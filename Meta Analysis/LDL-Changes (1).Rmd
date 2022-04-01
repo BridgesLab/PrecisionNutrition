@@ -1,0 +1,326 @@
+---
+title: "Systematic Review of LDL Changes on a Ketogenic Diet"
+author: "Dave Bridges"
+date: "June 18, 2021"
+output:
+  word_document:
+    toc: yes
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=FALSE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+=
+# Purpose
+
+To evaluate how LDL changes in ketogenic diet studies
+
+# Experimental Details
+
+Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight and LDL-C are reported as an outcome
+
+# Raw Data
+
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations.
+
+```{r data-input}
+library(readxl) #loads the readr package
+filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
+
+#this loads whatever the file is into a dataframe called exp.data if it exists
+exp.data <- read_excel(filename)
+eval.data <- exp.data %>% 
+  filter(Use=='x') %>%
+  mutate(Pct.Wt.Change = `Weight Change`/`Baseline Weight`*100)%>%
+  mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
+```
+
+These data can be found in **`r getwd()`** in a file named **`r ifelse(filename %in% dir(), filename, "no file found")`**.  This script was most recently updated on **`r date()`**.
+
+# Analysis
+
+# Variance in LDL-C
+
+```{r ldlc-endpoint}
+library(ggplot2)
+
+eval.data <-
+  eval.data %>%
+  mutate(LDL.endpoint = `Baseline LDL`+`Change in LDL-C`)
+
+eval.data %>%
+  filter(!(is.na(`Endpoint SD`))) %>%
+  ggplot(aes(y=LDL.endpoint,
+             ymin=LDL.endpoint-`Endpoint SD`,
+             ymax=LDL.endpoint+`Endpoint SD`,
+             x=reorder(Study,-`LDL.endpoint` ))) +
+  geom_point() +
+  geom_errorbar()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+eval.data %>% 
+  summarize_at(.vars=vars(Pct.Wt.Change,`Weight Change`,`Change in LDL-C`),
+               .funs=funs(mean)) 
+```
+
+# Meta-Analysis
+
+```{r meta-analysis}
+meta.data <-
+  eval.data %>%
+  filter(!is.na(`Endpoint SD`)) %>%
+  mutate(Pooled.SD=sqrt(`Baseline SD`^2+`Endpoint SD`^2)) %>%
+  mutate(SMD=`Change in LDL-C`) %>%
+  mutate(SMD.Wt = `Weight Change`) 
+
+library(meta)
+ldl.c.meta <- metagen(TE = SMD,
+                 seTE = Pooled.SD,
+                 n.e=n,
+                 n.c=n,
+                 studlab = Study,
+                 data = meta.data,
+                 sm = "SMD",
+                 comb.fixed = TRUE,
+                 comb.random = FALSE,
+                 #method.tau = "REML",
+                 hakn = TRUE,
+                 title = "LDL-C Changes in Ketogenic Diet Studies")
+
+forest.meta(ldl.c.meta, 
+            sortvar = SMD,
+            predict = F, 
+            print.tau2 = TRUE,
+            print.I2 = TRUE,
+            #leftcols=c('Study'),
+            #rightlabs=c('Change','95% CI','Weight'),
+            layout = "RevMan5",
+            fontsize=8,
+            leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+            leftlabs = c("Study","Change","SE","95% CI","Weight"),
+            range = F,
+            digits=1,
+            digits.se=1)
+```
+
+# Average Change in LDL-C
+
+```{r ldl-change}
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=reorder(Study, -`Change in LDL-C`))) +
+  geom_bar(stat='identity') +
+  labs(x="Study")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=reorder(Study, -`Change in LDL-C`))) +
+  geom_bar(stat='identity', aes(fill=`Percent Male`)) +
+  labs(x="Study")+
+    theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=reorder(Study, -`Change in LDL-C`))) +
+  geom_bar(stat='identity', aes(fill=`Sex.Group`)) +
+  labs(x="Study") +
+    theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+```
+
+## Relative to Weight
+
+```{r ldl-change-vs-weight}
+library(ggrepel)
+library(ggplot2)
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline Weight`)) +
+  geom_point() +
+  geom_smooth(span=1) +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline Weight")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline Weight`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline Weight")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline Weight`,
+             col=`Percent Male`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline Weight")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline Weight`,
+             col=`Sex.Group`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline Weight")
+
+library(broom)
+bind_rows(`Baseline`=shapiro.test(eval.data$`Baseline Weight`)$p.value,
+          `Change`=shapiro.test(eval.data$`Change in LDL-C`)$p.value) %>%
+  kable(caption="Shapiro Tests for Correlates")
+with(eval.data, cor.test(`Change in LDL-C`,`Baseline Weight`, method="spearman")) %>% tidy %>% kable(caption="Correlation between change in LDL-C and baseline weight")
+
+
+lm(`Change in LDL-C`~`Baseline Weight`+`Percent Male`, data=eval.data) %>% tidy %>% kable(caption="Linear model between change in LDL-C and baseline weight, including gender")
+
+ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weight.baseline.lm %>% tidy %>% kable
+
+ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weight.baseline.aov %>% tidy %>% kable
+
+ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`*`Sex.Group`, data = eval.data)
+ldl.weight.baseline.aov %>% tidy %>% kable
+
+ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
+ldl.weight.baseline.aov %>% tidy %>% kable
+```
+
+## Relative to Weight Loss
+
+```{r ldl-change-vs-weight-change}
+library(ggplot2)
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=Pct.Wt.Change)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Weight Change (%)")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=Pct.Wt.Change,
+             col=`Percent Male`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Weight Change (%)")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=Pct.Wt.Change,
+             col=`Sex.Group`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Weight Change (%)")
+
+library(broom)
+bind_rows(`Weight Change`=shapiro.test(eval.data$Pct.Wt.Change)$p.value,
+          `LDL Change`=shapiro.test(eval.data$`Change in LDL-C`)$p.value) %>%
+  kable(caption="Shapiro Tests for Correlates")
+with(eval.data, cor.test(`Change in LDL-C`,Pct.Wt.Change, method="spearman")) %>% tidy %>% kable(caption="Correlation between change in LDL-C and weight change")
+
+ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
+ldl.weight.change.lm %>% tidy %>% kable
+
+ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
+ldl.weight.change.aov %>% tidy %>% kable
+
+ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
+ldl.weight.change.aov %>% tidy %>% kable
+
+```
+
+## Relative to Baseline LDL-C
+
+```{r ldl-change-vs-baseline}
+library(ggplot2)
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline LDL`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline LDL-C")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline LDL`,
+             col=`Percent Male`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline LDL-C")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline LDL`,
+             col=`Sex.Group`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline LDL-C")
+
+library(broom)
+bind_rows(`Baseline`=shapiro.test(eval.data$`Baseline LDL`)$p.value,
+          `Change`=shapiro.test(eval.data$`Change in LDL-C`)$p.value) %>%
+  kable(caption="Shapiro Tests for Correlates")
+with(eval.data, cor.test(`Change in LDL-C`,`Baseline LDL`, method="spearman")) %>% tidy %>% kable(caption="Correlation between baseline and change in LDL-C")
+
+ldl.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
+ldl.baseline.lm %>% tidy %>% kable
+
+ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
+ldl.baseline.aov %>% tidy %>% kable
+
+ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Sex.Group`, data = eval.data)
+ldl.baseline.aov %>% tidy %>% kable
+
+ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Percent Male`, data = eval.data)
+ldl.baseline.aov %>% tidy %>% kable
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```

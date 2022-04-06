@@ -48,8 +48,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations.
-#need more details added here --> how did we find other studies (literature search for all studies using a KD diet that met our inclusion criteria, most recently updated this search on (whatever date is most up to date)) --> A systematic literature search of Embase, PubMed, and Cochrane Library was performed to identify randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on glycemic control, weight loss, and lipid profile as primary endpoints. all studies using a KD diet that met our inclusion criteria xxx . most recently updated this search on (whatever date is most up to date))
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on xxx.
 
 ```{r data-input}
 library(readxl) #loads the readr package
@@ -60,6 +59,7 @@ exp.data <- read_excel(filename)
 eval.data <- exp.data %>% 
   filter(Use=='x') %>%
   mutate(Pct.Wt.Change = `Weight Change`/`Baseline Weight`*100)%>%
+  mutate(PCT.BMI.Change = `BMI Change` / `Baseline BMI`*100)%>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
@@ -170,11 +170,27 @@ eval.data %>%
 
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline BMI`)) +
+  geom_point() +
+  geom_smooth(span=1) +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline BMI")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
              x=`Baseline Weight`)) +
   geom_point() +
   geom_smooth(method='lm') +
   geom_text_repel(aes(label=Study)) +
   labs(x="Baseline Weight")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline BMI`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline BMI")
 
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
@@ -206,11 +222,17 @@ lm(`Change in LDL-C`~`Baseline Weight`+`Percent Male`, data=eval.data) %>% tidy 
 ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
 ldl.weight.baseline.lm %>% tidy %>% kable
 
+ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.lm %>% tidy %>% kable
+
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
 ldl.weight.baseline.aov %>% tidy %>% kable
 
-ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`*`Sex.Group`, data = eval.data)
-ldl.weight.baseline.aov %>% tidy %>% kable
+ldl.bmi.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.aov %>% tidy %>% kable
+
+ldl.bmi2.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline BMI`*`Sex.Group`, data = eval.data)
+ldl.bmi2.baseline.aov %>% tidy %>% kable
 
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
 ldl.weight.baseline.aov %>% tidy %>% kable
@@ -231,17 +253,24 @@ eval.data %>%
 
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
-             x=Pct.Wt.Change,
-             col=`Percent Male`)) +
+             x=`BMI Change`)) +
   geom_point() +
   geom_smooth(method='lm') +
   geom_text_repel(aes(label=Study)) +
-  labs(x="Weight Change (%)")
+  labs(x="BMI Change")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`PCT.BMI.Change`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="% BMI Change")
 
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
              x=Pct.Wt.Change,
-             col=`Sex.Group`)) +
+             col=`Percent Male`)) +
   geom_point() +
   geom_smooth(method='lm') +
   geom_text_repel(aes(label=Study)) +
@@ -256,8 +285,20 @@ with(eval.data, cor.test(`Change in LDL-C`,Pct.Wt.Change, method="spearman")) %>
 ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
 ldl.weight.change.lm %>% tidy %>% kable
 
+ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmi.change.lm %>% tidy %>% kable
+
+ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.pctbmi.change.lm %>% tidy %>% kable
+
 ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
 ldl.weight.change.aov %>% tidy %>% kable
+
+ldl.bmi.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmi.change.aov %>% tidy %>% kable
+
+ldl.pctbmi.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.pctbmi.change.aov %>% tidy %>% kable
 
 ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
 ldl.weight.change.aov %>% tidy %>% kable

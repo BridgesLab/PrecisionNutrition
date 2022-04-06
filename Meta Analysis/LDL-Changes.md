@@ -8,6 +8,8 @@ output:
     keep_md: yes
     number_sections: yes
     toc: yes
+  pdf_document:
+    toc: yes
 ---
 
 
@@ -22,7 +24,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on xxx.
 
 
 ```r
@@ -34,10 +36,11 @@ exp.data <- read_excel(filename)
 eval.data <- exp.data %>% 
   filter(Use=='x') %>%
   mutate(Pct.Wt.Change = `Weight Change`/`Baseline Weight`*100)%>%
+  mutate(PCT.BMI.Change = `BMI Change` / `Baseline BMI`*100)%>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Fri Apr 01 09:39:10 2022**.
+These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Wed Apr 06 10:17:53 2022**.
 
 # Analysis
 
@@ -74,7 +77,7 @@ eval.data %>%
 ## # A tibble: 1 x 3
 ##   Pct.Wt.Change `Weight Change` `Change in LDL-C`
 ##           <dbl>           <dbl>             <dbl>
-## 1            NA              NA              11.8
+## 1            NA              NA              11.4
 ```
 
 # Meta-Analysis
@@ -175,6 +178,18 @@ eval.data %>%
 ```r
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline BMI`)) +
+  geom_point() +
+  geom_smooth(span=1) +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline BMI")
+```
+
+![](figures/ldl-change-vs-weight-2.png)<!-- -->
+
+```r
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
              x=`Baseline Weight`)) +
   geom_point() +
   geom_smooth(method='lm') +
@@ -182,7 +197,19 @@ eval.data %>%
   labs(x="Baseline Weight")
 ```
 
-![](figures/ldl-change-vs-weight-2.png)<!-- -->
+![](figures/ldl-change-vs-weight-3.png)<!-- -->
+
+```r
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline BMI`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline BMI")
+```
+
+![](figures/ldl-change-vs-weight-4.png)<!-- -->
 
 ```r
 eval.data %>%
@@ -195,7 +222,7 @@ eval.data %>%
   labs(x="Baseline Weight")
 ```
 
-![](figures/ldl-change-vs-weight-3.png)<!-- -->
+![](figures/ldl-change-vs-weight-5.png)<!-- -->
 
 ```r
 eval.data %>%
@@ -208,7 +235,7 @@ eval.data %>%
   labs(x="Baseline Weight")
 ```
 
-![](figures/ldl-change-vs-weight-4.png)<!-- -->
+![](figures/ldl-change-vs-weight-6.png)<!-- -->
 
 ```r
 library(broom)
@@ -223,7 +250,7 @@ Table: Shapiro Tests for Correlates
 
 | Baseline| Change|
 |--------:|------:|
-|    0.199|      0|
+|    0.216|      0|
 
 ```r
 with(eval.data, cor.test(`Change in LDL-C`,`Baseline Weight`, method="spearman")) %>% tidy %>% kable(caption="Correlation between change in LDL-C and baseline weight")
@@ -235,7 +262,7 @@ Table: Correlation between change in LDL-C and baseline weight
 
 | estimate| statistic| p.value|method                          |alternative |
 |--------:|---------:|-------:|:-------------------------------|:-----------|
-|   -0.749|      1994|       0|Spearman's rank correlation rho |two.sided   |
+|   -0.725|      1966|       0|Spearman's rank correlation rho |two.sided   |
 
 ```r
 lm(`Change in LDL-C`~`Baseline Weight`+`Percent Male`, data=eval.data) %>% tidy %>% kable(caption="Linear model between change in LDL-C and baseline weight, including gender")
@@ -247,9 +274,9 @@ Table: Linear model between change in LDL-C and baseline weight, including gende
 
 |term              | estimate| std.error| statistic| p.value|
 |:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |   69.310|    16.332|     4.244|   0.001|
-|`Baseline Weight` |   -0.624|     0.205|    -3.044|   0.008|
-|`Percent Male`    |   -4.376|    12.636|    -0.346|   0.734|
+|(Intercept)       |   69.286|    16.562|     4.183|   0.001|
+|`Baseline Weight` |   -0.627|     0.208|    -3.013|   0.008|
+|`Percent Male`    |   -4.849|    12.797|    -0.379|   0.710|
 
 ```r
 ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
@@ -260,10 +287,24 @@ ldl.weight.baseline.lm %>% tidy %>% kable
 
 |term                 | estimate| std.error| statistic| p.value|
 |:--------------------|--------:|---------:|---------:|-------:|
-|(Intercept)          |   66.279|     16.51|     4.013|   0.001|
-|`Baseline Weight`    |   -0.542|      0.22|    -2.463|   0.026|
-|Sex.GroupMixed       |   -7.455|      9.57|    -0.779|   0.448|
-|Sex.GroupMostly Male |  -13.409|     13.32|    -1.007|   0.330|
+|(Intercept)          |   65.991|    16.716|     3.948|   0.001|
+|`Baseline Weight`    |   -0.538|     0.223|    -2.415|   0.029|
+|Sex.GroupMixed       |   -8.305|     9.667|    -0.859|   0.404|
+|Sex.GroupMostly Male |  -13.512|    13.489|    -1.002|   0.332|
+
+```r
+ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.lm %>% tidy %>% kable
+```
+
+
+
+|term                 | estimate| std.error| statistic| p.value|
+|:--------------------|--------:|---------:|---------:|-------:|
+|(Intercept)          |    55.84|    13.636|      4.09|   0.003|
+|`Baseline BMI`       |    -1.13|     0.489|     -2.31|   0.050|
+|Sex.GroupMixed       |   -14.57|     5.951|     -2.45|   0.040|
+|Sex.GroupMostly Male |   -17.01|     8.376|     -2.03|   0.077|
 
 ```r
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
@@ -274,23 +315,36 @@ ldl.weight.baseline.aov %>% tidy %>% kable
 
 |term              | df| sumsq| meansq| statistic| p.value|
 |:-----------------|--:|-----:|------:|---------:|-------:|
-|`Baseline Weight` |  1|  3265|   3265|    14.783|   0.002|
-|Sex.Group         |  2|   241|    120|     0.545|   0.591|
-|Residuals         | 15|  3313|    221|        NA|      NA|
+|`Baseline Weight` |  1|  3319|   3319|    14.655|   0.002|
+|Sex.Group         |  2|   259|    130|     0.572|   0.576|
+|Residuals         | 15|  3397|    226|        NA|      NA|
 
 ```r
-ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`*`Sex.Group`, data = eval.data)
-ldl.weight.baseline.aov %>% tidy %>% kable
+ldl.bmi.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.aov %>% tidy %>% kable
 ```
 
 
 
-|term                        | df| sumsq| meansq| statistic| p.value|
-|:---------------------------|--:|-----:|------:|---------:|-------:|
-|`Baseline Weight`           |  1|  3265|   3265|    14.255|   0.002|
-|Sex.Group                   |  2|   241|    120|     0.525|   0.603|
-|`Baseline Weight`:Sex.Group |  2|   335|    168|     0.732|   0.500|
-|Residuals                   | 13|  2978|    229|        NA|      NA|
+|term           | df| sumsq| meansq| statistic| p.value|
+|:--------------|--:|-----:|------:|---------:|-------:|
+|`Baseline BMI` |  1|   965|  965.0|     18.51|   0.003|
+|Sex.Group      |  2|   411|  205.3|      3.94|   0.065|
+|Residuals      |  8|   417|   52.1|        NA|      NA|
+
+```r
+ldl.bmi2.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline BMI`*`Sex.Group`, data = eval.data)
+ldl.bmi2.baseline.aov %>% tidy %>% kable
+```
+
+
+
+|term                     | df| sumsq| meansq| statistic| p.value|
+|:------------------------|--:|-----:|------:|---------:|-------:|
+|`Baseline BMI`           |  1|   965|  965.0|     32.26|   0.001|
+|Sex.Group                |  2|   411|  205.3|      6.86|   0.022|
+|`Baseline BMI`:Sex.Group |  1|   208|  207.7|      6.94|   0.034|
+|Residuals                |  7|   209|   29.9|        NA|      NA|
 
 ```r
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
@@ -301,8 +355,8 @@ ldl.weight.baseline.aov %>% tidy %>% kable
 
 |term              | df| sumsq| meansq| statistic| p.value|
 |:-----------------|--:|-----:|------:|---------:|-------:|
-|`Baseline Weight` |  1|  3265|   3265|      15.6|   0.001|
-|Residuals         | 17|  3554|    209|        NA|      NA|
+|`Baseline Weight` |  1|  3319|   3319|      15.4|   0.001|
+|Residuals         | 17|  3657|    215|        NA|      NA|
 
 ## Relative to Weight Loss
 
@@ -324,6 +378,30 @@ eval.data %>%
 ```r
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
+             x=`BMI Change`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="BMI Change")
+```
+
+![](figures/ldl-change-vs-weight-change-2.png)<!-- -->
+
+```r
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`PCT.BMI.Change`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="% BMI Change")
+```
+
+![](figures/ldl-change-vs-weight-change-3.png)<!-- -->
+
+```r
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
              x=Pct.Wt.Change,
              col=`Percent Male`)) +
   geom_point() +
@@ -332,20 +410,7 @@ eval.data %>%
   labs(x="Weight Change (%)")
 ```
 
-![](figures/ldl-change-vs-weight-change-2.png)<!-- -->
-
-```r
-eval.data %>%
-  ggplot(aes(y=`Change in LDL-C`,
-             x=Pct.Wt.Change,
-             col=`Sex.Group`)) +
-  geom_point() +
-  geom_smooth(method='lm') +
-  geom_text_repel(aes(label=Study)) +
-  labs(x="Weight Change (%)")
-```
-
-![](figures/ldl-change-vs-weight-change-3.png)<!-- -->
+![](figures/ldl-change-vs-weight-change-4.png)<!-- -->
 
 ```r
 library(broom)
@@ -360,7 +425,7 @@ Table: Shapiro Tests for Correlates
 
 | Weight Change| LDL Change|
 |-------------:|----------:|
-|         0.247|          0|
+|         0.199|          0|
 
 ```r
 with(eval.data, cor.test(`Change in LDL-C`,Pct.Wt.Change, method="spearman")) %>% tidy %>% kable(caption="Correlation between change in LDL-C and weight change")
@@ -372,7 +437,7 @@ Table: Correlation between change in LDL-C and weight change
 
 | estimate| statistic| p.value|method                          |alternative |
 |--------:|---------:|-------:|:-------------------------------|:-----------|
-|    0.571|       416|   0.015|Spearman's rank correlation rho |two.sided   |
+|    0.538|       448|   0.023|Spearman's rank correlation rho |two.sided   |
 
 ```r
 ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
@@ -383,10 +448,38 @@ ldl.weight.change.lm %>% tidy %>% kable
 
 |term                 | estimate| std.error| statistic| p.value|
 |:--------------------|--------:|---------:|---------:|-------:|
-|(Intercept)          |    24.62|     6.126|     4.020|   0.001|
-|Pct.Wt.Change        |     1.44|     0.855|     1.681|   0.115|
-|Sex.GroupMixed       |    -6.13|     7.950|    -0.772|   0.453|
-|Sex.GroupMostly Male |   -17.26|    10.281|    -1.679|   0.115|
+|(Intercept)          |    24.22|     6.314|      3.84|   0.002|
+|Pct.Wt.Change        |     1.31|     0.878|      1.49|   0.158|
+|Sex.GroupMixed       |    -8.02|     7.977|     -1.00|   0.332|
+|Sex.GroupMostly Male |   -17.37|    10.604|     -1.64|   0.124|
+
+```r
+ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmi.change.lm %>% tidy %>% kable
+```
+
+
+
+|term                 | estimate| std.error| statistic| p.value|
+|:--------------------|--------:|---------:|---------:|-------:|
+|(Intercept)          |    27.67|      5.76|     4.801|   0.002|
+|`BMI Change`         |     1.66|      2.25|     0.739|   0.484|
+|Sex.GroupMixed       |   -20.64|      7.42|    -2.781|   0.027|
+|Sex.GroupMostly Male |   -15.33|     10.41|    -1.472|   0.185|
+
+```r
+ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.pctbmi.change.lm %>% tidy %>% kable
+```
+
+
+
+|term                 | estimate| std.error| statistic| p.value|
+|:--------------------|--------:|---------:|---------:|-------:|
+|(Intercept)          |   28.078|     6.051|     4.640|   0.002|
+|PCT.BMI.Change       |    0.578|     0.794|     0.728|   0.490|
+|Sex.GroupMixed       |  -21.108|     7.123|    -2.963|   0.021|
+|Sex.GroupMostly Male |  -15.077|    10.423|    -1.447|   0.191|
 
 ```r
 ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
@@ -397,9 +490,35 @@ ldl.weight.change.aov %>% tidy %>% kable
 
 |term          | df| sumsq| meansq| statistic| p.value|
 |:-------------|--:|-----:|------:|---------:|-------:|
-|Pct.Wt.Change |  1|   782|    782|      5.21|   0.039|
-|Sex.Group     |  2|   425|    212|      1.41|   0.276|
-|Residuals     | 14|  2102|    150|        NA|      NA|
+|Pct.Wt.Change |  1|   735|    735|      4.60|   0.050|
+|Sex.Group     |  2|   449|    225|      1.40|   0.278|
+|Residuals     | 14|  2237|    160|        NA|      NA|
+
+```r
+ldl.bmi.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmi.change.aov %>% tidy %>% kable
+```
+
+
+
+|term         | df| sumsq| meansq| statistic| p.value|
+|:------------|--:|-----:|------:|---------:|-------:|
+|`BMI Change` |  1|   564|  563.8|      6.93|   0.034|
+|Sex.Group    |  2|   654|  327.1|      4.03|   0.069|
+|Residuals    |  7|   569|   81.3|        NA|      NA|
+
+```r
+ldl.pctbmi.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.pctbmi.change.aov %>% tidy %>% kable
+```
+
+
+
+|term           | df| sumsq| meansq| statistic| p.value|
+|:--------------|--:|-----:|------:|---------:|-------:|
+|PCT.BMI.Change |  1|   490|  490.1|      6.02|   0.044|
+|Sex.Group      |  2|   727|  363.4|      4.46|   0.056|
+|Residuals      |  7|   570|   81.5|        NA|      NA|
 
 ```r
 ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
@@ -410,8 +529,8 @@ ldl.weight.change.aov %>% tidy %>% kable
 
 |term          | df| sumsq| meansq| statistic| p.value|
 |:-------------|--:|-----:|------:|---------:|-------:|
-|Pct.Wt.Change |  1|   782|    782|      4.96|   0.041|
-|Residuals     | 16|  2527|    158|        NA|      NA|
+|Pct.Wt.Change |  1|   735|    735|      4.38|   0.053|
+|Residuals     | 16|  2686|    168|        NA|      NA|
 
 ## Relative to Baseline LDL-C
 
@@ -468,7 +587,7 @@ Table: Shapiro Tests for Correlates
 
 | Baseline| Change|
 |--------:|------:|
-|    0.779|      0|
+|    0.703|      0|
 
 ```r
 with(eval.data, cor.test(`Change in LDL-C`,`Baseline LDL`, method="spearman")) %>% tidy %>% kable(caption="Correlation between baseline and change in LDL-C")
@@ -480,7 +599,7 @@ Table: Correlation between baseline and change in LDL-C
 
 | estimate| statistic| p.value|method                          |alternative |
 |--------:|---------:|-------:|:-------------------------------|:-----------|
-|   -0.226|      1888|   0.324|Spearman's rank correlation rho |two.sided   |
+|   -0.269|      1954|   0.238|Spearman's rank correlation rho |two.sided   |
 
 ```r
 ldl.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
@@ -491,10 +610,10 @@ ldl.baseline.lm %>% tidy %>% kable
 
 |term                 | estimate| std.error| statistic| p.value|
 |:--------------------|--------:|---------:|---------:|-------:|
-|(Intercept)          |   52.824|    18.045|      2.93|   0.009|
-|`Baseline LDL`       |   -0.225|     0.156|     -1.45|   0.166|
-|Sex.GroupMixed       |  -20.876|     7.970|     -2.62|   0.018|
-|Sex.GroupMostly Male |  -27.683|    11.197|     -2.47|   0.024|
+|(Intercept)          |   53.821|    18.117|      2.97|   0.009|
+|`Baseline LDL`       |   -0.235|     0.157|     -1.50|   0.152|
+|Sex.GroupMixed       |  -21.424|     7.980|     -2.68|   0.016|
+|Sex.GroupMostly Male |  -27.756|    11.217|     -2.47|   0.024|
 
 ```r
 ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
@@ -505,9 +624,9 @@ ldl.baseline.aov %>% tidy %>% kable
 
 |term           | df| sumsq| meansq| statistic| p.value|
 |:--------------|--:|-----:|------:|---------:|-------:|
-|`Baseline LDL` |  1|   651|    651|      2.63|   0.124|
-|Sex.Group      |  2|  2227|   1113|      4.50|   0.027|
-|Residuals      | 17|  4211|    248|        NA|      NA|
+|`Baseline LDL` |  1|   706|    706|      2.84|   0.110|
+|Sex.Group      |  2|  2298|   1149|      4.62|   0.025|
+|Residuals      | 17|  4226|    249|        NA|      NA|
 
 ```r
 ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Sex.Group`, data = eval.data)
@@ -518,8 +637,8 @@ ldl.baseline.aov %>% tidy %>% kable
 
 |term      | df| sumsq| meansq| statistic| p.value|
 |:---------|--:|-----:|------:|---------:|-------:|
-|Sex.Group |  2|  2359|   1180|      4.49|   0.026|
-|Residuals | 18|  4729|    263|        NA|      NA|
+|Sex.Group |  2|  2446|   1223|       4.6|   0.024|
+|Residuals | 18|  4784|    266|        NA|      NA|
 
 ```r
 ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Percent Male`, data = eval.data)
@@ -530,8 +649,8 @@ ldl.baseline.aov %>% tidy %>% kable
 
 |term           | df| sumsq| meansq| statistic| p.value|
 |:--------------|--:|-----:|------:|---------:|-------:|
-|`Percent Male` |  1|  1259|   1259|      4.11|   0.057|
-|Residuals      | 19|  5829|    307|        NA|      NA|
+|`Percent Male` |  1|  1293|   1293|      4.14|   0.056|
+|Residuals      | 19|  5937|    312|        NA|      NA|
 
 # Session Information
 

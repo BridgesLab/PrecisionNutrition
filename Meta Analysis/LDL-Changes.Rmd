@@ -93,7 +93,7 @@ eval.data %>%
                .funs=funs(mean)) 
 ```
 
-# Meta-Analysis
+# Meta-Analysis --> Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.6 UNITs (95% CIL 1.1 to 22.1) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of XXX.
 
 ```{r meta-analysis}
 meta.data <-
@@ -157,7 +157,7 @@ eval.data %>%
     theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
 ```
 
-## Relative to Weight
+## Relative to Weight --> Lower basline BMI was associated with an increased change in LDL-C after consumpstion of a ketogenic diet (r = xxx, p-value = XXX). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r = XXX, p-value = XXX). 
 
 ```{r ldl-change-vs-weight}
 library(ggrepel)
@@ -240,7 +240,7 @@ ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eva
 ldl.weight.baseline.aov %>% tidy %>% kable
 ```
 
-## Relative to Weight Loss
+## Relative to Weight Loss --> Greater BMI decreases over the study period were associatied with a smaller increase in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). The assocition with the change in LDL-C and decrease in BMI was consistent with weight (r = XXX, p-value = XXX), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet (r = XXX, p-value = XXX).
 
 ```{r ldl-change-vs-weight-change}
 library(ggplot2)
@@ -307,7 +307,7 @@ ldl.weight.change.aov %>% tidy %>% kable
 
 ```
 
-## Relative to Baseline LDL-C
+## Relative to Baseline LDL-C --> Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). 
 
 ```{r ldl-change-vs-baseline}
 library(ggplot2)

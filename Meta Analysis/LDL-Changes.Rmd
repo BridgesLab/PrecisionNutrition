@@ -39,7 +39,6 @@ library(dplyr)
 # sets maize and blue color scheme
 color.scheme <- c('#00274c', '#ffcb05')
 ```
-=
 # Purpose
 
 To evaluate how LDL changes in ketogenic diet studies
@@ -50,7 +49,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on XXX.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on `r date()`.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -94,11 +93,13 @@ eval.data %>%
   theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
 
 eval.data %>% 
-  summarize_at(.vars=vars(Pct.Wt.Change,`Weight Change`,`Change in LDL-C`),
-               .funs=funs(mean)) 
+  summarize_at(.vars=vars(Pct.Wt.Change,`Weight Change`,`Change in LDL-C`,`BMI Change`),
+               .funs=funs(mean(.,na.rm=TRUE))) 
+
+#Above is non-weighted average
 ```
 
-# Meta-Analysis --> Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.6 UNITs (95% CIL 1.1 to 22.1) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of XXX.
+# Meta-Analysis 
 
 ```{r meta-analysis}
 meta.data <-
@@ -138,6 +139,8 @@ forest.meta(ldl.c.meta,
             digits.se=1)
 ```
 
+We evaluated `r ldl.c.meta$k` studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased `r ldl.c.meta$TE.fixed` mg/dL (95% CI: `r ldl.c.meta$lower.fixed` to `r ldl.c.meta$upper.fixed`) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of `r ldl.c.meta$pval.fixed`. Across these studies, the I<sup>2</sup> is `r ldl.c.meta$I2`, the p-value for Q is `r ldl.c.meta$pval.Q`. This is a highly consistent I^2. 
+
 # Average Change in LDL-C
 
 ```{r ldl-change}
@@ -162,7 +165,7 @@ eval.data %>%
     theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
 ```
 
-## Relative to Weight --> Lower basline BMI was associated with an increased change in LDL-C after consumpstion of a ketogenic diet (r = xxx, p-value = XXX). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r = XXX, p-value = XXX). 
+## Relative to Weight
 
 ```{r ldl-change-vs-weight}
 library(ggrepel)
@@ -229,8 +232,11 @@ lm(`Change in LDL-C`~`Baseline Weight`+`Percent Male`, data=eval.data) %>% tidy 
 ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
 ldl.weight.baseline.lm %>% tidy %>% kable
 
-ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, data = eval.data)
 ldl.bmi.baseline.lm %>% tidy %>% kable
+
+ldl.bmi.baseline.sex.aov <- aov(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.sex.aov %>% tidy %>% kable
 
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
 ldl.weight.baseline.aov %>% tidy %>% kable
@@ -244,6 +250,8 @@ ldl.bmi2.baseline.aov %>% tidy %>% kable
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
 ldl.weight.baseline.aov %>% tidy %>% kable
 ```
+
+Lower baseline BMI was associated with an increased change in LDL-C after consumption of a ketogenic diet (r<sup>2</sup> = `r ldl.bmi.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.baseline.lm %>% tidy %>% pull(p.value) %>% last`). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r = XXX, p-value = XXX). 
 
 ## Relative to Weight Loss --> Greater BMI decreases over the study period were associatied with a smaller increase in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). The assocition with the change in LDL-C and decrease in BMI was consistent with weight (r = XXX, p-value = XXX), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet (r = XXX, p-value = XXX).
 

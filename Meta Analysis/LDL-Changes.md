@@ -13,7 +13,6 @@ output:
 ---
 
 
-=
 # Purpose
 
 To evaluate how LDL changes in ketogenic diet studies
@@ -24,7 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on XXX.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Apr 08 09:39:44 2022.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -45,7 +44,7 @@ eval.data <- exp.data %>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Fri Apr 08 08:56:47 2022**.
+These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Fri Apr 08 09:39:44 2022**.
 
 # Analysis
 
@@ -75,7 +74,7 @@ eval.data %>%
 ```r
 eval.data %>% 
   summarize_at(.vars=vars(Pct.Wt.Change,`Weight Change`,`Change in LDL-C`),
-               .funs=funs(mean)) 
+               .funs=funs(mean(.,na.rn=TRUE))) 
 ```
 
 ```
@@ -85,7 +84,11 @@ eval.data %>%
 ## 1            NA              NA              11.4
 ```
 
-# Meta-Analysis --> Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.6 UNITs (95% CIL 1.1 to 22.1) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of XXX.
+```r
+#Above is non-weighted average
+```
+
+# Meta-Analysis 
 
 
 ```r
@@ -127,6 +130,7 @@ forest.meta(ldl.c.meta,
 ```
 
 ![](figures/meta-analysis-1.png)<!-- -->
+We evaluated 18 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.575 mg/dL (95% CI: 1.097 to 22.053) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.03.
 
 # Average Change in LDL-C
 

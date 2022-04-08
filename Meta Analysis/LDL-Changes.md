@@ -24,7 +24,12 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on xxx.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on XXX.
+
+We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
+
+
+Correlations in this meta-analysis before and after the administration of the ketogenic diet were analyzed with linear models and results given using pearsons correlation coefficient, statistical significance was defined as below 0.05. 
 
 
 ```r
@@ -40,7 +45,7 @@ eval.data <- exp.data %>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Wed Apr 06 10:17:53 2022**.
+These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Fri Apr 08 08:56:47 2022**.
 
 # Analysis
 
@@ -80,7 +85,7 @@ eval.data %>%
 ## 1            NA              NA              11.4
 ```
 
-# Meta-Analysis
+# Meta-Analysis --> Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.6 UNITs (95% CIL 1.1 to 22.1) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of XXX.
 
 
 ```r
@@ -158,7 +163,7 @@ eval.data %>%
 
 ![](figures/ldl-change-3.png)<!-- -->
 
-## Relative to Weight
+## Relative to Weight --> Lower basline BMI was associated with an increased change in LDL-C after consumpstion of a ketogenic diet (r = xxx, p-value = XXX). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r = XXX, p-value = XXX). 
 
 
 ```r
@@ -358,7 +363,7 @@ ldl.weight.baseline.aov %>% tidy %>% kable
 |`Baseline Weight` |  1|  3319|   3319|      15.4|   0.001|
 |Residuals         | 17|  3657|    215|        NA|      NA|
 
-## Relative to Weight Loss
+## Relative to Weight Loss --> Greater BMI decreases over the study period were associatied with a smaller increase in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). The assocition with the change in LDL-C and decrease in BMI was consistent with weight (r = XXX, p-value = XXX), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet (r = XXX, p-value = XXX).
 
 
 ```r
@@ -532,7 +537,7 @@ ldl.weight.change.aov %>% tidy %>% kable
 |Pct.Wt.Change |  1|   735|    735|      4.38|   0.053|
 |Residuals     | 16|  2686|    168|        NA|      NA|
 
-## Relative to Baseline LDL-C
+## Relative to Baseline LDL-C --> Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). 
 
 
 ```r

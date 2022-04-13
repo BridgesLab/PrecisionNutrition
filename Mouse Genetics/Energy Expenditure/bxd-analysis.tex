@@ -131,10 +131,6 @@ physiology.
   mL/kg/h. From Prinen 2014
   (\url{https://doi.org/10.1016/j.cmet.2014.04.002})
 \item
-  \textbf{BXD\_17618} Oxygen intake over 24h at 16 w age on HFD?, males.
-  Not adjusted for lean mass. Has mean +/- SE in mL/kg/h. From Williams
-  (2016). Body weight in BXD\_17559, lean mass in BXD\_17573
-\item
   \textbf{BXD\_17622} Oxygen intake over 24h at 16 w age on HFD?, males.
   Not adjusted for lean mass. Has mean +/- SE in mL/kg/h. From Williams
   (2016). Body weight in BXD\_17560, lean mass in BXD\_17574
@@ -143,11 +139,7 @@ physiology.
 \begin{Shaded}
 \begin{Highlighting}[]
 \KeywordTok{library}\NormalTok{(readr)}
-\NormalTok{ncd.pirinen <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17621.csv"}\NormalTok{, }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{) }\OperatorTok{%>%}\StringTok{ }
-\StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Diet=}\StringTok{"NCD"}\NormalTok{,}\DataTypeTok{Age=}\DecValTok{16}\NormalTok{,}\DataTypeTok{Dataset=}\StringTok{"Prinen"}\NormalTok{)}
-
-
-\NormalTok{williams.ncd.ee <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17621.csv"}\NormalTok{, }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{)}\OperatorTok{%>%}\StringTok{ }\CommentTok{#may be mislabelled on genenetwork, assigned based on HFD reductions}
+\NormalTok{williams.ncd.ee <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17621.csv"}\NormalTok{, }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{)}\OperatorTok{%>%}\StringTok{ }
 \StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Diet=}\StringTok{"NCD"}\NormalTok{,}\DataTypeTok{Age=}\DecValTok{16}\NormalTok{,}\DataTypeTok{Dataset=}\StringTok{"Williams"}\NormalTok{)}
 \NormalTok{williams.ncd.bw <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17559.csv"}\NormalTok{ , }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{)}\OperatorTok{%>%}\StringTok{ }
 \StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Diet=}\StringTok{"NCD"}\NormalTok{,}\DataTypeTok{Age=}\DecValTok{16}\NormalTok{,}\DataTypeTok{Dataset=}\StringTok{"Williams"}\NormalTok{)}
@@ -187,7 +179,7 @@ physiology.
 These data can be found in
 /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse
 Genetics/Energy Expenditure. This script was most recently updated on
-Wed Apr 13 12:21:45 2022.
+Wed Apr 13 16:37:04 2022.
 
 \hypertarget{analysis}{%
 \section{Analysis}\label{analysis}}
@@ -841,8 +833,8 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Name & 46 & 0.665 & 0.014 & 7.76 & 0 & 0.016 & 88.6\tabularnewline
-Residuals & 159 & 0.296 & 0.002 & NA & NA & 0.016 & 11.4\tabularnewline
+Name & 46 & 0.704 & 0.015 & 6.56 & 0 & 0.018 & 86.8\tabularnewline
+Residuals & 159 & 0.371 & 0.002 & NA & NA & 0.018 & 13.2\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -869,9 +861,9 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.057 & 0.057 & 30.61 & 0 & 0.072 & 79.13\tabularnewline
-Name & 46 & 0.609 & 0.013 & 7.07 & 0 & 0.072 & 18.28\tabularnewline
-Residuals & 158 & 0.296 & 0.002 & NA & NA & 0.072 & 2.58\tabularnewline
+Lean & 1 & 0.036 & 0.036 & 15.47 & 0 & 0.053 & 68.25\tabularnewline
+Name & 46 & 0.668 & 0.015 & 6.19 & 0 & 0.053 & 27.33\tabularnewline
+Residuals & 158 & 0.371 & 0.002 & NA & NA & 0.053 & 4.41\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -904,9 +896,9 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.057 & 0.057 & 30.61 & 0 & 0.015 & 379.2\tabularnewline
-Name & 46 & 0.609 & 0.013 & 7.07 & 0 & 0.015 & 87.6\tabularnewline
-Residuals & 158 & 0.296 & 0.002 & NA & NA & 0.015 & 12.4\tabularnewline
+Lean & 1 & 0.036 & 0.036 & 15.47 & 0 & 0.017 & 215.0\tabularnewline
+Name & 46 & 0.668 & 0.015 & 6.19 & 0 & 0.017 & 86.1\tabularnewline
+Residuals & 158 & 0.371 & 0.002 & NA & NA & 0.017 & 13.9\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -934,11 +926,11 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.258 & 0.258 & 108.88 & 0 & 1.84 & 13.978\tabularnewline
-Name & 47 & 1.276 & 0.027 & 11.48 & 0 & 1.84 & 1.474\tabularnewline
-Diet & 1 & 1.543 & 1.543 & 652.60 & 0 & 1.84 & 83.780\tabularnewline
-Name:Diet & 41 & 0.484 & 0.012 & 4.99 & 0 & 1.84 & 0.641\tabularnewline
-Residuals & 302 & 0.714 & 0.002 & NA & NA & 1.84 & 0.128\tabularnewline
+Lean & 1 & 0.190 & 0.190 & 55.90 & 0 & 1.87 & 10.156\tabularnewline
+Name & 47 & 1.445 & 0.031 & 9.05 & 0 & 1.87 & 1.645\tabularnewline
+Diet & 1 & 1.636 & 1.636 & 481.61 & 0 & 1.87 & 87.495\tabularnewline
+Name:Diet & 41 & 0.401 & 0.010 & 2.88 & 0 & 1.87 & 0.523\tabularnewline
+Residuals & 302 & 1.026 & 0.003 & NA & NA & 1.87 & 0.182\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -971,11 +963,11 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.258 & 0.258 & 108.88 & 0 & 0.041 & 623.28\tabularnewline
-Name & 47 & 1.276 & 0.027 & 11.48 & 0 & 0.041 & 65.71\tabularnewline
-Diet & 1 & 1.543 & 1.543 & 652.60 & 0 & 0.041 & 3735.83\tabularnewline
-Name:Diet & 41 & 0.484 & 0.012 & 4.99 & 0 & 0.041 & 28.57\tabularnewline
-Residuals & 302 & 0.714 & 0.002 & NA & NA & 0.041 & 5.72\tabularnewline
+Lean & 1 & 0.190 & 0.190 & 55.90 & 0 & 0.044 & 432.24\tabularnewline
+Name & 47 & 1.445 & 0.031 & 9.05 & 0 & 0.044 & 70.02\tabularnewline
+Diet & 1 & 1.636 & 1.636 & 481.61 & 0 & 0.044 & 3723.90\tabularnewline
+Name:Diet & 41 & 0.401 & 0.010 & 2.88 & 0 & 0.044 & 22.25\tabularnewline
+Residuals & 302 & 1.026 & 0.003 & NA & NA & 0.044 & 7.73\tabularnewline
 \bottomrule
 \end{longtable}
 

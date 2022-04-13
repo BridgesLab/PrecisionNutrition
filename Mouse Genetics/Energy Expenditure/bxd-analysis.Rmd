@@ -41,16 +41,11 @@ color.scheme <- c('#00274c', '#ffcb05')
 The goal is to identify genetic determinants of energy expenditure and of adaptive thermogenesis from BXD mice.  To start we searched gene network for energy expenditure data, ignoring those involved in exercise physiology.
 
 * **BXD_17621** Oxygen intake over 24h on NCD at 16 w age.  Also included light/dark.  Not adjusted for lean mass.  Has mean +/- SE in mL/kg/h.  From Prinen 2014 (https://doi.org/10.1016/j.cmet.2014.04.002)
-* **BXD_17618** Oxygen intake over 24h at 16 w age on HFD?, males.  Not adjusted for lean mass.  Has mean +/- SE in mL/kg/h.  From Williams (2016).  Body weight in BXD_17559, lean mass in BXD_17573
 * **BXD_17622** Oxygen intake over 24h at 16 w age on HFD?, males.  Not adjusted for lean mass.  Has mean +/- SE in mL/kg/h.  From Williams (2016).  Body weight in BXD_17560, lean mass in BXD_17574
 
 ```{r data-input}
 library(readr)
-ncd.pirinen <- read_csv("BXD_17621.csv", skip=9) %>% 
-  mutate(Diet="NCD",Age=16,Dataset="Prinen")
-
-
-williams.ncd.ee <- read_csv("BXD_17621.csv", skip=9)%>% #may be mislabelled on genenetwork, assigned based on HFD reductions
+williams.ncd.ee <- read_csv("BXD_17621.csv", skip=9)%>% 
   mutate(Diet="NCD",Age=16,Dataset="Williams")
 williams.ncd.bw <- read_csv("BXD_17559.csv" , skip=9)%>% 
   mutate(Diet="NCD",Age=16,Dataset="Williams")

@@ -1,0 +1,37 @@
+##
+## GEMMA Version    = 0.98.5 (2021-08-25)
+## Build profile    = /gnu/store/8rvid272yb53bgascf5c468z0jhsyflj-profile
+## GCC version      = 4.2.1
+## GSL Version      = 2.7
+## OpenBlas         = OpenBLAS 0.3.15  - OpenBLAS 0.3.15 DYNAMIC_ARCH NO_AFFINITY USE_OPENMP Haswell MAX_THREADS=56
+##   arch           = Haswell
+##   threads        = 8
+##   parallel type  = openmp
+##
+## Command Line Input = gemma -g bxd-ee-genotype.bimbam -p ee_phenotype.csv -a snp-annotation.bimbam -k output/ee.cXX.txt -lmm 1 -o ee 
+##
+## Date = Mon Feb 14 10:59:03 2022
+##
+## Summary Statistics:
+## number of total individuals = 44
+## number of analyzed individuals = 44
+## number of covariates = 1
+## number of phenotypes = 1
+## number of total SNPs/var = 7320
+## number of analyzed SNPs/var = 7167
+## REMLE log-likelihood in the null model = 46.109
+## MLE log-likelihood in the null model = 47.9123
+## pve estimate in the null model = 0.363116
+## se(pve) in the null model = 0.232776
+## vg estimate in the null model = 0.00276042
+## ve estimate in the null model = 0.00449281
+## beta estimate in the null model =   0.474507
+## se(beta) =   0.0101049
+##
+## Computation Time:
+## total computation time = 0.0139215 min 
+## computation time break down: 
+##      time on eigen-decomposition = 7.85333e-05 min 
+##      time on calculating UtX = 0.000223583 min 
+##      time on optimization = 0.0115884 min 
+##

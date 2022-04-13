@@ -147,7 +147,7 @@ physiology.
 \StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Diet=}\StringTok{"NCD"}\NormalTok{,}\DataTypeTok{Age=}\DecValTok{16}\NormalTok{,}\DataTypeTok{Dataset=}\StringTok{"Prinen"}\NormalTok{)}
 
 
-\NormalTok{williams.ncd.ee <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17618.csv"}\NormalTok{, }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{)}\OperatorTok{%>%}\StringTok{ }\CommentTok{#may be mislabelled on genenetwork, assigned based on HFD reductions}
+\NormalTok{williams.ncd.ee <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17621.csv"}\NormalTok{, }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{)}\OperatorTok{%>%}\StringTok{ }\CommentTok{#may be mislabelled on genenetwork, assigned based on HFD reductions}
 \StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Diet=}\StringTok{"NCD"}\NormalTok{,}\DataTypeTok{Age=}\DecValTok{16}\NormalTok{,}\DataTypeTok{Dataset=}\StringTok{"Williams"}\NormalTok{)}
 \NormalTok{williams.ncd.bw <-}\StringTok{ }\KeywordTok{read_csv}\NormalTok{(}\StringTok{"BXD_17559.csv"}\NormalTok{ , }\DataTypeTok{skip=}\DecValTok{9}\NormalTok{)}\OperatorTok{%>%}\StringTok{ }
 \StringTok{  }\KeywordTok{mutate}\NormalTok{(}\DataTypeTok{Diet=}\StringTok{"NCD"}\NormalTok{,}\DataTypeTok{Age=}\DecValTok{16}\NormalTok{,}\DataTypeTok{Dataset=}\StringTok{"Williams"}\NormalTok{)}
@@ -185,9 +185,9 @@ physiology.
 \end{Shaded}
 
 These data can be found in
-/Users/davebrid/Documents/GitHub/TissueSpecificTscKnockouts/Other
-Published Data/Systems Biology. This script was most recently updated on
-Sun Mar 27 10:21:25 2022.
+/Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse
+Genetics/Energy Expenditure. This script was most recently updated on
+Wed Apr 13 12:21:45 2022.
 
 \hypertarget{analysis}{%
 \section{Analysis}\label{analysis}}
@@ -271,7 +271,7 @@ Diet & Max & Min & Mean & SE & N & SD & Rel.SD\tabularnewline
 Diet & Max & Min & Mean & SE & N & SD & Rel.SD\tabularnewline
 \midrule
 \endhead
-NCD & 0.669 & 0.340 & 0.475 & 0.018 & 4.44 & 0.038 & 7.95\tabularnewline
+NCD & 0.647 & 0.393 & 0.526 & 0.020 & 4.44 & 0.042 & 7.96\tabularnewline
 HFD & 0.791 & 0.488 & 0.659 & 0.025 & 4.47 & 0.052 & 7.96\tabularnewline
 \bottomrule
 \end{longtable}
@@ -383,8 +383,8 @@ term & df & sumsq & meansq & statistic & p.value\tabularnewline
 term & df & sumsq & meansq & statistic & p.value\tabularnewline
 \midrule
 \endhead
-Value\_lm & 1 & 0.040 & 0.040 & 5.96 & 0.019\tabularnewline
-Residuals & 42 & 0.279 & 0.007 & NA & NA\tabularnewline
+Value\_lm & 1 & 0.013 & 0.013 & 5.17 & 0.028\tabularnewline
+Residuals & 45 & 0.115 & 0.003 & NA & NA\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -405,8 +405,8 @@ term & estimate & std.error & statistic & p.value\tabularnewline
 term & estimate & std.error & statistic & p.value\tabularnewline
 \midrule
 \endhead
-(Intercept) & 0.136 & 0.139 & 0.981 & 0.332\tabularnewline
-Value\_lm & 0.013 & 0.006 & 2.442 & 0.019\tabularnewline
+(Intercept) & 0.333 & 0.085 & 3.92 & 0.000\tabularnewline
+Value\_lm & 0.008 & 0.003 & 2.27 & 0.028\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -426,9 +426,9 @@ term & df & sumsq & meansq & statistic & p.value\tabularnewline
 term & df & sumsq & meansq & statistic & p.value\tabularnewline
 \midrule
 \endhead
-Value\_lm & 1 & 0.159 & 0.159 & 27.2 & 0\tabularnewline
-Diet & 1 & 0.639 & 0.639 & 109.5 & 0\tabularnewline
-Residuals & 84 & 0.490 & 0.006 & NA & NA\tabularnewline
+Value\_lm & 1 & 0.081 & 0.081 & 21.5 & 0\tabularnewline
+Diet & 1 & 0.347 & 0.347 & 92.0 & 0\tabularnewline
+Residuals & 87 & 0.328 & 0.004 & NA & NA\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -449,9 +449,9 @@ term & estimate & std.error & statistic & p.value\tabularnewline
 term & estimate & std.error & statistic & p.value\tabularnewline
 \midrule
 \endhead
-(Intercept) & 0.160 & 0.094 & 1.71 & 0.091\tabularnewline
-Value\_lm & 0.012 & 0.004 & 3.38 & 0.001\tabularnewline
-DietHFD & 0.174 & 0.017 & 10.47 & 0.000\tabularnewline
+(Intercept) & 0.287 & 0.075 & 3.83 & 0.000\tabularnewline
+Value\_lm & 0.009 & 0.003 & 3.22 & 0.002\tabularnewline
+DietHFD & 0.126 & 0.013 & 9.59 & 0.000\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -626,29 +626,29 @@ nobs\strut
 \midrule
 \endhead
 \begin{minipage}[t]{0.08\columnwidth}\raggedleft
-0.474\strut
+0.042\strut
 \end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
-0.462\strut
+0.02\strut
 \end{minipage} & \begin{minipage}[t]{0.05\columnwidth}\raggedleft
-3.77\strut
+5.06\strut
 \end{minipage} & \begin{minipage}[t]{0.08\columnwidth}\raggedleft
-37.9\strut
+1.9\strut
 \end{minipage} & \begin{minipage}[t]{0.06\columnwidth}\raggedleft
-2.4e-07\strut
+0.172\strut
 \end{minipage} & \begin{minipage}[t]{0.02\columnwidth}\raggedleft
 1\strut
 \end{minipage} & \begin{minipage}[t]{0.05\columnwidth}\raggedleft
--120\strut
+-139\strut
 \end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedleft
-246\strut
+284\strut
 \end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedleft
-251\strut
+289\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
-598\strut
+1128\strut
 \end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-42\strut
-\end{minipage} & \begin{minipage}[t]{0.04\columnwidth}\raggedleft
 44\strut
+\end{minipage} & \begin{minipage}[t]{0.04\columnwidth}\raggedleft
+46\strut
 \end{minipage}\tabularnewline
 \bottomrule
 \end{longtable}
@@ -739,29 +739,29 @@ nobs\strut
 \midrule
 \endhead
 \begin{minipage}[t]{0.08\columnwidth}\raggedleft
-0.441\strut
+0.023\strut
 \end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
-0.427\strut
+0.001\strut
 \end{minipage} & \begin{minipage}[t]{0.05\columnwidth}\raggedleft
-3.89\strut
+5.11\strut
 \end{minipage} & \begin{minipage}[t]{0.08\columnwidth}\raggedleft
-33.1\strut
+1\strut
 \end{minipage} & \begin{minipage}[t]{0.06\columnwidth}\raggedleft
-9e-07\strut
+0.315\strut
 \end{minipage} & \begin{minipage}[t]{0.02\columnwidth}\raggedleft
 1\strut
 \end{minipage} & \begin{minipage}[t]{0.05\columnwidth}\raggedleft
--121\strut
+-139\strut
 \end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedleft
-248\strut
+285\strut
 \end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedleft
-254\strut
+290\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
-636\strut
+1151\strut
 \end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-42\strut
-\end{minipage} & \begin{minipage}[t]{0.04\columnwidth}\raggedleft
 44\strut
+\end{minipage} & \begin{minipage}[t]{0.04\columnwidth}\raggedleft
+46\strut
 \end{minipage}\tabularnewline
 \bottomrule
 \end{longtable}
@@ -841,8 +841,8 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Name & 43 & 1.600 & 0.037 & 20 & 0 & 0.039 & 95.24\tabularnewline
-Residuals & 148 & 0.275 & 0.002 & NA & NA & 0.039 & 4.76\tabularnewline
+Name & 46 & 0.665 & 0.014 & 7.76 & 0 & 0.016 & 88.6\tabularnewline
+Residuals & 159 & 0.296 & 0.002 & NA & NA & 0.016 & 11.4\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -869,9 +869,9 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.090 & 0.090 & 48.9 & 0 & 0.127 & 70.95\tabularnewline
-Name & 43 & 1.513 & 0.035 & 19.0 & 0 & 0.127 & 27.60\tabularnewline
-Residuals & 147 & 0.272 & 0.002 & NA & NA & 0.127 & 1.45\tabularnewline
+Lean & 1 & 0.057 & 0.057 & 30.61 & 0 & 0.072 & 79.13\tabularnewline
+Name & 46 & 0.609 & 0.013 & 7.07 & 0 & 0.072 & 18.28\tabularnewline
+Residuals & 158 & 0.296 & 0.002 & NA & NA & 0.072 & 2.58\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -904,9 +904,9 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.090 & 0.090 & 48.9 & 0 & 0.037 & 244.20\tabularnewline
-Name & 43 & 1.513 & 0.035 & 19.0 & 0 & 0.037 & 95.01\tabularnewline
-Residuals & 147 & 0.272 & 0.002 & NA & NA & 0.037 & 4.99\tabularnewline
+Lean & 1 & 0.057 & 0.057 & 30.61 & 0 & 0.015 & 379.2\tabularnewline
+Name & 46 & 0.609 & 0.013 & 7.07 & 0 & 0.015 & 87.6\tabularnewline
+Residuals & 158 & 0.296 & 0.002 & NA & NA & 0.015 & 12.4\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -934,11 +934,11 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.361 & 0.361 & 149.97 & 0 & 3.26 & 11.059\tabularnewline
-Name & 43 & 2.063 & 0.048 & 19.95 & 0 & 3.26 & 1.471\tabularnewline
-Diet & 1 & 2.837 & 2.837 & 1179.99 & 0 & 3.26 & 87.009\tabularnewline
-Name:Diet & 42 & 0.530 & 0.013 & 5.25 & 0 & 3.26 & 0.387\tabularnewline
-Residuals & 291 & 0.700 & 0.002 & NA & NA & 3.26 & 0.074\tabularnewline
+Lean & 1 & 0.258 & 0.258 & 108.88 & 0 & 1.84 & 13.978\tabularnewline
+Name & 47 & 1.276 & 0.027 & 11.48 & 0 & 1.84 & 1.474\tabularnewline
+Diet & 1 & 1.543 & 1.543 & 652.60 & 0 & 1.84 & 83.780\tabularnewline
+Name:Diet & 41 & 0.484 & 0.012 & 4.99 & 0 & 1.84 & 0.641\tabularnewline
+Residuals & 302 & 0.714 & 0.002 & NA & NA & 1.84 & 0.128\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -971,11 +971,11 @@ term & df & sumsq & meansq & statistic & p.value & Total.Var &
 Pct.Var\tabularnewline
 \midrule
 \endhead
-Lean & 1 & 0.361 & 0.361 & 149.97 & 0 & 0.063 & 572.34\tabularnewline
-Name & 43 & 2.063 & 0.048 & 19.95 & 0 & 0.063 & 76.15\tabularnewline
-Diet & 1 & 2.837 & 2.837 & 1179.99 & 0 & 0.063 & 4503.12\tabularnewline
-Name:Diet & 42 & 0.530 & 0.013 & 5.25 & 0 & 0.063 & 20.03\tabularnewline
-Residuals & 291 & 0.700 & 0.002 & NA & NA & 0.063 & 3.82\tabularnewline
+Lean & 1 & 0.258 & 0.258 & 108.88 & 0 & 0.041 & 623.28\tabularnewline
+Name & 47 & 1.276 & 0.027 & 11.48 & 0 & 0.041 & 65.71\tabularnewline
+Diet & 1 & 1.543 & 1.543 & 652.60 & 0 & 0.041 & 3735.83\tabularnewline
+Name:Diet & 41 & 0.484 & 0.012 & 4.99 & 0 & 0.041 & 28.57\tabularnewline
+Residuals & 302 & 0.714 & 0.002 & NA & NA & 0.041 & 5.72\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -1116,29 +1116,29 @@ nobs\strut
 \midrule
 \endhead
 \begin{minipage}[t]{0.08\columnwidth}\raggedleft
-0.801\strut
+0.017\strut
 \end{minipage} & \begin{minipage}[t]{0.11\columnwidth}\raggedleft
-0.796\strut
+-0.007\strut
 \end{minipage} & \begin{minipage}[t]{0.05\columnwidth}\raggedleft
-2.32\strut
+5.22\strut
 \end{minipage} & \begin{minipage}[t]{0.08\columnwidth}\raggedleft
-169\strut
+0.691\strut
 \end{minipage} & \begin{minipage}[t]{0.06\columnwidth}\raggedleft
-0\strut
+0.411\strut
 \end{minipage} & \begin{minipage}[t]{0.02\columnwidth}\raggedleft
 1\strut
 \end{minipage} & \begin{minipage}[t]{0.05\columnwidth}\raggedleft
--98.5\strut
+-131\strut
 \end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedleft
-203\strut
+268\strut
 \end{minipage} & \begin{minipage}[t]{0.03\columnwidth}\raggedleft
-208\strut
+273\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
-226\strut
+1117\strut
 \end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedleft
-42\strut
+41\strut
 \end{minipage} & \begin{minipage}[t]{0.04\columnwidth}\raggedleft
-44\strut
+43\strut
 \end{minipage}\tabularnewline
 \bottomrule
 \end{longtable}
@@ -1199,7 +1199,7 @@ Age & MR\_adj\_NCD\tabularnewline
 Age & MR\_adj\_NCD\tabularnewline
 \midrule
 \endhead
-0.98 & 0.725\tabularnewline
+0.98 & 0.043\tabularnewline
 \bottomrule
 \end{longtable}
 
@@ -1255,17 +1255,17 @@ alternative\strut
 \midrule
 \endhead
 \begin{minipage}[t]{0.07\columnwidth}\raggedleft
--0.177\strut
+-0.058\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
--1.05\strut
+-0.356\strut
 \end{minipage} & \begin{minipage}[t]{0.06\columnwidth}\raggedleft
-0.302\strut
+0.724\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
-34\strut
+37\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
--0.478\strut
+-0.367\strut
 \end{minipage} & \begin{minipage}[t]{0.07\columnwidth}\raggedleft
-0.161\strut
+0.262\strut
 \end{minipage} & \begin{minipage}[t]{0.28\columnwidth}\raggedright
 Pearson's product-moment correlation\strut
 \end{minipage} & \begin{minipage}[t]{0.09\columnwidth}\raggedright

@@ -229,8 +229,11 @@ with(eval.data, cor.test(`Change in LDL-C`,`Baseline Weight`, method="spearman")
 
 lm(`Change in LDL-C`~`Baseline Weight`+`Percent Male`, data=eval.data) %>% tidy %>% kable(caption="Linear model between change in LDL-C and baseline weight, including gender")
 
-ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
 ldl.weight.baseline.lm %>% tidy %>% kable
+
+ldl.weightsex.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weightsex.baseline.lm %>% tidy %>% kable
 
 ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, data = eval.data)
 ldl.bmi.baseline.lm %>% tidy %>% kable
@@ -251,7 +254,7 @@ ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eva
 ldl.weight.baseline.aov %>% tidy %>% kable
 ```
 
-Lower baseline BMI was associated with an increased change in LDL-C after consumption of a ketogenic diet (r<sup>2</sup> = `r ldl.bmi.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.baseline.lm %>% tidy %>% pull(p.value) %>% last`). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r = XXX, p-value = XXX). 
+Lower baseline BMI was associated with an increased change in LDL-C after consumption of a ketogenic diet (r<sup>2</sup> = `r ldl.bmi.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.baseline.lm %>% tidy %>% pull(p.value) %>% last`). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r<sup>2</sup> = `r ldl.weight.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.weight.baseline.lm %>% tidy %>% pull(p.value) %>% last`). 
 
 ## Relative to Weight Loss
 

@@ -253,7 +253,7 @@ ldl.weight.baseline.aov %>% tidy %>% kable
 
 Lower baseline BMI was associated with an increased change in LDL-C after consumption of a ketogenic diet (r<sup>2</sup> = `r ldl.bmi.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.baseline.lm %>% tidy %>% pull(p.value) %>% last`). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r = XXX, p-value = XXX). 
 
-## Relative to Weight Loss --> Greater BMI decreases over the study period were associatied with a smaller increase in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). The assocition with the change in LDL-C and decrease in BMI was consistent with weight (r = XXX, p-value = XXX), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet (r = XXX, p-value = XXX).
+## Relative to Weight Loss
 
 ```{r ldl-change-vs-weight-change}
 library(ggplot2)
@@ -297,20 +297,32 @@ bind_rows(`Weight Change`=shapiro.test(eval.data$Pct.Wt.Change)$p.value,
   kable(caption="Shapiro Tests for Correlates")
 with(eval.data, cor.test(`Change in LDL-C`,Pct.Wt.Change, method="spearman")) %>% tidy %>% kable(caption="Correlation between change in LDL-C and weight change")
 
-ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
+ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
 ldl.weight.change.lm %>% tidy %>% kable
 
-ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.weightsex.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
+ldl.weightsex.change.lm %>% tidy %>% kable
+
+ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
 ldl.bmi.change.lm %>% tidy %>% kable
 
-ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.bmisex.change.lm <- lm(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmisex.change.lm %>% tidy %>% kable
+
+ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
 ldl.pctbmi.change.lm %>% tidy %>% kable
+
+ldl.pctbmisex.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.pctbmisex.change.lm %>% tidy %>% kable
 
 ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
 ldl.weight.change.aov %>% tidy %>% kable
 
-ldl.bmi.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmi.change.aov <- aov(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
 ldl.bmi.change.aov %>% tidy %>% kable
+
+ldl.bmisex.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmisex.change.aov %>% tidy %>% kable
 
 ldl.pctbmi.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
 ldl.pctbmi.change.aov %>% tidy %>% kable
@@ -319,8 +331,10 @@ ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.da
 ldl.weight.change.aov %>% tidy %>% kable
 
 ```
+Greater BMI decreases over the study period were associated with a smaller increase in LDL-C after consumption of a ketogenic diet, though this did not reach significance (r<sup>2</sup> = `r ldl.bmi.change.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.change.lm %>% tidy %>% pull(p.value) %>% last`). The association with the change in LDL-C and decrease in BMI was consistent with weight, with change in weight on LDL-C reaching significance (r<sup>2</sup> = `r ldl.weight.change.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.weight.change.lm %>% tidy %>% pull(p.value) %>% last`), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet, though this was not significant (r<sup>2</sup> = `r ldl.pctbmi.change.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.pctbmi.change.lm %>% tidy %>% pull(p.value) %>% last`).
 
-## Relative to Baseline LDL-C --> Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet (r = XXX, p-value = XXX). 
+
+## Relative to Baseline LDL-C
 
 ```{r ldl-change-vs-baseline}
 library(ggplot2)
@@ -356,8 +370,11 @@ bind_rows(`Baseline`=shapiro.test(eval.data$`Baseline LDL`)$p.value,
   kable(caption="Shapiro Tests for Correlates")
 with(eval.data, cor.test(`Change in LDL-C`,`Baseline LDL`, method="spearman")) %>% tidy %>% kable(caption="Correlation between baseline and change in LDL-C")
 
-ldl.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
+ldl.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline LDL`, data = eval.data)
 ldl.baseline.lm %>% tidy %>% kable
+
+ldl.baselinesex.lm <- lm(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
+ldl.baselinesex.lm %>% tidy %>% kable
 
 ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
 ldl.baseline.aov %>% tidy %>% kable
@@ -368,6 +385,8 @@ ldl.baseline.aov %>% tidy %>% kable
 ldl.baseline.aov <- aov(`Change in LDL-C` ~ `Percent Male`, data = eval.data)
 ldl.baseline.aov %>% tidy %>% kable
 ```
+
+Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = `r ldl.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.baseline.lm %>% tidy %>% pull(p.value) %>% last`). 
 
 # Session Information
 

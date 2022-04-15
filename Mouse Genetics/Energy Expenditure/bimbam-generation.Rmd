@@ -1,0 +1,108 @@
+---
+title: "Generation of BIMBAM files for GEMMA Analyses"
+author: "Dave Bridges"
+date: "February 11, 2022"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+Use this file to generate bimbam files for GEMMA analyses
+
+# Raw Data
+
+Downloaded SNPs from http://gn1.genenetwork.org/dbdoc/BXDGeno.html
+
+```{r data-input}
+bxd.genotypes <- 'BXD-geno_8-9-17.txt'
+library(readr)
+bxd.genotype.data <- read_tsv(bxd.genotypes, skip=20,
+                              col_types = cols(
+  .default = col_character(),
+  Chr = col_factor(levels=NULL),
+  cM = col_double(),
+  Mb = col_double()
+)) %>%  
+  mutate(`5XFAD`='B') %>% #strain 5x FAD is set to homozygous B allele
+  mutate(`D2Gpnmb`='D') %>% #strain 5x FAD is set to homozygous B allele
+  mutate(`D2`='D')  #strain 5x FAD is set to homozygous B allele
+
+strain.labels <- 'bxd-strain-labels.txt'
+colnames(bxd.genotype.data) %>% tail(-4) %>% write(strain.labels)
+```
+
+These data can be found in **`r getwd()`**.  This script was most recently updated on **`r date()`**.
+
+This analysis uses the BXD genotyping file at `r bxd.genotypes` which had `r dim(bxd.genotype.data)[1]` markers for `r dim(bxd.genotype.data)[2]` strains of mice.
+
+## SNP Annotation File
+
+The SNP annotation file must be in the order SNP - bp - chromosome
+
+```{r snp-annotation}
+snp.annotation.file <- 'snp-annotation.bimbam'
+bxd.genotype.data %>%
+  mutate(Base=Mb*1000000) %>% #convert Mb to actual base position
+  select(Locus,Base,Chr) %>%
+  write_csv(snp.annotation.file, col_names = FALSE)
+```
+
+## Genotype File
+
+The genotype file must be in the order SNP - Major Allele - Minor Allele - Genotype1 ... GenotypeX.  This genotype file contains all genotypes, including those with no data.
+
+```{r genotype-file}
+genotype.file <- 'bxd-genotype.bimbam' 
+bxd.genotype.data %>%
+  mutate(Major = 'B',
+         Minor = 'D') %>%
+  select(Locus,Major,Minor,
+         starts_with('BXD'),
+         starts_with('5XFAD'),
+         starts_with('D2')) %>% View()
+  write_csv(genotype.file, col_names=FALSE)
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```

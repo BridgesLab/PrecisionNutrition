@@ -1,0 +1,413 @@
+---
+title: "QTL Analysis of Energy Expenditure from BXD Strains"
+author: "Dave Bridges"
+date: "February 11, 2022"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+Use this file to generate bimbam files for GEMMA analyses
+
+# Raw Data
+
+Downloaded SNPs from GeneNetwork 
+
+```{r data-input}
+bxd.genotypes <- 'BXD-geno_8-9-17.txt'
+library(readr)
+bxd.genotype.data <- read_tsv(bxd.genotypes, skip=20,
+                              col_types = cols(
+  .default = col_character(),
+  Chr = col_factor(levels=NULL),
+  cM = col_double(),
+  Mb = col_double()
+)) %>%  
+  mutate(`5XFAD`='B') %>% #strain 5x FAD is set to homozygous B allele
+  mutate(`D2Gpnmb`='D') %>% #strain 5x FAD is set to homozygous B allele
+  mutate(`D2`='D')  #strain 5x FAD is set to homozygous B allele
+
+phenotype.data <-  'Strain Level Energy Expenditure Data.csv'
+ee.phenotype.data <- 
+  read_csv(phenotype.data) %>%
+  filter(!is.na(MR_W))
+
+```
+
+These data can be found in **`r getwd()`**.  This script was most recently updated on **`r date()`**.
+
+This analysis uses the BXD genotyping file at `r bxd.genotypes` which had `r dim(bxd.genotype.data)[1]` markers for `r dim(bxd.genotype.data)[2]` strains of mice.
+
+## Making Energy Expenditure Phenotype Files
+
+The phenotype file must be in the order of the genotypes with that length.  Missing phenotypes should be denoted with NA
+
+```{r ee-phenotype-files}
+strain.list <-
+  bxd.genotype.data %>%
+  mutate(`C57BL/6J`='B',
+         `DBA/2J`='D') %>%
+  select(ee.phenotype.data$Name) %>%
+  colnames() %>%
+  as.data.frame %>%
+  rename("Strain"=1)
+
+phenotype.table <-
+  left_join(strain.list, ee.phenotype.data, by=c("Strain"="Name")) %>%
+  select(Strain,MR_W, MR_adj) %>%
+  arrange(Strain) 
+
+phenotype.file <- 'ee_phenotype.csv'
+phenotype.table %>% 
+  select(MR_W) %>%
+  write_csv(phenotype.file, col_names=F)
+
+
+phenotype.file <- 'ee_adj_phenotype.csv'
+phenotype.table %>% 
+  select(MR_adj) %>%
+  write_csv(phenotype.file, col_names=F)
+
+ee.genotype.file <- 'bxd-ee-genotype.bimbam' 
+bxd.genotype.data %>%
+    mutate(`C57BL/6J`='B',
+         `DBA/2J`='D') %>%
+  select(-Chr,-cM) %>%
+  mutate_at(.vars=vars(-("Locus")),
+            .funs=funs(case_when(.=='B'~2,
+                                            .=='D'~0))) %>%
+  mutate(Major = 'B',
+         Minor = 'D') %>%
+  select(Locus,Major,Minor,strain.list$Strain) %>% 
+  write_csv(ee.genotype.file, col_names=FALSE)
+
+ee.phenotype.data[!(ee.phenotype.data$Name %in% phenotype.table$Strain),] %>%
+  kable(caption="Strains without genotypes in genotype file")
+```
+
+Exported file with `r table(is.na(phenotype.table$Mean))['FALSE']` phenotypes.  This is based on `r dim(ee.phenotype.data)[1]` input phenotypes.  
+
+# GEMMA Analysis
+
+## Linear Mixed Models
+
+```{sh bash-gemma-lmm, eval=T}
+#generate relatedness matrix (uses standard matrix)
+gemma -g bxd-ee-genotype.bimbam -p ee_phenotype.csv -gk 1 -o ee
+#perform eigen decomposition
+gemma -g bxd-ee-genotype.bimbam -p ee_phenotype.csv -k output/ee.cXX.txt -eigen -o ee
+#run mixed linear model for fat.gain mass
+gemma -g bxd-ee-genotype.bimbam -p ee_phenotype.csv -a snp-annotation.bimbam -k output/ee.cXX.txt -lmm 1 -o ee
+
+
+#generate relatedness matrix (uses standard matrix)
+gemma -g bxd-ee-genotype.bimbam -p ee_adj_phenotype.csv -gk 1 -o ee.adj
+#perform eigen decomposition
+gemma -g bxd-ee-genotype.bimbam -p ee_adj_phenotype.csv -k output/ee.adj.cXX.txt -eigen -o ee.adj
+#run mixed linear model for fat.gain mass
+gemma -g bxd-ee-genotype.bimbam -p ee_adj_phenotype.csv -a snp-annotation.bimbam -k output/ee.adj.cXX.txt -lmm 1 -o ee.adj
+```
+
+## BSLMM Analyses
+
+```{sh bash-gemma-bslmm, eval=F, echo=F, message=F}
+#removed 2 log from s and w
+#run bslmm (see http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf), 250,000 burnin and 1,000,000 for number of sampling iterations
+gemma -g bxd-ee-genotype.bimbam -p ee_adj_phenotype.csv -a snp-annotation.bimbam -bslmm 1 -w 250000 -s 1000000 -rpace 100 -wpace 1000 -maf 0.01 -o ee.adj
+
+gemma -g bxd-ee-genotype.bimbam -p ee_adj_phenotype.csv -a snp-annotation.bimbam -bslmm 1 -w 250000 -s 1000000 -rpace 100 -wpace 1000 -maf 0.01 -o ee
+```
+
+## EE QTL Analysis
+
+### Lean Mass Adjusted Energy Expenditure
+
+```{r ee-adj-analysis}
+ee.adj.lmm.filename <- 'output/ee.adj.assoc.txt'
+ee.adj.lmm.results <- read.table(ee.adj.lmm.filename, sep='\t', header=T)
+suggestive.pval <- 1E-5
+gw.pval <- 5E-8
+
+ee.adj.lmm.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<gw.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for lean mass adjusted energy expenditure") 
+
+ee.adj.lmm.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  kable(caption="Suggestive associations from mixed linear models for lean mass adjusted energy expenditure on NCD ") 
+
+ ee.adj.lmm.results %>%
+    arrange(p_wald) %>% 
+    filter(p_wald<0.05) %>%
+    head(10) %>%
+    kable(caption="Top 10 nominal associations from mixed linear models for adjusted energy expenditure", digits=c(0,0,0,0,0,0,3,3,3,1,3,8)) 
+ 
+ ee.adj.lmm.results %>%
+   arrange(p_wald) %>% 
+    group_by(chr) %>%
+   head(50) %>%
+  mutate(Lead.SNP = first(rs),
+         lead.pval = min(p_wald)) %>%
+  group_by(chr) %>%
+  summarize(Region.Start=min(ps),
+         Region.End = max(ps),
+         Pval=min(lead.pval)) %>%
+  mutate(Region.Size=Region.End-Region.Start) %>%
+  arrange(Pval) %>%
+  kable(caption="Top loci assocated with unadjusted energy expenditure")
+
+library(qqman)
+library(ggplot2) 
+
+ee.adj.lmm.results %>%
+  mutate(chr=as.numeric(as.character(chr))) %>%
+  na.omit %>%
+# Make the Manhattan plot on the gwasResults dataset
+  manhattan(chr="chr", bp="ps", snp="rs", p="p_wald",col = color.scheme, 
+            suggestiveline =-log10(suggestive.pval),
+            genomewideline = -log10(gw.pval),
+            cex.text=5) 
+```
+
+### Unadjusted Energy Expenditure
+
+```{r ee-analysis}
+ee.lmm.filename <- 'output/ee.assoc.txt'
+ee.lmm.results <- read.table(ee.lmm.filename, sep='\t', header=T)
+
+
+ee.lmm.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<gw.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for unadjusted energy expenditure") 
+
+ee.lmm.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  kable(caption="Suggestive associations from mixed linear models for unadjusted energy expenditure") 
+
+ee.lmm.results %>%
+   arrange(p_wald) %>% 
+   head(10) %>%
+   filter(p_wald<0.05) %>%
+   kable(caption="Top 10 nominal associations from mixed linear models for unadjusted energy expenditure") 
+
+ee.lmm.results %>%
+   arrange(p_wald) %>% 
+    group_by(chr) %>%
+   head(50) %>%
+  mutate(Lead.SNP = first(rs),
+         lead.pval = min(p_wald)) %>%
+  group_by(chr) %>%
+  summarize(Region.Start=min(ps),
+         Region.End = max(ps),
+         Pval=min(lead.pval)) %>%
+  mutate(Region.Size=Region.End-Region.Start) %>%
+    arrange(Pval) %>%
+  kable(caption="Top loci assocated with unadjusted energy expenditure")
+
+
+ee.lmm.results %>%
+  mutate(chr=as.numeric(as.character(chr))) %>%
+  na.omit %>%
+# Make the Manhattan plot on the gwasResults dataset
+  manhattan(chr="chr", bp="ps", snp="rs", p="p_wald",col = color.scheme, 
+            suggestiveline =-log10(suggestive.pval),
+            genomewideline = -log10(gw.pval))
+```
+
+# Analysis of QTLs
+
+```{ee-suggestive-snps}
+sug.snps <- 
+  ee.adj.lmm.results %>%
+  arrange(p_wald) %>%
+  distinct(chr, .keep_all=T) %>%
+  filter(p_wald<suggestive.pval) %>%
+  pull(rs)
+
+sug.genotype.data <- bxd.genotype.data %>%
+  filter(Locus %in% sug.snps) %>%
+      mutate(`C57BL/6J`='B',
+         `DBA/2J`='D') %>%
+  select(Chr,Locus,ee.phenotype.data$Name)
+
+snp.annotated.ee.adj.phenotype <- 
+  sug.genotype.data %>% 
+  pivot_longer(cols= -one_of('Chr','Locus','Name'), 
+                                   names_to='Strain',
+                                   values_to='Genotype') %>% 
+  pivot_wider(names_from=c('Chr','Locus'),values_from='Genotype') %>%
+  left_join(ee.phenotype.data,by =c("Strain"="Name"))
+  
+
+library(ggplot2)  
+snp.annotated.ee.adj.phenotype %>% 
+  group_by(`4_UNC8365581`) %>%
+  summarize(ee.adj.Mean=mean(MR_adj,na.rm=T),
+            ee.adj.SE=se(MR_adj)) %>%
+  na.omit %>%
+  ggplot(aes(y=ee.adj.Mean,
+             x=`4_UNC8365581`,
+             ymin=ee.adj.Mean-ee.adj.SE,
+             ymax=ee.adj.Mean+ee.adj.SE)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5) +
+  labs(title="Percent Fat Mass Gain",
+       subtitle="Effect of UNC8365581 on Chr4",
+       y="Adjusted Energy Expenditure (W)",
+       x="Genotype") +
+  theme(text=element_text(size=18))
+
+snp.annotated.ee.adj.phenotype %>% 
+  group_by(`14_rs4139535`) %>%
+  summarize(ee.adj.Mean=mean(MR_adj,na.rm=T),
+            ee.adj.SE=se(MR_adj)) %>%
+  na.omit %>%
+  ggplot(aes(y=ee.adj.Mean,
+             x=`14_rs4139535`,
+             ymin=ee.adj.Mean-ee.adj.SE,
+             ymax=ee.adj.Mean+ee.adj.SE)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5) +
+  labs(title="Percent Fat Mass Gain",
+       subtitle="Effect of rs4139535 on Chr14",
+       y="Adjusted Energy Expenditure (W)",
+       x="Genotype") +
+  theme_classic() +
+  theme(text=element_text(size=18))
+
+snp.annotated.ee.adj.phenotype %>% 
+  group_by(`17_rs3701810`) %>%
+  summarize(ee.adj.Mean=mean(MR_adj,na.rm=T),
+            ee.adj.SE=se(MR_adj)) %>%
+  na.omit %>%
+  ggplot(aes(y=ee.adj.Mean,
+             x=`17_rs3701810`,
+             ymin=ee.adj.Mean-ee.adj.SE,
+             ymax=ee.adj.Mean+ee.adj.SE)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5) +
+  labs(title="Percent Fat Mass Gain",
+       subtitle="Effect of rs3701810 on Chr17",
+       y="Adjusted Energy Expenditure (W)",
+       x="Genotype") +
+  theme_classic() +
+  theme(text=element_text(size=18))
+
+snp.annotated.ee.adj.phenotype %>% 
+  group_by(`X_rs48259763`) %>%
+  summarize(ee.adj.Mean=mean(MR_adj,na.rm=T),
+            ee.adj.SE=se(MR_adj)) %>%
+  na.omit %>%
+  ggplot(aes(y=ee.adj.Mean,
+             x=`X_rs48259763`,
+             ymin=ee.adj.Mean-ee.adj.SE,
+             ymax=ee.adj.Mean+ee.adj.SE)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5) +
+  labs(title="Percent Fat Mass Gain",
+       subtitle="Effect of rs48259763 on ChrX",
+       y="Adjusted Energy Expenditure (W)",
+       x="Genotype") +
+  theme_classic() +
+  theme(text=element_text(size=18))
+```
+
+## BSLMM Analysis
+
+### Adjusted for Lean Mass
+
+```{r bslmm-adj-analysis}
+ee.adj.bslmm.results.file <- 'output/ee.adj.param.txt'
+ee.adj.bslmm.results <- read_tsv(ee.adj.bslmm.results.file, 
+                               col_types = cols(chr=col_factor(levels=NULL))) %>%
+                                 mutate(eff.size = beta*gamma) %>%
+                                 arrange(-abs(eff.size))
+  
+ee.adj.bslmm.results %>% arrange(-gamma) %>% head(5) %>% kable(captin="Variants with the most likely sparse effects for lean mass adjusted energy expenditure.")
+
+ee.adj.bslmm.hyp.file <- 'output/ee.adj.hyp.txt'
+read_tsv(ee.adj.bslmm.hyp.file,
+         col_types=cols(
+           h = col_double(),
+           pve = col_double(),
+           rho = col_double(),
+           pge = col_double(),
+           pi = col_double(),
+           n_gamma = col_integer()
+)) %>%
+  summarize_all(mean) %>%
+  kable(caption="Mean hyperparameter estimates for lean mass adjusted energy expenditure.  Our snps explain some the variance (PVE), among these, some (n_gamma) SNPS explain a large amount amount of the variance explained by the SNPs (PGE).  Based on this, this phenotype is estimated to be about half of a BVSR model (rho)")
+```
+
+### Unadjusted for Lean Mass
+
+```{r bslmm-ee-analysis}
+ee.adj.bslmm.results.file <- 'output/ee.param.txt'
+ee.adj.bslmm.results <- read_tsv(ee.adj.bslmm.results.file, 
+                               col_types = cols(chr=col_factor(levels=NULL))) %>%
+                                 mutate(eff.size = beta*gamma) %>%
+                                 arrange(-abs(eff.size))
+  
+ee.adj.bslmm.results %>% arrange(-gamma) %>% head(5) %>% kable(captin="Variants with the most likely sparse effects for unadjusted analysis")
+
+ee.adj.bslmm.hyp.file <- 'output/ee.hyp.txt'
+read_tsv(ee.adj.bslmm.hyp.file,
+         col_types=cols(
+           h = col_double(),
+           pve = col_double(),
+           rho = col_double(),
+           pge = col_double(),
+           pi = col_double(),
+           n_gamma = col_integer()
+)) %>%
+  summarize_all(mean) %>%
+  kable(caption="Mean hyperparameter estimates for unadjusted analysis.  Our snps explain some the variance (PVE), among these, some (n_gamma) SNPS explain a large amount amount of the variance explained by the SNPs (PGE).  Based on this, this phenotype is estimated to be about half of a BVSR model (rho)")
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```

@@ -56,6 +56,9 @@ We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being h
 
 Correlations in this meta-analysis before and after the administration of the ketogenic diet were analyzed with linear models and results given using pearsons correlation coefficient, statistical significance was defined as below 0.05. 
 
+
+For all outcomes, we tested sex as a modifier and as a covariate. For outcomes where sex was found to be a significant modifier, these results are reported. 
+
 ```{r data-input}
 library(readxl) #loads the readr package
 filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
@@ -235,6 +238,9 @@ ldl.weight.baseline.lm %>% tidy %>% kable
 ldl.weightsex.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
 ldl.weightsex.baseline.lm %>% tidy %>% kable
 
+ldl.weightsex.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weightsex.baseline.aov %>% tidy %>% kable
+
 ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, data = eval.data)
 ldl.bmi.baseline.lm %>% tidy %>% kable
 
@@ -306,11 +312,17 @@ ldl.weight.change.lm %>% tidy %>% kable
 ldl.weightsex.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
 ldl.weightsex.change.lm %>% tidy %>% kable
 
+ldl.weightsex.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
+ldl.weightsex.change.aov %>% tidy %>% kable
+
 ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
 ldl.bmi.change.lm %>% tidy %>% kable
 
 ldl.bmisex.change.lm <- lm(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
 ldl.bmisex.change.lm %>% tidy %>% kable
+
+ldl.bmisex.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmisex.change.aov %>% tidy %>% kable
 
 ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
 ldl.pctbmi.change.lm %>% tidy %>% kable

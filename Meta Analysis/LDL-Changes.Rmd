@@ -126,20 +126,20 @@ ldl.c.meta <- metagen(TE = SMD,
                  hakn = TRUE,
                  title = "LDL-C Changes in Ketogenic Diet Studies")
 
-forest.meta(ldl.c.meta, 
-            sortvar = SMD,
-            predict = F, 
-            print.tau2 = TRUE,
-            print.I2 = TRUE,
+#forest.meta(ldl.c.meta, 
+            #sortvar = SMD,
+            #predict = F, 
+            #print.tau2 = TRUE,
+           # print.I2 = TRUE,
             #leftcols=c('Study'),
             #rightlabs=c('Change','95% CI','Weight'),
-            layout = "RevMan5",
-            fontsize=8,
-            leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
-            leftlabs = c("Study","Change","SE","95% CI","Weight"),
-            range = F,
-            digits=1,
-            digits.se=1)
+           # layout = "RevMan5",
+          #  fontsize=8,
+          #  leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+          #  leftlabs = c("Study","Change","SE","95% CI","Weight"),
+          #  range = F,
+          #  digits=1,
+          #  digits.se=1)
 ```
 
 We evaluated `r ldl.c.meta$k` studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased `r ldl.c.meta$TE.fixed` mg/dL (95% CI: `r ldl.c.meta$lower.fixed` to `r ldl.c.meta$upper.fixed`) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of `r ldl.c.meta$pval.fixed`. Across these studies, the I<sup>2</sup> is `r ldl.c.meta$I2`, the p-value for Q is `r ldl.c.meta$pval.Q`. This is a highly consistent I^2. 

@@ -23,12 +23,15 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Apr 15 09:46:45 2022.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Apr 22 09:16:03 2022.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
 
 Correlations in this meta-analysis before and after the administration of the ketogenic diet were analyzed with linear models and results given using pearsons correlation coefficient, statistical significance was defined as below 0.05. 
+
+
+For all outcomes, we tested sex as a modifier and as a covariate. For outcomes where sex was found to be a significant modifier, these results are reported. 
 
 
 ```r
@@ -44,7 +47,7 @@ eval.data <- exp.data %>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Fri Apr 15 09:46:45 2022**.
+These data can be found in **C:/Users/Cody/OneDrive/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Fri Apr 22 09:16:04 2022**.
 
 # Analysis
 
@@ -113,23 +116,21 @@ ldl.c.meta <- metagen(TE = SMD,
                  hakn = TRUE,
                  title = "LDL-C Changes in Ketogenic Diet Studies")
 
-forest.meta(ldl.c.meta, 
-            sortvar = SMD,
-            predict = F, 
-            print.tau2 = TRUE,
-            print.I2 = TRUE,
+#forest.meta(ldl.c.meta, 
+            #sortvar = SMD,
+            #predict = F, 
+            #print.tau2 = TRUE,
+           # print.I2 = TRUE,
             #leftcols=c('Study'),
             #rightlabs=c('Change','95% CI','Weight'),
-            layout = "RevMan5",
-            fontsize=8,
-            leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
-            leftlabs = c("Study","Change","SE","95% CI","Weight"),
-            range = F,
-            digits=1,
-            digits.se=1)
+           # layout = "RevMan5",
+          #  fontsize=8,
+          #  leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+          #  leftlabs = c("Study","Change","SE","95% CI","Weight"),
+          #  range = F,
+          #  digits=1,
+          #  digits.se=1)
 ```
-
-![](figures/meta-analysis-1.png)<!-- -->
 
 We evaluated 19 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.474 mg/dL (95% CI: 1.112 to 21.836) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.03. Across these studies, the I<sup>2</sup> is 0, the p-value for Q is 0.997. This is a highly consistent I^2. 
 
@@ -313,6 +314,19 @@ ldl.weightsex.baseline.lm %>% tidy %>% kable
 |`Baseline Weight`    |   -0.538|     0.223|    -2.415|   0.029|
 |Sex.GroupMixed       |   -8.305|     9.667|    -0.859|   0.404|
 |Sex.GroupMostly Male |  -13.512|    13.489|    -1.002|   0.332|
+
+```r
+ldl.weightsex.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weightsex.baseline.aov %>% tidy %>% kable
+```
+
+
+
+|term              | df| sumsq| meansq| statistic| p.value|
+|:-----------------|--:|-----:|------:|---------:|-------:|
+|`Baseline Weight` |  1|  3319|   3319|    14.655|   0.002|
+|Sex.Group         |  2|   259|    130|     0.572|   0.576|
+|Residuals         | 15|  3397|    226|        NA|      NA|
 
 ```r
 ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, data = eval.data)
@@ -501,6 +515,19 @@ ldl.weightsex.change.lm %>% tidy %>% kable
 |Sex.GroupMostly Male |   -17.37|    10.604|     -1.64|   0.124|
 
 ```r
+ldl.weightsex.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
+ldl.weightsex.change.aov %>% tidy %>% kable
+```
+
+
+
+|term          | df| sumsq| meansq| statistic| p.value|
+|:-------------|--:|-----:|------:|---------:|-------:|
+|Pct.Wt.Change |  1|   735|    735|      4.60|   0.050|
+|Sex.Group     |  2|   449|    225|      1.40|   0.278|
+|Residuals     | 14|  2237|    160|        NA|      NA|
+
+```r
 ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
 ldl.bmi.change.lm %>% tidy %>% kable
 ```
@@ -525,6 +552,19 @@ ldl.bmisex.change.lm %>% tidy %>% kable
 |`BMI Change`         |     1.66|      2.25|     0.739|   0.484|
 |Sex.GroupMixed       |   -20.64|      7.42|    -2.781|   0.027|
 |Sex.GroupMostly Male |   -15.33|     10.41|    -1.472|   0.185|
+
+```r
+ldl.bmisex.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
+ldl.bmisex.change.aov %>% tidy %>% kable
+```
+
+
+
+|term         | df| sumsq| meansq| statistic| p.value|
+|:------------|--:|-----:|------:|---------:|-------:|
+|`BMI Change` |  1|   564|  563.8|      6.93|   0.034|
+|Sex.Group    |  2|   654|  327.1|      4.03|   0.069|
+|Residuals    |  7|   569|   81.3|        NA|      NA|
 
 ```r
 ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
@@ -759,9 +799,9 @@ sessionInfo()
 ```
 
 ```
-## R version 4.1.1 (2021-08-10)
+## R version 4.1.3 (2022-03-10)
 ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-## Running under: Windows 10 x64 (build 19044)
+## Running under: Windows 10 x64 (build 22000)
 ## 
 ## Matrix products: default
 ## 
@@ -776,23 +816,23 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] broom_0.7.8   ggrepel_0.9.1 meta_5.1-1    ggplot2_3.3.5 readxl_1.3.1 
-## [6] dplyr_1.0.7   tidyr_1.1.3   knitr_1.33   
+## [1] broom_0.8.0   ggrepel_0.9.1 meta_5.2-0    ggplot2_3.3.5 readxl_1.4.0 
+## [6] dplyr_1.0.8   tidyr_1.2.0   knitr_1.38   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.1.1   xfun_0.24          purrr_0.3.4        splines_4.1.1     
-##  [5] lattice_0.20-44    colorspace_2.0-2   vctrs_0.3.8        generics_0.1.2    
-##  [9] htmltools_0.5.1.1  mgcv_1.8-36        yaml_2.2.1         utf8_1.2.1        
-## [13] rlang_0.4.11       nloptr_2.0.0       jquerylib_0.1.4    pillar_1.7.0      
-## [17] glue_1.4.2         withr_2.4.3        DBI_1.1.2          lifecycle_1.0.1   
+##  [1] tidyselect_1.1.2   xfun_0.30          bslib_0.3.1        purrr_0.3.4       
+##  [5] splines_4.1.3      lattice_0.20-45    colorspace_2.0-3   vctrs_0.4.1       
+##  [9] generics_0.1.2     htmltools_0.5.2    mgcv_1.8-39        yaml_2.3.5        
+## [13] utf8_1.2.2         rlang_1.0.2        jquerylib_0.1.4    pillar_1.7.0      
+## [17] nloptr_2.0.0       glue_1.6.2         withr_2.5.0        lifecycle_1.0.1   
 ## [21] stringr_1.4.0      munsell_0.5.0      gtable_0.3.0       cellranger_1.1.0  
-## [25] evaluate_0.14      labeling_0.4.2     metafor_3.0-2      fansi_0.5.0       
-## [29] highr_0.9          Rcpp_1.0.7         backports_1.2.1    scales_1.1.1      
-## [33] farver_2.1.0       lme4_1.1-27.1      digest_0.6.27      stringi_1.7.6     
-## [37] CompQuadForm_1.4.3 mathjaxr_1.4-0     grid_4.1.1         cli_3.0.1         
-## [41] tools_4.1.1        magrittr_2.0.1     tibble_3.1.2       crayon_1.4.2      
-## [45] pkgconfig_2.0.3    ellipsis_0.3.2     MASS_7.3-54        Matrix_1.3-4      
-## [49] xml2_1.3.3         assertthat_0.2.1   minqa_1.2.4        rmarkdown_2.11    
-## [53] rstudioapi_0.13    R6_2.5.1           boot_1.3-28        nlme_3.1-152      
-## [57] compiler_4.1.1
+## [25] evaluate_0.15      labeling_0.4.2     fastmap_1.1.0      metafor_3.4-0     
+## [29] fansi_1.0.3        highr_0.9          Rcpp_1.0.8.3       backports_1.4.1   
+## [33] scales_1.2.0       jsonlite_1.8.0     farver_2.1.0       lme4_1.1-29       
+## [37] digest_0.6.29      stringi_1.7.6      CompQuadForm_1.4.3 mathjaxr_1.6-0    
+## [41] grid_4.1.3         cli_3.2.0          tools_4.1.3        magrittr_2.0.3    
+## [45] sass_0.4.1         tibble_3.1.6       crayon_1.5.1       pkgconfig_2.0.3   
+## [49] ellipsis_0.3.2     MASS_7.3-55        Matrix_1.4-0       xml2_1.3.3        
+## [53] minqa_1.2.4        rmarkdown_2.13     rstudioapi_0.13    metadat_1.2-0     
+## [57] R6_2.5.1           boot_1.3-28        nlme_3.1-155       compiler_4.1.3
 ```

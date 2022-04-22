@@ -64,6 +64,8 @@ library(readxl) #loads the readr package
 filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
 
 #this loads whatever the file is into a dataframe called exp.data if it exists
+#make a new variable called break.groups, make it so c is the break.groups so that is the code
+
 exp.data <- read_excel(filename)
 eval.data <- exp.data %>% 
   filter(Use=='x') %>%
@@ -232,6 +234,12 @@ with(eval.data, cor.test(`Change in LDL-C`,`Baseline Weight`, method="spearman")
 
 lm(`Change in LDL-C`~`Baseline Weight`+`Percent Male`, data=eval.data) %>% tidy %>% kable(caption="Linear model between change in LDL-C and baseline weight, including gender")
 
+ldl.weightsex.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`*`Sex.Group`, data = eval.data)
+ldl.weightsex.baseline.aov %>% tidy %>% kable
+
+ldl.weightsex.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
+ldl.weightsex.baseline.aov %>% tidy %>% kable
+
 ldl.weight.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
 ldl.weight.baseline.lm %>% tidy %>% kable
 
@@ -244,7 +252,7 @@ ldl.weightsex.baseline.aov %>% tidy %>% kable
 ldl.bmi.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, data = eval.data)
 ldl.bmi.baseline.lm %>% tidy %>% kable
 
-ldl.bmi.baseline.sex.aov <- aov(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
+ldl.bmi.baseline.sex.aov <- aov(`Change in LDL-C` ~ `Baseline BMI`*`Sex.Group`, data = eval.data)
 ldl.bmi.baseline.sex.aov %>% tidy %>% kable
 
 ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)

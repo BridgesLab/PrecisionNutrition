@@ -225,6 +225,15 @@ eval.data %>%
   geom_text_repel(aes(label=Study)) +
   labs(x="Baseline Weight")
 
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline BMI`,
+             col=`Sex.Group`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline Weight")
+
 library(broom)
 bind_rows(`Baseline`=shapiro.test(eval.data$`Baseline Weight`)$p.value,
           `Change`=shapiro.test(eval.data$`Change in LDL-C`)$p.value) %>%
@@ -255,17 +264,18 @@ ldl.bmi.baseline.lm %>% tidy %>% kable
 ldl.bmi.baseline.sex.aov <- aov(`Change in LDL-C` ~ `Baseline BMI`*`Sex.Group`, data = eval.data)
 ldl.bmi.baseline.sex.aov %>% tidy %>% kable
 
-ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight` + `Sex.Group`, data = eval.data)
-ldl.weight.baseline.aov %>% tidy %>% kable
-
 ldl.bmi.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline BMI` + `Sex.Group`, data = eval.data)
 ldl.bmi.baseline.aov %>% tidy %>% kable
 
-ldl.bmi2.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline BMI`*`Sex.Group`, data = eval.data)
-ldl.bmi2.baseline.aov %>% tidy %>% kable
+ldl.bmi.baseline.mixed.lm<- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, Sex.Group == "Mixed"))
+ldl.bmi.baseline.mixed.lm %>% tidy %>% kable
 
-ldl.weight.baseline.aov <- aov(`Change in LDL-C` ~ `Baseline Weight`, data = eval.data)
-ldl.weight.baseline.aov %>% tidy %>% kable
+ldl.bmi.baseline.female.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, Sex.Group == "Mostly Female"))
+ldl.bmi.baseline.female.lm %>% tidy %>% kable
+
+ldl.bmi.baseline.male.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, Sex.Group == "Mostly Male"))
+ldl.bmi.baseline.male.lm %>% tidy %>% kable
+
 ```
 
 Lower baseline BMI was associated with an increased change in LDL-C after consumption of a ketogenic diet (r<sup>2</sup> = `r ldl.bmi.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.baseline.lm %>% tidy %>% pull(p.value) %>% last`). The association with increased LDL-C was consistent with baseline weight, where a lower baseline weight was associated with an increased change in LDL-C (r<sup>2</sup> = `r ldl.weight.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.weight.baseline.lm %>% tidy %>% pull(p.value) %>% last`). 

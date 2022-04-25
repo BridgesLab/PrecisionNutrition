@@ -234,6 +234,15 @@ eval.data %>%
   geom_text_repel(aes(label=Study)) +
   labs(x="Baseline Weight")
 
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`Baseline BMI`,
+             col=`Normal weight`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="Baseline Weight")
+
 library(broom)
 bind_rows(`Baseline`=shapiro.test(eval.data$`Baseline Weight`)$p.value,
           `Change`=shapiro.test(eval.data$`Change in LDL-C`)$p.value) %>%
@@ -276,6 +285,14 @@ ldl.bmi.baseline.female.lm %>% tidy %>% kable (caption="Correlation betwteen bas
 ldl.bmi.baseline.male.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, Sex.Group == "Mostly Male"))
 ldl.bmi.baseline.male.lm %>% tidy %>% kable (caption="Correlation betwteen baseline BMI and delta-LDL of Mostly Male")
 
+ldl.bmi.baseline.sex.aov <- aov(`Change in LDL-C` ~ `Baseline BMI`*`Normal weight`, data = eval.data)
+ldl.bmi.baseline.sex.aov %>% tidy %>% kable
+
+ldl.bmi.baseline.female.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, `Normal weight` == "Yes"))
+ldl.bmi.baseline.female.lm %>% tidy %>% kable (caption="Correlation betwteen baseline BMI and delta-LDL of Normal weight studies")
+
+ldl.bmi.baseline.male.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, `Normal weight` == "No"))
+ldl.bmi.baseline.male.lm %>% tidy %>% kable (caption="Correlation betwteen baseline BMI and delta-LDL of Overweight studies")
 
 ```
 

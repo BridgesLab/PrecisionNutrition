@@ -321,7 +321,25 @@ eval.data %>%
 
 eval.data %>%
   ggplot(aes(y=`Change in LDL-C`,
+             x=`BMI Change`,
+             col = `Sex.Group`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="BMI Change")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
              x=`PCT.BMI.Change`)) +
+  geom_point() +
+  geom_smooth(method='lm') +
+  geom_text_repel(aes(label=Study)) +
+  labs(x="% BMI Change")
+
+eval.data %>%
+  ggplot(aes(y=`Change in LDL-C`,
+             x=`PCT.BMI.Change`,
+             col = `Sex.Group`)) +
   geom_point() +
   geom_smooth(method='lm') +
   geom_text_repel(aes(label=Study)) +
@@ -342,44 +360,53 @@ bind_rows(`Weight Change`=shapiro.test(eval.data$Pct.Wt.Change)$p.value,
   kable(caption="Shapiro Tests for Correlates")
 with(eval.data, cor.test(`Change in LDL-C`,Pct.Wt.Change, method="spearman")) %>% tidy %>% kable(caption="Correlation between change in LDL-C and weight change")
 
-ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
-ldl.weight.change.lm %>% tidy %>% kable
-
-ldl.weightsex.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
-ldl.weightsex.change.lm %>% tidy %>% kable
+ldl.weightsexinter.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change`*`Sex.Group`, data = eval.data)
+ldl.weightsexinter.change.aov %>% tidy %>% kable
 
 ldl.weightsex.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
 ldl.weightsex.change.aov %>% tidy %>% kable
 
-ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
-ldl.bmi.change.lm %>% tidy %>% kable
+ldl.weight.change.lm <- lm(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
+ldl.weight.change.lm %>% tidy %>% kable
 
-ldl.bmisex.change.lm <- lm(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
-ldl.bmisex.change.lm %>% tidy %>% kable
+ldl.bmisexinter.change.aov <- aov(`Change in LDL-C` ~ `BMI Change`*`Sex.Group`, data = eval.data)
+ldl.bmisexinter.change.aov %>% tidy %>% kable
 
 ldl.bmisex.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
 ldl.bmisex.change.aov %>% tidy %>% kable
+
+ldl.bmi.change.lm <- lm(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
+ldl.bmi.change.lm %>% tidy %>% kable
+
+ldl.bmi.change.mixed.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mixed"))
+ldl.bmi.change.mixed.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mixed groups")
+
+ldl.bmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
+ldl.bmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
+
+ldl.bmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
+ldl.bmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
 
 ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
 ldl.pctbmi.change.lm %>% tidy %>% kable
 
-ldl.pctbmisex.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
-ldl.pctbmisex.change.lm %>% tidy %>% kable
+ldl.pctbmisexinter.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change`*`Sex.Group`, data = eval.data)
+ldl.pctbmisexinter.change.aov %>% tidy %>% kable
 
-ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change` + `Sex.Group`, data = eval.data)
-ldl.weight.change.aov %>% tidy %>% kable
+ldl.pctbmisex.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+ldl.pctbmisex.change.aov %>% tidy %>% kable
 
-ldl.bmi.change.aov <- aov(`Change in LDL-C` ~ `BMI Change`, data = eval.data)
-ldl.bmi.change.aov %>% tidy %>% kable
+ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
+ldl.pctbmi.change.lm %>% tidy %>% kable
 
-ldl.bmisex.change.aov <- aov(`Change in LDL-C` ~ `BMI Change` + `Sex.Group`, data = eval.data)
-ldl.bmisex.change.aov %>% tidy %>% kable
+ldl.pctbmi.change.mixed.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mixed"))
+ldl.pctbmi.change.mixed.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mixed groups")
 
-ldl.pctbmi.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
-ldl.pctbmi.change.aov %>% tidy %>% kable
+ldl.pctbmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
+ldl.pctbmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
 
-ldl.weight.change.aov <- aov(`Change in LDL-C` ~ `Pct.Wt.Change`, data = eval.data)
-ldl.weight.change.aov %>% tidy %>% kable
+ldl.pctbmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
+ldl.pctbmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
 
 ```
 Greater BMI decreases over the study period were associated with a smaller increase in LDL-C after consumption of a ketogenic diet, though this did not reach significance (r<sup>2</sup> = `r ldl.bmi.change.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.bmi.change.lm %>% tidy %>% pull(p.value) %>% last`). The association with the change in LDL-C and decrease in BMI was consistent with weight, with change in weight on LDL-C reaching significance (r<sup>2</sup> = `r ldl.weight.change.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.weight.change.lm %>% tidy %>% pull(p.value) %>% last`), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet, though this was not significant (r<sup>2</sup> = `r ldl.pctbmi.change.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.pctbmi.change.lm %>% tidy %>% pull(p.value) %>% last`).
@@ -420,6 +447,12 @@ bind_rows(`Baseline`=shapiro.test(eval.data$`Baseline LDL`)$p.value,
           `Change`=shapiro.test(eval.data$`Change in LDL-C`)$p.value) %>%
   kable(caption="Shapiro Tests for Correlates")
 with(eval.data, cor.test(`Change in LDL-C`,`Baseline LDL`, method="spearman")) %>% tidy %>% kable(caption="Correlation between baseline and change in LDL-C")
+
+ldl.baselinesexinter.aov <- aov(`Change in LDL-C` ~ `Baseline LDL` * `Sex.Group`, data = eval.data)
+ldl.baselinesexinter.aov %>% tidy %>% kable
+
+ldl.baselinesex.aov <- aov(`Change in LDL-C` ~ `Baseline LDL` + `Sex.Group`, data = eval.data)
+ldl.baselinesex.aov %>% tidy %>% kable
 
 ldl.baseline.lm <- lm(`Change in LDL-C` ~ `Baseline LDL`, data = eval.data)
 ldl.baseline.lm %>% tidy %>% kable

@@ -15,40 +15,15 @@ output:
     toc: yes
 ---
 
-```{r global_options, include=FALSE}
-library(knitr)
-#figures makde will go to directory called figures, will make them as both png and pdf files 
-opts_chunk$set(fig.path='figures/',
-               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
-options(scipen = 2, digits = 3)
-# set echo and message to TRUE if you want to display code blocks and code output respectively
 
-knitr::knit_hooks$set(inline = function(x) {
-  knitr:::format_sci(x, 'md')
-})
-
-
-superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
-  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
-  length = length, ...)
-
-  
-se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
-
-#load these packages, nearly always needed
-library(tidyr)
-library(dplyr)
-
-# sets maize and blue color scheme
-color.scheme <- c('#00274c', '#ffcb05')
-```
 
 The goal is to identify genetic determinants of energy expenditure and of adaptive thermogenesis from BXD mice.  To start we searched gene network for energy expenditure data, ignoring those involved in exercise physiology.
 
 * **BXD_17621** Oxygen intake over 24h on NCD at 16 w age.  Also included light/dark.  Not adjusted for lean mass.  Has mean +/- SE in mL/kg/h.  From Prinen 2014 (https://doi.org/10.1016/j.cmet.2014.04.002)
 * **BXD_17622** Oxygen intake over 24h at 16 w age on HFD, males.  Not adjusted for lean mass.  Has mean +/- SE in mL/kg/h.  From Williams (2016).  Body weight in BXD_17560, lean mass in BXD_17574
 
-```{r data-input}
+
+```r
 library(readr)
 williams.ncd.ee <- read_csv("BXD_17621.csv", skip=9)%>% 
   mutate(Diet="NCD",Age=16,Dataset="Williams")
@@ -84,16 +59,16 @@ data <- bind_rows(#ncd.pirinen,
   mutate(MR_W = MR_KJ_d * 0.0115740741,
          MR_W_SE = MR_KJ_d_SE* 0.0115740741) %>% # in Watts 
   mutate(Diet = relevel(factor(Diet), ref="NCD"))
-
 ```
 
-These data can be found in `r getwd()`.  This script was most recently updated on `r date()`.
+These data can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Energy Expenditure.  This script was most recently updated on Sat May  7 12:14:05 2022.
 
 # Analysis
 
 ## Comparason of Datasets
 
-```{r baseline-thermogenesis}
+
+```r
 library(ggplot2)
 data %>%
   filter(!(is.na(MR_W))) %>% # complete cases only
@@ -106,7 +81,11 @@ data %>%
   labs(y="Energy Expenditure (W)",
        x="") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  
+```
+
+![](figures/baseline-thermogenesis-1.png)<!-- -->
+
+```r
 #lm(Value~Name+Diet,data=data) %>% summary
 
 mr.order <- 
@@ -130,9 +109,12 @@ data %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
+![](figures/baseline-thermogenesis-2.png)<!-- -->
+
 ## Estimating Effect Sizes
 
-```{r effect-sizes}
+
+```r
 data %>%
   group_by(Diet) %>%
   summarize(Max = max(MR_W, na.rm=T),
@@ -143,7 +125,18 @@ data %>%
   mutate(SD = SE*sqrt(mean(N,na.rm=T))) %>%
   mutate(Rel.SD = SD/Mean*100) %>%
   kable(caption="Summary statistics for thermogenesis from BXD mice")
+```
 
+
+
+Table: Summary statistics for thermogenesis from BXD mice
+
+|Diet |   Max|   Min|  Mean|    SE|    N|    SD| Rel.SD|
+|:----|-----:|-----:|-----:|-----:|----:|-----:|------:|
+|NCD  | 0.647| 0.393| 0.526| 0.020| 4.44| 0.042|   7.96|
+|HFD  | 0.791| 0.488| 0.659| 0.025| 4.47| 0.052|   7.96|
+
+```r
 data %>%
   group_by(Diet) %>%
   summarize(Max = max(Value_lm, na.rm=T),
@@ -156,9 +149,19 @@ data %>%
   kable(caption="Summary statistics for lean mass from BXD mice")
 ```
 
+
+
+Table: Summary statistics for lean mass from BXD mice
+
+|Diet |  Max|  Min| Mean|    SE|    N|   SD| Rel.SD|
+|:----|----:|----:|----:|-----:|----:|----:|------:|
+|NCD  | 30.7| 19.7| 25.4| 0.623| 4.44| 1.31|   5.19|
+|HFD  | 30.2| 20.0| 26.0| 0.612| 4.47| 1.29|   4.97|
+
 ## Adjusting for Lean Mass
 
-```{r lean-mass-adjusting}
+
+```r
 library(ggrepel)
 ggplot(data, aes(y=MR_W,
            x=Value_lm)) +
@@ -167,8 +170,11 @@ ggplot(data, aes(y=MR_W,
   #geom_label_repel(data = subset(data, (MR_W < 0.45&Value_lm>25.5)|MR_W>0.65&Value_lm<27), aes(label=Name,col=Diet)) +
   labs(y="Energy Expenditure (W)",
        x="Lean Mass (g)")
+```
 
+![](figures/lean-mass-adjusting-1.png)<!-- -->
 
+```r
 ggplot(data, aes(y=MR_W,
            x=Value_lm,
            col=Diet)) +
@@ -184,8 +190,11 @@ ggplot(data, aes(y=MR_W,
   theme_classic() +
   theme(legend.position = c(0.1,0.85),
         text=element_text(size=18))
+```
 
+![](figures/lean-mass-adjusting-2.png)<!-- -->
 
+```r
 #chow only
 ggplot(data %>% filter(Diet=="NCD"), aes(y=MR_W,
            x=Value_lm)) +
@@ -197,16 +206,68 @@ ggplot(data %>% filter(Diet=="NCD"), aes(y=MR_W,
   guides(fill = guide_legend(override.aes = aes(color = NA))) +
   labs(y="Energy Expenditure (W)",
        x="Lean Mass (g)")
+```
 
+![](figures/lean-mass-adjusting-3.png)<!-- -->
+
+```r
 lm.model.1 <- lm(MR_W~Value_lm,data=data %>% filter(Diet=="NCD")) #model built on only NCD
 lm.model.2 <- lm(MR_W~Value_lm+Diet,data=data) #model built on NCD and AT
 library(broom)
 aov(lm.model.1) %>% tidy %>% kable(caption="Model 1 summary for adjusting for lean mass")
+```
+
+
+
+Table: Model 1 summary for adjusting for lean mass
+
+|term      | df| sumsq| meansq| statistic| p.value|
+|:---------|--:|-----:|------:|---------:|-------:|
+|Value_lm  |  1| 0.013|  0.013|      5.17|   0.028|
+|Residuals | 45| 0.115|  0.003|        NA|      NA|
+
+```r
 summary(lm.model.1) %>% tidy %>% kable(caption="Model 1 coefficients for adjusting for lean mass")
+```
 
+
+
+Table: Model 1 coefficients for adjusting for lean mass
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |    0.333|     0.085|      3.92|   0.000|
+|Value_lm    |    0.008|     0.003|      2.27|   0.028|
+
+```r
 aov(lm.model.2) %>% tidy %>% kable(caption="Model 2 summary for adjusting for lean mass")
-summary(lm.model.2) %>% tidy %>% kable(caption="Model 2 coefficients for adjusting for lean mass")
+```
 
+
+
+Table: Model 2 summary for adjusting for lean mass
+
+|term      | df| sumsq| meansq| statistic| p.value|
+|:---------|--:|-----:|------:|---------:|-------:|
+|Value_lm  |  1| 0.081|  0.081|      21.5|       0|
+|Diet      |  1| 0.347|  0.347|      92.0|       0|
+|Residuals | 87| 0.328|  0.004|        NA|      NA|
+
+```r
+summary(lm.model.2) %>% tidy %>% kable(caption="Model 2 coefficients for adjusting for lean mass")
+```
+
+
+
+Table: Model 2 coefficients for adjusting for lean mass
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |    0.287|     0.075|      3.83|   0.000|
+|Value_lm    |    0.009|     0.003|      3.22|   0.002|
+|DietHFD     |    0.126|     0.013|      9.59|   0.000|
+
+```r
 data <- data %>%
   mutate(MR_predicted = predict(lm.model.1, newdata = list(Value_lm=Value_lm))) %>%
   mutate(MR_resid = MR_W-MR_predicted) %>%
@@ -223,8 +284,11 @@ data %>%
   geom_bar(stat='identity',position='dodge') +
   labs(y="EE Observed - EE Predicted (W)") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
 
+![](figures/lean-mass-adjusting-4.png)<!-- -->
 
+```r
 mr.adj.order <- 
   data %>% 
   filter(Diet == "NCD") %>% 
@@ -244,8 +308,9 @@ data %>%
   geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
   labs(y="Lean Mass Adjusted Energy Expenditure (W)",x="") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
-  
 ```
+
+![](figures/lean-mass-adjusting-5.png)<!-- -->
 
 based on this modelling after adjusting for lean mass, HFD increases thermogenesis by `(coef(lm.model.2)["(Intercept)"]-coef(lm.model.2)["DietHFD"])/coef(lm.model.2)["(Intercept)"]*100`%.
 
@@ -253,7 +318,8 @@ based on this modelling after adjusting for lean mass, HFD increases thermogenes
 
 Defined as lean mass adjusted VO2 from HFD - NCD
 
-```{r adaptive-thermogenesis}
+
+```r
 data.wide <-
   data %>%
   select(Value_lm,SE,Value_bw, MR_W, MR_W_SE, MR_adj,Name,Diet) %>%
@@ -276,9 +342,12 @@ data.wide %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))  
 ```
 
+![](figures/adaptive-thermogenesis-1.png)<!-- -->
+
 ### Thermogenesis on NCD as a Predictor of Weight Gain
 
-```{r thermogenesis-weight}
+
+```r
 data.wide %>%
   ggplot(aes(y=Wt.Gain,
              x=MR_W_NCD)) +
@@ -288,9 +357,23 @@ data.wide %>%
   geom_smooth(method="lm") +
   theme_classic() +
   theme(text=element_text(size=18))
+```
+
+![](figures/thermogenesis-weight-1.png)<!-- -->
+
+```r
 lm(Wt.Gain~MR_W_NCD, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between energy expenditure and diet-induced weight gain", digits = c(3,3,3,1,8,0,0,0,0,0,0,0))
+```
 
 
+
+Table: Summary of relationship between energy expenditure and diet-induced weight gain
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
+|     0.042|          0.02|  5.06|       1.9|   0.172|  1|   -139| 284| 289|     1128|          44|   46|
+
+```r
 data.wide %>%
   ggplot(aes(y=Wt.Gain,
              x=MR_adj_NCD)) +
@@ -304,11 +387,24 @@ data.wide %>%
                      ymax=Wt.Gain+Wt_SE)) +
   theme_classic() +
   theme(text=element_text(size=18))
+```
 
+![](figures/thermogenesis-weight-2.png)<!-- -->
+
+```r
 lm(Wt.Gain~MR_adj_NCD, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between lean mass adjusted energy expenditure and diet-induced weight gain", digits = c(3,3,3,1,8,0,0,0,0,0,0,0))
 ```
 
-```{r ncd-data-export}
+
+
+Table: Summary of relationship between lean mass adjusted energy expenditure and diet-induced weight gain
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
+|     0.023|         0.001|  5.11|         1|   0.315|  1|   -139| 285| 290|     1151|          44|   46|
+
+
+```r
 gemma.phenotype.export <- 'Strain Level Energy Expenditure Data.csv'
 data %>%
   filter(Diet=="NCD") %>%
@@ -316,13 +412,14 @@ data %>%
   write_csv(gemma.phenotype.export)
 ```
 
-The data on lean mass adjusted thermogenesis was exported to `r gemma.phenotype.export`
+The data on lean mass adjusted thermogenesis was exported to Strain Level Energy Expenditure Data.csv
 
 #### Heritability of NCD Thermogenesis
 
 Since we dont have individual mouse data we will make fake data based on the mean and se of MR
 
-```{r anova-barplots}
+
+```r
 new.sim.data <- data.frame(Name=NA, Diet=NA,EE=NA)
 
 for (row in 1:dim(data)[1]) {
@@ -360,13 +457,36 @@ aov(EE ~  Name, data=new.sim.data %>% filter(Diet=='NCD')) %>%
   mutate(Total.Var=sum(meansq),
          Pct.Var = meansq/Total.Var*100) %>%
   kable(caption="Overall heritability of energy expenditure on NCD mice")
+```
 
+
+
+Table: Overall heritability of energy expenditure on NCD mice
+
+|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
+|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
+|Name      |  46| 0.654|  0.014|      7.89|       0|     0.016|    88.7|
+|Residuals | 159| 0.287|  0.002|        NA|      NA|     0.016|    11.3|
+
+```r
 aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
   tidy %>%
   mutate(Total.Var=sum(meansq),
          Pct.Var = meansq/Total.Var*100) %>%
   kable(caption="Overall heritability of energy expenditure on NCD including lean mass")
+```
 
+
+
+Table: Overall heritability of energy expenditure on NCD including lean mass
+
+|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
+|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
+|Lean      |   1| 0.015|  0.015|      8.18|   0.005|      0.03|   47.84|
+|Name      |  46| 0.646|  0.014|      7.92|   0.000|      0.03|   46.32|
+|Residuals | 158| 0.280|  0.002|        NA|      NA|      0.03|    5.85|
+
+```r
 aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
   tidy %>%
   mutate(Total.Var=sum(meansq[2:3]),
@@ -378,14 +498,40 @@ aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>%
          Pct.Var = meansq/Total.Var*100) -> lean.adj.ee.all 
   
 lean.adj.ee.lean %>% kable(caption="Overall heritability of energy expenditure on NCD adjusting for lean mass")
+```
 
+
+
+Table: Overall heritability of energy expenditure on NCD adjusting for lean mass
+
+|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
+|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
+|Lean      |   1| 0.015|  0.015|      8.18|   0.005|     0.016|    91.7|
+|Name      |  46| 0.646|  0.014|      7.92|   0.000|     0.016|    88.8|
+|Residuals | 158| 0.280|  0.002|        NA|      NA|     0.016|    11.2|
+
+```r
 aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
   tidy %>%
   mutate(Total.Var=sum(meansq),
          Pct.Var = meansq/Total.Var*100) -> hfd.incl.ee
 
 hfd.incl.ee  %>% kable(caption="Overall heritability of energy expenditure including diet and lean mass")
+```
 
+
+
+Table: Overall heritability of energy expenditure including diet and lean mass
+
+|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
+|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
+|Lean      |   1| 0.191|  0.191|     91.00|       0|      1.81|  10.578|
+|Name      |  47| 1.363|  0.029|     13.81|       0|      1.81|   1.606|
+|Diet      |   1| 1.576|  1.576|    750.61|       0|      1.81|  87.250|
+|Name:Diet |  41| 0.334|  0.008|      3.87|       0|      1.81|   0.450|
+|Residuals | 302| 0.634|  0.002|        NA|      NA|      1.81|   0.116|
+
+```r
 aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
   tidy %>%
   mutate(Total.Var=sum(meansq[c(2,4,5)]),
@@ -397,7 +543,21 @@ aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>%
          Pct.Var = meansq/Total.Var*100) -> hfd.adj.ee.all
 
 hfd.adj.ee.adj %>% kable(caption="Overall heritability of energy expenditure adjusted for diet and lean mass")
+```
 
+
+
+Table: Overall heritability of energy expenditure adjusted for diet and lean mass
+
+|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
+|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
+|Lean      |   1| 0.191|  0.191|     91.00|       0|     0.039|  486.97|
+|Name      |  47| 1.363|  0.029|     13.81|       0|     0.039|   73.92|
+|Diet      |   1| 1.576|  1.576|    750.61|       0|     0.039| 4016.65|
+|Name:Diet |  41| 0.334|  0.008|      3.87|       0|     0.039|   20.73|
+|Residuals | 302| 0.634|  0.002|        NA|      NA|     0.039|    5.35|
+
+```r
 ee.var.data <- bind_rows(lean.adj.ee.lean %>% mutate(Diet="NCD"),hfd.adj.ee.adj %>% mutate(Diet="HFD")) 
 
 ggplot(ee.var.data %>% filter(term %in% c('Name','Name:Diet','Residuals')),
@@ -412,8 +572,11 @@ ggplot(ee.var.data %>% filter(term %in% c('Name','Name:Diet','Residuals')),
   theme_classic() +
   theme(legend.position="top")+
   theme(text=element_text(size=18))
+```
 
+![](figures/anova-barplots-1.png)<!-- -->
 
+```r
 ee.var.all.data <- bind_rows(lean.adj.ee.all %>% mutate(Diet="NCD",Corr="None"),
                              lean.adj.ee.lean %>% mutate(Diet="NCD", Corr="Lean Mass"),
                              hfd.adj.ee.all %>% mutate(Diet="HFD", Corr="Lean Mass"),
@@ -440,9 +603,12 @@ ggplot(aes(x=ordered(Group, levels=c("NCD-None","NCD-Lean Mass", "HFD-Lean Mass"
         axis.text=element_text(size=8))
 ```
 
+![](figures/anova-barplots-2.png)<!-- -->
+
 ### Adaptive Thermogenesis vs Weight Gain
 
-```{r adaptive-thermogenesis-weight}
+
+```r
 data.wide %>%
   ggplot(aes(y=Wt.Gain,
              x=AT)) +
@@ -451,15 +617,28 @@ data.wide %>%
   geom_point() +
   geom_smooth(method="lm") +  theme_classic() +
   theme(text=element_text(size=18))
+```
 
+![](figures/adaptive-thermogenesis-weight-1.png)<!-- -->
+
+```r
 lm(Wt.Gain~AT, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between energy expenditure and diet-induced weight gain")
 ```
+
+
+
+Table: Summary of relationship between energy expenditure and diet-induced weight gain
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
+|     0.017|        -0.007|  5.22|     0.691|   0.411|  1|   -131| 268| 273|     1117|          41|   43|
 
 # Integration with Lifespan
 
 To ask whether BMR is related to experimental livespan we used the data from Roy et al 2021.  This determined lifespan of **female** mice in days
 
-```{r aging-data}
+
+```r
 aging.datafile <- 'BXD_18441.csv'
 
 aging.data <- read_csv(aging.datafile, skip=8) %>%
@@ -483,20 +662,79 @@ combined.age.mr.data %>%
   geom_smooth(method="lm") +
   theme_classic() +
   theme(text=element_text(size=18))
+```
 
+![](figures/aging-data-1.png)<!-- -->
 
+```r
 combined.age.mr.data %>%
   mutate_at(vars(Age,MR_adj_NCD), .funs=as.numeric) %>%
   summarize_at(vars(Age,MR_adj_NCD), .funs=function(x) shapiro.test(x)$p.value) %>%
   kable(caption="Shapiro-Wilk tests for normality")
- 
+```
+
+
+
+Table: Shapiro-Wilk tests for normality
+
+|  Age| MR_adj_NCD|
+|----:|----------:|
+| 0.98|      0.043|
+
+```r
 with(combined.age.mr.data, cor.test(Age, MR_adj_NCD)) %>% 
   tidy %>%
   kable(caption="Relationship between age (of female BXD mice) and adjusted metabolic rate")
 ```
 
+
+
+Table: Relationship between age (of female BXD mice) and adjusted metabolic rate
+
+| estimate| statistic| p.value| parameter| conf.low| conf.high|method                               |alternative |
+|--------:|---------:|-------:|---------:|--------:|---------:|:------------------------------------|:-----------|
+|   -0.058|    -0.356|   0.724|        37|   -0.367|     0.262|Pearson's product-moment correlation |two.sided   |
+
 # Session Information
 
-```{r session-information, echo=T}
+
+```r
 sessionInfo()
+```
+
+```
+## R version 4.0.2 (2020-06-22)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS  10.16
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRblas.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.0/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+## [1] RColorBrewer_1.1-2 broom_0.7.11       ggrepel_0.9.1      ggplot2_3.3.5     
+## [5] readr_2.1.1        dplyr_1.0.7        tidyr_1.1.4        knitr_1.37        
+## 
+## loaded via a namespace (and not attached):
+##  [1] tidyselect_1.1.1 xfun_0.29        bslib_0.3.1      purrr_0.3.4     
+##  [5] lattice_0.20-45  splines_4.0.2    colorspace_2.0-2 vctrs_0.3.8     
+##  [9] generics_0.1.1   htmltools_0.5.2  yaml_2.2.1       mgcv_1.8-38     
+## [13] utf8_1.2.2       rlang_0.4.12     jquerylib_0.1.4  pillar_1.6.4    
+## [17] glue_1.6.0       withr_2.4.3      DBI_1.1.2        bit64_4.0.5     
+## [21] lifecycle_1.0.1  stringr_1.4.0    munsell_0.5.0    gtable_0.3.0    
+## [25] evaluate_0.14    labeling_0.4.2   tzdb_0.2.0       fastmap_1.1.0   
+## [29] parallel_4.0.2   fansi_1.0.0      highr_0.9        Rcpp_1.0.7      
+## [33] backports_1.4.1  scales_1.1.1     vroom_1.5.7      jsonlite_1.7.2  
+## [37] farver_2.1.0     bit_4.0.4        hms_1.1.1        digest_0.6.29   
+## [41] stringi_1.7.6    grid_4.0.2       cli_3.1.0        tools_4.0.2     
+## [45] magrittr_2.0.1   sass_0.4.0       tibble_3.1.6     crayon_1.4.2    
+## [49] pkgconfig_2.0.3  Matrix_1.4-0     ellipsis_0.3.2   assertthat_0.2.1
+## [53] rmarkdown_2.11   rstudioapi_0.13  R6_2.5.1         nlme_3.1-153    
+## [57] compiler_4.0.2
 ```

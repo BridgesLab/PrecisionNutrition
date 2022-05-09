@@ -89,7 +89,7 @@ data <- bind_rows(#ncd.pirinen,
 
 These data can be found in `r getwd()`.  This script was most recently updated on `r date()`.
 
-# Analysis
+# Analysis of Energy Expenditure
 
 ## Comparason of Datasets
 
@@ -318,9 +318,25 @@ data %>%
 
 The data on lean mass adjusted thermogenesis was exported to `r gemma.phenotype.export`
 
-#### Heritability of NCD Thermogenesis
 
-Since we dont have individual mouse data we will make fake data based on the mean and se of MR
+### Adaptive Thermogenesis vs Weight Gain
+
+```{r adaptive-thermogenesis-weight}
+data.wide %>%
+  ggplot(aes(y=Wt.Gain,
+             x=AT)) +
+  labs(y="Weight Gained on HFD (g)",
+       x="Adaptive Thermogenesis (W)") +
+  geom_point() +
+  geom_smooth(method="lm") +  theme_classic() +
+  theme(text=element_text(size=18))
+
+lm(Wt.Gain~AT, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between energy expenditure and diet-induced weight gain")
+```
+
+# Heritability of NCD Thermogenesis
+
+Since we dont have individual mouse data we will make simulated data based on the mean and se of the metabolic rate.
 
 ```{r anova-barplots}
 new.sim.data <- data.frame(Name=NA, Diet=NA,EE=NA)
@@ -440,20 +456,6 @@ ggplot(aes(x=ordered(Group, levels=c("NCD-None","NCD-Lean Mass", "HFD-Lean Mass"
         axis.text=element_text(size=8))
 ```
 
-### Adaptive Thermogenesis vs Weight Gain
-
-```{r adaptive-thermogenesis-weight}
-data.wide %>%
-  ggplot(aes(y=Wt.Gain,
-             x=AT)) +
-  labs(y="Weight Gained on HFD (g)",
-       x="Adaptive Thermogenesis (W)") +
-  geom_point() +
-  geom_smooth(method="lm") +  theme_classic() +
-  theme(text=element_text(size=18))
-
-lm(Wt.Gain~AT, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between energy expenditure and diet-induced weight gain")
-```
 
 # Integration with Lifespan
 

@@ -61,9 +61,9 @@ data <- bind_rows(#ncd.pirinen,
   mutate(Diet = relevel(factor(Diet), ref="NCD"))
 ```
 
-These data can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Energy Expenditure.  This script was most recently updated on Sat May  7 12:14:05 2022.
+These data can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Energy Expenditure.  This script was most recently updated on Mon May  9 08:36:25 2022.
 
-# Analysis
+# Analysis of Energy Expenditure
 
 ## Comparason of Datasets
 
@@ -414,9 +414,38 @@ data %>%
 
 The data on lean mass adjusted thermogenesis was exported to Strain Level Energy Expenditure Data.csv
 
-#### Heritability of NCD Thermogenesis
 
-Since we dont have individual mouse data we will make fake data based on the mean and se of MR
+### Adaptive Thermogenesis vs Weight Gain
+
+
+```r
+data.wide %>%
+  ggplot(aes(y=Wt.Gain,
+             x=AT)) +
+  labs(y="Weight Gained on HFD (g)",
+       x="Adaptive Thermogenesis (W)") +
+  geom_point() +
+  geom_smooth(method="lm") +  theme_classic() +
+  theme(text=element_text(size=18))
+```
+
+![](figures/adaptive-thermogenesis-weight-1.png)<!-- -->
+
+```r
+lm(Wt.Gain~AT, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between energy expenditure and diet-induced weight gain")
+```
+
+
+
+Table: Summary of relationship between energy expenditure and diet-induced weight gain
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
+|     0.017|        -0.007|  5.22|     0.691|   0.411|  1|   -131| 268| 273|     1117|          41|   43|
+
+# Heritability of NCD Thermogenesis
+
+Since we dont have individual mouse data we will make simulated data based on the mean and se of the metabolic rate.
 
 
 ```r
@@ -465,8 +494,8 @@ Table: Overall heritability of energy expenditure on NCD mice
 
 |term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
 |:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Name      |  46| 0.654|  0.014|      7.89|       0|     0.016|    88.7|
-|Residuals | 159| 0.287|  0.002|        NA|      NA|     0.016|    11.3|
+|Name      |  46| 0.643|  0.014|      6.76|       0|     0.016|    87.1|
+|Residuals | 159| 0.329|  0.002|        NA|      NA|     0.016|    12.9|
 
 ```r
 aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
@@ -482,9 +511,9 @@ Table: Overall heritability of energy expenditure on NCD including lean mass
 
 |term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
 |:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.015|  0.015|      8.18|   0.005|      0.03|   47.84|
-|Name      |  46| 0.646|  0.014|      7.92|   0.000|      0.03|   46.32|
-|Residuals | 158| 0.280|  0.002|        NA|      NA|      0.03|    5.85|
+|Lean      |   1| 0.092|  0.092|     46.11|       0|     0.106|   86.55|
+|Name      |  46| 0.565|  0.012|      6.17|       0|     0.106|   11.58|
+|Residuals | 158| 0.315|  0.002|        NA|      NA|     0.106|    1.88|
 
 ```r
 aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
@@ -506,9 +535,9 @@ Table: Overall heritability of energy expenditure on NCD adjusting for lean mass
 
 |term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
 |:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.015|  0.015|      8.18|   0.005|     0.016|    91.7|
-|Name      |  46| 0.646|  0.014|      7.92|   0.000|     0.016|    88.8|
-|Residuals | 158| 0.280|  0.002|        NA|      NA|     0.016|    11.2|
+|Lean      |   1| 0.092|  0.092|     46.11|       0|     0.014|     643|
+|Name      |  46| 0.565|  0.012|      6.17|       0|     0.014|      86|
+|Residuals | 158| 0.315|  0.002|        NA|      NA|     0.014|      14|
 
 ```r
 aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
@@ -525,11 +554,11 @@ Table: Overall heritability of energy expenditure including diet and lean mass
 
 |term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
 |:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.191|  0.191|     91.00|       0|      1.81|  10.578|
-|Name      |  47| 1.363|  0.029|     13.81|       0|      1.81|   1.606|
-|Diet      |   1| 1.576|  1.576|    750.61|       0|      1.81|  87.250|
-|Name:Diet |  41| 0.334|  0.008|      3.87|       0|      1.81|   0.450|
-|Residuals | 302| 0.634|  0.002|        NA|      NA|      1.81|   0.116|
+|Lean      |   1| 0.258|  0.258|     88.15|       0|      1.84|  13.969|
+|Name      |  47| 1.299|  0.028|      9.46|       0|      1.84|   1.498|
+|Diet      |   1| 1.546|  1.546|    529.15|       0|      1.84|  83.855|
+|Name:Diet |  41| 0.392|  0.010|      3.28|       0|      1.84|   0.519|
+|Residuals | 302| 0.882|  0.003|        NA|      NA|      1.84|   0.158|
 
 ```r
 aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
@@ -551,11 +580,11 @@ Table: Overall heritability of energy expenditure adjusted for diet and lean mas
 
 |term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
 |:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.191|  0.191|     91.00|       0|     0.039|  486.97|
-|Name      |  47| 1.363|  0.029|     13.81|       0|     0.039|   73.92|
-|Diet      |   1| 1.576|  1.576|    750.61|       0|     0.039| 4016.65|
-|Name:Diet |  41| 0.334|  0.008|      3.87|       0|     0.039|   20.73|
-|Residuals | 302| 0.634|  0.002|        NA|      NA|     0.039|    5.35|
+|Lean      |   1| 0.258|  0.258|     88.15|       0|      0.04|  641.94|
+|Name      |  47| 1.299|  0.028|      9.46|       0|      0.04|   68.86|
+|Diet      |   1| 1.546|  1.546|    529.15|       0|      0.04| 3853.63|
+|Name:Diet |  41| 0.392|  0.010|      3.28|       0|      0.04|   23.86|
+|Residuals | 302| 0.882|  0.003|        NA|      NA|      0.04|    7.28|
 
 ```r
 ee.var.data <- bind_rows(lean.adj.ee.lean %>% mutate(Diet="NCD"),hfd.adj.ee.adj %>% mutate(Diet="HFD")) 
@@ -605,33 +634,6 @@ ggplot(aes(x=ordered(Group, levels=c("NCD-None","NCD-Lean Mass", "HFD-Lean Mass"
 
 ![](figures/anova-barplots-2.png)<!-- -->
 
-### Adaptive Thermogenesis vs Weight Gain
-
-
-```r
-data.wide %>%
-  ggplot(aes(y=Wt.Gain,
-             x=AT)) +
-  labs(y="Weight Gained on HFD (g)",
-       x="Adaptive Thermogenesis (W)") +
-  geom_point() +
-  geom_smooth(method="lm") +  theme_classic() +
-  theme(text=element_text(size=18))
-```
-
-![](figures/adaptive-thermogenesis-weight-1.png)<!-- -->
-
-```r
-lm(Wt.Gain~AT, data=data.wide) %>% glance %>% kable(caption="Summary of relationship between energy expenditure and diet-induced weight gain")
-```
-
-
-
-Table: Summary of relationship between energy expenditure and diet-induced weight gain
-
-| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
-|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
-|     0.017|        -0.007|  5.22|     0.691|   0.411|  1|   -131| 268| 273|     1117|          41|   43|
 
 # Integration with Lifespan
 

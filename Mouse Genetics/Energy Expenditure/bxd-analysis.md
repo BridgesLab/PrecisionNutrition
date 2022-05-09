@@ -61,7 +61,7 @@ data <- bind_rows(#ncd.pirinen,
   mutate(Diet = relevel(factor(Diet), ref="NCD"))
 ```
 
-These data can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Energy Expenditure.  This script was most recently updated on Mon May  9 08:36:25 2022.
+These data can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Energy Expenditure.  This script was most recently updated on Mon May  9 09:29:57 2022.
 
 # Analysis of Energy Expenditure
 
@@ -449,7 +449,7 @@ Since we dont have individual mouse data we will make simulated data based on th
 
 
 ```r
-new.sim.data <- data.frame(Name=NA, Diet=NA,EE=NA)
+new.sim.data <- data.frame(Strain=NA, Diet=NA,EE=NA)
 
 for (row in 1:dim(data)[1]) {
   strain.data <- data[row,]
@@ -464,137 +464,117 @@ for (row in 1:dim(data)[1]) {
                          sd=SE_lm * sqrt(N),
                          n=N_ee
                     ))
-  sim.dataset <- data.frame(Name=strain.data$Name, 
+  sim.dataset <- data.frame(Strain=strain.data$Name, 
                             Diet=strain.data$Diet,
                             EE=sim.data,
                             Lean=sim.lean.data)
   new.sim.data <- bind_rows(new.sim.data,sim.dataset)
   }
 else{
-    sim.dataset <- data.frame(Name=strain.data$Name, 
+    sim.dataset <- data.frame(Strain=strain.data$Name, 
                             Diet=strain.data$Diet,
                             EE=NA,
                             Lean=NA)
     new.sim.data <- bind_rows(new.sim.data,sim.dataset)
 }
 
-  }
+}
+```
+
+Estimated heritability by calculating the $\omega^2_p$ for each component.  The formula for this is:
+
+$$\eta^2=\frac{SS_{effect}}{SS_{total}}$$
+
+The alternative, not used here is to use the $\omega^2_p$, but for this the sum of the terms is less than 1
+
+$$\omega^2_p = \frac{SS_{effect}-df_{effect} \times MS_{error}}{SS_{effect}+(N-df_{effect})\times MS_{error}}$$
+The forumula is from from:
+
+>Albers and Lakens. 2018.  When power analyses based on pilot data are biased: Inaccurate effect size estimators and follow-up bias.  Journal of Experimental Social Psychology. 74: 187-195 https://doi.org/10.1016/j.jesp.2017.09.004.
+
+In this case $SS_{effect}$ is the term for the strain.  Therefore $\omega^2_p$ for the strain the amount of variance attributable to the strain, or the broad sense heritability.
 
 
-aov(EE ~  Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) %>%
-  kable(caption="Overall heritability of energy expenditure on NCD mice")
+```r
+library(effectsize)
+aov(EE ~  Strain, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
+  eta_squared() %>%
+  kable(caption="Overall heritability of energy expenditure on NCD mice, not accounting for lean mass")
 ```
 
 
 
-Table: Overall heritability of energy expenditure on NCD mice
+Table: Overall heritability of energy expenditure on NCD mice, not accounting for lean mass
 
-|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
-|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Name      |  46| 0.643|  0.014|      6.76|       0|     0.016|    87.1|
-|Residuals | 159| 0.329|  0.002|        NA|      NA|     0.016|    12.9|
-
-```r
-aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) %>%
-  kable(caption="Overall heritability of energy expenditure on NCD including lean mass")
-```
-
-
-
-Table: Overall heritability of energy expenditure on NCD including lean mass
-
-|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
-|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.092|  0.092|     46.11|       0|     0.106|   86.55|
-|Name      |  46| 0.565|  0.012|      6.17|       0|     0.106|   11.58|
-|Residuals | 158| 0.315|  0.002|        NA|      NA|     0.106|    1.88|
+|Parameter |  Eta2|   CI| CI_low| CI_high|
+|:---------|-----:|----:|------:|-------:|
+|Strain    | 0.675| 0.95|  0.565|       1|
 
 ```r
-aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq[2:3]),
-         Pct.Var = meansq/Total.Var*100) -> lean.adj.ee.lean 
+aov(EE ~ Lean + Strain, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
+  eta_squared(partial=F) -> lean.adj.ee.lean 
 
-aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) -> lean.adj.ee.all 
   
-lean.adj.ee.lean %>% kable(caption="Overall heritability of energy expenditure on NCD adjusting for lean mass")
+lean.adj.ee.lean %>% kable(caption="Heritability of energy expenditure on NCD adjusting for lean mass")
 ```
 
 
 
-Table: Overall heritability of energy expenditure on NCD adjusting for lean mass
+Table: Heritability of energy expenditure on NCD adjusting for lean mass
 
-|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
-|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.092|  0.092|     46.11|       0|     0.014|     643|
-|Name      |  46| 0.565|  0.012|      6.17|       0|     0.014|      86|
-|Residuals | 158| 0.315|  0.002|        NA|      NA|     0.014|      14|
+|Parameter |  Eta2|   CI| CI_low| CI_high|
+|:---------|-----:|----:|------:|-------:|
+|Lean      | 0.037| 0.95|  0.004|       1|
+|Strain    | 0.638| 0.95|  0.510|       1|
 
 ```r
-aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) -> hfd.incl.ee
+aov(EE ~ Lean + Strain + Diet + Strain:Diet, data=new.sim.data) %>% 
+  eta_squared(partial=F) -> hfd.incl.ee
 
-hfd.incl.ee  %>% kable(caption="Overall heritability of energy expenditure including diet and lean mass")
+hfd.incl.ee  %>% kable(caption="Overall heritability of energy expenditure including diet and lean mass, and allowing for a gene-diet interaction")
 ```
 
 
 
-Table: Overall heritability of energy expenditure including diet and lean mass
+Table: Overall heritability of energy expenditure including diet and lean mass, and allowing for a gene-diet interaction
 
-|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
-|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.258|  0.258|     88.15|       0|      1.84|  13.969|
-|Name      |  47| 1.299|  0.028|      9.46|       0|      1.84|   1.498|
-|Diet      |   1| 1.546|  1.546|    529.15|       0|      1.84|  83.855|
-|Name:Diet |  41| 0.392|  0.010|      3.28|       0|      1.84|   0.519|
-|Residuals | 302| 0.882|  0.003|        NA|      NA|      1.84|   0.158|
+|Parameter   |  Eta2|   CI| CI_low| CI_high|
+|:-----------|-----:|----:|------:|-------:|
+|Lean        | 0.036| 0.95|  0.009|       1|
+|Strain      | 0.327| 0.95|  0.172|       1|
+|Diet        | 0.354| 0.95|  0.286|       1|
+|Strain:Diet | 0.084| 0.95|  0.000|       1|
 
 ```r
-aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq[c(2,4,5)]),
-         Pct.Var = meansq/Total.Var*100) -> hfd.adj.ee.adj
+aov(EE ~ Lean + Strain + Diet + Strain:Diet, data=new.sim.data) %>% 
+  eta_squared(partial=F) -> hfd.adj.ee.adj
 
-aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq[c(2,3,4,5)]),
-         Pct.Var = meansq/Total.Var*100) -> hfd.adj.ee.all
+aov(EE ~ Lean + Strain + Diet + Strain:Diet, data=new.sim.data) %>% 
+  eta_squared(partial=F) -> hfd.adj.ee.all
 
-hfd.adj.ee.adj %>% kable(caption="Overall heritability of energy expenditure adjusted for diet and lean mass")
+hfd.adj.ee.adj %>% kable(caption="Heritability of energy expenditure adjusted for diet and lean mass")
 ```
 
 
 
-Table: Overall heritability of energy expenditure adjusted for diet and lean mass
+Table: Heritability of energy expenditure adjusted for diet and lean mass
 
-|term      |  df| sumsq| meansq| statistic| p.value| Total.Var| Pct.Var|
-|:---------|---:|-----:|------:|---------:|-------:|---------:|-------:|
-|Lean      |   1| 0.258|  0.258|     88.15|       0|      0.04|  641.94|
-|Name      |  47| 1.299|  0.028|      9.46|       0|      0.04|   68.86|
-|Diet      |   1| 1.546|  1.546|    529.15|       0|      0.04| 3853.63|
-|Name:Diet |  41| 0.392|  0.010|      3.28|       0|      0.04|   23.86|
-|Residuals | 302| 0.882|  0.003|        NA|      NA|      0.04|    7.28|
+|Parameter   |  Eta2|   CI| CI_low| CI_high|
+|:-----------|-----:|----:|------:|-------:|
+|Lean        | 0.036| 0.95|  0.009|       1|
+|Strain      | 0.327| 0.95|  0.172|       1|
+|Diet        | 0.354| 0.95|  0.286|       1|
+|Strain:Diet | 0.084| 0.95|  0.000|       1|
 
 ```r
 ee.var.data <- bind_rows(lean.adj.ee.lean %>% mutate(Diet="NCD"),hfd.adj.ee.adj %>% mutate(Diet="HFD")) 
 
-ggplot(ee.var.data %>% filter(term %in% c('Name','Name:Diet','Residuals')),
-        aes(x=reorder(Diet,-Pct.Var),
-            y=Pct.Var,
-            fill=term)) +
+ggplot(ee.var.data %>% filter(Parameter %in% c('Strain','Strain:Diet','Diet')),
+        aes(x=reorder(Diet,-Eta2),
+            y=Eta2,
+            fill=Parameter)) +
   geom_bar(position="stack",stat='identity') +
-  scale_fill_manual(labels = c("Strain", "Strain x Diet", "Other"), values = c("red", "pink","blue"),
+  scale_fill_manual(values = color.scheme,
                      name="Factor") +
   labs(y="Percent of Variance",
        x="") +
@@ -604,35 +584,6 @@ ggplot(ee.var.data %>% filter(term %in% c('Name','Name:Diet','Residuals')),
 ```
 
 ![](figures/anova-barplots-1.png)<!-- -->
-
-```r
-ee.var.all.data <- bind_rows(lean.adj.ee.all %>% mutate(Diet="NCD",Corr="None"),
-                             lean.adj.ee.lean %>% mutate(Diet="NCD", Corr="Lean Mass"),
-                             hfd.adj.ee.all %>% mutate(Diet="HFD", Corr="Lean Mass"),
-                             hfd.adj.ee.adj %>% mutate(Diet="HFD", Corr="Lean Mass,Diet")) %>%
-  mutate(Group=paste(Diet,Corr,sep="-"))
-
-library(RColorBrewer)
-ee.var.all.data %>% 
-         filter(term %in% c('Lean','Name','Name:Diet','Diet','Residuals')) %>%
-         filter(!(term=='Lean'&Corr=='Lean Mass')) %>%
-         filter(!(term=='Lean'&Corr=="Lean Mass,Diet")) %>%
-         filter(!(term=='Diet'&Corr=="Lean Mass,Diet")) %>%
-ggplot(aes(x=ordered(Group, levels=c("NCD-None","NCD-Lean Mass", "HFD-Lean Mass", "HFD-Lean Mass,Diet")),
-            y=Pct.Var,
-            fill=term)) +
-  geom_bar(position="stack",stat='identity') +
-  scale_fill_manual(name="Factor",
-                    labels = c("Diet", "Lean Mass", "Strain", "Strain x Diet", "Residuals"),
-                    values=brewer.pal(5, "Set1")) +
-  labs(y="Variance Contribution (%)",
-       x="Diet and Adjustments") +
-  theme_classic() +
-  theme(text=element_text(size=18),
-        axis.text=element_text(size=8))
-```
-
-![](figures/anova-barplots-2.png)<!-- -->
 
 
 # Integration with Lifespan
@@ -720,23 +671,27 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] RColorBrewer_1.1-2 broom_0.7.11       ggrepel_0.9.1      ggplot2_3.3.5     
+## [1] effectsize_0.6.0.1 broom_0.7.11       ggrepel_0.9.1      ggplot2_3.3.5     
 ## [5] readr_2.1.1        dplyr_1.0.7        tidyr_1.1.4        knitr_1.37        
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.1.1 xfun_0.29        bslib_0.3.1      purrr_0.3.4     
-##  [5] lattice_0.20-45  splines_4.0.2    colorspace_2.0-2 vctrs_0.3.8     
-##  [9] generics_0.1.1   htmltools_0.5.2  yaml_2.2.1       mgcv_1.8-38     
-## [13] utf8_1.2.2       rlang_0.4.12     jquerylib_0.1.4  pillar_1.6.4    
-## [17] glue_1.6.0       withr_2.4.3      DBI_1.1.2        bit64_4.0.5     
-## [21] lifecycle_1.0.1  stringr_1.4.0    munsell_0.5.0    gtable_0.3.0    
-## [25] evaluate_0.14    labeling_0.4.2   tzdb_0.2.0       fastmap_1.1.0   
-## [29] parallel_4.0.2   fansi_1.0.0      highr_0.9        Rcpp_1.0.7      
-## [33] backports_1.4.1  scales_1.1.1     vroom_1.5.7      jsonlite_1.7.2  
-## [37] farver_2.1.0     bit_4.0.4        hms_1.1.1        digest_0.6.29   
-## [41] stringi_1.7.6    grid_4.0.2       cli_3.1.0        tools_4.0.2     
-## [45] magrittr_2.0.1   sass_0.4.0       tibble_3.1.6     crayon_1.4.2    
-## [49] pkgconfig_2.0.3  Matrix_1.4-0     ellipsis_0.3.2   assertthat_0.2.1
-## [53] rmarkdown_2.11   rstudioapi_0.13  R6_2.5.1         nlme_3.1-153    
-## [57] compiler_4.0.2
+##  [1] Rcpp_1.0.7        mvtnorm_1.1-3     lattice_0.20-45   zoo_1.8-9        
+##  [5] assertthat_0.2.1  digest_0.6.29     utf8_1.2.2        R6_2.5.1         
+##  [9] backports_1.4.1   coda_0.19-4       evaluate_0.14     highr_0.9        
+## [13] pillar_1.6.4      rlang_0.4.12      multcomp_1.4-18   performance_0.8.0
+## [17] rstudioapi_0.13   jquerylib_0.1.4   Matrix_1.4-0      rmarkdown_2.11   
+## [21] labeling_0.4.2    splines_4.0.2     stringr_1.4.0     bit_4.0.4        
+## [25] munsell_0.5.0     compiler_4.0.2    xfun_0.29         pkgconfig_2.0.3  
+## [29] parameters_0.17.0 mgcv_1.8-38       htmltools_0.5.2   insight_0.17.0   
+## [33] tidyselect_1.1.1  tibble_3.1.6      codetools_0.2-18  fansi_1.0.0      
+## [37] crayon_1.4.2      tzdb_0.2.0        withr_2.4.3       MASS_7.3-54      
+## [41] grid_4.0.2        xtable_1.8-4      nlme_3.1-153      jsonlite_1.7.2   
+## [45] gtable_0.3.0      lifecycle_1.0.1   DBI_1.1.2         magrittr_2.0.1   
+## [49] bayestestR_0.11.5 scales_1.1.1      datawizard_0.4.0  estimability_1.3 
+## [53] cli_3.1.0         stringi_1.7.6     vroom_1.5.7       farver_2.1.0     
+## [57] bslib_0.3.1       ellipsis_0.3.2    generics_0.1.1    vctrs_0.3.8      
+## [61] sandwich_3.0-1    TH.data_1.1-0     tools_4.0.2       bit64_4.0.5      
+## [65] glue_1.6.0        purrr_0.3.4       hms_1.1.1         emmeans_1.7.2    
+## [69] survival_3.2-13   parallel_4.0.2    fastmap_1.1.0     yaml_2.2.1       
+## [73] colorspace_2.0-2  sass_0.4.0
 ```

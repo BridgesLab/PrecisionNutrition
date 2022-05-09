@@ -40,7 +40,7 @@ library(tidyr)
 library(dplyr)
 
 # sets maize and blue color scheme
-color.scheme <- c('#00274c', '#ffcb05')
+color.scheme <- c('#00274c', '#ffcb05','#9A3324')
 ```
 
 The goal is to identify genetic determinants of energy expenditure and of adaptive thermogenesis from BXD mice.  To start we searched gene network for energy expenditure data, ignoring those involved in exercise physiology.
@@ -338,8 +338,8 @@ lm(Wt.Gain~AT, data=data.wide) %>% glance %>% kable(caption="Summary of relation
 
 Since we dont have individual mouse data we will make simulated data based on the mean and se of the metabolic rate.
 
-```{r anova-barplots}
-new.sim.data <- data.frame(Name=NA, Diet=NA,EE=NA)
+```{r anova-data-simulation}
+new.sim.data <- data.frame(Strain=NA, Diet=NA,EE=NA)
 
 for (row in 1:dim(data)[1]) {
   strain.data <- data[row,]
@@ -354,106 +354,75 @@ for (row in 1:dim(data)[1]) {
                          sd=SE_lm * sqrt(N),
                          n=N_ee
                     ))
-  sim.dataset <- data.frame(Name=strain.data$Name, 
+  sim.dataset <- data.frame(Strain=strain.data$Name, 
                             Diet=strain.data$Diet,
                             EE=sim.data,
                             Lean=sim.lean.data)
   new.sim.data <- bind_rows(new.sim.data,sim.dataset)
   }
 else{
-    sim.dataset <- data.frame(Name=strain.data$Name, 
+    sim.dataset <- data.frame(Strain=strain.data$Name, 
                             Diet=strain.data$Diet,
                             EE=NA,
                             Lean=NA)
     new.sim.data <- bind_rows(new.sim.data,sim.dataset)
 }
 
-  }
+}
+```
 
+Estimated heritability by calculating the $\omega^2_p$ for each component.  The formula for this is:
 
-aov(EE ~  Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) %>%
-  kable(caption="Overall heritability of energy expenditure on NCD mice")
+$$\eta^2=\frac{SS_{effect}}{SS_{total}}$$
 
-aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) %>%
-  kable(caption="Overall heritability of energy expenditure on NCD including lean mass")
+The alternative, not used here is to use the $\omega^2_p$, but for this the sum of the terms is less than 1
 
-aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq[2:3]),
-         Pct.Var = meansq/Total.Var*100) -> lean.adj.ee.lean 
+$$\omega^2_p = \frac{SS_{effect}-df_{effect} \times MS_{error}}{SS_{effect}+(N-df_{effect})\times MS_{error}}$$
+The forumula is from from:
 
-aov(EE ~ Lean + Name, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) -> lean.adj.ee.all 
+>Albers and Lakens. 2018.  When power analyses based on pilot data are biased: Inaccurate effect size estimators and follow-up bias.  Journal of Experimental Social Psychology. 74: 187-195 https://doi.org/10.1016/j.jesp.2017.09.004.
+
+In this case $SS_{effect}$ is the term for the strain.  Therefore $\omega^2_p$ for the strain the amount of variance attributable to the strain, or the broad sense heritability.
+
+```{r anova-barplots}
+library(effectsize)
+aov(EE ~  Strain, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
+  eta_squared() %>%
+  kable(caption="Overall heritability of energy expenditure on NCD mice, not accounting for lean mass")
+
+aov(EE ~ Lean + Strain, data=new.sim.data %>% filter(Diet=='NCD')) %>% 
+  eta_squared(partial=F) -> lean.adj.ee.lean 
+
   
-lean.adj.ee.lean %>% kable(caption="Overall heritability of energy expenditure on NCD adjusting for lean mass")
+lean.adj.ee.lean %>% kable(caption="Heritability of energy expenditure on NCD adjusting for lean mass")
 
-aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq),
-         Pct.Var = meansq/Total.Var*100) -> hfd.incl.ee
+aov(EE ~ Lean + Strain + Diet + Strain:Diet, data=new.sim.data) %>% 
+  eta_squared(partial=F) -> hfd.incl.ee
 
-hfd.incl.ee  %>% kable(caption="Overall heritability of energy expenditure including diet and lean mass")
+hfd.incl.ee  %>% kable(caption="Overall heritability of energy expenditure including diet and lean mass, and allowing for a gene-diet interaction")
 
-aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq[c(2,4,5)]),
-         Pct.Var = meansq/Total.Var*100) -> hfd.adj.ee.adj
+aov(EE ~ Lean + Strain + Diet + Strain:Diet, data=new.sim.data) %>% 
+  eta_squared(partial=F) -> hfd.adj.ee.adj
 
-aov(EE ~ Lean + Name + Diet + Name:Diet, data=new.sim.data) %>% 
-  tidy %>%
-  mutate(Total.Var=sum(meansq[c(2,3,4,5)]),
-         Pct.Var = meansq/Total.Var*100) -> hfd.adj.ee.all
+aov(EE ~ Lean + Strain + Diet + Strain:Diet, data=new.sim.data) %>% 
+  eta_squared(partial=F) -> hfd.adj.ee.all
 
-hfd.adj.ee.adj %>% kable(caption="Overall heritability of energy expenditure adjusted for diet and lean mass")
+hfd.adj.ee.adj %>% kable(caption="Heritability of energy expenditure adjusted for diet and lean mass")
 
 ee.var.data <- bind_rows(lean.adj.ee.lean %>% mutate(Diet="NCD"),hfd.adj.ee.adj %>% mutate(Diet="HFD")) 
 
-ggplot(ee.var.data %>% filter(term %in% c('Name','Name:Diet','Residuals')),
-        aes(x=reorder(Diet,-Pct.Var),
-            y=Pct.Var,
-            fill=term)) +
+ggplot(ee.var.data %>% filter(Parameter %in% c('Strain','Strain:Diet','Diet')),
+        aes(x=reorder(Diet,-Eta2),
+            y=Eta2,
+            fill=Parameter)) +
   geom_bar(position="stack",stat='identity') +
-  scale_fill_manual(labels = c("Strain", "Strain x Diet", "Other"), values = c("red", "pink","blue"),
+  scale_fill_manual(values = color.scheme,
                      name="Factor") +
   labs(y="Percent of Variance",
        x="") +
   theme_classic() +
   theme(legend.position="top")+
   theme(text=element_text(size=18))
-
-
-ee.var.all.data <- bind_rows(lean.adj.ee.all %>% mutate(Diet="NCD",Corr="None"),
-                             lean.adj.ee.lean %>% mutate(Diet="NCD", Corr="Lean Mass"),
-                             hfd.adj.ee.all %>% mutate(Diet="HFD", Corr="Lean Mass"),
-                             hfd.adj.ee.adj %>% mutate(Diet="HFD", Corr="Lean Mass,Diet")) %>%
-  mutate(Group=paste(Diet,Corr,sep="-"))
-
-library(RColorBrewer)
-ee.var.all.data %>% 
-         filter(term %in% c('Lean','Name','Name:Diet','Diet','Residuals')) %>%
-         filter(!(term=='Lean'&Corr=='Lean Mass')) %>%
-         filter(!(term=='Lean'&Corr=="Lean Mass,Diet")) %>%
-         filter(!(term=='Diet'&Corr=="Lean Mass,Diet")) %>%
-ggplot(aes(x=ordered(Group, levels=c("NCD-None","NCD-Lean Mass", "HFD-Lean Mass", "HFD-Lean Mass,Diet")),
-            y=Pct.Var,
-            fill=term)) +
-  geom_bar(position="stack",stat='identity') +
-  scale_fill_manual(name="Factor",
-                    labels = c("Diet", "Lean Mass", "Strain", "Strain x Diet", "Residuals"),
-                    values=brewer.pal(5, "Set1")) +
-  labs(y="Variance Contribution (%)",
-       x="Diet and Adjustments") +
-  theme_classic() +
-  theme(text=element_text(size=18),
-        axis.text=element_text(size=8))
 ```
 
 

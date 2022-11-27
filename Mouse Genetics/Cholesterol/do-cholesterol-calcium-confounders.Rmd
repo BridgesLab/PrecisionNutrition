@@ -1,0 +1,158 @@
+---
+title: "Associations with Diversity Outbred Calcium and Cholesterol Levels"
+author: "Dave Bridges"
+date: "November 27, 2022"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+To analyze associations between other phenotypes and cholesterol and calcium to identify potential measured confounders.
+
+# Experimental Details
+
+This analysis uses the complete dataset (F01-F425 and M01-M425). 
+
+# Raw Data
+
+```{r datafiles}
+phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+```
+
+
+```{r data-input}
+library(readr) #loads the readr package
+
+
+phenotype.data <- read_csv(phenotype.filename)
+#set phenotypes of zero or  to na
+phenotype.data[phenotype.data < 0] <- NA
+
+library(forcats)
+cholesterol.data <-
+  phenotype.data %>%
+  mutate(Diet = fct_recode(as.factor(diet),
+                           "NCD"="chow",
+                           "HFHS"="hf")) %>%
+  select(-diet) %>%
+  mutate(chol.avg = rowMeans(select(., starts_with("chol")), 
+                             na.rm = TRUE))
+```
+
+# Correlation Matrix
+
+```{r calcium-associations}
+library("psych")    
+correlation.matrix <- cholesterol.data %>%
+  select(-coat_color,-gen,-sex,-Diet,-sample) %>%
+  corr.test(method="spearman", use="pairwise",adjust="BH")
+
+correlation.matrix$p %>%
+  as.data.frame() %>%
+  select(calcium2) %>%
+  filter(calcium2<0.05/162) -> calcium.correlates
+
+correlation.matrix$p %>%
+  as.data.frame() %>%
+  select(chol.avg) %>%
+  filter(chol.avg<0.05/162) -> cholesterol.correlates
+
+overlapping.correlates <- intersect(rownames(calcium.correlates),
+                                    rownames(cholesterol.correlates))
+```
+
+```{r confounders-venn}
+library(venneuler)
+
+venneuler(c("Calcium"=dim(calcium.correlates)[1]+1,
+            "Cholesterol"=dim(cholesterol.correlates)[1]+1,
+            "Calcium&Cholesterol"=length(overlapping.correlates)+1)) %>%
+  plot
+```
+
+# Testing Moderation by Correlates
+
+
+```{r chol-calcium-effect-changes}
+base.model <- lm(chol2 ~ Diet + sex + calcium2, data=cholesterol.data)
+
+confounders.data <-
+  data.frame("Measure"=overlapping.correlates) %>%
+  mutate(Calcium.mod = NA)
+
+for (measure in overlapping.correlates) {
+  formula <- as.formula(paste("chol2 ~ ", measure, " + Diet + sex + calcium2"))
+  test.model = lm(formula,data=cholesterol.data)
+  confounders.data <- 
+    confounders.data %>%
+    add_row(Measure=measure,
+            Calcium.mod=coefficients(test.model)['calcium2'])
+}
+
+confounders.data <-
+  confounders.data %>% 
+  mutate(Calcium.base = coefficients(base.model)['calcium2']) %>%
+  filter(!is.na(Calcium.mod)) 
+
+library(ggplot2)
+confounders.data %>%
+  mutate(Estimate.change = Calcium.mod-Calcium.base) %>%
+  ggplot(aes(y=Estimate.change,x=reorder(Measure,Calcium.mod))) +
+  geom_bar(stat="identity") +
+  labs(y="Change in Calcium Beta",
+       x="Phenotype") +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+
+confounders.data %>%
+  arrange(Calcium.mod) %>%
+  mutate(Estimate.change = Calcium.mod-Calcium.base) %>%
+  kable(caption="Base and Moderated Model Estimates")
+```
+
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```
+

@@ -3,14 +3,14 @@ title: "Predictors of Diversity Outbred Cholesterol Levels"
 author: "Dave Bridges and Cody Cousineau"
 date: "March 25, 2022"
 output:
-  pdf_document:
-    highlight: tango
-    keep_tex: yes
-    number_sections: yes
-    toc: yes
   html_document:
     highlight: tango
     keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
     number_sections: yes
     toc: yes
 ---
@@ -98,7 +98,9 @@ cholesterol.data %>%
   facet_grid(Diet~sex)
 ```
 
-```{r cholesterol-stratification}
+### Similarity at Both Time Points
+
+```{r cholesterol-similarity}
   
 summary.data.complete <-
   cholesterol.data %>%
@@ -106,18 +108,15 @@ summary.data.complete <-
   summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
-```
 
-### Similarity at Both Time Points
-
-```{r cholesterol-similar}
 library(broom)
 wilcox.test(cholesterol.data$chol2,
        cholesterol.data$chol1, 
        paired=TRUE) %>% tidy %>%
   kable(caption="Pairwise t-test ofcholesterol levels week 11 and week 18")
   
-
+summary.data.complete %>%
+  ggplot(aes())
 ```
 
 ```{r cholesterol-analysis}

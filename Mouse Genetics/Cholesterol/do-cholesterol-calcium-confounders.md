@@ -173,6 +173,34 @@ Table: Base and Moderated Model Estimates
 |calcium2    |      12.660|         12.7|           0.000|
 |phosphorus2 |      13.705|         12.7|           1.045|
 
+# Potential Confounders
+
+These are defined as phenotypes that associate with both calcium and cholesterol, and strengthen the sex and diet adjusted association of cholesterol and calcium when included in the model.
+
+## Phosphorous
+
+
+```r
+phos.lm <- lm(chol2 ~ Diet + sex + calcium2 + phosphorus2, data=cholesterol.data)
+library(broom)
+phos.lm %>% tidy %>% kable(caption="Model including phosphorus")
+```
+
+
+
+Table: Model including phosphorus
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |   -32.45|     7.975|     -4.07|   0.000|
+|DietHFHS    |    27.95|     1.797|     15.55|   0.000|
+|sexM        |    19.03|     1.836|     10.36|   0.000|
+|calcium2    |    13.71|     0.962|     14.25|   0.000|
+|phosphorus2 |    -2.09|     0.849|     -2.46|   0.014|
+
+```r
+#anova(base.model,phos.lm) %>% tidy %>% kable(caption="Chi squared test of models with or without calcium")
+```
 
 # Session Information
 
@@ -197,9 +225,9 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] ggplot2_3.4.0   venneuler_1.1-3 rJava_1.0-6     psych_2.2.9    
-## [5] forcats_0.5.2   readr_2.1.3     dplyr_1.0.10    tidyr_1.2.1    
-## [9] knitr_1.41     
+##  [1] broom_1.0.1     ggplot2_3.4.0   venneuler_1.1-3 rJava_1.0-6    
+##  [5] psych_2.2.9     forcats_0.5.2   readr_2.1.3     dplyr_1.0.10   
+##  [9] tidyr_1.2.1     knitr_1.41     
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] tidyselect_1.2.0 xfun_0.35        bslib_0.4.1      purrr_0.3.5     
@@ -209,12 +237,12 @@ sessionInfo()
 ## [17] DBI_1.1.3        bit64_4.0.5      lifecycle_1.0.3  stringr_1.4.1   
 ## [21] munsell_0.5.0    gtable_0.3.1     evaluate_0.18    labeling_0.4.2  
 ## [25] tzdb_0.3.0       fastmap_1.1.0    parallel_4.2.0   fansi_1.0.3     
-## [29] highr_0.9        scales_1.2.1     cachem_1.0.6     vroom_1.6.0     
-## [33] jsonlite_1.8.3   farver_2.1.1     bit_4.0.5        mnormt_2.1.1    
-## [37] hms_1.1.2        digest_0.6.30    stringi_1.7.8    grid_4.2.0      
-## [41] cli_3.4.1        tools_4.2.0      magrittr_2.0.3   sass_0.4.3      
-## [45] tibble_3.1.8     crayon_1.5.2     pkgconfig_2.0.3  ellipsis_0.3.2  
-## [49] assertthat_0.2.1 rmarkdown_2.18   rstudioapi_0.14  R6_2.5.1        
-## [53] nlme_3.1-160     compiler_4.2.0
+## [29] highr_0.9        backports_1.4.1  scales_1.2.1     cachem_1.0.6    
+## [33] vroom_1.6.0      jsonlite_1.8.3   farver_2.1.1     bit_4.0.5       
+## [37] mnormt_2.1.1     hms_1.1.2        digest_0.6.30    stringi_1.7.8   
+## [41] grid_4.2.0       cli_3.4.1        tools_4.2.0      magrittr_2.0.3  
+## [45] sass_0.4.3       tibble_3.1.8     crayon_1.5.2     pkgconfig_2.0.3 
+## [49] ellipsis_0.3.2   assertthat_0.2.1 rmarkdown_2.18   rstudioapi_0.14 
+## [53] R6_2.5.1         nlme_3.1-160     compiler_4.2.0
 ```
 

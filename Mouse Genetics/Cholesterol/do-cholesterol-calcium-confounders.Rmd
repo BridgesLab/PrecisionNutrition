@@ -149,6 +149,18 @@ confounders.data %>%
   kable(caption="Base and Moderated Model Estimates")
 ```
 
+# Potential Confounders
+
+These are defined as phenotypes that associate with both calcium and cholesterol, and strengthen the sex and diet adjusted association of cholesterol and calcium when included in the model.
+
+## Phosphorous
+
+```{r confounder-phosphorous}
+phos.lm <- lm(chol2 ~ Diet + sex + calcium2 + phosphorus2, data=cholesterol.data)
+library(broom)
+phos.lm %>% tidy %>% kable(caption="Model including phosphorus")
+#anova(base.model,phos.lm) %>% tidy %>% kable(caption="Chi squared test of models with or without calcium")
+```
 
 # Session Information
 

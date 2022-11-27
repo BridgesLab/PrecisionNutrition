@@ -149,9 +149,36 @@ confounders.data %>%
   kable(caption="Base and Moderated Model Estimates")
 ```
 
+# Potential Mediators
+
+These are defined as phenotypes that associate with both calcium and cholesterol, and *weaken* the sex and diet adjusted association of cholesterol and calcium when included in the model.
+
+## Fat Mass
+
+```{r mediator-fat mass}
+library(broom)
+complete.data <- 
+  cholesterol.data %>%
+  filter(!(is.na(calcium2))) %>%
+  filter(!(is.na(chol2))) %>%
+  filter(!(is.na(fat_mri)))
+         
+
+
+base.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)        
+fat.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)
+fat.lm %>% tidy %>% kable(caption="Model including fat mass")
+
+library(mediation)
+results <- mediate(fat.lm, base.lm, treat='calcium2', mediator='fat_mri',
+                   boot=TRUE, sims=1000)
+results %>% summary
+```
+
+
 # Potential Confounders
 
-These are defined as phenotypes that associate with both calcium and cholesterol, and strengthen the sex and diet adjusted association of cholesterol and calcium when included in the model.
+These are defined as phenotypes that associate with both calcium and cholesterol, and *strengthen* the sex and diet adjusted association of cholesterol and calcium when included in the model.
 
 ## Phosphorous
 

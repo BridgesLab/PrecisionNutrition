@@ -173,9 +173,71 @@ Table: Base and Moderated Model Estimates
 |calcium2    |      12.660|         12.7|           0.000|
 |phosphorus2 |      13.705|         12.7|           1.045|
 
+# Potential Mediators
+
+These are defined as phenotypes that associate with both calcium and cholesterol, and *weaken* the sex and diet adjusted association of cholesterol and calcium when included in the model.
+
+## Fat Mass
+
+
+```r
+library(broom)
+complete.data <- 
+  cholesterol.data %>%
+  filter(!(is.na(calcium2))) %>%
+  filter(!(is.na(chol2))) %>%
+  filter(!(is.na(fat_mri)))
+         
+
+
+base.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)        
+fat.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)
+fat.lm %>% tidy %>% kable(caption="Model including fat mass")
+```
+
+
+
+Table: Model including fat mass
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |  -22.978|    21.272|    -1.080|   0.282|
+|DietHFHS    |   35.744|     5.313|     6.728|   0.000|
+|sexM        |   10.953|     4.662|     2.349|   0.020|
+|calcium2    |   11.205|     2.382|     4.705|   0.000|
+|fat_mri     |    0.218|     0.536|     0.407|   0.685|
+
+```r
+library(mediation)
+results <- mediate(fat.lm, base.lm, treat='calcium2', mediator='fat_mri',
+                   boot=TRUE, sims=1000)
+results %>% summary
+```
+
+```
+## 
+## Causal Mediation Analysis 
+## 
+## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
+## 
+##                Estimate 95% CI Lower 95% CI Upper p-value    
+## ACME              2.447      -14.722        13.93   0.740    
+## ADE              11.205        6.836        16.14  <2e-16 ***
+## Total Effect     13.652       -1.844        25.66   0.076 .  
+## Prop. Mediated    0.179       -5.480         4.45   0.664    
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Sample Size Used: 148 
+## 
+## 
+## Simulations: 1000
+```
+
+
 # Potential Confounders
 
-These are defined as phenotypes that associate with both calcium and cholesterol, and strengthen the sex and diet adjusted association of cholesterol and calcium when included in the model.
+These are defined as phenotypes that associate with both calcium and cholesterol, and *strengthen* the sex and diet adjusted association of cholesterol and calcium when included in the model.
 
 ## Phosphorous
 
@@ -225,24 +287,39 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] broom_1.0.1     ggplot2_3.4.0   venneuler_1.1-3 rJava_1.0-6    
-##  [5] psych_2.2.9     forcats_0.5.2   readr_2.1.3     dplyr_1.0.10   
-##  [9] tidyr_1.2.1     knitr_1.41     
+##  [1] mediation_4.5.0 sandwich_3.0-2  mvtnorm_1.1-3   Matrix_1.5-3   
+##  [5] MASS_7.3-58.1   broom_1.0.1     ggplot2_3.4.0   venneuler_1.1-3
+##  [9] rJava_1.0-6     psych_2.2.9     forcats_0.5.2   readr_2.1.3    
+## [13] dplyr_1.0.10    tidyr_1.2.1     knitr_1.41     
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.2.0 xfun_0.35        bslib_0.4.1      purrr_0.3.5     
-##  [5] lattice_0.20-45  colorspace_2.0-3 vctrs_0.5.1      generics_0.1.3  
-##  [9] htmltools_0.5.3  yaml_2.3.6       utf8_1.2.2       rlang_1.0.6     
-## [13] jquerylib_0.1.4  pillar_1.8.1     glue_1.6.2       withr_2.5.0     
-## [17] DBI_1.1.3        bit64_4.0.5      lifecycle_1.0.3  stringr_1.4.1   
-## [21] munsell_0.5.0    gtable_0.3.1     evaluate_0.18    labeling_0.4.2  
-## [25] tzdb_0.3.0       fastmap_1.1.0    parallel_4.2.0   fansi_1.0.3     
-## [29] highr_0.9        backports_1.4.1  scales_1.2.1     cachem_1.0.6    
-## [33] vroom_1.6.0      jsonlite_1.8.3   farver_2.1.1     bit_4.0.5       
-## [37] mnormt_2.1.1     hms_1.1.2        digest_0.6.30    stringi_1.7.8   
-## [41] grid_4.2.0       cli_3.4.1        tools_4.2.0      magrittr_2.0.3  
-## [45] sass_0.4.3       tibble_3.1.8     crayon_1.5.2     pkgconfig_2.0.3 
-## [49] ellipsis_0.3.2   assertthat_0.2.1 rmarkdown_2.18   rstudioapi_0.14 
-## [53] R6_2.5.1         nlme_3.1-160     compiler_4.2.0
+##  [1] nlme_3.1-160        bit64_4.0.5         RColorBrewer_1.1-3 
+##  [4] tools_4.2.0         backports_1.4.1     bslib_0.4.1        
+##  [7] utf8_1.2.2          R6_2.5.1            rpart_4.1.19       
+## [10] Hmisc_4.7-2         DBI_1.1.3           colorspace_2.0-3   
+## [13] nnet_7.3-18         withr_2.5.0         tidyselect_1.2.0   
+## [16] gridExtra_2.3       mnormt_2.1.1        bit_4.0.5          
+## [19] compiler_4.2.0      cli_3.4.1           htmlTable_2.4.1    
+## [22] labeling_0.4.2      sass_0.4.3          scales_1.2.1       
+## [25] checkmate_2.1.0     stringr_1.4.1       digest_0.6.30      
+## [28] foreign_0.8-83      minqa_1.2.5         rmarkdown_2.18     
+## [31] base64enc_0.1-3     jpeg_0.1-9          pkgconfig_2.0.3    
+## [34] htmltools_0.5.3     lme4_1.1-31         fastmap_1.1.0      
+## [37] highr_0.9           htmlwidgets_1.5.4   rlang_1.0.6        
+## [40] rstudioapi_0.14     jquerylib_0.1.4     farver_2.1.1       
+## [43] generics_0.1.3      zoo_1.8-11          jsonlite_1.8.3     
+## [46] vroom_1.6.0         magrittr_2.0.3      Formula_1.2-4      
+## [49] interp_1.1-3        Rcpp_1.0.9          munsell_0.5.0      
+## [52] fansi_1.0.3         lifecycle_1.0.3     stringi_1.7.8      
+## [55] yaml_2.3.6          grid_4.2.0          parallel_4.2.0     
+## [58] crayon_1.5.2        deldir_1.0-6        lattice_0.20-45    
+## [61] splines_4.2.0       hms_1.1.2           pillar_1.8.1       
+## [64] boot_1.3-28         lpSolve_5.6.17      glue_1.6.2         
+## [67] evaluate_0.18       latticeExtra_0.6-30 data.table_1.14.6  
+## [70] nloptr_2.0.3        png_0.1-7           vctrs_0.5.1        
+## [73] tzdb_0.3.0          gtable_0.3.1        purrr_0.3.5        
+## [76] assertthat_0.2.1    cachem_1.0.6        xfun_0.35          
+## [79] survival_3.4-0      tibble_3.1.8        cluster_2.1.4      
+## [82] ellipsis_0.3.2
 ```
 

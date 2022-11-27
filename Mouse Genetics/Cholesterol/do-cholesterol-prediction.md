@@ -61,19 +61,19 @@ cholesterol.data <-
 cholesterol.data %>%
   group_by(sex,diet) %>%
   summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(~shapiro.test(.)$p.value)) %>%
-  kable(caption="Groupwise Shapiro-Wilk normality tests for cholesterol levels")
+  kable(caption="Groupwise Shapiro-Wilk normality tests for cholesterol levels", digits=c(0,0,5,5,5))
 ```
 
 
 
 Table: Groupwise Shapiro-Wilk normality tests for cholesterol levels
 
-|sex |diet | chol1| chol2| chol.avg|
-|:---|:----|-----:|-----:|--------:|
-|F   |chow | 0.217| 0.016|    0.219|
-|F   |hf   | 0.015| 0.000|    0.002|
-|M   |chow | 0.000| 0.001|    0.000|
-|M   |hf   | 0.048| 0.013|    0.108|
+|sex |diet |  chol1|   chol2| chol.avg|
+|:---|:----|------:|-------:|--------:|
+|F   |chow | 0.2167| 0.01587|  0.21915|
+|F   |hf   | 0.0150| 0.00006|  0.00217|
+|M   |chow | 0.0000| 0.00071|  0.00002|
+|M   |hf   | 0.0478| 0.01317|  0.10807|
 
 ```r
 library(ggplot2)
@@ -96,7 +96,7 @@ cholesterol.data %>%
 ```r
 summary.data.complete <-
   cholesterol.data %>%
-  group_by(sex,diet) %>%
+  group_by(sex,Diet) %>%
   summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
@@ -106,12 +106,12 @@ kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
 
 Table: Cholesterol levels at 11 and 18 weeks
 
-|sex |diet | chol1_mean| chol2_mean| chol.avg_mean| chol1_se| chol2_se| chol.avg_se|
+|sex |Diet | chol1_mean| chol2_mean| chol.avg_mean| chol1_se| chol2_se| chol.avg_se|
 |:---|:----|----------:|----------:|-------------:|--------:|--------:|-----------:|
-|F   |chow |       80.0|       78.7|            79|     1.16|     1.48|        1.23|
-|F   |hf   |      108.0|      113.3|           111|     1.79|     2.38|        1.86|
-|M   |chow |       96.4|       96.5|            97|     1.47|     1.57|        1.37|
-|M   |hf   |      128.4|      129.4|           128|     2.06|     2.32|        1.90|
+|F   |NCD  |       80.0|       78.7|            79|     1.16|     1.48|        1.23|
+|F   |HFHS |      108.0|      113.3|           111|     1.79|     2.38|        1.86|
+|M   |NCD  |       96.4|       96.5|            97|     1.47|     1.57|        1.37|
+|M   |HFHS |      128.4|      129.4|           128|     2.06|     2.32|        1.90|
 
 ```r
 library(broom)
@@ -131,7 +131,26 @@ Table: Pairwise t-test ofcholesterol levels week 11 and week 18
 
 ```r
 summary.data.complete %>%
-  ggplot(aes())
+  pivot_longer(cols=starts_with('chol'),
+               names_sep="_",
+               names_to = c("Measure","Measurement"),
+               values_to = "Cholesterol") %>%
+  pivot_wider(values_from="Cholesterol",names_from = "Measurement") %>%
+  mutate(Value=fct_recode(as.factor(Measure),
+                          "Average"="chol.avg",
+                          `8 Weeks`="chol1",
+                          `19 Weeks`="chol2")) %>%
+  ggplot(aes(y=mean,ymin=mean-se,ymax=mean+se,x=Value)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5) +
+  facet_grid(Diet~sex) +
+    labs(y="Cholesterol (mg/dL)",
+       x="") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ![](figures/cholesterol-similarity-1.png)<!-- -->
@@ -141,10 +160,10 @@ summary.data.complete %>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol1), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 library(broom)
-lm(chol1~sex*diet, data=cholesterol.data) %>%
+lm(chol.avg~sex*diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 ```
@@ -155,31 +174,32 @@ Table: Global interactions between sex and diet
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     80.0|      1.68|     47.63|   0.000|
-|sexM        |     16.4|      2.38|      6.91|   0.000|
-|diethf      |     28.0|      2.38|     11.81|   0.000|
-|sexM:diethf |      3.9|      3.37|      1.16|   0.248|
+|(Intercept) |   78.993|      1.54|     51.38|   0.000|
+|sexM        |   18.029|      2.18|      8.27|   0.000|
+|diethf      |   31.702|      2.24|     14.14|   0.000|
+|sexM:diethf |   -0.285|      3.18|     -0.09|   0.929|
 
 ```r
-lm(chol1~sex+diet, data=cholesterol.data) %>%
+lm(chol.avg~sex+diet, data=cholesterol.data) %>%
   tidy %>%
-  kable(caption="Global effects of sex and diet, no interaction")
+  kable(caption="Global effects of sex and diet, no interaction",
+        digits=c(0,2,2,2,99))
 ```
 
 
 
 Table: Global effects of sex and diet, no interaction
 
-|term        | estimate| std.error| statistic| p.value|
-|:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     79.0|      1.46|      54.3|       0|
-|sexM        |     18.4|      1.69|      10.9|       0|
-|diethf      |     30.0|      1.69|      17.8|       0|
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |     79.1|      1.35|      58.8| 0.00e+00|
+|sexM        |     17.9|      1.59|      11.3| 1.45e-27|
+|diethf      |     31.6|      1.59|      19.9| 3.22e-72|
 
 ```r
 cholesterol.data %>%
   group_by(sex,diet) %>%
-  filter(!is.na(chol1)) %>%
+  filter(!is.na(chol.avg)) %>%
   count %>%
   kable(caption="Total cholesterol values for complete DO dataset")
 ```
@@ -190,22 +210,22 @@ Table: Total cholesterol values for complete DO dataset
 
 |sex |diet |   n|
 |:---|:----|---:|
-|F   |chow | 200|
+|F   |chow | 225|
 |F   |hf   | 200|
-|M   |chow | 199|
+|M   |chow | 223|
 |M   |hf   | 196|
 
 ```r
 library(ggplot2)
 cholesterol.data %>%
-  ggplot(aes(y=chol1,x=sex,
+  ggplot(aes(y=chol.avg,x=sex,
              fill=Diet)) +
   geom_violin() +
   geom_jitter(alpha=0.2,
               position = position_jitterdodge(dodge.width = 0.9,
                                               jitter.width = 0.5,
                                               jitter.height = 0)) +
-  labs(y="Blood Cholesterol (mg/dL)",
+  labs(y="Cholesterol (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
   scale_color_grey() +
@@ -354,13 +374,13 @@ tree.all.cont$cptable %>% kable(captiomn="Complexity parameter table, used to id
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
 | 0.562|      0|     1.000|  1.002| 0.059|
-| 0.139|      1|     0.438|  0.462| 0.030|
-| 0.095|      2|     0.299|  0.285| 0.017|
-| 0.023|      3|     0.204|  0.220| 0.015|
-| 0.017|      4|     0.181|  0.208| 0.015|
-| 0.016|      5|     0.164|  0.187| 0.013|
-| 0.011|      6|     0.148|  0.172| 0.012|
-| 0.010|      7|     0.137|  0.166| 0.011|
+| 0.139|      1|     0.438|  0.456| 0.029|
+| 0.095|      2|     0.299|  0.308| 0.021|
+| 0.023|      3|     0.204|  0.221| 0.015|
+| 0.017|      4|     0.181|  0.205| 0.013|
+| 0.016|      5|     0.164|  0.182| 0.013|
+| 0.011|      6|     0.148|  0.175| 0.013|
+| 0.010|      7|     0.137|  0.172| 0.012|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned

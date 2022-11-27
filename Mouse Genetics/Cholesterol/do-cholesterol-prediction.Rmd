@@ -84,7 +84,7 @@ cholesterol.data <-
 cholesterol.data %>%
   group_by(sex,diet) %>%
   summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(~shapiro.test(.)$p.value)) %>%
-  kable(caption="Groupwise Shapiro-Wilk normality tests for cholesterol levels")
+  kable(caption="Groupwise Shapiro-Wilk normality tests for cholesterol levels", digits=c(0,0,5,5,5))
 
 library(ggplot2)
 cholesterol.data %>%
@@ -104,7 +104,7 @@ cholesterol.data %>%
   
 summary.data.complete <-
   cholesterol.data %>%
-  group_by(sex,diet) %>%
+  group_by(sex,Diet) %>%
   summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
@@ -116,40 +116,60 @@ wilcox.test(cholesterol.data$chol2,
   kable(caption="Pairwise t-test ofcholesterol levels week 11 and week 18")
   
 summary.data.complete %>%
-  ggplot(aes())
+  pivot_longer(cols=starts_with('chol'),
+               names_sep="_",
+               names_to = c("Measure","Measurement"),
+               values_to = "Cholesterol") %>%
+  pivot_wider(values_from="Cholesterol",names_from = "Measurement") %>%
+  mutate(Value=fct_recode(as.factor(Measure),
+                          "Average"="chol.avg",
+                          `8 Weeks`="chol1",
+                          `19 Weeks`="chol2")) %>%
+  ggplot(aes(y=mean,ymin=mean-se,ymax=mean+se,x=Value)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5) +
+  facet_grid(Diet~sex) +
+    labs(y="Cholesterol (mg/dL)",
+       x="") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
 ```
 
 ```{r cholesterol-analysis}
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol1), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 library(broom)
-lm(chol1~sex*diet, data=cholesterol.data) %>%
+lm(chol.avg~sex*diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 
-lm(chol1~sex+diet, data=cholesterol.data) %>%
+lm(chol.avg~sex+diet, data=cholesterol.data) %>%
   tidy %>%
-  kable(caption="Global effects of sex and diet, no interaction")
+  kable(caption="Global effects of sex and diet, no interaction",
+        digits=c(0,2,2,2,99))
 
 cholesterol.data %>%
   group_by(sex,diet) %>%
-  filter(!is.na(chol1)) %>%
+  filter(!is.na(chol.avg)) %>%
   count %>%
   kable(caption="Total cholesterol values for complete DO dataset")
 
 library(ggplot2)
 cholesterol.data %>%
-  ggplot(aes(y=chol1,x=sex,
+  ggplot(aes(y=chol.avg,x=sex,
              fill=Diet)) +
   geom_violin() +
   geom_jitter(alpha=0.2,
               position = position_jitterdodge(dodge.width = 0.9,
                                               jitter.width = 0.5,
                                               jitter.height = 0)) +
-  labs(y="Blood Cholesterol (mg/dL)",
+  labs(y="Cholesterol (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
   scale_color_grey() +

@@ -2,3 +2,7 @@
 
 * Check the schemata for the diets and time points
 
+
+# Analyses
+
+* Check BMD

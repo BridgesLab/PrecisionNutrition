@@ -240,13 +240,13 @@ There is no evidence of an interaction between sex and diet, though both covaria
 
 # Cholesterol Classification
 
-Classified elevated cholesterol as being >mean for the 19 week cholesterol data for all mice
+Classified elevated cholesterol as being greater than the mean for the averaged cholesterol data for all mice
 
 
 ```r
 cholesterol.data <-
   cholesterol.data %>%
-  mutate(High.Chol = chol2 > mean(chol2,na.rm=T)) %>%
+  mutate(High.Chol = chol.avg > mean(chol.avg,na.rm=T)) %>%
   mutate(sex = as.factor(sex),
          diet = as.factor(diet))
 ```
@@ -258,40 +258,16 @@ First used only sex and diet to predict using classification trees
 
 ```r
 library(tree)
-tree.sex.diet <- tree(High.Chol~sex+diet, data=cholesterol.data)
 
-summary(tree.sex.diet) 
-```
-
-```
-## 
-## Regression tree:
-## tree(formula = High.Chol ~ sex + diet, data = cholesterol.data)
-## Number of terminal nodes:  4 
-## Residual mean deviance:  0.196 = 161 / 820 
-## Distribution of residuals:
-##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
-##  -0.743  -0.398  -0.130   0.000   0.419   0.870
-```
-
-```r
-plot(tree.sex.diet)
-text(tree.sex.diet, pretty=0)
-```
-
-![](figures/sex-diet-tree-1.png)<!-- -->
-
-```r
 # load libraries
 library(rpart)
 library(rattle)
 
-tree.sex.diet <- rpart(High.Chol~sex+diet, data=cholesterol.data)
-
+tree.sex.diet <- rpart(High.Chol~sex+Diet, data=cholesterol.data)
 fancyRpartPlot(tree.sex.diet)
 ```
 
-![](figures/sex-diet-tree-2.png)<!-- -->
+![](figures/sex-diet-tree-1.png)<!-- -->
 
 Next included fat mass as a predictor
 
@@ -308,10 +284,10 @@ Table: Logistic regression for sex and diet as predictors of above average chole
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   -2.333|     0.440|    -5.303|   0.000|
-|sexM        |    0.769|     0.372|     2.068|   0.039|
-|diethf      |    2.741|     0.425|     6.449|   0.000|
-|fat_mri     |    0.029|     0.042|     0.692|   0.489|
+|(Intercept) |   -2.421|     0.464|    -5.217|   0.000|
+|sexM        |    1.128|     0.405|     2.786|   0.005|
+|diethf      |    3.150|     0.457|     6.886|   0.000|
+|fat_mri     |    0.017|     0.044|     0.375|   0.708|
 
 ```r
 fancyRpartPlot(tree.sex.diet)
@@ -326,31 +302,20 @@ not_all_na <- function(x) any(!is.na(x))
 
 cholesterol.data %>%
   select(where(not_all_na)) %>% #remove columns with all nA
-  select(-sample,-chol2,-chol1, -hdld1,-hdld2,-sqlalchemy_id) -> #remove cholesterol and hdl columns
+  select(-sample,-chol.avg,-chol1, -hdld1,-hdld2,-sqlalchemy_id,-diet) -> #remove cholesterol and hdl columns
   chol.pred.data.high #testing higher than average cholesterol
 
 cholesterol.data %>%
   select(where(not_all_na)) %>% #remove columns with all nA
-  select(-sample,-chol1,-High.Chol, -hdld1,-hdld2,-sqlalchemy_id) -> #remove cholesterol and hdl columns
+  select(-sample,-chol1,-chol.avg,-High.Chol, -hdld1,-hdld2,-sqlalchemy_id,-diet) -> #remove cholesterol and hdl columns
   chol.pred.data.cont #testing continuous cholesterol levels
 
-
-
-  
- chol.pred.data.high %>%
-   dim %>%
-   kable()
-```
-
-
-
-|   x|
-|---:|
-| 846|
-| 163|
-
-```r
-chol.pred.data.cont %>% rpart(chol2~., data=., method="anova") -> tree.all.cont
+ 
+chol.pred.data.cont %>% 
+  rename(`TG 19w`="tg2",
+         `Ca 19w`="calcium2",
+         `BW 19w`="bw_19") %>%
+  rpart(chol2~., data=., method="anova") -> tree.all.cont
 chol.pred.data.high %>% rpart(High.Chol~., data=., method="class") -> tree.all.high
 
 fancyRpartPlot(tree.all.cont, main="Full tree, predicting continuous cholesterol levels")
@@ -366,21 +331,27 @@ fancyRpartPlot(tree.all.high, main="Full tree, predicting above average choleste
 
 ```r
 #pruning of the continuous model, first showed the complexity parameter table
-tree.all.cont$cptable %>% kable(captiomn="Complexity parameter table, used to idenfiy minumum crossvalidated error rate (xerror)")
+tree.all.cont$cptable %>% kable(caption="Complexity parameter table, used to idenfiy minumum crossvalidated error rate (xerror)")
 ```
 
 
 
+Table: Complexity parameter table, used to idenfiy minumum crossvalidated error rate (xerror)
+
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.562|      0|     1.000|  1.002| 0.059|
-| 0.139|      1|     0.438|  0.456| 0.029|
-| 0.095|      2|     0.299|  0.308| 0.021|
-| 0.023|      3|     0.204|  0.221| 0.015|
-| 0.017|      4|     0.181|  0.205| 0.013|
-| 0.016|      5|     0.164|  0.182| 0.013|
-| 0.011|      6|     0.148|  0.175| 0.013|
-| 0.010|      7|     0.137|  0.172| 0.012|
+| 0.247|      0|     1.000|  1.001| 0.059|
+| 0.063|      1|     0.753|  0.755| 0.045|
+| 0.059|      2|     0.690|  0.724| 0.045|
+| 0.037|      3|     0.630|  0.635| 0.040|
+| 0.026|      4|     0.594|  0.651| 0.045|
+| 0.023|      5|     0.568|  0.638| 0.044|
+| 0.016|      6|     0.544|  0.636| 0.044|
+| 0.016|      7|     0.529|  0.645| 0.045|
+| 0.013|      8|     0.513|  0.666| 0.046|
+| 0.011|      9|     0.500|  0.679| 0.047|
+| 0.010|     10|     0.488|  0.688| 0.047|
+| 0.010|     11|     0.478|  0.687| 0.047|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -389,6 +360,35 @@ fancyRpartPlot(tree.all.cont.pruned, uniform=TRUE, main="Pruned tree predicting 
 ```
 
 ![](figures/full-tree-3.png)<!-- -->
+
+```r
+rpart.plot::prp(tree.all.cont.pruned, extra=1, 
+                main="",
+                cex=1.2) 
+```
+
+![](figures/full-tree-4.png)<!-- -->
+
+```r
+tree.all.cont.pruned
+```
+
+```
+## n=824 (22 observations deleted due to missingness)
+## 
+## node), split, n, deviance, yval
+##       * denotes terminal node
+## 
+##  1) root 824 941000 103.0  
+##    2) Diet=NCD 439 263000  87.4  
+##      4) TG 19w< 128 233  92600  76.5 *
+##      5) TG 19w>=128 206 111000  99.8 *
+##    3) Diet=HFHS 385 445000 121.0  
+##      6) Ca 19w< 8.35 52  26700  90.6 *
+##      7) Ca 19w>=8.35 333 363000 126.0  
+##       14) BW 19w< 29.6 70  48500 106.0 *
+##       15) BW 19w>=29.6 263 280000 131.0 *
+```
 
 
 ```r
@@ -404,24 +404,24 @@ summary(log.calcium)
 ## 
 ## Deviance Residuals: 
 ##    Min      1Q  Median      3Q     Max  
-## -2.665  -0.793  -0.318   0.845   2.554  
+## -2.750  -0.758  -0.293   0.795   2.377  
 ## 
 ## Coefficients:
-##              Estimate Std. Error z value Pr(>|z|)    
-## (Intercept) -10.51257    1.08294   -9.71  < 2e-16 ***
-## sexM          1.08639    0.18686    5.81  6.1e-09 ***
-## diethf        2.08519    0.20100   10.37  < 2e-16 ***
-## tg2           0.00807    0.00184    4.40  1.1e-05 ***
-## calcium2      0.84150    0.11269    7.47  8.2e-14 ***
+##             Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -8.78573    1.02509   -8.57  < 2e-16 ***
+## sexM         1.40355    0.19921    7.05  1.8e-12 ***
+## diethf       2.67173    0.21937   12.18  < 2e-16 ***
+## tg2          0.00944    0.00193    4.90  9.7e-07 ***
+## calcium2     0.59068    0.10635    5.55  2.8e-08 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 1063.49  on 771  degrees of freedom
-## Residual deviance:  783.56  on 767  degrees of freedom
+##     Null deviance: 1065.23  on 771  degrees of freedom
+## Residual deviance:  741.39  on 767  degrees of freedom
 ##   (74 observations deleted due to missingness)
-## AIC: 793.6
+## AIC: 751.4
 ## 
 ## Number of Fisher Scoring iterations: 5
 ```
@@ -430,15 +430,78 @@ summary(log.calcium)
 library(ggplot2)
 
 ggplot(data=cholesterol.data,
-       aes(y=chol2,
+       aes(y=chol.avg,
            x=calcium2,
-           col=diet)) +
+           col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm, se=F) +
+  labs(y="Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
 ```
 
 ![](figures/Calcium-1.png)<!-- -->
+
+```r
+ lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of cholesterol with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of cholesterol with calcium
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -35.0|     7.941|     -4.41| 1.19e-05|
+|DietHFHS    |     28.4|     1.797|     15.78| 8.42e-49|
+|sexM        |     17.9|     1.775|     10.08| 1.58e-22|
+|calcium2    |     12.7|     0.862|     14.69| 3.03e-43|
+
+```r
+  lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   glance %>% 
+   kable(caption="Diet adjusted association of cholesterol with triglycerides",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of cholesterol with triglycerides
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik|  AIC|  BIC| deviance| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|------:|----:|----:|--------:|-----------:|----:|
+|         0|         0.452|  24.6|       213|       0|  3|  -3567| 7143| 7167|   465701|         768|  772|
+
+```r
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize(Estimate = cor.test(chol2,calcium2, method="spearman")$estimate,
+            P.value = cor.test(chol2,calcium2, method="spearman")$p.value) %>%
+  kable(caption="Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex",
+        digits=c(0,0,3,99))
+```
+
+
+
+Table: Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex
+
+|Diet |sex | Estimate|  P.value|
+|:----|:---|--------:|--------:|
+|NCD  |F   |    0.415| 1.50e-09|
+|NCD  |M   |    0.427| 5.66e-11|
+|HFHS |F   |    0.388| 1.29e-07|
+|HFHS |M   |    0.481| 3.17e-12|
 
 ```r
 lm.calcium.1 <- lm(chol2~calcium2, data=cholesterol.data)
@@ -606,18 +669,227 @@ summary(lm.calcium.hf) %>% glance %>% kable
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.278|         0.274|  28.9|      68.8|       0|  2|         357|  360|
 
+## Effects of Diet and Sex on Calcium
+
+
+```r
+summary.data <-
+  cholesterol.data %>%
+  group_by(sex,diet) %>%
+  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),se=se))
+
+lm(calcium2~sex*diet, data=cholesterol.data) %>%
+  tidy %>%
+  kable(caption="Global interactions between sex and diet on calcium levels")
+```
+
+
+
+Table: Global interactions between sex and diet on calcium levels
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |    9.088|     0.074|    123.62|   0.000|
+|sexM        |   -0.134|     0.102|     -1.32|   0.189|
+|diethf      |    0.214|     0.107|      1.99|   0.047|
+|sexM:diethf |    0.190|     0.148|      1.28|   0.201|
+
+```r
+lm(calcium2~sex+diet, data=cholesterol.data) %>%
+  tidy %>%
+  kable(caption="Global effects of sex and diet on calcium levels, no interaction",
+        digits=c(0,2,2,2,99))
+```
+
+
+
+Table: Global effects of sex and diet on calcium levels, no interaction
+
+|term        | estimate| std.error| statistic|   p.value|
+|:-----------|--------:|---------:|---------:|---------:|
+|(Intercept) |     9.04|      0.06|    141.50| 0.0000000|
+|sexM        |    -0.04|      0.07|     -0.60| 0.5462925|
+|diethf      |     0.31|      0.07|      4.23| 0.0000267|
+
+```r
+cholesterol.data %>%
+  group_by(sex,diet) %>%
+  filter(!is.na(calcium2)) %>%
+  count %>%
+  kable(caption="Total calcium values for complete DO dataset")
+```
+
+
+
+Table: Total calcium values for complete DO dataset
+
+|sex |diet |   n|
+|:---|:----|---:|
+|F   |chow | 196|
+|F   |hf   | 173|
+|M   |chow | 216|
+|M   |hf   | 189|
+
+```r
+cholesterol.data %>%
+  ggplot(aes(y=calcium2,x=sex,
+             fill=Diet)) +
+  geom_violin() +
+  geom_jitter(alpha=0.2,
+              position = position_jitterdodge(dodge.width = 0.9,
+                                              jitter.width = 0.5,
+                                              jitter.height = 0)) +
+  labs(y="Calcium (mg/dL)",
+       x="Sex") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        legend.position = c(0.85,0.15))
+```
+
+![](figures/calcium-stratification-1.png)<!-- -->
+
+# Bone Content and Density
+
 
 ```r
 ggplot(data=cholesterol.data,
-       aes(y=chol2,
-           x=tg2,
-           col=diet)) +
+       aes(y=chol.avg,
+           x=bmd2,
+           col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm, se=F) +
+  labs(y="Cholesterol (mg/dL)",
+       x="Bone Mineral Density (g/cm2)") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
+```
+
+![](figures/bmd-1.png)<!-- -->
+
+```r
+ lm(chol2~Diet+sex+bmd2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of cholesterol with bone mineral density",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of cholesterol with bone mineral density
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |     74.8|     12.48|      5.99| 3.16e-09|
+|DietHFHS    |     33.6|      1.99|     16.93| 2.73e-55|
+|sexM        |     16.7|      2.05|      8.13| 1.57e-15|
+|bmd2        |     79.4|    227.43|      0.35| 7.27e-01|
+
+
+```r
+ggplot(data=cholesterol.data,
+       aes(y=chol.avg,
+           x=bmc2,
+           col=Diet)) +
+  geom_point() +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Cholesterol (mg/dL)",
+       x="Bone Mineral Content (g)") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
+```
+
+![](figures/bmc-1.png)<!-- -->
+
+```r
+ lm(chol2~Diet+sex+bmc2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of cholesterol with bone mineral content",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of cholesterol with bone mineral content
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |   79.277|      6.33|     12.52| 5.53e-33|
+|DietHFHS    |   33.646|      2.00|     16.85| 7.37e-55|
+|sexM        |   16.921|      2.22|      7.63| 6.46e-14|
+|bmc2        |   -0.374|     11.22|     -0.03| 9.73e-01|
+
+
+
+```r
+ggplot(data=cholesterol.data,
+       aes(y=chol.avg,
+           x=tg2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Cholesterol (mg/dL)",
+       x="Triglycerides (mg/dL)") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
 ```
 
 ![](figures/TG-1.png)<!-- -->
+
+```r
+ lm(chol2~Diet+sex+tg2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of cholesterol with triglycerides",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of cholesterol with triglycerides
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |   57.688|     2.531|     22.79| 1.96e-89|
+|DietHFHS    |   38.544|     1.894|     20.35| 7.45e-75|
+|sexM        |   11.396|     1.911|      5.96| 3.66e-09|
+|tg2         |    0.179|     0.017|     10.68| 5.33e-25|
+
+```r
+  lm(chol2~Diet+sex+tg2, data=cholesterol.data) %>% 
+   glance %>% 
+   kable(caption="Diet adjusted association of cholesterol with triglycerides",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of cholesterol with triglycerides
+
+| r.squared| adj.r.squared| sigma| statistic|  p.value| df| logLik|  AIC|  BIC| deviance| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|--------:|--:|------:|----:|----:|--------:|-----------:|----:|
+|         0|         0.392|  26.4|       178| 6.25e-89|  3|  -3863| 7736| 7760|   569756|         820|  824|
 
 ```r
 lm.tg.1 <- lm(chol2~sex+tg2, data=cholesterol.data)
@@ -1010,7 +1282,7 @@ ctrl <- trainControl(method = "cv",  number = 10)
 
 # train bagged model
 bagged_cv <- bagging(
-  formula = chol2~diet+calcium2,
+  formula = chol2~Diet+calcium2,
   data    = chol.pred.data.cont,
   coob=TRUE
   )
@@ -1027,7 +1299,7 @@ for (i in seq_along(ntree)) {
   
   # perform bagged model
   model <- bagging(
-  formula = chol2~diet+sex+calcium2+tg2,
+  formula = chol2~Diet+sex+calcium2+tg2,
   data    = chol.pred.data.cont,
   coob=TRUE,
   nbagg   = ntree[i]
@@ -1053,7 +1325,7 @@ ggplot(chol.pred.data.cont, aes(x=predict_model,y=chol2)) +
 
 ```r
 library(randomForest)
-forest <- randomForest(chol2~diet+sex+calcium2+tg2, 
+forest <- randomForest(chol2~Diet+sex+calcium2+tg2, 
              data = chol.pred.data.cont,
              na.action=na.exclude) 
 varImpPlot(forest)

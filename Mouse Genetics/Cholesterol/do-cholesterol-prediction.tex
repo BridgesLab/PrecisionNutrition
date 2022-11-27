@@ -1,0 +1,1590 @@
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{lmodern}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math}
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage[margin=1in]{geometry}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.77,0.63,0.00}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same} % disable monospaced font for URLs
+\hypersetup{
+  pdftitle={Predictors of Diversity Outbred Cholesterol Levels},
+  pdfauthor={Dave Bridges},
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
+
+\title{Predictors of Diversity Outbred Cholesterol Levels}
+\author{Dave Bridges}
+\date{March 25, 2022}
+
+\begin{document}
+\maketitle
+
+{
+\setcounter{tocdepth}{2}
+\tableofcontents
+}
+\hypertarget{purpose}{%
+\section{Purpose}\label{purpose}}
+
+To analyze cholesterol levels from diversity outbred mice, identifying
+predictors of elevated choelsterol.
+
+\hypertarget{experimental-details}{%
+\section{Experimental Details}\label{experimental-details}}
+
+This analysis uses the complete dataset (F01-F425 and M01-M425).
+
+\hypertarget{raw-data}{%
+\section{Raw Data}\label{raw-data}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{phenotype.filename }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Svenson{-}183\_Svenson\_DO{-}phenotypes.csv\textquotesingle{}}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(readr) }\CommentTok{\#loads the readr package}
+
+
+\NormalTok{phenotype.data }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(phenotype.filename)}
+\CommentTok{\#set phenotypes of zero or  to na}
+\NormalTok{phenotype.data[phenotype.data }\SpecialCharTok{\textless{}} \DecValTok{0}\NormalTok{] }\OtherTok{\textless{}{-}} \ConstantTok{NA}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{analysis}{%
+\section{Analysis}\label{analysis}}
+
+\hypertarget{cholesterol-levels-for-ncd-annimals}{%
+\subsection{Cholesterol Levels for NCD
+Annimals}\label{cholesterol-levels-for-ncd-annimals}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cholesterol.data }\OtherTok{\textless{}{-}}
+\NormalTok{  phenotype.data }
+
+\NormalTok{summary.data }\OtherTok{\textless{}{-}}
+\NormalTok{  cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\NormalTok{mean,}\AttributeTok{se=}\NormalTok{se))}
+
+\FunctionTok{library}\NormalTok{(broom)}
+\FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{*}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{cholesterol.data) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Global interactions between sex and diet"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Global interactions between sex and diet}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 80.0 & 1.68 & 47.63 & 0.000 \\
+sexM & 16.4 & 2.38 & 6.91 & 0.000 \\
+diethf & 28.0 & 2.38 & 11.81 & 0.000 \\
+sexM:diethf & 3.9 & 3.37 & 1.16 & 0.248 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{cholesterol.data) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Global effects of sex and diet, no interaction"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Global effects of sex and diet, no interaction}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 79.0 & 1.46 & 54.3 & 0 \\
+sexM & 18.4 & 1.69 & 10.9 & 0 \\
+diethf & 30.0 & 1.69 & 17.8 & 0 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(chol1)) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  count }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Total cholesterol values for complete DO dataset"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}llr@{}}
+\caption{Total cholesterol values for complete DO
+dataset}\tabularnewline
+\toprule()
+sex & diet & n \\
+\midrule()
+\endfirsthead
+\toprule()
+sex & diet & n \\
+\midrule()
+\endhead
+F & chow & 200 \\
+F & hf & 200 \\
+M & chow & 199 \\
+M & hf & 196 \\
+\bottomrule()
+\end{longtable}
+
+There is no evidence of an interaction between sex and diet, though both
+covariates were significant individually.
+
+\hypertarget{cholesterol-classification}{%
+\section{Cholesterol Classification}\label{cholesterol-classification}}
+
+Classified elevated cholesterol as being \textgreater mean for the 19
+week cholesterol data for all mice
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{cholesterol.data }\OtherTok{\textless{}{-}}
+\NormalTok{  cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{High.Chol =}\NormalTok{ chol2 }\SpecialCharTok{\textgreater{}} \FunctionTok{mean}\NormalTok{(chol2,}\AttributeTok{na.rm=}\NormalTok{T)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{sex =} \FunctionTok{as.factor}\NormalTok{(sex),}
+         \AttributeTok{diet =} \FunctionTok{as.factor}\NormalTok{(diet))}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{classification-tree}{%
+\section{Classification Tree}\label{classification-tree}}
+
+First used only sex and diet to predict using classification trees
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(tree)}
+\NormalTok{tree.sex.diet }\OtherTok{\textless{}{-}} \FunctionTok{tree}\NormalTok{(High.Chol}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+
+\FunctionTok{summary}\NormalTok{(tree.sex.diet) }
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Regression tree:
+## tree(formula = High.Chol ~ sex + diet, data = cholesterol.data)
+## Number of terminal nodes:  4 
+## Residual mean deviance:  0.196 = 161 / 820 
+## Distribution of residuals:
+##    Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+##  -0.743  -0.398  -0.130   0.000   0.419   0.870
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{plot}\NormalTok{(tree.sex.diet)}
+\FunctionTok{text}\NormalTok{(tree.sex.diet, }\AttributeTok{pretty=}\DecValTok{0}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/sex-diet-tree-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\# load libraries}
+\FunctionTok{library}\NormalTok{(rpart)}
+\FunctionTok{library}\NormalTok{(rattle)}
+
+\NormalTok{tree.sex.diet }\OtherTok{\textless{}{-}} \FunctionTok{rpart}\NormalTok{(High.Chol}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+
+\FunctionTok{fancyRpartPlot}\NormalTok{(tree.sex.diet)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/sex-diet-tree-2.png}
+
+Next included fat mass as a predictor
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{tree.fat }\OtherTok{\textless{}{-}} \FunctionTok{rpart}\NormalTok{(High.Chol}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{fat\_mri, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{log.fat }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(High.Chol}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{fat\_mri, }\AttributeTok{data=}\NormalTok{cholesterol.data, }\AttributeTok{family=}\StringTok{\textquotesingle{}binomial\textquotesingle{}}\NormalTok{)}
+\NormalTok{log.fat }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Logistic regression for sex and diet as predictors of above average cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Logistic regression for sex and diet as predictors of above
+average cholesterol levels}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -2.333 & 0.440 & -5.303 & 0.000 \\
+sexM & 0.769 & 0.372 & 2.068 & 0.039 \\
+diethf & 2.741 & 0.425 & 6.449 & 0.000 \\
+fat\_mri & 0.029 & 0.042 & 0.692 & 0.489 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{fancyRpartPlot}\NormalTok{(tree.sex.diet)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/fat-tree-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#function to figure out if all columns are na, pass to select  }
+\NormalTok{not\_all\_na }\OtherTok{\textless{}{-}} \ControlFlowTok{function}\NormalTok{(x) }\FunctionTok{any}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(x))  }
+
+\NormalTok{cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(}\FunctionTok{where}\NormalTok{(not\_all\_na)) }\SpecialCharTok{\%\textgreater{}\%} \CommentTok{\#remove columns with all nA}
+  \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{sample,}\SpecialCharTok{{-}}\NormalTok{chol2,}\SpecialCharTok{{-}}\NormalTok{chol1, }\SpecialCharTok{{-}}\NormalTok{hdld1,}\SpecialCharTok{{-}}\NormalTok{hdld2,}\SpecialCharTok{{-}}\NormalTok{sqlalchemy\_id) }\OtherTok{{-}\textgreater{}} \CommentTok{\#remove cholesterol and hdl columns}
+\NormalTok{  chol.pred.data.high }\CommentTok{\#testing higher than average cholesterol}
+
+\NormalTok{cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(}\FunctionTok{where}\NormalTok{(not\_all\_na)) }\SpecialCharTok{\%\textgreater{}\%} \CommentTok{\#remove columns with all nA}
+  \FunctionTok{select}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{sample,}\SpecialCharTok{{-}}\NormalTok{chol1,}\SpecialCharTok{{-}}\NormalTok{High.Chol, }\SpecialCharTok{{-}}\NormalTok{hdld1,}\SpecialCharTok{{-}}\NormalTok{hdld2,}\SpecialCharTok{{-}}\NormalTok{sqlalchemy\_id) }\OtherTok{{-}\textgreater{}} \CommentTok{\#remove cholesterol and hdl columns}
+\NormalTok{  chol.pred.data.cont }\CommentTok{\#testing continuous cholesterol levels}
+
+
+
+  
+\NormalTok{ chol.pred.data.high }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{   dim }\SpecialCharTok{\%\textgreater{}\%}
+   \FunctionTok{kable}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}r@{}}
+\toprule()
+x \\
+\midrule()
+\endhead
+846 \\
+161 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{chol.pred.data.cont }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rpart}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{., }\AttributeTok{data=}\NormalTok{., }\AttributeTok{method=}\StringTok{"anova"}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ tree.all.cont}
+\NormalTok{chol.pred.data.high }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{rpart}\NormalTok{(High.Chol}\SpecialCharTok{\textasciitilde{}}\NormalTok{., }\AttributeTok{data=}\NormalTok{., }\AttributeTok{method=}\StringTok{"class"}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ tree.all.high}
+
+\FunctionTok{fancyRpartPlot}\NormalTok{(tree.all.cont, }\AttributeTok{main=}\StringTok{"Full tree, predicting continuous cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/full-tree-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{fancyRpartPlot}\NormalTok{(tree.all.high, }\AttributeTok{main=}\StringTok{"Full tree, predicting above average cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/full-tree-2.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\CommentTok{\#pruning of the continuous model, first showed the complexity parameter table}
+\NormalTok{tree.all.cont}\SpecialCharTok{$}\NormalTok{cptable }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{captiomn=}\StringTok{"Complexity parameter table, used to idenfiy minumum crossvalidated error rate (xerror)"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}rrrrr@{}}
+\toprule()
+CP & nsplit & rel error & xerror & xstd \\
+\midrule()
+\endhead
+0.247 & 0 & 1.000 & 1.000 & 0.059 \\
+0.063 & 1 & 0.753 & 0.754 & 0.045 \\
+0.059 & 2 & 0.690 & 0.717 & 0.044 \\
+0.037 & 3 & 0.630 & 0.636 & 0.040 \\
+0.026 & 4 & 0.594 & 0.648 & 0.045 \\
+0.023 & 5 & 0.568 & 0.639 & 0.045 \\
+0.016 & 6 & 0.544 & 0.663 & 0.046 \\
+0.016 & 7 & 0.529 & 0.684 & 0.048 \\
+0.013 & 8 & 0.513 & 0.685 & 0.048 \\
+0.011 & 9 & 0.500 & 0.691 & 0.049 \\
+0.010 & 10 & 0.488 & 0.696 & 0.049 \\
+0.010 & 11 & 0.478 & 0.701 & 0.049 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{prune}\NormalTok{(tree.all.cont, }\AttributeTok{cp=}\FloatTok{0.0365}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ tree.all.cont.pruned}
+
+\FunctionTok{fancyRpartPlot}\NormalTok{(tree.all.cont.pruned, }\AttributeTok{uniform=}\ConstantTok{TRUE}\NormalTok{, }\AttributeTok{main=}\StringTok{"Pruned tree predicting continuous cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/full-tree-3.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{log.calcium }\OtherTok{\textless{}{-}} \FunctionTok{glm}\NormalTok{(High.Chol}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{tg2}\SpecialCharTok{+}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data, }\AttributeTok{family=}\StringTok{\textquotesingle{}binomial\textquotesingle{}}\NormalTok{)}
+\FunctionTok{summary}\NormalTok{(log.calcium)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## 
+## Call:
+## glm(formula = High.Chol ~ sex + diet + tg2 + calcium2, family = "binomial", 
+##     data = cholesterol.data)
+## 
+## Deviance Residuals: 
+##    Min      1Q  Median      3Q     Max  
+## -2.665  -0.793  -0.318   0.845   2.554  
+## 
+## Coefficients:
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -10.51257    1.08294   -9.71  < 2e-16 ***
+## sexM          1.08639    0.18686    5.81  6.1e-09 ***
+## diethf        2.08519    0.20100   10.37  < 2e-16 ***
+## tg2           0.00807    0.00184    4.40  1.1e-05 ***
+## calcium2      0.84150    0.11269    7.47  8.2e-14 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## (Dispersion parameter for binomial family taken to be 1)
+## 
+##     Null deviance: 1063.49  on 771  degrees of freedom
+## Residual deviance:  783.56  on 767  degrees of freedom
+##   (74 observations deleted due to missingness)
+## AIC: 793.6
+## 
+## Number of Fisher Scoring iterations: 5
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+
+\FunctionTok{ggplot}\NormalTok{(}\AttributeTok{data=}\NormalTok{cholesterol.data,}
+       \FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,}
+           \AttributeTok{x=}\NormalTok{calcium2,}
+           \AttributeTok{col=}\NormalTok{diet)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(.}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\NormalTok{lm)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/Calcium-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.calcium}\FloatTok{.1} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.2} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.3} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.4} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.5} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.6} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.7} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.calcium}\FloatTok{.8} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{tg2}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\FunctionTok{anova}\NormalTok{(lm.calcium}\FloatTok{.3}\NormalTok{,lm.calcium}\FloatTok{.4}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## Analysis of Variance Table
+## 
+## Model 1: chol2 ~ calcium2 + sex + diet
+## Model 2: chol2 ~ calcium2 + sex + tg2
+##   Res.Df    RSS Df Sum of Sq F Pr(>F)
+## 1    768 465701                      
+## 2    768 613655  0   -147954
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.calcium}\FloatTok{.9} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{*}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{aov.calcium }\OtherTok{\textless{}{-}} \FunctionTok{aov}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Effects of calcium on cholesterol at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -29.2 & 9.47 & -3.08 & 2.12e-03 \\
+calcium2 & 14.5 & 1.03 & 14.11 & 2.19e-40 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex adjusted effects of calcium on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -40.3 & 9.12 & -4.42 & 1.12e-05 \\
+calcium2 & 14.7 & 0.98 & 14.99 & 9.67e-45 \\
+sexM & 17.9 & 2.04 & 8.75 & 1.37e-17 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.3}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of calcium on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -35.0 & 7.941 & -4.41 & 1.19e-05 \\
+calcium2 & 12.7 & 0.862 & 14.69 & 3.03e-43 \\
+sexM & 17.9 & 1.775 & 10.08 & 1.58e-22 \\
+diethf & 28.4 & 1.797 & 15.78 & 8.40e-49 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.4}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -39.676 & 9.1133 & -4.35 & 1.52e-05 \\
+calcium2 & 14.193 & 1.0101 & 14.05 & 4.45e-40 \\
+sexM & 16.728 & 2.1168 & 7.90 & 9.47e-15 \\
+tg2 & 0.036 & 0.0184 & 1.95 & 5.10e-02 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.5}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -61.87 & 9.136 & -6.77 & 2.52e-11 \\
+calcium2 & 13.09 & 0.960 & 13.65 & 4.11e-38 \\
+sexM & 6.90 & 2.375 & 2.91 & 3.76e-03 \\
+bw\_19 & 1.23 & 0.149 & 8.22 & 8.97e-16 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.6}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -35.0 & 7.941 & -4.41 & 1.19e-05 \\
+sexM & 17.9 & 1.775 & 10.08 & 1.58e-22 \\
+diethf & 28.4 & 1.797 & 15.78 & 8.40e-49 \\
+calcium2 & 12.7 & 0.862 & 14.69 & 3.03e-43 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.7}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -32.181 & 7.7007 & -4.18 & 3.27e-05 \\
+sexM & 14.259 & 1.7914 & 7.96 & 6.21e-15 \\
+diethf & 32.024 & 1.8134 & 17.66 & 0.00e+00 \\
+calcium2 & 10.801 & 0.8736 & 12.36 & 3.78e-32 \\
+tg2 & 0.116 & 0.0162 & 7.19 & 1.50e-12 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.calcium}\FloatTok{.8}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -40.248 & 8.1030 & -4.97 & 8.39e-07 \\
+sexM & 10.594 & 2.1570 & 4.91 & 1.11e-06 \\
+diethf & 29.767 & 1.9456 & 15.30 & 2.67e-46 \\
+calcium2 & 10.478 & 0.8760 & 11.96 & 2.40e-30 \\
+tg2 & 0.111 & 0.0162 & 6.86 & 1.43e-11 \\
+bw\_19 & 0.430 & 0.1407 & 3.06 & 2.30e-03 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.calcium.chow }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{calcium2, }\FunctionTok{filter}\NormalTok{(cholesterol.data, diet }\SpecialCharTok{==} \StringTok{"chow"}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(lm.calcium.chow) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ glance }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ kable}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0882}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1176}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0441}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0735}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule()
+\endhead
+0.325 & 0.322 & 19.9 & 98.4 & 0 & 2 & 409 & 412 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.calcium.hf }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{calcium2, }\FunctionTok{filter}\NormalTok{(cholesterol.data, diet }\SpecialCharTok{==} \StringTok{"hf"}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(lm.calcium.hf) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ glance }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ kable}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0882}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1176}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0441}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0735}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule()
+\endhead
+0.278 & 0.274 & 28.9 & 68.8 & 0 & 2 & 357 & 360 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggplot}\NormalTok{(}\AttributeTok{data=}\NormalTok{cholesterol.data,}
+       \FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,}
+           \AttributeTok{x=}\NormalTok{tg2,}
+           \AttributeTok{col=}\NormalTok{diet)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(.}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\NormalTok{lm)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/TG-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.tg}\FloatTok{.1} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.tg}\FloatTok{.2} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.tg}\FloatTok{.3} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.tg}\FloatTok{.4} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{bw\_19}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.tg}\FloatTok{.5} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{tg2}\SpecialCharTok{+}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.tg}\FloatTok{.6} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{tg2}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.tg.male }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet}\SpecialCharTok{*}\NormalTok{tg2, dplyr}\SpecialCharTok{::}\FunctionTok{filter}\NormalTok{(cholesterol.data, sex }\SpecialCharTok{==} \StringTok{"M"}\NormalTok{))}
+\NormalTok{lm.tg.female }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet}\SpecialCharTok{*}\NormalTok{tg2, dplyr}\SpecialCharTok{::}\FunctionTok{filter}\NormalTok{(cholesterol.data, sex }\SpecialCharTok{==} \StringTok{"F"}\NormalTok{))}
+\NormalTok{lm.tg.complicated }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet }\SpecialCharTok{+}\NormalTok{ sex }\SpecialCharTok{+}\NormalTok{ diet}\SpecialCharTok{*}\NormalTok{tg2 }\SpecialCharTok{+}\NormalTok{ sex}\SpecialCharTok{*}\NormalTok{tg2 }\SpecialCharTok{+}\NormalTok{ sex}\SpecialCharTok{*}\NormalTok{diet }\SpecialCharTok{+}\NormalTok{ sex}\SpecialCharTok{*}\NormalTok{diet}\SpecialCharTok{*}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{aov.tg }\OtherTok{\textless{}{-}} \FunctionTok{aov}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+
+\FunctionTok{summary}\NormalTok{(lm.tg}\FloatTok{.1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex adjusted effects of tg on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex adjusted effects of tg on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 84.4052 & 2.65 & 31.80 & 0.00e+00 \\
+sexM & 13.6869 & 2.34 & 5.85 & 7.01e-09 \\
+tg2 & 0.0988 & 0.02 & 4.94 & 9.61e-07 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg}\FloatTok{.2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of tg on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of tg on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 57.688 & 2.5315 & 22.79 & 0.00e+00 \\
+sexM & 11.396 & 1.9108 & 5.96 & 3.66e-09 \\
+diethf & 38.544 & 1.8938 & 20.35 & 0.00e+00 \\
+tg2 & 0.179 & 0.0168 & 10.68 & 5.33e-25 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg}\FloatTok{.3}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of tg on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of tg on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -39.676 & 9.1133 & -4.35 & 1.52e-05 \\
+sexM & 16.728 & 2.1168 & 7.90 & 9.47e-15 \\
+calcium2 & 14.193 & 1.0101 & 14.05 & 4.45e-40 \\
+tg2 & 0.036 & 0.0184 & 1.95 & 5.10e-02 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg}\FloatTok{.4}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of tg on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of tg on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 36.5354 & 5.2576 & 6.949 & 7.50e-12 \\
+sexM & -0.2733 & 2.5866 & -0.106 & 9.16e-01 \\
+bw\_19 & 1.6440 & 0.1588 & 10.355 & 1.06e-23 \\
+tg2 & 0.0903 & 0.0189 & 4.788 & 2.00e-06 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg}\FloatTok{.5}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of tg on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of tg on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -32.181 & 7.7007 & -4.18 & 3.27e-05 \\
+sexM & 14.259 & 1.7914 & 7.96 & 6.21e-15 \\
+diethf & 32.024 & 1.8134 & 17.66 & 0.00e+00 \\
+tg2 & 0.116 & 0.0162 & 7.19 & 1.50e-12 \\
+calcium2 & 10.801 & 0.8736 & 12.36 & 3.78e-32 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg}\FloatTok{.6}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of tg on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of tg on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -40.248 & 8.1030 & -4.97 & 8.39e-07 \\
+sexM & 10.594 & 2.1570 & 4.91 & 1.11e-06 \\
+diethf & 29.767 & 1.9456 & 15.30 & 2.67e-46 \\
+tg2 & 0.111 & 0.0162 & 6.86 & 1.43e-11 \\
+calcium2 & 10.478 & 0.8760 & 11.96 & 2.40e-30 \\
+bw\_19 & 0.430 & 0.1407 & 3.06 & 2.30e-03 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg.male) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of calcium on cholesterol at 18w for males"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of calcium on cholesterol at 18w
+for males}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 67.619 & 4.6946 & 14.40 & 3.60e-38 \\
+diethf & 50.051 & 6.3200 & 7.92 & 2.39e-14 \\
+tg2 & 0.194 & 0.0292 & 6.65 & 9.42e-11 \\
+diethf:tg2 & -0.101 & 0.0417 & -2.43 & 1.57e-02 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg.female) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of calcium on cholesterol at 18w for females"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of calcium on cholesterol at 18w
+for females}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 54.282 & 4.4127 & 12.30 & 6.95e-30 \\
+diethf & 27.651 & 6.5939 & 4.19 & 3.36e-05 \\
+tg2 & 0.202 & 0.0336 & 6.01 & 4.17e-09 \\
+diethf:tg2 & 0.145 & 0.0604 & 2.40 & 1.70e-02 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.tg.complicated) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of calcium on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 54.2816 & 4.4710 & 12.141 & 2.68e-31 \\
+diethf & 27.6507 & 6.6810 & 4.139 & 3.86e-05 \\
+sexM & 13.3372 & 6.4380 & 2.072 & 3.86e-02 \\
+tg2 & 0.2015 & 0.0340 & 5.927 & 4.56e-09 \\
+diethf:tg2 & 0.1447 & 0.0612 & 2.366 & 1.82e-02 \\
+sexM:tg2 & -0.0073 & 0.0446 & -0.164 & 8.70e-01 \\
+diethf:sexM & 22.4002 & 9.1393 & 2.451 & 1.45e-02 \\
+diethf:sexM:tg2 & -0.2460 & 0.0738 & -3.336 & 8.88e-04 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.tg.chow }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{tg2, }\FunctionTok{filter}\NormalTok{(cholesterol.data, diet }\SpecialCharTok{==} \StringTok{"chow"}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(lm.tg.chow) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ glance }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ kable}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0882}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1176}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0441}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0735}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule()
+\endhead
+0.34 & 0.337 & 20 & 112 & 0 & 2 & 436 & 439 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.tg.hf }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{tg2, }\FunctionTok{filter}\NormalTok{(cholesterol.data, diet }\SpecialCharTok{==} \StringTok{"hf"}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(lm.tg.hf) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ glance }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ kable}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0882}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1176}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0441}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0735}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule()
+\endhead
+0.114 & 0.109 & 32.1 & 24.5 & 0 & 2 & 382 & 385 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(effectsize)}
+\FunctionTok{omega\_squared}\NormalTok{(aov.calcium, }\AttributeTok{partial =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Partial effect size estimates for predictors of continuous cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Partial effect size estimates for predictors of continuous
+cholesterol levels}\tabularnewline
+\toprule()
+Parameter & Omega2\_partial & CI & CI\_low & CI\_high \\
+\midrule()
+\endfirsthead
+\toprule()
+Parameter & Omega2\_partial & CI & CI\_low & CI\_high \\
+\midrule()
+\endhead
+sex & 0.107 & 0.95 & 0.075 & 1 \\
+diet & 0.299 & 0.95 & 0.257 & 1 \\
+calcium2 & 0.218 & 0.95 & 0.177 & 1 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dplyr}\SpecialCharTok{::}\FunctionTok{filter}\NormalTok{(cholesterol.data, sex }\SpecialCharTok{==} \StringTok{"M"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 421 x 167
+##    sample  acr1  acr2 adiponectin b_area1 b_area2   bmc1   bmc2    bmd1    bmd2
+##    <chr>  <dbl> <dbl>       <dbl>   <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl>
+##  1 F142      NA    NA          NA    8.31    8.74  0.423  0.477  0.0509  0.0546
+##  2 M01       NA    NA          NA    9.97    9.82  0.496  0.538  0.0497  0.0547
+##  3 M02       NA    NA          NA    9.02    8.57  0.489  0.497  0.0542  0.058 
+##  4 M03       NA    NA          NA    9.05    9.48  0.542  0.594  0.0598  0.0627
+##  5 M04       NA    NA          NA    9.55    9.36  0.546  0.533  0.0572  0.057 
+##  6 M05       NA    NA          NA    8.78    8.47  0.500  0.482  0.0569  0.0568
+##  7 M06       NA    NA          NA   11.4    10.9   0.654  0.620  0.0577  0.0568
+##  8 M07       NA    NA          NA    9.24    9.81  0.547  0.594  0.0592  0.0606
+##  9 M08       NA    NA          NA   10.7    11.0   0.640  0.662  0.0596  0.06  
+## 10 M09       NA    NA          NA   NA      NA    NA     NA     NA      NA     
+## # ... with 411 more rows, and 157 more variables: bun1 <dbl>, bun2 <dbl>,
+## #   bw_10 <dbl>, bw_11 <dbl>, bw_12 <dbl>, bw_13 <dbl>, bw_14 <dbl>,
+## #   bw_15 <dbl>, bw_16 <dbl>, bw_17 <dbl>, bw_18 <dbl>, bw_19 <dbl>,
+## #   bw_20 <dbl>, bw_21 <dbl>, bw_22 <dbl>, bw_23 <dbl>, bw_24 <dbl>,
+## #   bw_25 <dbl>, bw_26 <dbl>, bw_27 <dbl>, bw_28 <dbl>, bw_29 <dbl>,
+## #   bw_3 <dbl>, bw_30 <dbl>, bw_4 <dbl>, bw_5 <dbl>, bw_6 <dbl>, bw_7 <dbl>,
+## #   bw_8 <dbl>, bw_9 <dbl>, bw_pc1 <dbl>, bw_pc2 <dbl>, calcium1 <dbl>, ...
+\end{verbatim}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{ggplot}\NormalTok{(}\AttributeTok{data=}\NormalTok{cholesterol.data,}
+       \FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,}
+           \AttributeTok{x=}\NormalTok{bw\_19,}
+           \AttributeTok{col=}\NormalTok{diet)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(.}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex) }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\NormalTok{lm)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/BW_19-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.bw}\FloatTok{.1} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.bw}\FloatTok{.2} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{bw\_19}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.bw}\FloatTok{.3} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.bw}\FloatTok{.4} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.bw}\FloatTok{.5} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{tg2}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.bw}\FloatTok{.6} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{bw\_19}\SpecialCharTok{+}\NormalTok{tg2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{lm.bw}\FloatTok{.7} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{bw\_19}\SpecialCharTok{+}\NormalTok{tg2}\SpecialCharTok{+}\NormalTok{calcium2, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+
+\NormalTok{lm.bw}\FloatTok{.6} \OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{*}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\NormalTok{aov.calcium }\OtherTok{\textless{}{-}} \FunctionTok{aov}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{bw\_19, }\AttributeTok{data=}\NormalTok{cholesterol.data)}
+\FunctionTok{summary}\NormalTok{(lm.bw}\FloatTok{.1}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Effects of calcium on cholesterol at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 43.68 & 4.694 & 9.31 & 1.18e-19 \\
+bw\_19 & 1.75 & 0.135 & 13.02 & 2.19e-35 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.bw}\FloatTok{.2}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex adjusted effects of calcium on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 45.22 & 5.000 & 9.045 & 1.06e-18 \\
+bw\_19 & 1.68 & 0.161 & 10.427 & 5.48e-24 \\
+sexM & 2.30 & 2.564 & 0.896 & 3.70e-01 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.bw}\FloatTok{.3}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet adjusted effects of calcium on cholesterol at
+18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 56.16 & 4.554 & 12.33 & 3.57e-32 \\
+sexM & 9.72 & 2.360 & 4.12 & 4.22e-05 \\
+diethf & 29.47 & 2.089 & 14.11 & 1.25e-40 \\
+bw\_19 & 0.84 & 0.156 & 5.39 & 9.26e-08 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.bw}\FloatTok{.4}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & -61.87 & 9.136 & -6.77 & 2.52e-11 \\
+sexM & 6.90 & 2.375 & 2.91 & 3.76e-03 \\
+calcium2 & 13.09 & 0.960 & 13.65 & 4.11e-38 \\
+bw\_19 & 1.23 & 0.149 & 8.22 & 8.97e-16 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(lm.bw}\FloatTok{.5}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Sex and diet and tg adjusted effects of calcium on cholesterol at 18w"}\NormalTok{, }\AttributeTok{digits=}\DecValTok{50}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Sex and diet and tg adjusted effects of calcium on cholesterol
+at 18w}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 36.5354 & 5.2576 & 6.949 & 7.50e-12 \\
+sexM & -0.2733 & 2.5866 & -0.106 & 9.16e-01 \\
+tg2 & 0.0903 & 0.0189 & 4.788 & 2.00e-06 \\
+bw\_19 & 1.6440 & 0.1588 & 10.355 & 1.06e-23 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.bw.chow }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{bw\_19, }\FunctionTok{filter}\NormalTok{(cholesterol.data, diet }\SpecialCharTok{==} \StringTok{"chow"}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(lm.bw.chow) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ glance }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ kable}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0882}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1176}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0441}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0735}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule()
+\endhead
+0.18 & 0.176 & 22.3 & 47.8 & 0 & 2 & 435 & 438 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{lm.bw.hf }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{bw\_19, }\FunctionTok{filter}\NormalTok{(cholesterol.data, diet }\SpecialCharTok{==} \StringTok{"hf"}\NormalTok{))}
+\FunctionTok{summary}\NormalTok{(lm.bw.hf) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ glance }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ kable}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2059}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0882}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1471}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1176}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0441}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1765}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0735}}@{}}
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+adj.r.squared
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+sigma
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+df.residual
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+nobs
+\end{minipage} \\
+\midrule()
+\endhead
+0.08 & 0.075 & 32.7 & 16.7 & 0 & 2 & 382 & 385 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(effectsize)}
+\FunctionTok{omega\_squared}\NormalTok{(aov.calcium, }\AttributeTok{partial =} \ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Partial effect size estimates for predictors of continuous cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Partial effect size estimates for predictors of continuous
+cholesterol levels}\tabularnewline
+\toprule()
+Parameter & Omega2\_partial & CI & CI\_low & CI\_high \\
+\midrule()
+\endfirsthead
+\toprule()
+Parameter & Omega2\_partial & CI & CI\_low & CI\_high \\
+\midrule()
+\endhead
+sex & 0.084 & 0.95 & 0.056 & 1 \\
+diet & 0.270 & 0.95 & 0.229 & 1 \\
+bw\_19 & 0.033 & 0.95 & 0.016 & 1 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{dplyr}\SpecialCharTok{::}\FunctionTok{filter}\NormalTok{(cholesterol.data, sex }\SpecialCharTok{==} \StringTok{"M"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## # A tibble: 421 x 167
+##    sample  acr1  acr2 adiponectin b_area1 b_area2   bmc1   bmc2    bmd1    bmd2
+##    <chr>  <dbl> <dbl>       <dbl>   <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl>
+##  1 F142      NA    NA          NA    8.31    8.74  0.423  0.477  0.0509  0.0546
+##  2 M01       NA    NA          NA    9.97    9.82  0.496  0.538  0.0497  0.0547
+##  3 M02       NA    NA          NA    9.02    8.57  0.489  0.497  0.0542  0.058 
+##  4 M03       NA    NA          NA    9.05    9.48  0.542  0.594  0.0598  0.0627
+##  5 M04       NA    NA          NA    9.55    9.36  0.546  0.533  0.0572  0.057 
+##  6 M05       NA    NA          NA    8.78    8.47  0.500  0.482  0.0569  0.0568
+##  7 M06       NA    NA          NA   11.4    10.9   0.654  0.620  0.0577  0.0568
+##  8 M07       NA    NA          NA    9.24    9.81  0.547  0.594  0.0592  0.0606
+##  9 M08       NA    NA          NA   10.7    11.0   0.640  0.662  0.0596  0.06  
+## 10 M09       NA    NA          NA   NA      NA    NA     NA     NA      NA     
+## # ... with 411 more rows, and 157 more variables: bun1 <dbl>, bun2 <dbl>,
+## #   bw_10 <dbl>, bw_11 <dbl>, bw_12 <dbl>, bw_13 <dbl>, bw_14 <dbl>,
+## #   bw_15 <dbl>, bw_16 <dbl>, bw_17 <dbl>, bw_18 <dbl>, bw_19 <dbl>,
+## #   bw_20 <dbl>, bw_21 <dbl>, bw_22 <dbl>, bw_23 <dbl>, bw_24 <dbl>,
+## #   bw_25 <dbl>, bw_26 <dbl>, bw_27 <dbl>, bw_28 <dbl>, bw_29 <dbl>,
+## #   bw_3 <dbl>, bw_30 <dbl>, bw_4 <dbl>, bw_5 <dbl>, bw_6 <dbl>, bw_7 <dbl>,
+## #   bw_8 <dbl>, bw_9 <dbl>, bw_pc1 <dbl>, bw_pc2 <dbl>, calcium1 <dbl>, ...
+\end{verbatim}
+
+\hypertarget{random-forests}{%
+\section{Random Forests}\label{random-forests}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(caret)}
+\FunctionTok{library}\NormalTok{(ipred)}
+
+\CommentTok{\# Specify 10{-}fold cross validation}
+\NormalTok{ctrl }\OtherTok{\textless{}{-}} \FunctionTok{trainControl}\NormalTok{(}\AttributeTok{method =} \StringTok{"cv"}\NormalTok{,  }\AttributeTok{number =} \DecValTok{10}\NormalTok{) }
+
+\CommentTok{\# train bagged model}
+\NormalTok{bagged\_cv }\OtherTok{\textless{}{-}} \FunctionTok{bagging}\NormalTok{(}
+  \AttributeTok{formula =}\NormalTok{ chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{calcium2,}
+  \AttributeTok{data    =}\NormalTok{ chol.pred.data.cont,}
+  \AttributeTok{coob=}\ConstantTok{TRUE}
+\NormalTok{  )}
+
+\CommentTok{\# assess 10{-}50 bagged trees}
+\NormalTok{ntree }\OtherTok{\textless{}{-}} \DecValTok{10}\SpecialCharTok{:}\DecValTok{50}
+
+\CommentTok{\# create empty vector to store OOB RMSE values}
+\NormalTok{rmse }\OtherTok{\textless{}{-}} \FunctionTok{vector}\NormalTok{(}\AttributeTok{mode =} \StringTok{"numeric"}\NormalTok{, }\AttributeTok{length =} \FunctionTok{length}\NormalTok{(ntree))}
+
+\ControlFlowTok{for}\NormalTok{ (i }\ControlFlowTok{in} \FunctionTok{seq\_along}\NormalTok{(ntree)) \{}
+  \CommentTok{\# reproducibility}
+  \FunctionTok{set.seed}\NormalTok{(}\DecValTok{123}\NormalTok{)}
+  
+  \CommentTok{\# perform bagged model}
+\NormalTok{  model }\OtherTok{\textless{}{-}} \FunctionTok{bagging}\NormalTok{(}
+  \AttributeTok{formula =}\NormalTok{ chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{tg2,}
+  \AttributeTok{data    =}\NormalTok{ chol.pred.data.cont,}
+  \AttributeTok{coob=}\ConstantTok{TRUE}\NormalTok{,}
+  \AttributeTok{nbagg   =}\NormalTok{ ntree[i]}
+\NormalTok{)}
+  \CommentTok{\# get OOB error}
+\NormalTok{  rmse[i] }\OtherTok{\textless{}{-}}\NormalTok{ model}\SpecialCharTok{$}\NormalTok{err}
+\NormalTok{\}}
+
+\FunctionTok{plot}\NormalTok{(ntree, rmse, }\AttributeTok{type =} \StringTok{\textquotesingle{}l\textquotesingle{}}\NormalTok{, }\AttributeTok{lwd =} \DecValTok{2}\NormalTok{)}
+\FunctionTok{abline}\NormalTok{(}\AttributeTok{v =} \DecValTok{25}\NormalTok{, }\AttributeTok{col =} \StringTok{"red"}\NormalTok{, }\AttributeTok{lty =} \StringTok{"dashed"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/random-forrest-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predict\_model}\OtherTok{\textless{}{-}}\FunctionTok{predict}\NormalTok{(bagged\_cv, chol.pred.data.cont)}
+
+\FunctionTok{ggplot}\NormalTok{(chol.pred.data.cont, }\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{predict\_model,}\AttributeTok{y=}\NormalTok{chol2)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/random-forrest-2.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(randomForest)}
+\NormalTok{forest }\OtherTok{\textless{}{-}} \FunctionTok{randomForest}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet}\SpecialCharTok{+}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{calcium2}\SpecialCharTok{+}\NormalTok{tg2, }
+             \AttributeTok{data =}\NormalTok{ chol.pred.data.cont,}
+             \AttributeTok{na.action=}\NormalTok{na.exclude) }
+\FunctionTok{varImpPlot}\NormalTok{(forest)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/random-forrest-3.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{predict\_model}\OtherTok{\textless{}{-}}\FunctionTok{predict}\NormalTok{(forest, chol.pred.data.cont)}
+\end{Highlighting}
+\end{Shaded}
+
+\hypertarget{session-information}{%
+\section{Session Information}\label{session-information}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{sessionInfo}\NormalTok{()}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+## R version 4.2.0 (2022-04-22)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Big Sur/Monterey 10.16
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
+## 
+## locale:
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## attached base packages:
+## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## 
+## other attached packages:
+##  [1] randomForest_4.7-1.1 ipred_0.9-13         caret_6.0-93        
+##  [4] lattice_0.20-45      effectsize_0.8.2     ggplot2_3.4.0       
+##  [7] rattle_5.5.1         bitops_1.0-7         tibble_3.1.8        
+## [10] rpart_4.1.19         tree_1.0-42          broom_1.0.1         
+## [13] readr_2.1.3          dplyr_1.0.10         tidyr_1.2.1         
+## [16] knitr_1.41          
+## 
+## loaded via a namespace (and not attached):
+##  [1] TH.data_1.1-1        colorspace_2.0-3     ellipsis_0.3.2      
+##  [4] class_7.3-20         estimability_1.4.1   parameters_0.19.0   
+##  [7] rstudioapi_0.14      listenv_0.8.0        farver_2.1.1        
+## [10] bit64_4.0.5          prodlim_2019.11.13   fansi_1.0.3         
+## [13] mvtnorm_1.1-3        lubridate_1.9.0      codetools_0.2-18    
+## [16] splines_4.2.0        pROC_1.18.0          compiler_4.2.0      
+## [19] emmeans_1.8.2        backports_1.4.1      assertthat_0.2.1    
+## [22] Matrix_1.5-3         fastmap_1.1.0        cli_3.4.1           
+## [25] htmltools_0.5.3      tools_4.2.0          coda_0.19-4         
+## [28] gtable_0.3.1         glue_1.6.2           reshape2_1.4.4      
+## [31] Rcpp_1.0.9           vctrs_0.5.1          nlme_3.1-160        
+## [34] iterators_1.0.14     insight_0.18.7       timeDate_4021.106   
+## [37] gower_1.0.0          xfun_0.35            stringr_1.4.1       
+## [40] globals_0.16.1       timechange_0.1.1     lifecycle_1.0.3     
+## [43] future_1.29.0        MASS_7.3-58.1        zoo_1.8-11          
+## [46] scales_1.2.1         vroom_1.6.0          hms_1.1.2           
+## [49] parallel_4.2.0       sandwich_3.0-2       RColorBrewer_1.1-3  
+## [52] rpart.plot_3.1.1     yaml_2.3.6           stringi_1.7.8       
+## [55] highr_0.9            bayestestR_0.13.0    foreach_1.5.2       
+## [58] hardhat_1.2.0        lava_1.7.0           rlang_1.0.6         
+## [61] pkgconfig_2.0.3      evaluate_0.18        purrr_0.3.5         
+## [64] recipes_1.0.3        labeling_0.4.2       bit_4.0.5           
+## [67] tidyselect_1.2.0     parallelly_1.32.1    plyr_1.8.8          
+## [70] magrittr_2.0.3       R6_2.5.1             magick_2.7.3        
+## [73] generics_0.1.3       multcomp_1.4-20      DBI_1.1.3           
+## [76] pillar_1.8.1         withr_2.5.0          mgcv_1.8-41         
+## [79] survival_3.4-0       datawizard_0.6.4     nnet_7.3-18         
+## [82] future.apply_1.10.0  crayon_1.5.2         utf8_1.2.2          
+## [85] tzdb_0.3.0           rmarkdown_2.18       grid_4.2.0          
+## [88] data.table_1.14.6    ModelMetrics_1.2.2.2 digest_0.6.30       
+## [91] xtable_1.8-4         stats4_4.2.0         munsell_0.5.0
+\end{verbatim}
+
+\end{document}

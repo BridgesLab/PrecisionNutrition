@@ -63,9 +63,8 @@ library(readr) #loads the readr package
 
 
 phenotype.data <- read_csv(phenotype.filename)
-#hacky fix for readr
+#set phenotypes of zero or  to na
 phenotype.data[phenotype.data < 0] <- NA
-
 ```
 
 # Analysis

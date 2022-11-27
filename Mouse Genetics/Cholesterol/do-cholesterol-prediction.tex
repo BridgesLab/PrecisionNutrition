@@ -109,12 +109,12 @@
 \urlstyle{same} % disable monospaced font for URLs
 \hypersetup{
   pdftitle={Predictors of Diversity Outbred Cholesterol Levels},
-  pdfauthor={Dave Bridges},
+  pdfauthor={Dave Bridges and Cody Cousineau},
   hidelinks,
   pdfcreator={LaTeX via pandoc}}
 
 \title{Predictors of Diversity Outbred Cholesterol Levels}
-\author{Dave Bridges}
+\author{Dave Bridges and Cody Cousineau}
 \date{March 25, 2022}
 
 \begin{document}
@@ -152,6 +152,15 @@ This analysis uses the complete dataset (F01-F425 and M01-M425).
 \NormalTok{phenotype.data }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(phenotype.filename)}
 \CommentTok{\#set phenotypes of zero or  to na}
 \NormalTok{phenotype.data[phenotype.data }\SpecialCharTok{\textless{}} \DecValTok{0}\NormalTok{] }\OtherTok{\textless{}{-}} \ConstantTok{NA}
+
+\FunctionTok{library}\NormalTok{(forcats)}
+\NormalTok{cholesterol.data }\OtherTok{\textless{}{-}}
+\NormalTok{  phenotype.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{Diet =} \FunctionTok{fct\_recode}\NormalTok{(}\FunctionTok{as.factor}\NormalTok{(diet),}
+                           \StringTok{"NCD"}\OtherTok{=}\StringTok{"chow"}\NormalTok{,}
+                           \StringTok{"HFHS"}\OtherTok{=}\StringTok{"hf"}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{chol.avg =} \FunctionTok{rowMeans}\NormalTok{(}\FunctionTok{select}\NormalTok{(., }\FunctionTok{starts\_with}\NormalTok{(}\StringTok{"chol"}\NormalTok{)), }
+                             \AttributeTok{na.rm =} \ConstantTok{TRUE}\NormalTok{))}
 \end{Highlighting}
 \end{Shaded}
 
@@ -164,13 +173,172 @@ Annimals}\label{cholesterol-levels-for-ncd-annimals}}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{cholesterol.data }\OtherTok{\textless{}{-}}
-\NormalTok{  phenotype.data }
+\NormalTok{cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1,chol2,chol.avg), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\FunctionTok{shapiro.test}\NormalTok{(.)}\SpecialCharTok{$}\NormalTok{p.value)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Groupwise Shapiro{-}Wilk normality tests for cholesterol levels"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
 
+\begin{longtable}[]{@{}llrrr@{}}
+\caption{Groupwise Shapiro-Wilk normality tests for cholesterol
+levels}\tabularnewline
+\toprule()
+sex & diet & chol1 & chol2 & chol.avg \\
+\midrule()
+\endfirsthead
+\toprule()
+sex & diet & chol1 & chol2 & chol.avg \\
+\midrule()
+\endhead
+F & chow & 0.217 & 0.016 & 0.219 \\
+F & hf & 0.015 & 0.000 & 0.002 \\
+M & chow & 0.000 & 0.001 & 0.000 \\
+M & hf & 0.048 & 0.013 & 0.108 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\NormalTok{cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{select}\NormalTok{(sex,Diet,}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}chol\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(sex,Diet) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}chol\textquotesingle{}}\NormalTok{),}
+               \AttributeTok{names\_to =} \StringTok{"Measure"}\NormalTok{,}
+               \AttributeTok{values\_to =} \StringTok{"Cholesterol"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{x=}\NormalTok{Cholesterol,}\AttributeTok{fill=}\NormalTok{Measure)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_density}\NormalTok{(}\AttributeTok{alpha=}\FloatTok{0.5}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(Diet}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/cholesterol-normality-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{summary.data.complete }\OtherTok{\textless{}{-}}
+\NormalTok{  cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1,chol2,chol.avg), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\SpecialCharTok{\textasciitilde{}}\FunctionTok{mean}\NormalTok{(., }\AttributeTok{na.rm=}\NormalTok{T),}\AttributeTok{se=}\NormalTok{se))}
+
+\FunctionTok{kable}\NormalTok{(summary.data.complete, }\AttributeTok{caption=}\StringTok{"Cholesterol levels at 11 and 18 weeks"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0533}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0667}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1467}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1467}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1867}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1200}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1200}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1600}}@{}}
+\caption{Cholesterol levels at 11 and 18 weeks}\tabularnewline
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+sex
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+diet
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol1\_mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol2\_mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol.avg\_mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol1\_se
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol2\_se
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol.avg\_se
+\end{minipage} \\
+\midrule()
+\endfirsthead
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+sex
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+diet
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol1\_mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol2\_mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol.avg\_mean
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol1\_se
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol2\_se
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+chol.avg\_se
+\end{minipage} \\
+\midrule()
+\endhead
+F & chow & 80.0 & 78.7 & 79 & 1.16 & 1.48 & 1.23 \\
+F & hf & 108.0 & 113.3 & 111 & 1.79 & 2.38 & 1.86 \\
+M & chow & 96.4 & 96.5 & 97 & 1.47 & 1.57 & 1.37 \\
+M & hf & 128.4 & 129.4 & 128 & 2.06 & 2.32 & 1.90 \\
+\bottomrule()
+\end{longtable}
+
+\hypertarget{similarity-at-both-time-points}{%
+\subsubsection{Similarity at Both Time
+Points}\label{similarity-at-both-time-points}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(broom)}
+\FunctionTok{wilcox.test}\NormalTok{(cholesterol.data}\SpecialCharTok{$}\NormalTok{chol2,}
+\NormalTok{       cholesterol.data}\SpecialCharTok{$}\NormalTok{chol1, }
+       \AttributeTok{paired=}\ConstantTok{TRUE}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Pairwise t{-}test ofcholesterol levels week 11 and week 18"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1205}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.0964}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.6386}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 6\tabcolsep) * \real{0.1446}}@{}}
+\caption{Pairwise t-test ofcholesterol levels week 11 and week
+18}\tabularnewline
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+method
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+alternative
+\end{minipage} \\
+\midrule()
+\endfirsthead
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedleft
+statistic
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.value
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+method
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+alternative
+\end{minipage} \\
+\midrule()
+\endhead
+149882 & 0.456 & Wilcoxon signed rank test with continuity correction &
+two.sided \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
 \NormalTok{summary.data }\OtherTok{\textless{}{-}}
 \NormalTok{  cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\NormalTok{mean,}\AttributeTok{se=}\NormalTok{se))}
+  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\SpecialCharTok{\textasciitilde{}}\FunctionTok{mean}\NormalTok{(., }\AttributeTok{na.rm=}\NormalTok{T),}\AttributeTok{se=}\NormalTok{se))}
 
 \FunctionTok{library}\NormalTok{(broom)}
 \FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{*}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{cholesterol.data) }\SpecialCharTok{\%\textgreater{}\%}
@@ -247,6 +415,29 @@ M & chow & 199 \\
 M & hf & 196 \\
 \bottomrule()
 \end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggplot2)}
+\NormalTok{cholesterol.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,}\AttributeTok{x=}\NormalTok{sex,}
+             \AttributeTok{fill=}\NormalTok{Diet)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_violin}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_jitter}\NormalTok{(}\AttributeTok{alpha=}\FloatTok{0.2}\NormalTok{,}
+              \AttributeTok{position =} \FunctionTok{position\_jitterdodge}\NormalTok{(}\AttributeTok{dodge.width =} \FloatTok{0.9}\NormalTok{,}
+                                              \AttributeTok{jitter.width =} \FloatTok{0.5}\NormalTok{,}
+                                              \AttributeTok{jitter.height =} \DecValTok{0}\NormalTok{)) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Blood Cholesterol (mg/dL)"}\NormalTok{,}
+       \AttributeTok{x=}\StringTok{"Sex"}\NormalTok{) }\SpecialCharTok{+}
+  \FunctionTok{scale\_fill\_grey}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{scale\_color\_grey}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme\_classic}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{theme}\NormalTok{(}\AttributeTok{text=}\FunctionTok{element\_text}\NormalTok{(}\AttributeTok{size=}\DecValTok{16}\NormalTok{),}
+        \AttributeTok{legend.position =} \FunctionTok{c}\NormalTok{(}\FloatTok{0.15}\NormalTok{,}\FloatTok{0.8}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/cholesterol-analysis-1.png}
 
 There is no evidence of an interaction between sex and diet, though both
 covariates were significant individually.
@@ -381,7 +572,7 @@ x \\
 \midrule()
 \endhead
 846 \\
-161 \\
+163 \\
 \bottomrule()
 \end{longtable}
 
@@ -416,18 +607,14 @@ x \\
 CP & nsplit & rel error & xerror & xstd \\
 \midrule()
 \endhead
-0.247 & 0 & 1.000 & 1.000 & 0.059 \\
-0.063 & 1 & 0.753 & 0.754 & 0.045 \\
-0.059 & 2 & 0.690 & 0.717 & 0.044 \\
-0.037 & 3 & 0.630 & 0.636 & 0.040 \\
-0.026 & 4 & 0.594 & 0.648 & 0.045 \\
-0.023 & 5 & 0.568 & 0.639 & 0.045 \\
-0.016 & 6 & 0.544 & 0.663 & 0.046 \\
-0.016 & 7 & 0.529 & 0.684 & 0.048 \\
-0.013 & 8 & 0.513 & 0.685 & 0.048 \\
-0.011 & 9 & 0.500 & 0.691 & 0.049 \\
-0.010 & 10 & 0.488 & 0.696 & 0.049 \\
-0.010 & 11 & 0.478 & 0.701 & 0.049 \\
+0.562 & 0 & 1.000 & 1.004 & 0.059 \\
+0.139 & 1 & 0.438 & 0.453 & 0.029 \\
+0.095 & 2 & 0.299 & 0.312 & 0.018 \\
+0.023 & 3 & 0.204 & 0.229 & 0.015 \\
+0.017 & 4 & 0.181 & 0.211 & 0.014 \\
+0.016 & 5 & 0.164 & 0.190 & 0.013 \\
+0.011 & 6 & 0.148 & 0.176 & 0.013 \\
+0.010 & 7 & 0.137 & 0.169 & 0.013 \\
 \bottomrule()
 \end{longtable}
 
@@ -1150,7 +1337,7 @@ calcium2 & 0.218 & 0.95 & 0.177 & 1 \\
 \end{Shaded}
 
 \begin{verbatim}
-## # A tibble: 421 x 167
+## # A tibble: 421 x 169
 ##    sample  acr1  acr2 adiponectin b_area1 b_area2   bmc1   bmc2    bmd1    bmd2
 ##    <chr>  <dbl> <dbl>       <dbl>   <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl>
 ##  1 F142      NA    NA          NA    8.31    8.74  0.423  0.477  0.0509  0.0546
@@ -1163,7 +1350,7 @@ calcium2 & 0.218 & 0.95 & 0.177 & 1 \\
 ##  8 M07       NA    NA          NA    9.24    9.81  0.547  0.594  0.0592  0.0606
 ##  9 M08       NA    NA          NA   10.7    11.0   0.640  0.662  0.0596  0.06  
 ## 10 M09       NA    NA          NA   NA      NA    NA     NA     NA      NA     
-## # ... with 411 more rows, and 157 more variables: bun1 <dbl>, bun2 <dbl>,
+## # ... with 411 more rows, and 159 more variables: bun1 <dbl>, bun2 <dbl>,
 ## #   bw_10 <dbl>, bw_11 <dbl>, bw_12 <dbl>, bw_13 <dbl>, bw_14 <dbl>,
 ## #   bw_15 <dbl>, bw_16 <dbl>, bw_17 <dbl>, bw_18 <dbl>, bw_19 <dbl>,
 ## #   bw_20 <dbl>, bw_21 <dbl>, bw_22 <dbl>, bw_23 <dbl>, bw_24 <dbl>,
@@ -1424,7 +1611,7 @@ bw\_19 & 0.033 & 0.95 & 0.016 & 1 \\
 \end{Shaded}
 
 \begin{verbatim}
-## # A tibble: 421 x 167
+## # A tibble: 421 x 169
 ##    sample  acr1  acr2 adiponectin b_area1 b_area2   bmc1   bmc2    bmd1    bmd2
 ##    <chr>  <dbl> <dbl>       <dbl>   <dbl>   <dbl>  <dbl>  <dbl>   <dbl>   <dbl>
 ##  1 F142      NA    NA          NA    8.31    8.74  0.423  0.477  0.0509  0.0546
@@ -1437,7 +1624,7 @@ bw\_19 & 0.033 & 0.95 & 0.016 & 1 \\
 ##  8 M07       NA    NA          NA    9.24    9.81  0.547  0.594  0.0592  0.0606
 ##  9 M08       NA    NA          NA   10.7    11.0   0.640  0.662  0.0596  0.06  
 ## 10 M09       NA    NA          NA   NA      NA    NA     NA     NA      NA     
-## # ... with 411 more rows, and 157 more variables: bun1 <dbl>, bun2 <dbl>,
+## # ... with 411 more rows, and 159 more variables: bun1 <dbl>, bun2 <dbl>,
 ## #   bw_10 <dbl>, bw_11 <dbl>, bw_12 <dbl>, bw_13 <dbl>, bw_14 <dbl>,
 ## #   bw_15 <dbl>, bw_16 <dbl>, bw_17 <dbl>, bw_18 <dbl>, bw_19 <dbl>,
 ## #   bw_20 <dbl>, bw_21 <dbl>, bw_22 <dbl>, bw_23 <dbl>, bw_24 <dbl>,
@@ -1547,11 +1734,11 @@ bw\_19 & 0.033 & 0.95 & 0.016 & 1 \\
 ## 
 ## other attached packages:
 ##  [1] randomForest_4.7-1.1 ipred_0.9-13         caret_6.0-93        
-##  [4] lattice_0.20-45      effectsize_0.8.2     ggplot2_3.4.0       
-##  [7] rattle_5.5.1         bitops_1.0-7         tibble_3.1.8        
-## [10] rpart_4.1.19         tree_1.0-42          broom_1.0.1         
-## [13] readr_2.1.3          dplyr_1.0.10         tidyr_1.2.1         
-## [16] knitr_1.41          
+##  [4] lattice_0.20-45      effectsize_0.8.2     rattle_5.5.1        
+##  [7] bitops_1.0-7         tibble_3.1.8         rpart_4.1.19        
+## [10] tree_1.0-42          broom_1.0.1          ggplot2_3.4.0       
+## [13] forcats_0.5.2        readr_2.1.3          dplyr_1.0.10        
+## [16] tidyr_1.2.1          knitr_1.41          
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] TH.data_1.1-1        colorspace_2.0-3     ellipsis_0.3.2      

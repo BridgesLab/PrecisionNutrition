@@ -1,6 +1,6 @@
 ---
 title: "Predictors of Diversity Outbred Cholesterol Levels"
-author: "Dave Bridges"
+author: "Dave Bridges and Cody Cousineau"
 date: "March 25, 2022"
 output:
   pdf_document:
@@ -65,20 +65,66 @@ library(readr) #loads the readr package
 phenotype.data <- read_csv(phenotype.filename)
 #set phenotypes of zero or  to na
 phenotype.data[phenotype.data < 0] <- NA
+
+library(forcats)
+cholesterol.data <-
+  phenotype.data %>%
+  mutate(Diet = fct_recode(as.factor(diet),
+                           "NCD"="chow",
+                           "HFHS"="hf")) %>%
+  mutate(chol.avg = rowMeans(select(., starts_with("chol")), 
+                             na.rm = TRUE))
 ```
 
 # Analysis
 
 ## Cholesterol Levels for NCD Annimals
 
-```{r cholesterol-analysis}
-cholesterol.data <-
-  phenotype.data 
+```{r cholesterol-normality}
+cholesterol.data %>%
+  group_by(sex,diet) %>%
+  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(~shapiro.test(.)$p.value)) %>%
+  kable(caption="Groupwise Shapiro-Wilk normality tests for cholesterol levels")
 
+library(ggplot2)
+cholesterol.data %>%
+  select(sex,Diet,starts_with('chol')) %>%
+  group_by(sex,Diet) %>%
+  pivot_longer(cols=starts_with('chol'),
+               names_to = "Measure",
+               values_to = "Cholesterol") %>%
+  ggplot(aes(x=Cholesterol,fill=Measure)) +
+  geom_density(alpha=0.5) +
+  facet_grid(Diet~sex)
+```
+
+```{r cholesterol-stratification}
+  
+summary.data.complete <-
+  cholesterol.data %>%
+  group_by(sex,diet) %>%
+  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
+
+kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
+```
+
+### Similarity at Both Time Points
+
+```{r cholesterol-similar}
+library(broom)
+wilcox.test(cholesterol.data$chol2,
+       cholesterol.data$chol1, 
+       paired=TRUE) %>% tidy %>%
+  kable(caption="Pairwise t-test ofcholesterol levels week 11 and week 18")
+  
+
+```
+
+```{r cholesterol-analysis}
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol1), .funs=list(mean=mean,se=se))
+  summarize_at(.vars=vars(chol1), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 library(broom)
 lm(chol1~sex*diet, data=cholesterol.data) %>%
@@ -94,6 +140,24 @@ cholesterol.data %>%
   filter(!is.na(chol1)) %>%
   count %>%
   kable(caption="Total cholesterol values for complete DO dataset")
+
+library(ggplot2)
+cholesterol.data %>%
+  ggplot(aes(y=chol1,x=sex,
+             fill=Diet)) +
+  geom_violin() +
+  geom_jitter(alpha=0.2,
+              position = position_jitterdodge(dodge.width = 0.9,
+                                              jitter.width = 0.5,
+                                              jitter.height = 0)) +
+  labs(y="Blood Cholesterol (mg/dL)",
+       x="Sex") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.8))
+  
 ```
 
 There is no evidence of an interaction between sex and diet, though both covariates were significant individually.  

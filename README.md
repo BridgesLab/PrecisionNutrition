@@ -13,7 +13,7 @@ This repository contains raw data for studies done by the [Bridges Lab](http://b
 
 | Publication | Dataset | Tag |
 |-------------|---------|-----|
-| Cousineau, C.M., K. Loftus, and D, Bridges. Association between calcium and cholesterol in genetically diverse outbred mice. (In Preparation ) | | |
+| Cousineau, C.M., K. Loftus, and D, Bridges. Association between calcium and cholesterol in genetically diverse outbred mice. (In Preparation) | | |
 
 
 

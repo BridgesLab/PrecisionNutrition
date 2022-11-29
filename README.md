@@ -13,7 +13,7 @@ This repository contains raw data for studies done by the [Bridges Lab](http://b
 
 | Publication | Dataset | Tag |
 |-------------|---------|-----|
-| Cousineau, C.M., K. Loftus, and D, Bridges. Association between calcium and cholesterol in genetically diverse outbred mice. | In Preparation | |
+| Cousineau, C.M., K. Loftus, and D, Bridges. Association between calcium and cholesterol in genetically diverse outbred mice. (In Preparation ) | | |
 
 
 
@@ -21,14 +21,11 @@ This repository contains raw data for studies done by the [Bridges Lab](http://b
 
 In general data are provided in raw form, with a R script (as a Rmd file) that analyses the data, generating html and md outputs along with figures.  There are several subfolders to this repository:
 
-Manuscripts
-: Contains all text and image files for the manuscript.  See the README file in each folder to identify the location of underlying files and scripts
+*Manuscripts*: Contains all text and image files for the manuscript.  See the README file in each folder to identify the location of underlying files and scripts
 
-Mouse Genetics
-: Contains mouse data including analysis and figure generation scripts.
+*Mouse Genetics*: Contains mouse data including analysis and figure generation scripts.
 
-Meta Analysis
-: Contains meta-analyses, generally of human data
+*Meta Analysis*: Contains meta-analyses, generally of human data
 
 
 # Licence

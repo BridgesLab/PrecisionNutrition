@@ -1,2 +1,36 @@
-# PrecisionNutrition
-Studies related to individual responses to particular diets
+Precision Nutrition Datasets
+============================
+
+<!-- Open Knowledge Link -->
+ <a href="http://opendefinition.org/">
+ <img alt="This material is Open Knowledge" border="0"
+  src="http://assets.okfn.org/images/ok_buttons/ok_80x15_blue.png" /></a>
+<!-- /Open Knowledge Link -->
+
+# Precision Nutrition Studies
+
+This repository contains raw data for studies done by the [Bridges Lab](http://bridgeslab.sph.umich.edu) and our collaborators on precision nutrition approaches.  This repository contains the data for the manuscripts detailed below.  The tag column refers the state of the dataset at the indicated time of the manuscript's publishing:
+
+| Publication | Dataset | Tag |
+|-------------|---------|-----|
+| Cousineau, C.M., K. Loftus, and D, Bridges. Association between calcium and cholesterol in genetically diverse outbred mice. | In Preparation | |
+
+
+
+# Struture of this Repository
+
+In general data are provided in raw form, with a R script (as a Rmd file) that analyses the data, generating html and md outputs along with figures.  There are several subfolders to this repository:
+
+Manuscripts
+: Contains all text and image files for the manuscript.  See the README file in each folder to identify the location of underlying files and scripts
+
+Mouse Genetics
+: Contains mouse data including analysis and figure generation scripts.
+
+Meta Analysis
+: Contains meta-analyses, generally of human data
+
+
+# Licence
+
+This TissueSpecificTscKnockouts data is made available under the Open Data Commons Attribution License: http://opendatacommons.org/licenses/by/1.0.  For more information see [LICENSE](https://github.com/BridgesLab/PrecisionNutrition/blob/master/LICENSE.txt)

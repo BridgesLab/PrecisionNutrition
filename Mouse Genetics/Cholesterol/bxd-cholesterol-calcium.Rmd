@@ -49,12 +49,15 @@ To analyze cholesterol levels from diversity outbred mice, identifying predictor
 
 # Experimental Details
 
-This analysis uses the complete dataset (F01-F425 and M01-M425). 
+This analysis uses data from the Andreux et al dataset
 
 # Raw Data
 
 ```{r datafiles}
-phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+ca.female.filename <- 'BXD_12844.csv'	
+ca.male.filename <- 'BXD_12914.csv' 
+chol.male.filename <- 'BXD_12951.csv'	
+chol.female.filename <- 'BXD_12881.csv'
 ```
 
 
@@ -62,11 +65,60 @@ phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
 library(readr) #loads the readr package
 
 
-phenotype.data <- read_csv(phenotype.filename)
-#set phenotypes of zero or  to na
-phenotype.data[phenotype.data < 0] <- NA
+ca.f.data <- read_csv(ca.female.filename, skip=10) %>% mutate(Sex="F",Measure="Ca")
+ca.m.data <- read_csv(ca.male.filename, skip=10) %>% mutate(Sex="M",Measure="Ca")
+chol.f.data <- read_csv(chol.female.filename, skip=10) %>% mutate(Sex="F",Measure="Chol")
+chol.m.data <- read_csv(chol.male.filename, skip=10) %>% mutate(Sex="M",Measure="Chol")
+
+combined.data <-
+  left_join(bind_rows(ca.f.data,ca.m.data),
+            bind_rows(chol.f.data,chol.m.data),
+            by=c("Name","Sex"),
+            suffix=c("_ca","_chol")) %>%
+  mutate(Chol=Value_chol*38.665 ) %>% #convert to mg/dL
+  mutate(Ca = Value_ca*40.05)#convert to mg/dL
+
 ```
 
+# Analysis of BXD 
+
+```{r bxd-ca-chol-correlation}
+library(ggplot2)
+library(ggrepel)
+combined.data %>%
+  ggplot(aes(y=Chol,x=Ca)) +
+  geom_point() +
+  geom_smooth(method="lm",color="grey") +
+  labs(y="Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="BXD Strains") +
+  #geom_label_repel(aes(label=Name)) +
+  facet_grid(.~Sex) +
+  theme_classic() +
+  theme(text=element_text(size=16))
+
+library(broom)
+with(combined.data, cor.test(Ca,Chol, method="spearman"))  %>%
+  tidy %>%
+  kable(caption="Overall association between calcium and cholesterol in BXD mice")
+
+with(combined.data %>% filter(Sex=="M"), cor.test(Ca,Chol, method="spearman"))  %>%
+  tidy %>%
+  kable(caption="Association between calcium and cholesterol in BXD male mice")
+
+with(combined.data %>% filter(Sex=="F"), cor.test(Ca,Chol, method="spearman"))  %>%
+  tidy %>%
+  kable(caption="Association between calcium and cholesterol in BXD female mice")
+
+lm(Chol ~ Sex + Ca, data=combined.data) %>% tidy %>%
+  kable(caption="Multivariate regression of Calcium and Cholesterol Associations")
+
+lm(Chol ~ Sex + Ca, data=combined.data) %>% glance %>%
+  kable(caption="Multivariate regression of Calcium and Cholesterol Associations")
+
+lm(Chol ~ Sex + Ca + Sex:Ca, data=combined.data) %>% tidy %>%
+  kable(caption="Multivariate regression of Calcium and Cholesterol Associations, testing for modification by sex")
+```
 
 # Session Information
 

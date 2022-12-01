@@ -51,9 +51,49 @@ combined.data <-
             bind_rows(chol.f.data,chol.m.data),
             by=c("Name","Sex"),
             suffix=c("_ca","_chol")) %>%
-  mutate(Chol=Value_chol*38.665 ) %>% #convert to mg/dL
-  mutate(Ca = Value_ca*40.05)#convert to mg/dL
+  mutate(Chol=Value_chol*38.665,
+         Chol.se = SE_chol*38.665) %>% #convert to mg/dL
+  mutate(Ca = Value_ca*4.005,
+         Ca.se = SE_ca*4.005)#convert to mg/dL
 ```
+
+# Sample Sizes
+
+
+```r
+combined.data %>%
+  mutate(Ca.Data = !(is.na(Ca)),
+         Chol.Data = !(is.na(Chol))) %>%
+  group_by(Sex,Ca.Data,Chol.Data) %>%
+  count %>%
+  kable(caption="Number of strains for BXD Ca/Chol associations")
+```
+
+
+
+Table: Number of strains for BXD Ca/Chol associations
+
+|Sex |Ca.Data |Chol.Data |  n|
+|:---|:-------|:---------|--:|
+|F   |TRUE    |TRUE      | 17|
+|M   |TRUE    |TRUE      | 36|
+
+```r
+combined.data %>%
+  mutate(Total.Mice = N_ca + N_chol) %>%
+  group_by(Sex) %>%
+  summarize(All.Mice = sum(Total.Mice)) %>%
+  kable(caption="Number of strains for BXD Ca/Chol associations")
+```
+
+
+
+Table: Number of strains for BXD Ca/Chol associations
+
+|Sex | All.Mice|
+|:---|--------:|
+|F   |       72|
+|M   |      254|
 
 # Analysis of BXD 
 
@@ -75,6 +115,26 @@ combined.data %>%
 ```
 
 ![](figures/bxd-ca-chol-correlation-1.png)<!-- -->
+
+```r
+combined.data %>%
+  ggplot(aes(y=Chol,x=Ca)) +
+  geom_point() +
+  geom_errorbar(aes(ymin=Chol-Chol.se,
+                    ymax=Chol+Chol.se)) +
+  geom_errorbarh(aes(xmin=Ca-Ca.se,
+                    xmax=Ca-Ca.se)) +
+  geom_smooth(method="lm",color="grey") +
+  labs(y="Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="BXD Strains") +
+  #geom_label_repel(aes(label=Name)) +
+  facet_grid(.~Sex) +
+  theme_classic() +
+  theme(text=element_text(size=16))
+```
+
+![](figures/bxd-ca-chol-correlation-2.png)<!-- -->
 
 ```r
 library(broom)
@@ -130,9 +190,9 @@ Table: Multivariate regression of Calcium and Cholesterol Associations
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   -56.82|    49.210|     -1.16|   0.254|
-|SexM        |    16.28|     4.861|      3.35|   0.002|
-|Ca          |     1.48|     0.509|      2.91|   0.005|
+|(Intercept) |    -56.8|     49.21|     -1.16|   0.254|
+|SexM        |     16.3|      4.86|      3.35|   0.002|
+|Ca          |     14.8|      5.09|      2.91|   0.005|
 
 ```r
 lm(Chol ~ Sex + Ca, data=combined.data) %>% glance %>%
@@ -158,10 +218,10 @@ Table: Multivariate regression of Calcium and Cholesterol Associations, testing 
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   17.199|    72.889|     0.236|   0.814|
-|SexM        | -117.146|    97.735|    -1.199|   0.236|
-|Ca          |    0.713|     0.755|     0.944|   0.350|
-|SexM:Ca     |    1.387|     1.015|     1.367|   0.178|
+|(Intercept) |    17.20|     72.89|     0.236|   0.814|
+|SexM        |  -117.15|     97.73|    -1.199|   0.236|
+|Ca          |     7.13|      7.55|     0.944|   0.350|
+|SexM:Ca     |    13.87|     10.15|     1.367|   0.178|
 
 # Session Information
 
@@ -202,7 +262,7 @@ sessionInfo()
 ## [37] jsonlite_1.8.3   farver_2.1.1     bit_4.0.5        hms_1.1.2       
 ## [41] digest_0.6.30    stringi_1.7.8    grid_4.2.0       cli_3.4.1       
 ## [45] tools_4.2.0      magrittr_2.0.3   sass_0.4.3       tibble_3.1.8    
-## [49] crayon_1.5.2     pkgconfig_2.0.3  ellipsis_0.3.2   Matrix_1.5-3    
+## [49] crayon_1.5.2     pkgconfig_2.0.3  Matrix_1.5-3     ellipsis_0.3.2  
 ## [53] assertthat_0.2.1 rmarkdown_2.18   rstudioapi_0.14  R6_2.5.1        
 ## [57] nlme_3.1-160     compiler_4.2.0
 ```

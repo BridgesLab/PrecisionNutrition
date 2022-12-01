@@ -142,27 +142,27 @@ summary.data.complete %>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 library(broom)
-lm(chol.avg~sex*diet, data=cholesterol.data) %>%
+lm(chol2~sex*diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 
-lm(chol.avg~sex+diet, data=cholesterol.data) %>%
+lm(chol2~sex+diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global effects of sex and diet, no interaction",
         digits=c(0,2,2,2,99))
 
 cholesterol.data %>%
   group_by(sex,diet) %>%
-  filter(!is.na(chol.avg)) %>%
+  filter(!is.na(chol2)) %>%
   count %>%
-  kable(caption="Total cholesterol values for complete DO dataset")
+  kable(caption="Total cholesterol values at 19 weeks for the complete DO dataset")
 
 library(ggplot2)
 cholesterol.data %>%
-  ggplot(aes(y=chol.avg,x=sex,
+  ggplot(aes(y=chol2,x=sex,
              fill=Diet)) +
   geom_violin() +
   geom_jitter(alpha=0.2,
@@ -188,7 +188,7 @@ Classified elevated cholesterol as being greater than the mean for the averaged 
 ```{r cholesterol-class}
 cholesterol.data <-
   cholesterol.data %>%
-  mutate(High.Chol = chol.avg > mean(chol.avg,na.rm=T)) %>%
+  mutate(High.Chol = chol2 > mean(chol2,na.rm=T)) %>%
   mutate(sex = as.factor(sex),
          diet = as.factor(diet))
 ```
@@ -265,14 +265,15 @@ summary(log.calcium)
 library(ggplot2)
 
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=calcium2,
            col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
-       x="Calcium (mg/dL)") +
+       x="Calcium (mg/dL)",
+       title="DO Strains") +
   scale_fill_grey() +
   scale_color_grey() +
   theme_classic() +
@@ -371,7 +372,7 @@ cholesterol.data %>%
 
 ```{r bmd}
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=bmd2,
            col=Diet)) +
   geom_point() +
@@ -396,7 +397,7 @@ ggplot(data=cholesterol.data,
 
 ```{r bmc}
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=bmc2,
            col=Diet)) +
   geom_point() +
@@ -422,14 +423,15 @@ ggplot(data=cholesterol.data,
 
 ```{r TG}
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=tg2,
            col=Diet)) +
   geom_point(alpha=0.5) +
   facet_grid(.~sex) +
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
-       x="Triglycerides (mg/dL)") +
+       x="Triglycerides (mg/dL)",
+       title="DO Strains") +
   scale_fill_grey() +
   scale_color_grey() +
   theme_classic() +

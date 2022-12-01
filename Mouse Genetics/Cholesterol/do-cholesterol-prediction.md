@@ -160,10 +160,10 @@ summary.data.complete %>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),se=se))
 
 library(broom)
-lm(chol.avg~sex*diet, data=cholesterol.data) %>%
+lm(chol2~sex*diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 ```
@@ -174,13 +174,13 @@ Table: Global interactions between sex and diet
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   78.993|      1.54|     51.38|   0.000|
-|sexM        |   18.029|      2.18|      8.27|   0.000|
-|diethf      |   31.702|      2.24|     14.14|   0.000|
-|sexM:diethf |   -0.285|      3.18|     -0.09|   0.929|
+|(Intercept) |    78.67|      1.88|    41.767|   0.000|
+|sexM        |    17.80|      2.69|     6.628|   0.000|
+|diethf      |    34.61|      2.75|    12.601|   0.000|
+|sexM:diethf |    -1.69|      3.93|    -0.431|   0.667|
 
 ```r
-lm(chol.avg~sex+diet, data=cholesterol.data) %>%
+lm(chol2~sex+diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global effects of sex and diet, no interaction",
         digits=c(0,2,2,2,99))
@@ -192,33 +192,33 @@ Table: Global effects of sex and diet, no interaction
 
 |term        | estimate| std.error| statistic|  p.value|
 |:-----------|--------:|---------:|---------:|--------:|
-|(Intercept) |     79.1|      1.35|      58.8| 0.00e+00|
-|sexM        |     17.9|      1.59|      11.3| 1.45e-27|
-|diethf      |     31.6|      1.59|      19.9| 3.22e-72|
+|(Intercept) |     79.1|      1.65|     47.85| 0.00e+00|
+|sexM        |     17.0|      1.96|      8.68| 2.09e-17|
+|diethf      |     33.8|      1.96|     17.21| 6.58e-57|
 
 ```r
 cholesterol.data %>%
   group_by(sex,diet) %>%
-  filter(!is.na(chol.avg)) %>%
+  filter(!is.na(chol2)) %>%
   count %>%
-  kable(caption="Total cholesterol values for complete DO dataset")
+  kable(caption="Total cholesterol values at 19 weeks for the complete DO dataset")
 ```
 
 
 
-Table: Total cholesterol values for complete DO dataset
+Table: Total cholesterol values at 19 weeks for the complete DO dataset
 
 |sex |diet |   n|
 |:---|:----|---:|
-|F   |chow | 225|
-|F   |hf   | 200|
-|M   |chow | 223|
-|M   |hf   | 196|
+|F   |chow | 223|
+|F   |hf   | 198|
+|M   |chow | 216|
+|M   |hf   | 187|
 
 ```r
 library(ggplot2)
 cholesterol.data %>%
-  ggplot(aes(y=chol.avg,x=sex,
+  ggplot(aes(y=chol2,x=sex,
              fill=Diet)) +
   geom_violin() +
   geom_jitter(alpha=0.2,
@@ -246,7 +246,7 @@ Classified elevated cholesterol as being greater than the mean for the averaged 
 ```r
 cholesterol.data <-
   cholesterol.data %>%
-  mutate(High.Chol = chol.avg > mean(chol.avg,na.rm=T)) %>%
+  mutate(High.Chol = chol2 > mean(chol2,na.rm=T)) %>%
   mutate(sex = as.factor(sex),
          diet = as.factor(diet))
 ```
@@ -284,10 +284,10 @@ Table: Logistic regression for sex and diet as predictors of above average chole
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   -2.421|     0.464|    -5.217|   0.000|
-|sexM        |    1.128|     0.405|     2.786|   0.005|
-|diethf      |    3.150|     0.457|     6.886|   0.000|
-|fat_mri     |    0.017|     0.044|     0.375|   0.708|
+|(Intercept) |   -2.333|     0.440|    -5.303|   0.000|
+|sexM        |    0.769|     0.372|     2.068|   0.039|
+|diethf      |    2.741|     0.425|     6.449|   0.000|
+|fat_mri     |    0.029|     0.042|     0.692|   0.489|
 
 ```r
 fancyRpartPlot(tree.sex.diet)
@@ -342,16 +342,16 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 |-----:|------:|---------:|------:|-----:|
 | 0.247|      0|     1.000|  1.001| 0.059|
 | 0.063|      1|     0.753|  0.755| 0.045|
-| 0.059|      2|     0.690|  0.724| 0.045|
+| 0.059|      2|     0.690|  0.723| 0.045|
 | 0.037|      3|     0.630|  0.635| 0.040|
-| 0.026|      4|     0.594|  0.651| 0.045|
-| 0.023|      5|     0.568|  0.638| 0.044|
-| 0.016|      6|     0.544|  0.636| 0.044|
-| 0.016|      7|     0.529|  0.645| 0.045|
-| 0.013|      8|     0.513|  0.666| 0.046|
-| 0.011|      9|     0.500|  0.679| 0.047|
-| 0.010|     10|     0.488|  0.688| 0.047|
-| 0.010|     11|     0.478|  0.687| 0.047|
+| 0.026|      4|     0.594|  0.649| 0.043|
+| 0.023|      5|     0.568|  0.651| 0.043|
+| 0.016|      6|     0.544|  0.648| 0.044|
+| 0.016|      7|     0.529|  0.654| 0.044|
+| 0.013|      8|     0.513|  0.664| 0.044|
+| 0.011|      9|     0.500|  0.690| 0.045|
+| 0.010|     10|     0.488|  0.692| 0.045|
+| 0.010|     11|     0.478|  0.695| 0.045|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -404,24 +404,24 @@ summary(log.calcium)
 ## 
 ## Deviance Residuals: 
 ##    Min      1Q  Median      3Q     Max  
-## -2.750  -0.758  -0.293   0.795   2.377  
+## -2.665  -0.793  -0.318   0.845   2.554  
 ## 
 ## Coefficients:
-##             Estimate Std. Error z value Pr(>|z|)    
-## (Intercept) -8.78573    1.02509   -8.57  < 2e-16 ***
-## sexM         1.40355    0.19921    7.05  1.8e-12 ***
-## diethf       2.67173    0.21937   12.18  < 2e-16 ***
-## tg2          0.00944    0.00193    4.90  9.7e-07 ***
-## calcium2     0.59068    0.10635    5.55  2.8e-08 ***
+##              Estimate Std. Error z value Pr(>|z|)    
+## (Intercept) -10.51257    1.08294   -9.71  < 2e-16 ***
+## sexM          1.08639    0.18686    5.81  6.1e-09 ***
+## diethf        2.08519    0.20100   10.37  < 2e-16 ***
+## tg2           0.00807    0.00184    4.40  1.1e-05 ***
+## calcium2      0.84150    0.11269    7.47  8.2e-14 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
 ## (Dispersion parameter for binomial family taken to be 1)
 ## 
-##     Null deviance: 1065.23  on 771  degrees of freedom
-## Residual deviance:  741.39  on 767  degrees of freedom
+##     Null deviance: 1063.49  on 771  degrees of freedom
+## Residual deviance:  783.56  on 767  degrees of freedom
 ##   (74 observations deleted due to missingness)
-## AIC: 751.4
+## AIC: 793.6
 ## 
 ## Number of Fisher Scoring iterations: 5
 ```
@@ -430,14 +430,15 @@ summary(log.calcium)
 library(ggplot2)
 
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=calcium2,
            col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
-       x="Calcium (mg/dL)") +
+       x="Calcium (mg/dL)",
+       title="DO Strains") +
   scale_fill_grey() +
   scale_color_grey() +
   theme_classic() +
@@ -755,7 +756,7 @@ cholesterol.data %>%
 
 ```r
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=bmd2,
            col=Diet)) +
   geom_point() +
@@ -796,7 +797,7 @@ Table: Diet adjusted association of cholesterol with bone mineral density
 
 ```r
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=bmc2,
            col=Diet)) +
   geom_point() +
@@ -838,14 +839,15 @@ Table: Diet adjusted association of cholesterol with bone mineral content
 
 ```r
 ggplot(data=cholesterol.data,
-       aes(y=chol.avg,
+       aes(y=chol2,
            x=tg2,
            col=Diet)) +
   geom_point(alpha=0.5) +
   facet_grid(.~sex) +
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
-       x="Triglycerides (mg/dL)") +
+       x="Triglycerides (mg/dL)",
+       title="DO Strains") +
   scale_fill_grey() +
   scale_color_grey() +
   theme_classic() +

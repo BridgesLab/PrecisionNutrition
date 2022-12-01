@@ -1,0 +1,76 @@
+---
+title: "Relationship between calcium and cholesterol in BXD Mice"
+author: "Dave Bridges"
+date: "December 1, 2022"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+To analyze cholesterol levels from diversity outbred mice, identifying predictors of elevated choelsterol.
+
+# Experimental Details
+
+This analysis uses the complete dataset (F01-F425 and M01-M425). 
+
+# Raw Data
+
+```{r datafiles}
+phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+```
+
+
+```{r data-input}
+library(readr) #loads the readr package
+
+
+phenotype.data <- read_csv(phenotype.filename)
+#set phenotypes of zero or  to na
+phenotype.data[phenotype.data < 0] <- NA
+```
+
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```
+

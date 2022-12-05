@@ -30,7 +30,7 @@ data <- read_csv(data.sheet)#from a google sheet
 :::
 
 
-The data can be found in the google sheet https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=381583063&single=true&output=csv.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Mon Dec  5 11:01:12 2022
+The data can be found in the google sheet https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=381583063&single=true&output=csv.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Mon Dec  5 11:33:03 2022
 
 ## Meta Analysis
 
@@ -47,7 +47,7 @@ analysis <- metacont(data=data,
                     mean.e=PTH_mean,
                     mean.c=Controls_mean,
                     sd.e=PTH_SD,
-                    sd.c=Controls_mean,
+                    sd.c=Controls_SD,
                     studlab = Study,
                     method.smd="Hedges",
                     sm="SMD",

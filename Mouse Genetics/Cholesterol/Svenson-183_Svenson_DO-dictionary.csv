@@ -1,0 +1,166 @@
+category,data_name,description,factor_levels,id,is_covar,is_date,is_derived,is_factor,is_id,is_numeric,is_pheno,omit,r_category,r_name,short_name,units,use_covar
+NA,sample,Sample ID,NA,532,False,,False,False,True,False,False,True,,Sample,Sample,NA,NA
+NA,sex,Sex of the mouse,Male:Female,533,True,,False,True,False,False,False,True,,Sex,Sex,NA,NA
+NA,gen,DO outbreeding generation and litter,NA,534,True,,False,True,False,False,False,True,,Gen,Gen,NA,NA
+NA,diet,Diet,chow:hf,535,True,,False,True,False,False,False,True,,Diet,Diet,NA,NA
+NA,coat_color,Coat Color,NA,536,False,,False,False,False,False,True,True,,Coat.Color,Coat.Color,NA,NA
+Urine,acr1,Albumin to creatinine ratio at 11 weeks,NA,537,False,,True,False,False,True,True,False,,ACR1,ACR1,g/mg,Gen:Sex:Diet
+Urine,acr2,Albumin to creatinine ratio at 20 weeks,NA,538,False,,True,False,False,True,True,False,,ACR2,ACR2,g/mg,Gen:Sex:Diet
+Clinical Chemistry,adiponectin,Adiponectin at 8 weeks,NA,539,False,,False,False,False,True,True,False,,Adiponectin,Adiponectin,ng/ml,Gen:Sex:Diet
+DEXA,b_area1,Body area at 12 weeks,NA,540,False,,False,False,False,True,True,False,,B.Area1,B.Area1,cm2,Gen:Sex:Diet
+DEXA,b_area2,Body area at 21 weeks,NA,541,False,,False,False,False,True,True,False,,B.Area2,B.Area2,cm2,Gen:Sex:Diet
+DEXA,bmc1,Bone mineal content at 12 weeks,NA,542,False,,False,False,False,True,True,False,,BMC1,BMC1,g,Gen:Sex:Diet
+DEXA,bmc2,Bone mineal content at 21 weeks,NA,543,False,,False,False,False,True,True,False,,BMC2,BMC2,g,Gen:Sex:Diet
+DEXA,bmd1,Bone mineal density at 12 weeks,NA,544,False,,True,False,False,True,True,False,,BMD1,BMD1,g/cm2,Gen:Sex:Diet
+DEXA,bmd2,Bone mineal density at 21 weeks,NA,545,False,,True,False,False,True,True,False,,BMD2,BMD2,g/cm2,Gen:Sex:Diet
+Clinical Chemistry,bun1,Blood urea nitrogen at 8 weeks,NA,546,False,,False,False,False,True,True,False,,BUN1,BUN1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,bun2,Blood urea nitrogen at 19 weeks,NA,547,False,,False,False,False,True,True,False,,BUN2,BUN2,mg/dL,Gen:Sex:Diet
+Weight,bw_3,Body weight at 3 weeks,NA,548,False,,False,False,False,True,True,False,,BW.3,BW.3,g,Gen:Sex:Diet
+Weight,bw_4,Body weight at 4 weeks,NA,549,False,,False,False,False,True,True,False,,BW.4,BW.4,g,Gen:Sex:Diet
+Weight,bw_5,Body weight at 5 weeks,NA,550,False,,False,False,False,True,True,False,,BW.5,BW.5,g,Gen:Sex:Diet
+Weight,bw_6,Body weight at 6 weeks,NA,551,False,,False,False,False,True,True,False,,BW.6,BW.6,g,Gen:Sex:Diet
+Weight,bw_7,Body weight at 7 weeks,NA,552,False,,False,False,False,True,True,False,,BW.7,BW.7,g,Gen:Sex:Diet
+Weight,bw_8,Body weight at 8 weeks,NA,553,False,,False,False,False,True,True,False,,BW.8,BW.8,g,Gen:Sex:Diet
+Weight,bw_9,Body weight at 9 weeks,NA,554,False,,False,False,False,True,True,False,,BW.9,BW.9,g,Gen:Sex:Diet
+Weight,bw_10,Body weight at 10 weeks,NA,555,False,,False,False,False,True,True,False,,BW.10,BW.10,g,Gen:Sex:Diet
+Weight,bw_11,Body weight at 11 weeks,NA,556,False,,False,False,False,True,True,False,,BW.11,BW.11,g,Gen:Sex:Diet
+Weight,bw_12,Body weight at 12 weeks,NA,557,False,,False,False,False,True,True,False,,BW.12,BW.12,g,Gen:Sex:Diet
+Weight,bw_13,Body weight at 13 weeks,NA,558,False,,False,False,False,True,True,False,,BW.13,BW.13,g,Gen:Sex:Diet
+Weight,bw_14,Body weight at 14 weeks,NA,559,False,,False,False,False,True,True,False,,BW.14,BW.14,g,Gen:Sex:Diet
+Weight,bw_15,Body weight at 15 weeks,NA,560,False,,False,False,False,True,True,False,,BW.15,BW.15,g,Gen:Sex:Diet
+Weight,bw_16,Body weight at 16 weeks,NA,561,False,,False,False,False,True,True,False,,BW.16,BW.16,g,Gen:Sex:Diet
+Weight,bw_17,Body weight at 17 weeks,NA,562,False,,False,False,False,True,True,False,,BW.17,BW.17,g,Gen:Sex:Diet
+Weight,bw_18,Body weight at 18 weeks,NA,563,False,,False,False,False,True,True,False,,BW.18,BW.18,g,Gen:Sex:Diet
+Weight,bw_19,Body weight at 19 weeks,NA,564,False,,False,False,False,True,True,False,,BW.19,BW.19,g,Gen:Sex:Diet
+Weight,bw_20,Body weight at 20 weeks,NA,565,False,,False,False,False,True,True,False,,BW.20,BW.20,g,Gen:Sex:Diet
+Weight,bw_21,Body weight at 21 weeks,NA,566,False,,False,False,False,True,True,False,,BW.21,BW.21,g,Gen:Sex:Diet
+Weight,bw_22,Body weight at 22 weeks,NA,567,False,,False,False,False,True,True,False,,BW.22,BW.22,g,Gen:Sex:Diet
+Weight,bw_23,Body weight at 23 weeks,NA,568,False,,False,False,False,True,True,False,,BW.23,BW.23,g,Gen:Sex:Diet
+Weight,bw_24,Body weight at 24 weeks,NA,569,False,,False,False,False,True,True,False,,BW.24,BW.24,g,Gen:Sex:Diet
+Weight,bw_25,Body weight at 25 weeks,NA,570,False,,False,False,False,True,True,False,,BW.25,BW.25,g,Gen:Sex:Diet
+Weight,bw_26,Body weight at 26 weeks,NA,571,False,,False,False,False,True,True,False,,BW.26,BW.26,g,Gen:Sex:Diet
+Weight,bw_27,Body weight at 27 weeks,NA,572,False,,False,False,False,True,True,False,,BW.27,BW.27,g,Gen:Sex:Diet
+Weight,bw_28,Body weight at 28 weeks,NA,573,False,,False,False,False,True,True,False,,BW.28,BW.28,g,Gen:Sex:Diet
+Weight,bw_29,Body weight at 29 weeks,NA,574,False,,False,False,False,True,True,False,,BW.29,BW.29,g,Gen:Sex:Diet
+Weight,bw_30,Body weight at 30 weeks,NA,575,False,,False,False,False,True,True,False,,BW.30,BW.30,g,Gen:Sex:Diet
+Weight,bw_pc1,"Body weight, 10 to 20 weeks, principal component 1 at 10 to 20 weeks",NA,576,False,,True,False,False,True,True,False,,BW.PC1,BW.PC1,g,Gen:Sex:Diet
+Weight,bw_pc2,"Body weight, 10 to 20 weeks, principal component 2 at 10 to 20 weeks",NA,577,False,,True,False,False,True,True,False,,BW.PC2,BW.PC2,g,Gen:Sex:Diet
+Clinical Chemistry,calcium1,"Calcium, time 1 at 8 weeks",NA,578,False,,False,False,False,True,True,False,,Calcium1,Calcium1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,calcium2,"Calcium, time 2 at 19 weeks",NA,579,False,,False,False,False,True,True,False,,Calcium2,Calcium2,mg/dL,Gen:Sex:Diet
+Hematology,chcm1,"Corpuscular hemoglobin concentration, mean at 10 weeks",NA,580,False,,True,False,False,True,True,False,,CHCM1,CHCM1,g/dL,Gen:Sex:Diet
+Hematology,chcm2,"Corpuscular hemoglobin concentration, mean at 22 weeks",NA,581,False,,True,False,False,True,True,False,,CHCM2,CHCM2,g/dL,Gen:Sex:Diet
+Hematology,chgb1,Calculated hemoglobin at 10 weeks,NA,582,False,,True,False,False,True,True,False,,cHGB1,cHGB1,g/dL,Gen:Sex:Diet
+Hematology,chgb2,Calculated hemoglobin at 22 weeks,NA,583,False,,True,False,False,True,True,False,,cHGB2,cHGB2,g/dL,Gen:Sex:Diet
+Clinical Chemistry,chol1,Cholesterol at 8 weeks,NA,584,False,,False,False,False,True,True,False,,CHOL1,CHOL1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,chol2,Cholesterol at 19 weeks,NA,585,False,,False,False,False,True,True,False,,CHOL2,CHOL2,mg/dL,Gen:Sex:Diet
+Hematology,ct_eos1,Eosinophil counts at 10 weeks,NA,586,False,,False,False,False,True,True,False,,ct.EOS1,ct.EOS1,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_eos2,Eosinophil counts at 22 weeks,NA,587,False,,False,False,False,True,True,False,,ct.EOS2,ct.EOS2,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_lym1,Lymphocyte counts at 10 weeks,NA,588,False,,False,False,False,True,True,False,,ct.LYM1,ct.LYM1,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_lym2,Lymphocyte counts at 22 weeks,NA,589,False,,False,False,False,True,True,False,,ct.LYM2,ct.LYM2,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_mono1,Monocyte counts at 10 weeks,NA,590,False,,False,False,False,True,True,False,,ct.MONO1,ct.MONO1,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_mono2,Monocyte counts at 22 weeks,NA,591,False,,False,False,False,True,True,False,,ct.MONO2,ct.MONO2,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_neut1,Neutrophil counts at 10 weeks,NA,592,False,,False,False,False,True,True,False,,ct.NEUT1,ct.NEUT1,103 cells/ ml,Gen:Sex:Diet
+Hematology,ct_neut2,Neutrophil counts at 22 weeks,NA,593,False,,False,False,False,True,True,False,,ct.NEUT2,ct.NEUT2,103 cells/ ml,Gen:Sex:Diet
+EchoMRI,fat_mri,Fat mass via EchoMRI at 16 weeks,NA,594,False,,False,False,False,True,True,False,,fat.mri,fat.mri,g,Gen:Sex:Diet
+EchoMRI,freewater_mri,Free Water at 16 weeks,NA,595,False,,False,False,False,True,True,False,,freewater.mri,freewater.mri,g,Gen:Sex:Diet
+Clinical Chemistry,fruc1,Fructoseamine at 8 weeks,NA,596,False,,False,False,False,True,True,False,,FRUC1,FRUC1,mmol/L,Gen:Sex:Diet
+DEXA,ftm1,Fat tissue mass at 12 weeks,NA,597,False,,True,False,False,True,True,False,,FTM1,FTM1,g,Gen:Sex:Diet
+DEXA,ftm2,Fat tissue mass at 21 weeks,NA,598,False,,True,False,False,True,True,False,,FTM2,FTM2,g,Gen:Sex:Diet
+Clinical Chemistry,ghrelin,Ghrelin at 8 weeks,NA,599,False,,False,False,False,True,True,False,,Ghrelin,Ghrelin,pg/ml,Gen:Sex:Diet
+Clinical Chemistry,gldh1,Glutamate dehydrogenase at 8 weeks,NA,600,False,,False,False,False,True,True,False,,GLDH1,GLDH1,U/L,Gen:Sex:Diet
+Clinical Chemistry,gldh2,Glutamate dehydrogenase at 19 weeks,NA,601,False,,False,False,False,True,True,False,,GLDH2,GLDH2,U/L,Gen:Sex:Diet
+Clinical Chemistry,glucose1,Glucose at 8 weeks,NA,602,False,,False,False,False,True,True,False,,Glucose1,Glucose1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,glucose2,Glucose at 19 weeks,NA,603,False,,False,False,False,True,True,False,,Glucose2,Glucose2,mg/dL,Gen:Sex:Diet
+Glucose,gtt_120,"Glucose tolerance test, area under curve at 24 weeks",NA,604,False,,True,False,False,True,True,False,,GTT.AUC,GTT.AUC,mg/dL,Gen:Sex:Diet
+Glucose,gtt_180,"Glucose tolerance test, time 0 at 24 weeks",NA,605,False,,False,False,False,True,True,False,,GTT.t0,GTT.t0,,Gen:Sex:Diet
+Glucose,gtt_auc,"Glucose tolerance test, time 15 at 24 weeks",NA,606,False,,False,False,False,True,True,False,,GTT.t15,GTT.t15,,Gen:Sex:Diet
+Glucose,gtt_t0,"Glucose tolerance test, time 30 at 24 weeks",NA,607,False,,False,False,False,True,True,False,,GTT.t30,GTT.t30,,Gen:Sex:Diet
+Glucose,gtt_t15,"Glucose tolerance test, time 60 at 24 weeks",NA,608,False,,False,False,False,True,True,False,,GTT.t60,GTT.t60,,Gen:Sex:Diet
+Glucose,gtt_t30,"Glucose tolerance test, time 120 at 24 weeks",NA,609,False,,False,False,False,True,True,False,,GTTt.120,GTTt.120,,Gen:Sex:Diet
+Glucose,gtt_t60,"Glucose tolerance test, time 180 at 24 weeks",NA,610,False,,False,False,False,True,True,False,,GTTt.180,GTTt.180,,Gen:Sex:Diet
+Hematology,hct1,Hematocrit at 10 weeks,NA,611,False,,False,False,False,True,True,False,,HCT1,HCT1,%,Gen:Sex:Diet
+Hematology,hct2,Hematocrit at 22 weeks,NA,612,False,,False,False,False,True,True,False,,HCT2,HCT2,%,Gen:Sex:Diet
+Clinical Chemistry,hdld1,High density lipoprotein at 8 weeks,NA,613,False,,False,False,False,True,True,False,,HDLD1,HDLD1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,hdld2,High density lipoprotein at 19 weeks,NA,614,False,,False,False,False,True,True,False,,HDLD2,HDLD2,mg/dL,Gen:Sex:Diet
+Hematology,hdw1,Hemoglobin distribution width at 10 weeks,NA,615,False,,False,False,False,True,True,False,,HDW1,HDW1,unitless,Gen:Sex:Diet
+Hematology,hdw2,Hemoglobin distribution width at 22 weeks,NA,616,False,,False,False,False,True,True,False,,HDW2,HDW2,unitless,Gen:Sex:Diet
+Weight,heart_wt,Heart weight at sacrifice,NA,617,False,,False,False,False,True,True,False,,heart.wt,heart.wt,g,Gen:Sex:Diet
+ECG,hr,Hear rate at 13 weeks,NA,618,False,,False,False,False,True,True,False,,HR,HR,beats/min,Gen:Sex:Diet
+ECG,hrv,Hear rate variation at 13 weeks,NA,619,False,,False,False,False,True,True,False,,HRV,HRV,beats/min,Gen:Sex:Diet
+Clinical Chemistry,insulin,Insulin at 8 weeks,NA,620,False,,False,False,False,True,True,False,,INSULIN,INSULIN,mg/ml,Gen:Sex:Diet
+Weight,kidney_wt_l,Left kidney weight at sacrifice,NA,621,False,,False,False,False,True,True,False,,kidney.wt.L,kidney.wt.L,g,Gen:Sex:Diet
+Weight,kidney_wt_r,Right kidney weight at sacrifice,NA,622,False,,False,False,False,True,True,False,,kidney.wt.R,kidney.wt.R,g,Gen:Sex:Diet
+EchoMRI,lean_mri,Lean tissue mass via Echo MRI at 16 weeks,NA,623,False,,False,False,False,True,True,False,,lean.mri,lean.mri,g,Gen:Sex:Diet
+DEXA,length1,Mouse length at 12 weeks,NA,624,False,,False,False,False,True,True,False,,Length1,Length1,cm,Gen:Sex:Diet
+DEXA,length2,Mouse length at 21 weeks,NA,625,False,,False,False,False,True,True,False,,Length2,Length2,cm,Gen:Sex:Diet
+Clinical Chemistry,leptin,Leptin at 8 weeks,NA,626,False,,False,False,False,True,True,False,,LEPTIN,LEPTIN,ng/ml,Gen:Sex:Diet
+Clinical Chemistry,lipase1,Lipase at 19 weeks,NA,627,False,,False,False,False,True,True,False,,Lipase1,Lipase1,U/L,Gen:Sex:Diet
+DEXA,ltm1,Lean tissue mass at 12 weeks,NA,628,False,,False,False,False,True,True,False,,LTM1,LTM1,g,Gen:Sex:Diet
+DEXA,ltm2,Lean tissue mass at 21 weeks,NA,629,False,,False,False,False,True,True,False,,LTM2,LTM2,g,Gen:Sex:Diet
+Hematology,mch1,Mean corpuscular hemoglobin at 10 weeks,NA,630,False,,True,False,False,True,True,False,,MCH1,MCH1,pg,Gen:Sex:Diet
+Hematology,mch2,Mean corpuscular hemoglobin at 22 weeks,NA,631,False,,True,False,False,True,True,False,,MCH2,MCH2,pg,Gen:Sex:Diet
+Hematology,mchc1,Mean corpuscular hemoglobin concentration at 10 weeks,NA,632,False,,True,False,False,True,True,False,,MCHC1,MCHC1,g/dL,Gen:Sex:Diet
+Hematology,mchc2,Mean corpuscular hemoglobin concentration at 22 weeks,NA,633,False,,True,False,False,True,True,False,,MCHC2,MCHC2,g/dL,Gen:Sex:Diet
+Hematology,mcv1,Mean corpuscular volume at 10 weeks,NA,634,False,,True,False,False,True,True,False,,MCV1,MCV1,fL,Gen:Sex:Diet
+Hematology,mcv2,Mean corpuscular volume at 22 weeks,NA,635,False,,True,False,False,True,True,False,,MCV2,MCV2,fL,Gen:Sex:Diet
+Hematology,mhgb1,measured hemoglobin at 10 weeks,NA,636,False,,False,False,False,True,True,False,,mHGB1,mHGB1,g/dL,Gen:Sex:Diet
+Hematology,mhgb2,measured hemoglobin at 22 weeks,NA,637,False,,False,False,False,True,True,False,,mHGB2,mHGB2,g/dL,Gen:Sex:Diet
+Hematology,mpv1,Mean platelet volume at 10 weeks,NA,638,False,,False,False,False,True,True,False,,MPV1,MPV1,fL,Gen:Sex:Diet
+Hematology,mpv2,Mean platelet volume at 22 weeks,NA,639,False,,False,False,False,True,True,False,,MPV2,MPV2,fL,Gen:Sex:Diet
+Weight,necr_wt,Body weight at necropsy,NA,640,False,,False,False,False,True,True,False,,necr.wt,necr.wt,g,Gen:Sex:Diet
+Clinical Chemistry,nefa1,Non-esterified fatty acids at 8 weeks,NA,641,False,,False,False,False,True,True,False,,NEFA1,NEFA1,mEq/L,Gen:Sex:Diet
+Clinical Chemistry,nefa2,Non-esterified fatty acids at 19 weeks,NA,642,False,,False,False,False,True,True,False,,NEFA2,NEFA2,mEq/L,Gen:Sex:Diet
+Clinical Chemistry,non_fast_alb,Non-fasted albumin at 17 weeks,NA,643,False,,False,False,False,True,True,False,,non.fast.ALB2,non.fast.ALB2,g/dL,Gen:Sex:Diet
+Clinical Chemistry,non_fast_calcium,Non-fasted calcium at 17 weeks,NA,644,False,,False,False,False,True,True,False,,non.fast.alb,non.fast.alb,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,non_fast_crex,Non-fasted creatinine at 17 weeks,NA,645,False,,False,False,False,True,True,False,,non.fast.CREX,non.fast.CREX,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,non_fast_phosphorous,Non-fasted phosphorous at 17 weeks,NA,646,False,,False,False,False,True,True,False,,non.fast.Phosphorous,non.fast.Phosphorous,mg/dL,Gen:Sex:Diet
+Hematology,perc_eos1,% Eosinophils at 10 weeks,NA,647,False,,True,False,False,True,True,False,,perc.EOS1,perc.EOS1,%,Gen:Sex:Diet
+Hematology,perc_eos2,% Eosinophils at 22 weeks,NA,648,False,,True,False,False,True,True,False,,perc.EOS2,perc.EOS2,%,Gen:Sex:Diet
+Hematology,perc_fat1,% Fat at 10 weeks,NA,649,False,,True,False,False,True,True,False,,perc.Fat1,perc.Fat1,%,Gen:Sex:Diet
+Hematology,perc_fat2,% Fat at 22 weeks,NA,650,False,,True,False,False,True,True,False,,perc.Fat2,perc.Fat2,%,Gen:Sex:Diet
+Hematology,perc_lym1,% Lymphocytes at 10 weeks,NA,651,False,,True,False,False,True,True,False,,perc.LYM1,perc.LYM1,%,Gen:Sex:Diet
+Hematology,perc_lym2,% Lymphocytes at 22 weeks,NA,652,False,,True,False,False,True,True,False,,perc.LYM2,perc.LYM2,%,Gen:Sex:Diet
+Hematology,perc_mono1,% Monocytes at 10 weeks,NA,653,False,,True,False,False,True,True,False,,perc.MONO1,perc.MONO1,%,Gen:Sex:Diet
+Hematology,perc_mono2,% Monocytes at 22 weeks,NA,654,False,,True,False,False,True,True,False,,perc.MONO2,perc.MONO2,%,Gen:Sex:Diet
+Hematology,perc_neut1,% Neutrophils at 10 weeks,NA,655,False,,True,False,False,True,True,False,,perc.NEUT1,perc.NEUT1,%,Gen:Sex:Diet
+Hematology,perc_neut2,% Neutrophils at 22 weeks,NA,656,False,,True,False,False,True,True,False,,perc.NEUT2,perc.NEUT2,%,Gen:Sex:Diet
+Clinical Chemistry,phosphorus1,Phophorous at 8 weeks,NA,657,False,,False,False,False,True,True,False,,Phosphorus1,Phosphorus1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,phosphorus2,Phophorous at 19 weeks,NA,658,False,,False,False,False,True,True,False,,Phosphorus2,Phosphorus2,mg/dL,Gen:Sex:Diet
+Hematology,plt1,Platelets at 10 weeks,NA,659,False,,False,False,False,True,True,False,,PLT1,PLT1,103 cells/ ml,Gen:Sex:Diet
+Hematology,plt2,Platelets at 22 weeks,NA,660,False,,False,False,False,True,True,False,,PLT2,PLT2,103 cells/ ml,Gen:Sex:Diet
+ECG,pnn50___6ms_,Mean number of times that the NN interval exceeds 50 ms at 13 weeks,NA,661,False,,False,False,False,True,True,False,,pNN50...6ms.,pNN50...6ms.,counts /6 ms,Gen:Sex:Diet
+ECG,pq,ECG: P to Q wave time at 13 weeks,NA,662,False,,False,False,False,True,True,False,,PQ,PQ,ms,Gen:Sex:Diet
+ECG,pr,ECG: P to R wave time at 13 weeks,NA,663,False,,False,False,False,True,True,False,,PR,PR,ms,Gen:Sex:Diet
+ECG,qrs,ECG: QRS wave time at 13 weeks,NA,664,False,,False,False,False,True,True,False,,QRS,QRS,ms,Gen:Sex:Diet
+ECG,qtc,ECG: corrected QT interval at 13 weeks,NA,665,False,,False,False,False,True,True,False,,QTC,QTC,ms,Gen:Sex:Diet
+ECG,qtc_dispersion,ECG: corrected QT interval dispersion at 13 weeks,NA,666,False,,False,False,False,True,True,False,,QTc.dispersion,QTc.dispersion,ms,Gen:Sex:Diet
+Hematology,rbc1,Red blood cell counts at 10 weeks,NA,667,False,,False,False,False,True,True,False,,RBC1,RBC1,106 cells/ ml,Gen:Sex:Diet
+Hematology,rbc2,Red blood cell counts at 22 weeks,NA,668,False,,False,False,False,True,True,False,,RBC2,RBC2,106 cells/ ml,Gen:Sex:Diet
+Hematology,rdw1,Red blood cell distribution width at 10 weeks,NA,669,False,,False,False,False,True,True,False,,RDW1,RDW1,unitless,Gen:Sex:Diet
+Hematology,rdw2,Red blood cell distribution width at 22 weeks,NA,670,False,,False,False,False,True,True,False,,RDW2,RDW2,unitless,Gen:Sex:Diet
+Hematology,retic1,Reticulocyte counts at 10 weeks,NA,671,False,,False,False,False,True,True,False,,Retic1,Retic1,109 cells/ ml,Gen:Sex:Diet
+Hematology,retic2,Reticulocyte counts at 22 weeks,NA,672,False,,False,False,False,True,True,False,,Retic2,Retic2,109 cells/ ml,Gen:Sex:Diet
+ECG,rmssd,ECG: root mean squared std. dev. (not sure of what) at 13 weeks,NA,673,False,,False,False,False,True,True,False,,rMSSD,rMSSD,ms,Gen:Sex:Diet
+ECG,rr,ECG: R to R wave time at 13 weeks,NA,674,False,,False,False,False,True,True,False,,RR,RR,ms,Gen:Sex:Diet
+Weight,spleen_wt,Spleen weight at sacrifice,NA,675,False,,False,False,False,True,True,False,,spleen.wt,spleen.wt,g,Gen:Sex:Diet
+ECG,st,ECG: S ot T wave time at 13 weeks,NA,676,False,,False,False,False,True,True,False,,ST,ST,ms,Gen:Sex:Diet
+DEXA,t_area1,Total area at 12 weeks,NA,677,False,,False,False,False,True,True,False,,T.Area1,T.Area1,cm2,Gen:Sex:Diet
+DEXA,t_area2,Total area at 21 weeks,NA,678,False,,False,False,False,True,True,False,,T.Area2,T.Area2,cm2,Gen:Sex:Diet
+Clinical Chemistry,tbil1,Total bilirubin at 8 weeks,NA,679,False,,False,False,False,True,True,False,,TBIL1,TBIL1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,tbil2,Total bilirubin at 19 weeks,NA,680,False,,False,False,False,True,True,False,,TBIL2,TBIL2,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,tg1,Triglycericdes at 8 weeks,NA,681,False,,False,False,False,True,True,False,,TG1,TG1,mg/dL,Gen:Sex:Diet
+Clinical Chemistry,tg2,Triglycericdes at 19 weeks,NA,682,False,,False,False,False,True,True,False,,TG2,TG2,mg/dL,Gen:Sex:Diet
+EchoMRI,totalwater_mri,Total Water via Echo MRI at 16 weeks,NA,683,False,,False,False,False,True,True,False,,totalwater.mri,totalwater.mri,g,Gen:Sex:Diet
+DEXA,ttm1,Total tissue mass at 12 weeks,NA,684,False,,False,False,False,True,True,False,,TTM1,TTM1,g,Gen:Sex:Diet
+DEXA,ttm2,Total tissue mass at 21 weeks,NA,685,False,,False,False,False,True,True,False,,TTM2,TTM2,g,Gen:Sex:Diet
+Urine,urine_creatinine1,Urine creatine at 11 weeks,NA,686,False,,False,False,False,True,True,False,,urine.creatinine1,urine.creatinine1,mg/dL,Gen:Sex:Diet
+Urine,urine_creatinine2,Urine creatine at 20 weeks,NA,687,False,,False,False,False,True,True,False,,urine.creatinine2,urine.creatinine2,mg/dL,Gen:Sex:Diet
+Urine,urine_glucose1,Urine glucose at 11 weeks,NA,688,False,,False,False,False,True,True,False,,urine.Glucose1,urine.Glucose1,mg/dL,Gen:Sex:Diet
+Urine,urine_glucose2,Urine glucose at 20 weeks,NA,689,False,,False,False,False,True,True,False,,urine.Glucose2,urine.Glucose2,mg/dL,Gen:Sex:Diet
+Urine,urine_microalbumin1,Urine microalbumin at 11 weeks,NA,690,False,,False,False,False,True,True,False,,urine.microalbumin1,urine.microalbumin1,mg/dL,Gen:Sex:Diet
+Urine,urine_microalbumin2,Urine microalbumin at 20 weeks,NA,691,False,,False,False,False,True,True,False,,urine.microalbumin2,urine.microalbumin2,mg/dL,Gen:Sex:Diet
+Hematology,wbc1,White blood cell counts at 10 weeks,NA,692,False,,False,False,False,True,True,False,,WBC1,WBC1,103 cells/ml,Gen:Sex:Diet
+Hematology,wbc2,White blood cell counts at 22 weeks,NA,693,False,,False,False,False,True,True,False,,WBC2,WBC2,103 cells/ml,Gen:Sex:Diet
+EchoMRI,weight_mri,Body weight via Echo MRI at 16 weeks,NA,694,False,,False,False,False,True,True,False,,weight.mri,weight.mri,g,Gen:Sex:Diet
+DEXA,weight1,Weight at 12 weeks,NA,695,False,,False,False,False,True,True,False,,Weight1,Weight1,NA,Gen:Sex:Diet
+DEXA,weight2,Weight at 21 weeks,NA,696,False,,False,False,False,True,True,False,,Weight2,Weight2,g,Gen:Sex:Diet

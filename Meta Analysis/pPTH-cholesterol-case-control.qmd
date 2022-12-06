@@ -1,0 +1,68 @@
+---
+title: "Meta Analysis of Case Control Studies of pPTH on Cholesterol"
+author: "Dave Bridges and Kaelin Loftus"
+format:
+  html:
+    toc: true
+    toc-location: left
+editor: visual
+execute:
+  keep-md: true
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+```
+
+## Data Souces
+
+Located studies from PubMed searches and checking internal references.  Manually re-calculated cholesterol to mM when presented in mg/dL
+
+
+```{r data-input}
+data.sheet <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=381583063&single=true&output=csv'
+library(readr)
+data <- read_csv(data.sheet)#from a google sheet
+```
+
+The data can be found in the google sheet `r data.sheet`.  This script can be found in `r getwd()` and was most recently run on `r date()`
+
+## Meta Analysis
+
+Analysed data from mean +/- SD of cases and controls
+
+```{r pth-meta-analysis}
+library(meta)
+analysis <- metacont(data=data,
+                    n.e=PTH_n,
+                    n.c=Controls_n,
+                    mean.e=PTH_mean,
+                    mean.c=Controls_mean,
+                    sd.e=PTH_SD,
+                    sd.c=Controls_SD,
+                    studlab = Study,
+                    method.smd="Hedges",
+                    sm="SMD",
+                    fixed=FALSE,
+                    random=TRUE,
+                    method.tau="REML",
+                    hakn=TRUE,
+                    title="pPTH on Cholesterol")
+
+forest.meta(analysis,
+            fontsize=6)
+```
+
+# Analysis
+
+There is no evidence that primary hyperparathyroidism results in elevated total cholesterol from case-control studies.
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```

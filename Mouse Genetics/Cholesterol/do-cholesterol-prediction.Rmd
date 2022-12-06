@@ -326,6 +326,12 @@ summary(lm.calcium.chow) %>% glance %>% kable
 
 lm.calcium.hf <- lm(chol2~sex+calcium2, filter(cholesterol.data, diet == "hf"))
 summary(lm.calcium.hf) %>% glance %>% kable
+
+lm.calcium <- lm(chol2~sex+diet+calcium2, cholesterol.data)
+summary(lm.calcium) %>% glance %>% kable
+
+library(effectsize)
+eta_squared(lm.calcium, partial = TRUE) %>% kable(caption="Partial effect sizes for calcium model")
 ```
 
 ## Effects of Diet and Sex on Calcium

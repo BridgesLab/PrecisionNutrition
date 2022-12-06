@@ -30,4 +30,4 @@ In general data are provided in raw form, with a R script (as a Rmd file) that a
 
 # Licence
 
-This TissueSpecificTscKnockouts data is made available under the Open Data Commons Attribution License: http://opendatacommons.org/licenses/by/1.0.  For more information see [LICENSE](https://github.com/BridgesLab/PrecisionNutrition/blob/master/LICENSE.txt)
+This PrecisionNutrition data is made available under the Open Data Commons Attribution License: http://opendatacommons.org/licenses/by/1.0.  For more information see [LICENSE](https://github.com/BridgesLab/PrecisionNutrition/blob/master/LICENSE.txt)

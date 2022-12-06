@@ -328,10 +328,19 @@ lm.calcium.hf <- lm(chol2~sex+calcium2, filter(cholesterol.data, diet == "hf"))
 summary(lm.calcium.hf) %>% glance %>% kable
 
 lm.calcium <- lm(chol2~sex+diet+calcium2, cholesterol.data)
-summary(lm.calcium) %>% glance %>% kable
+summary(lm.calcium) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and diet")
 
 library(effectsize)
 eta_squared(lm.calcium, partial = TRUE) %>% kable(caption="Partial effect sizes for calcium model")
+
+#moderation by triglycerides
+lm.calcium.tg <- lm(chol2~sex+diet+calcium2+tg2, cholesterol.data)
+summary(lm.calcium.tg) %>% tidy %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex, diet and triglycerides")
+
+anova(lm.calcium,lm.calcium.tg)%>% 
+  kable(caption="Comparason of models with or without triglyceride levels",
+        digits=c(0,0,0,0,0,99))
+
 ```
 
 ## Effects of Diet and Sex on Calcium

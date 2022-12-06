@@ -340,18 +340,18 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.002| 0.059|
-| 0.063|      1|     0.753|  0.758| 0.045|
-| 0.059|      2|     0.690|  0.730| 0.044|
-| 0.037|      3|     0.630|  0.651| 0.041|
-| 0.026|      4|     0.594|  0.658| 0.044|
-| 0.023|      5|     0.568|  0.666| 0.044|
-| 0.016|      6|     0.544|  0.672| 0.045|
-| 0.016|      7|     0.529|  0.686| 0.045|
-| 0.013|      8|     0.513|  0.690| 0.044|
-| 0.011|      9|     0.500|  0.701| 0.045|
-| 0.010|     10|     0.488|  0.701| 0.045|
-| 0.010|     11|     0.478|  0.705| 0.045|
+| 0.247|      0|     1.000|  1.005| 0.059|
+| 0.063|      1|     0.753|  0.760| 0.045|
+| 0.059|      2|     0.690|  0.739| 0.046|
+| 0.037|      3|     0.630|  0.652| 0.042|
+| 0.026|      4|     0.594|  0.676| 0.047|
+| 0.023|      5|     0.568|  0.668| 0.046|
+| 0.016|      6|     0.544|  0.655| 0.044|
+| 0.016|      7|     0.529|  0.666| 0.045|
+| 0.013|      8|     0.513|  0.676| 0.044|
+| 0.011|      9|     0.500|  0.691| 0.045|
+| 0.010|     10|     0.488|  0.705| 0.046|
+| 0.010|     11|     0.478|  0.708| 0.048|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -672,10 +672,12 @@ summary(lm.calcium.hf) %>% glance %>% kable
 
 ```r
 lm.calcium <- lm(chol2~sex+diet+calcium2, cholesterol.data)
-summary(lm.calcium) %>% glance %>% kable
+summary(lm.calcium) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and diet")
 ```
 
 
+
+Table: Linear model of calcium on cholesterol adjusting for sex and diet
 
 | r.squared| adj.r.squared| sigma| statistic| p.value| df| df.residual| nobs|
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
@@ -695,6 +697,39 @@ Table: Partial effect sizes for calcium model
 |sex       |        0.108| 0.95|  0.076|       1|
 |diet      |        0.301| 0.95|  0.258|       1|
 |calcium2  |        0.219| 0.95|  0.179|       1|
+
+```r
+#moderation by triglycerides
+lm.calcium.tg <- lm(chol2~sex+diet+calcium2+tg2, cholesterol.data)
+summary(lm.calcium.tg) %>% tidy %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex, diet and triglycerides")
+```
+
+
+
+Table: Linear model of calcium on cholesterol adjusting for sex, diet and triglycerides
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |  -32.181|     7.701|     -4.18|       0|
+|sexM        |   14.259|     1.791|      7.96|       0|
+|diethf      |   32.024|     1.813|     17.66|       0|
+|calcium2    |   10.801|     0.874|     12.36|       0|
+|tg2         |    0.116|     0.016|      7.19|       0|
+
+```r
+anova(lm.calcium,lm.calcium.tg)%>% 
+  kable(caption="Comparason of models with or without triglyceride levels",
+        digits=c(0,0,0,0,0,99))
+```
+
+
+
+Table: Comparason of models with or without triglyceride levels
+
+| Res.Df|    RSS| Df| Sum of Sq|  F|  Pr(>F)|
+|------:|------:|--:|---------:|--:|-------:|
+|    768| 465701| NA|        NA| NA|      NA|
+|    767| 436266|  1|     29435| 52| 1.5e-12|
 
 ## Effects of Diet and Sex on Calcium
 

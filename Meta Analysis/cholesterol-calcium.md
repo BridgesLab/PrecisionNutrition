@@ -16,8 +16,7 @@ execute:
 
 ## Data Souces
 
-Located studies from PubMed searches and checking internal references.  Manually re-calculated cholesterol to mM when presented in mg/dL
-
+Located studies from PubMed searches and checking internal references. Manually re-calculated cholesterol to mM when presented in mg/dL
 
 
 ::: {.cell}
@@ -30,7 +29,7 @@ data <- read_csv(data.sheet)#from a google sheet
 :::
 
 
-The data can be found in the google sheet https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=1100702568&single=true&output=csv.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Mon Dec  5 12:39:00 2022
+The data can be found in the google sheet https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=1100702568&single=true&output=csv. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Wed Dec  7 16:34:27 2022
 
 ## Meta Analysis
 
@@ -53,11 +52,12 @@ analysis <- metacor(data=data %>% dplyr::filter(!is.na(`r`)),
                  title="Calcium and Cholesterol")
 
 forest.meta(analysis,
-            fontsize=6)
+            fontsize=6,,
+            test.overall.random=TRUE)
 ```
 
 ::: {.cell-output-display}
-![](figures/pth-meta-analysis-1.png){width=672}
+![](figures/ca-chol-meta-1.png){width=672}
 :::
 :::
 

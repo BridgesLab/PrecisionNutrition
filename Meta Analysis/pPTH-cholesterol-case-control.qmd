@@ -20,8 +20,7 @@ options(scipen = 2, digits = 3)
 
 ## Data Souces
 
-Located studies from PubMed searches and checking internal references.  Manually re-calculated cholesterol to mM when presented in mg/dL
-
+Located studies from PubMed searches and checking internal references. Manually re-calculated cholesterol to mM when presented in mg/dL
 
 ```{r data-input}
 data.sheet <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=381583063&single=true&output=csv'
@@ -29,7 +28,7 @@ library(readr)
 data <- read_csv(data.sheet)#from a google sheet
 ```
 
-The data can be found in the google sheet `r data.sheet`.  This script can be found in `r getwd()` and was most recently run on `r date()`
+The data can be found in the google sheet `r data.sheet`. This script can be found in `r getwd()` and was most recently run on `r date()`
 
 ## Meta Analysis
 
@@ -54,7 +53,8 @@ analysis <- metacont(data=data,
                     title="pPTH on Cholesterol")
 
 forest.meta(analysis,
-            fontsize=6)
+            fontsize=6,
+            test.overall.random=TRUE)
 ```
 
 # Analysis

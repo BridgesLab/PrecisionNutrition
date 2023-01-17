@@ -286,12 +286,12 @@ ggplot(data=cholesterol.data,
  lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of cholesterol with calcium",
-         digits=c(0,3,3,2,99))
+         digits=c(3,3,3,2,99))
  
   lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    glance %>% 
    kable(caption="Diet adjusted association of cholesterol with triglycerides",
-         digits=c(0,3,3,2,99))
+         digits=c(3,3,3,2,99))
   
 cholesterol.data %>%
   group_by(Diet,sex) %>%

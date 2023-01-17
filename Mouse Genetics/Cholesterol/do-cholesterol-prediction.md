@@ -340,19 +340,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.004| 0.059|
-| 0.064|      1|     0.753|  0.757| 0.045|
-| 0.060|      2|     0.689|  0.720| 0.045|
-| 0.036|      3|     0.629|  0.650| 0.041|
-| 0.023|      4|     0.593|  0.657| 0.046|
-| 0.022|      5|     0.569|  0.653| 0.045|
-| 0.015|      6|     0.547|  0.641| 0.045|
-| 0.015|      7|     0.532|  0.632| 0.042|
-| 0.014|      8|     0.516|  0.632| 0.043|
-| 0.011|      9|     0.502|  0.639| 0.044|
-| 0.011|     10|     0.491|  0.661| 0.046|
-| 0.010|     11|     0.481|  0.661| 0.046|
-| 0.010|     12|     0.470|  0.660| 0.046|
+| 0.247|      0|     1.000|  1.001| 0.059|
+| 0.064|      1|     0.753|  0.755| 0.045|
+| 0.060|      2|     0.689|  0.712| 0.044|
+| 0.036|      3|     0.629|  0.633| 0.040|
+| 0.023|      4|     0.593|  0.636| 0.043|
+| 0.022|      5|     0.569|  0.643| 0.044|
+| 0.015|      6|     0.547|  0.639| 0.044|
+| 0.015|      7|     0.532|  0.670| 0.047|
+| 0.014|      8|     0.516|  0.661| 0.047|
+| 0.011|      9|     0.502|  0.649| 0.047|
+| 0.011|     10|     0.491|  0.660| 0.048|
+| 0.010|     11|     0.481|  0.661| 0.049|
+| 0.010|     12|     0.470|  0.662| 0.049|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -454,7 +454,7 @@ ggplot(data=cholesterol.data,
  lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of cholesterol with calcium",
-         digits=c(0,3,3,2,99))
+         digits=c(3,3,3,2,99))
 ```
 
 
@@ -472,7 +472,7 @@ Table: Diet adjusted association of cholesterol with calcium
   lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    glance %>% 
    kable(caption="Diet adjusted association of cholesterol with triglycerides",
-         digits=c(0,3,3,2,99))
+         digits=c(3,3,3,2,99))
 ```
 
 
@@ -481,7 +481,7 @@ Table: Diet adjusted association of cholesterol with triglycerides
 
 | r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik|  AIC|  BIC| deviance| df.residual| nobs|
 |---------:|-------------:|-----:|---------:|-------:|--:|------:|----:|----:|--------:|-----------:|----:|
-|         0|          0.45|  24.6|       210|   4e-99|  3|  -3538| 7086| 7109|   460649|         762|  766|
+|     0.452|          0.45|  24.6|       210|   4e-99|  3|  -3538| 7086| 7109|   460649|         762|  766|
 
 ```r
 cholesterol.data %>%

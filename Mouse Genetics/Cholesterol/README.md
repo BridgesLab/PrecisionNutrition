@@ -10,6 +10,8 @@ Phenotype dictionary: Svenson-183_Svenson_DO-dictionary.csv
 
 * contains F001-F425 and M001-M425
 
+Updated to V12 data found in Svenson-183_Svenson_DO-phenotypes.csv and described in Svenson-183_Svenson_DO-dictionary.csv.  These data were sent by Gary Churchill via email on December 9th
+
 ## Downloaded from GeneNetwork
 
 ### from Andreux Dataset at https://doi.org/10.1016/j.cell.2012.08.012

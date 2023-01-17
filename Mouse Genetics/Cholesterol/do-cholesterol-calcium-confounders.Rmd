@@ -54,7 +54,7 @@ This analysis uses the complete dataset (F01-F425 and M01-M425).
 # Raw Data
 
 ```{r datafiles}
-phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
 ```
 
 
@@ -82,7 +82,8 @@ cholesterol.data <-
 ```{r calcium-associations}
 library("psych")    
 correlation.matrix <- cholesterol.data %>%
-  select(-coat_color,-gen,-sex,-Diet,-sample) %>%
+  select(-gen,-sex,-Diet) %>%
+  select(where(is.numeric)) %>% #removes non numeric covariates
   corr.test(method="spearman", use="pairwise",adjust="BH")
 
 correlation.matrix$p %>%
@@ -161,16 +162,16 @@ complete.data <-
   cholesterol.data %>%
   filter(!(is.na(calcium2))) %>%
   filter(!(is.na(chol2))) %>%
-  filter(!(is.na(fat_mri)))
+  filter(!(is.na(percfat2)))
          
 
 
-base.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)        
-fat.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)
+base.lm <- lm(chol2 ~ Diet + sex + calcium2 + percfat2, data=complete.data)        
+fat.lm <- lm(chol2 ~ Diet + sex + calcium2 + percfat2, data=complete.data)
 fat.lm %>% tidy %>% kable(caption="Model including fat mass")
 
 library(mediation)
-results <- mediate(fat.lm, base.lm, treat='calcium2', mediator='fat_mri',
+results <- mediate(fat.lm, base.lm, treat='calcium2', mediator='percfat2',
                    boot=TRUE, sims=1000)
 results %>% summary
 ```

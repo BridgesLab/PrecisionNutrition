@@ -54,7 +54,7 @@ This analysis uses the complete dataset (F01-F425 and M01-M425).
 # Raw Data
 
 ```{r datafiles}
-phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
 ```
 
 
@@ -211,8 +211,8 @@ fancyRpartPlot(tree.sex.diet)
 Next included fat mass as a predictor
 
 ```{r fat-tree}
-tree.fat <- rpart(High.Chol~sex+diet+fat_mri, data=cholesterol.data)
-log.fat <- glm(High.Chol~sex+diet+fat_mri, data=cholesterol.data, family='binomial')
+tree.fat <- rpart(High.Chol~sex+diet+percfat2, data=cholesterol.data)
+log.fat <- glm(High.Chol~sex+diet+percfat2, data=cholesterol.data, family='binomial')
 log.fat %>% tidy %>% kable(caption="Logistic regression for sex and diet as predictors of above average cholesterol levels")
 
 fancyRpartPlot(tree.sex.diet)
@@ -223,20 +223,20 @@ fancyRpartPlot(tree.sex.diet)
 not_all_na <- function(x) any(!is.na(x))  
 
 cholesterol.data %>%
-  select(where(not_all_na)) %>% #remove columns with all nA
-  select(-sample,-chol.avg,-chol1, -hdld1,-hdld2,-sqlalchemy_id,-diet) -> #remove cholesterol and hdl columns
+  dplyr::select(where(not_all_na)) %>% #remove columns with all nA
+  dplyr::select(-mouse.id,-chol.avg,-chol1, -hdld1,-hdld2,-diet) -> #remove cholesterol and hdl columns
   chol.pred.data.high #testing higher than average cholesterol
 
 cholesterol.data %>%
   select(where(not_all_na)) %>% #remove columns with all nA
-  select(-sample,-chol1,-chol.avg,-High.Chol, -hdld1,-hdld2,-sqlalchemy_id,-diet) -> #remove cholesterol and hdl columns
+  select(-mouse.id,-chol1,-chol.avg,-High.Chol, -hdld1,-hdld2,-diet) -> #remove cholesterol and hdl columns
   chol.pred.data.cont #testing continuous cholesterol levels
 
  
 chol.pred.data.cont %>% 
   rename(`TG 19w`="tg2",
          `Ca 19w`="calcium2",
-         `BW 19w`="bw_19") %>%
+         `BW 19w`="bw.19") %>%
   rpart(chol2~., data=., method="anova") -> tree.all.cont
 chol.pred.data.high %>% rpart(High.Chol~., data=., method="class") -> tree.all.high
 
@@ -304,10 +304,10 @@ lm.calcium.1 <- lm(chol2~calcium2, data=cholesterol.data)
 lm.calcium.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
 lm.calcium.3 <- lm(chol2~calcium2+sex+diet, data=cholesterol.data)
 lm.calcium.4 <- lm(chol2~calcium2+sex+tg2, data=cholesterol.data)
-lm.calcium.5 <- lm(chol2~calcium2+sex+bw_19, data=cholesterol.data)
+lm.calcium.5 <- lm(chol2~calcium2+sex+bw.19, data=cholesterol.data)
 lm.calcium.6 <- lm(chol2~sex+diet+calcium2, data=cholesterol.data)
 lm.calcium.7 <- lm(chol2~sex+diet+calcium2+tg2, data=cholesterol.data)
-lm.calcium.8 <- lm(chol2~sex+diet+calcium2+tg2+bw_19, data=cholesterol.data)
+lm.calcium.8 <- lm(chol2~sex+diet+calcium2+tg2+bw.19, data=cholesterol.data)
 anova(lm.calcium.3,lm.calcium.4)
 lm.calcium.9 <- lm(chol2~sex+diet*calcium2, data=cholesterol.data)
 aov.calcium <- aov(chol2~sex+diet+calcium2, data=cholesterol.data)
@@ -468,9 +468,9 @@ ggplot(data=cholesterol.data,
 lm.tg.1 <- lm(chol2~sex+tg2, data=cholesterol.data)
 lm.tg.2 <- lm(chol2~sex+diet+tg2, data=cholesterol.data)
 lm.tg.3 <- lm(chol2~sex+calcium2+tg2, data=cholesterol.data)
-lm.tg.4 <- lm(chol2~sex+bw_19+tg2, data=cholesterol.data)
+lm.tg.4 <- lm(chol2~sex+bw.19+tg2, data=cholesterol.data)
 lm.tg.5 <- lm(chol2~sex+diet+tg2+calcium2, data=cholesterol.data)
-lm.tg.6 <- lm(chol2~sex+diet+tg2+calcium2+bw_19, data=cholesterol.data)
+lm.tg.6 <- lm(chol2~sex+diet+tg2+calcium2+bw.19, data=cholesterol.data)
 lm.tg.male <- lm(chol2~diet*tg2, dplyr::filter(cholesterol.data, sex == "M"))
 lm.tg.female <- lm(chol2~diet*tg2, dplyr::filter(cholesterol.data, sex == "F"))
 lm.tg.complicated <- lm(chol2~diet + sex + diet*tg2 + sex*tg2 + sex*diet + sex*diet*tg2, data=cholesterol.data)
@@ -502,23 +502,23 @@ dplyr::filter(cholesterol.data, sex == "M")
 ```{R BW_19}
 ggplot(data=cholesterol.data,
        aes(y=chol2,
-           x=bw_19,
+           x=bw.19,
            col=diet)) +
   geom_point() +
   facet_grid(.~sex) +
   geom_smooth(method=lm)
 
 
-lm.bw.1 <- lm(chol2~bw_19, data=cholesterol.data)
-lm.bw.2 <- lm(chol2~bw_19+sex, data=cholesterol.data)
-lm.bw.3 <- lm(chol2~sex+diet+bw_19, data=cholesterol.data)
-lm.bw.4 <- lm(chol2~sex+calcium2+bw_19, data=cholesterol.data)
-lm.bw.5 <- lm(chol2~sex+tg2+bw_19, data=cholesterol.data)
-lm.bw.6 <- lm(chol2~sex+diet+bw_19+tg2, data=cholesterol.data)
-lm.bw.7 <- lm(chol2~sex+diet+bw_19+tg2+calcium2, data=cholesterol.data)
+lm.bw.1 <- lm(chol2~bw.19, data=cholesterol.data)
+lm.bw.2 <- lm(chol2~bw.19+sex, data=cholesterol.data)
+lm.bw.3 <- lm(chol2~sex+diet+bw.19, data=cholesterol.data)
+lm.bw.4 <- lm(chol2~sex+calcium2+bw.19, data=cholesterol.data)
+lm.bw.5 <- lm(chol2~sex+tg2+bw.19, data=cholesterol.data)
+lm.bw.6 <- lm(chol2~sex+diet+bw.19+tg2, data=cholesterol.data)
+lm.bw.7 <- lm(chol2~sex+diet+bw.19+tg2+calcium2, data=cholesterol.data)
 
-lm.bw.6 <- lm(chol2~sex+diet*bw_19, data=cholesterol.data)
-aov.calcium <- aov(chol2~sex+diet+bw_19, data=cholesterol.data)
+lm.bw.6 <- lm(chol2~sex+diet*bw.19, data=cholesterol.data)
+aov.calcium <- aov(chol2~sex+diet+bw.19, data=cholesterol.data)
 summary(lm.bw.1) %>% tidy %>% kable(caption="Effects of calcium on cholesterol at 18w", digits=50)
 summary(lm.bw.2) %>% tidy %>% kable(caption="Sex adjusted effects of calcium on cholesterol at 18w", digits=50)
 summary(lm.bw.3) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w", digits=50)
@@ -526,10 +526,10 @@ summary(lm.bw.4) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effect
 summary(lm.bw.5) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
 
 
-lm.bw.chow <- lm(chol2~sex+bw_19, filter(cholesterol.data, diet == "chow"))
+lm.bw.chow <- lm(chol2~sex+bw.19, filter(cholesterol.data, diet == "chow"))
 summary(lm.bw.chow) %>% glance %>% kable
 
-lm.bw.hf <- lm(chol2~sex+bw_19, filter(cholesterol.data, diet == "hf"))
+lm.bw.hf <- lm(chol2~sex+bw.19, filter(cholesterol.data, diet == "hf"))
 summary(lm.bw.hf) %>% glance %>% kable
 
 library(effectsize)

@@ -29,7 +29,7 @@ This analysis uses the complete dataset (F01-F425 and M01-M425).
 
 
 ```r
-phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
 ```
 
 
@@ -59,7 +59,8 @@ cholesterol.data <-
 ```r
 library("psych")    
 correlation.matrix <- cholesterol.data %>%
-  select(-coat_color,-gen,-sex,-Diet,-sample) %>%
+  select(-gen,-sex,-Diet) %>%
+  select(where(is.numeric)) %>% #removes non numeric covariates
   corr.test(method="spearman", use="pairwise",adjust="BH")
 
 correlation.matrix$p %>%
@@ -138,40 +139,42 @@ confounders.data %>%
 
 Table: Base and Moderated Model Estimates
 
-|Measure     | Calcium.mod| Calcium.base| Estimate.change|
-|:-----------|-----------:|------------:|---------------:|
-|hdld2       |       0.424|         12.7|         -12.236|
-|chol.avg    |       5.276|         12.7|          -7.383|
-|nefa2       |      10.411|         12.7|          -2.249|
-|tg2         |      10.801|         12.7|          -1.858|
-|fat_mri     |      11.205|         12.7|          -1.454|
-|gldh2       |      11.713|         12.7|          -0.947|
-|chol1       |      11.840|         12.7|          -0.819|
-|bw_24       |      11.911|         12.7|          -0.749|
-|hdld1       |      11.921|         12.7|          -0.738|
-|bw_25       |      11.927|         12.7|          -0.733|
-|bw_23       |      11.952|         12.7|          -0.708|
-|bw_26       |      12.082|         12.7|          -0.578|
-|bw_19       |      12.158|         12.7|          -0.502|
-|bw_18       |      12.166|         12.7|          -0.494|
-|perc_fat2   |      12.178|         12.7|          -0.482|
-|bw_20       |      12.185|         12.7|          -0.475|
-|ftm2        |      12.211|         12.7|          -0.448|
-|bw_22       |      12.221|         12.7|          -0.439|
-|bw_17       |      12.227|         12.7|          -0.432|
-|glucose2    |      12.232|         12.7|          -0.427|
-|leptin      |      12.262|         12.7|          -0.398|
-|ttm2        |      12.264|         12.7|          -0.396|
-|bw_15       |      12.291|         12.7|          -0.368|
-|weight2     |      12.306|         12.7|          -0.354|
-|bw_21       |      12.339|         12.7|          -0.321|
-|t_area2     |      12.341|         12.7|          -0.319|
-|bw_5        |      12.350|         12.7|          -0.310|
-|perc_fat1   |      12.451|         12.7|          -0.209|
-|ftm1        |      12.498|         12.7|          -0.162|
-|chol2       |      12.660|         12.7|           0.000|
-|calcium2    |      12.660|         12.7|           0.000|
-|phosphorus2 |      13.705|         12.7|           1.045|
+|Measure   | Calcium.mod| Calcium.base| Estimate.change|
+|:---------|-----------:|------------:|---------------:|
+|hdld2     |       0.168|         12.6|         -12.411|
+|chol.avg  |       5.154|         12.6|          -7.425|
+|nefa2     |      10.482|         12.6|          -2.098|
+|tg2       |      10.783|         12.6|          -1.796|
+|fat.mri   |      11.205|         12.6|          -1.374|
+|gldh2     |      11.662|         12.6|          -0.918|
+|chol1     |      11.664|         12.6|          -0.915|
+|hdld1     |      11.757|         12.6|          -0.822|
+|bw.24     |      11.885|         12.6|          -0.695|
+|bw.25     |      11.903|         12.6|          -0.676|
+|bw.23     |      11.929|         12.6|          -0.650|
+|perc.fat2 |      12.020|         12.6|          -0.559|
+|percfat2  |      12.042|         12.6|          -0.538|
+|bw.19     |      12.052|         12.6|          -0.527|
+|bw.26     |      12.057|         12.6|          -0.523|
+|bw.18     |      12.060|         12.6|          -0.519|
+|ftm2      |      12.067|         12.6|          -0.512|
+|bw.20     |      12.081|         12.6|          -0.498|
+|ttm2      |      12.113|         12.6|          -0.466|
+|bw.17     |      12.123|         12.6|          -0.456|
+|weight2   |      12.155|         12.6|          -0.424|
+|glucose2  |      12.164|         12.6|          -0.416|
+|leptin    |      12.166|         12.6|          -0.413|
+|bw.15     |      12.181|         12.6|          -0.399|
+|t.area2   |      12.189|         12.6|          -0.390|
+|bw.22     |      12.199|         12.6|          -0.381|
+|bw.21     |      12.200|         12.6|          -0.379|
+|bw.16     |      12.217|         12.6|          -0.362|
+|bw.5      |      12.291|         12.6|          -0.288|
+|percfat1  |      12.366|         12.6|          -0.213|
+|perc.fat1 |      12.369|         12.6|          -0.210|
+|ftm1      |      12.406|         12.6|          -0.174|
+|calcium2  |      12.579|         12.6|           0.000|
+|chol2     |      12.579|         12.6|           0.000|
 
 # Potential Mediators
 
@@ -186,12 +189,12 @@ complete.data <-
   cholesterol.data %>%
   filter(!(is.na(calcium2))) %>%
   filter(!(is.na(chol2))) %>%
-  filter(!(is.na(fat_mri)))
+  filter(!(is.na(percfat2)))
          
 
 
-base.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)        
-fat.lm <- lm(chol2 ~ Diet + sex + calcium2 + fat_mri, data=complete.data)
+base.lm <- lm(chol2 ~ Diet + sex + calcium2 + percfat2, data=complete.data)        
+fat.lm <- lm(chol2 ~ Diet + sex + calcium2 + percfat2, data=complete.data)
 fat.lm %>% tidy %>% kable(caption="Model including fat mass")
 ```
 
@@ -201,15 +204,15 @@ Table: Model including fat mass
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |  -22.978|    21.272|    -1.080|   0.282|
-|DietHFHS    |   35.744|     5.313|     6.728|   0.000|
-|sexM        |   10.953|     4.662|     2.349|   0.020|
-|calcium2    |   11.205|     2.382|     4.705|   0.000|
-|fat_mri     |    0.218|     0.536|     0.407|   0.685|
+|(Intercept) |    -43.0|     8.074|     -5.32|       0|
+|DietHFHS    |     22.3|     2.111|     10.59|       0|
+|sexM        |     19.8|     1.805|     10.97|       0|
+|calcium2    |     12.0|     0.866|     13.90|       0|
+|percfat2    |     59.0|    11.328|      5.21|       0|
 
 ```r
 library(mediation)
-results <- mediate(fat.lm, base.lm, treat='calcium2', mediator='fat_mri',
+results <- mediate(fat.lm, base.lm, treat='calcium2', mediator='percfat2',
                    boot=TRUE, sims=1000)
 results %>% summary
 ```
@@ -221,14 +224,14 @@ results %>% summary
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              2.447      -14.722        13.93   0.740    
-## ADE              11.205        6.836        16.14  <2e-16 ***
-## Total Effect     13.652       -1.844        25.66   0.076 .  
-## Prop. Mediated    0.179       -5.480         4.45   0.664    
+## ACME            710.166      454.995       964.55  <2e-16 ***
+## ADE              12.042       10.404        13.61  <2e-16 ***
+## Total Effect    722.208      467.042       978.03  <2e-16 ***
+## Prop. Mediated    0.983        0.974         0.99  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
-## Sample Size Used: 148 
+## Sample Size Used: 758 
 ## 
 ## 
 ## Simulations: 1000
@@ -254,11 +257,11 @@ Table: Model including phosphorus
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   -32.45|     7.975|     -4.07|   0.000|
-|DietHFHS    |    27.95|     1.797|     15.55|   0.000|
-|sexM        |    19.03|     1.836|     10.36|   0.000|
-|calcium2    |    13.71|     0.962|     14.25|   0.000|
-|phosphorus2 |    -2.09|     0.849|     -2.46|   0.014|
+|(Intercept) |   -31.89|     8.003|     -3.98|   0.000|
+|DietHFHS    |    28.05|     1.801|     15.57|   0.000|
+|sexM        |    18.86|     1.839|     10.26|   0.000|
+|calcium2    |    13.64|     0.972|     14.04|   0.000|
+|phosphorus2 |    -2.07|     0.854|     -2.42|   0.016|
 
 ```r
 #anova(base.model,phos.lm) %>% tidy %>% kable(caption="Chi squared test of models with or without calcium")
@@ -272,9 +275,9 @@ sessionInfo()
 ```
 
 ```
-## R version 4.2.0 (2022-04-22)
+## R version 4.2.2 (2022-10-31)
 ## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur/Monterey 10.16
+## Running under: macOS Big Sur ... 10.16
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
@@ -288,38 +291,38 @@ sessionInfo()
 ## 
 ## other attached packages:
 ##  [1] mediation_4.5.0 sandwich_3.0-2  mvtnorm_1.1-3   Matrix_1.5-3   
-##  [5] MASS_7.3-58.1   broom_1.0.1     ggplot2_3.4.0   venneuler_1.1-3
+##  [5] MASS_7.3-58.1   broom_1.0.2     ggplot2_3.4.0   venneuler_1.1-3
 ##  [9] rJava_1.0-6     psych_2.2.9     forcats_0.5.2   readr_2.1.3    
 ## [13] dplyr_1.0.10    tidyr_1.2.1     knitr_1.41     
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] nlme_3.1-160        bit64_4.0.5         RColorBrewer_1.1-3 
-##  [4] tools_4.2.0         backports_1.4.1     bslib_0.4.1        
+##  [1] nlme_3.1-161        bit64_4.0.5         RColorBrewer_1.1-3 
+##  [4] tools_4.2.2         backports_1.4.1     bslib_0.4.2        
 ##  [7] utf8_1.2.2          R6_2.5.1            rpart_4.1.19       
 ## [10] Hmisc_4.7-2         DBI_1.1.3           colorspace_2.0-3   
 ## [13] nnet_7.3-18         withr_2.5.0         tidyselect_1.2.0   
 ## [16] gridExtra_2.3       mnormt_2.1.1        bit_4.0.5          
-## [19] compiler_4.2.0      cli_3.4.1           htmlTable_2.4.1    
-## [22] labeling_0.4.2      sass_0.4.3          scales_1.2.1       
-## [25] checkmate_2.1.0     stringr_1.4.1       digest_0.6.30      
-## [28] foreign_0.8-83      minqa_1.2.5         rmarkdown_2.18     
-## [31] base64enc_0.1-3     jpeg_0.1-9          pkgconfig_2.0.3    
-## [34] htmltools_0.5.3     lme4_1.1-31         fastmap_1.1.0      
-## [37] highr_0.9           htmlwidgets_1.5.4   rlang_1.0.6        
+## [19] compiler_4.2.2      cli_3.6.0           htmlTable_2.4.1    
+## [22] labeling_0.4.2      sass_0.4.4          scales_1.2.1       
+## [25] checkmate_2.1.0     stringr_1.5.0       digest_0.6.31      
+## [28] foreign_0.8-84      minqa_1.2.5         rmarkdown_2.19     
+## [31] base64enc_0.1-3     jpeg_0.1-10         pkgconfig_2.0.3    
+## [34] htmltools_0.5.4     lme4_1.1-31         fastmap_1.1.0      
+## [37] highr_0.10          htmlwidgets_1.6.1   rlang_1.0.6        
 ## [40] rstudioapi_0.14     jquerylib_0.1.4     farver_2.1.1       
-## [43] generics_0.1.3      zoo_1.8-11          jsonlite_1.8.3     
+## [43] generics_0.1.3      zoo_1.8-11          jsonlite_1.8.4     
 ## [46] vroom_1.6.0         magrittr_2.0.3      Formula_1.2-4      
 ## [49] interp_1.1-3        Rcpp_1.0.9          munsell_0.5.0      
-## [52] fansi_1.0.3         lifecycle_1.0.3     stringi_1.7.8      
-## [55] yaml_2.3.6          grid_4.2.0          parallel_4.2.0     
+## [52] fansi_1.0.3         lifecycle_1.0.3     stringi_1.7.12     
+## [55] yaml_2.3.6          grid_4.2.2          parallel_4.2.2     
 ## [58] crayon_1.5.2        deldir_1.0-6        lattice_0.20-45    
-## [61] splines_4.2.0       hms_1.1.2           pillar_1.8.1       
-## [64] boot_1.3-28         lpSolve_5.6.17      glue_1.6.2         
-## [67] evaluate_0.18       latticeExtra_0.6-30 data.table_1.14.6  
-## [70] nloptr_2.0.3        png_0.1-7           vctrs_0.5.1        
-## [73] tzdb_0.3.0          gtable_0.3.1        purrr_0.3.5        
-## [76] assertthat_0.2.1    cachem_1.0.6        xfun_0.35          
-## [79] survival_3.4-0      tibble_3.1.8        cluster_2.1.4      
+## [61] splines_4.2.2       hms_1.1.2           pillar_1.8.1       
+## [64] boot_1.3-28.1       lpSolve_5.6.17      glue_1.6.2         
+## [67] evaluate_0.19       latticeExtra_0.6-30 data.table_1.14.6  
+## [70] nloptr_2.0.3        png_0.1-8           vctrs_0.5.1        
+## [73] tzdb_0.3.0          gtable_0.3.1        purrr_1.0.1        
+## [76] assertthat_0.2.1    cachem_1.0.6        xfun_0.36          
+## [79] survival_3.5-0      tibble_3.1.8        cluster_2.1.4      
 ## [82] ellipsis_0.3.2
 ```
 

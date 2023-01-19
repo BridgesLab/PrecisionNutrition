@@ -78,6 +78,16 @@ cholesterol.data <-
 
 # Analysis
 
+The total number of mice with cholesterol levels in this dataset is `r cholesterol.data %>% distinct(mouse.id) %>% count`
+ mice, broken down as follows:
+ 
+```{r sample-size}
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  count() %>%
+  kable(caption="Number of mice in each group")
+```
+ 
 ## Cholesterol Levels for NCD Annimals
 
 ```{r cholesterol-normality}

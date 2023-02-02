@@ -13,7 +13,7 @@ This repository contains raw data for studies done by the [Bridges Lab](http://b
 
 | Publication | Dataset | Tag |
 |-------------|---------|-----|
-| Cousineau, C.M., K. Loftus, K. Svensson, G.D. Churchill, and D, Bridges. Cross-sectional association between blood cholesterol and calcium levels in genetically diverse strains of mice. (In Preparation) | | |
+| Cousineau, C.M., K. Loftus, G.D. Churchill, and D. Bridges. Cross-sectional association between blood cholesterol and calcium levels in genetically diverse strains of mice. (In Preparation) | | |
 
 
 # Struture of this Repository

@@ -1,0 +1,738 @@
+---
+title: "TWAS Analysis of Diversity Outbred Strain RNAseq Data"
+author: "Dave Bridges"
+date: "July 7, 2020"
+output:
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+# Experimental Details
+
+The RNA expression data was downloaded from GSE72759 as a matrix file, and compared with genotypes from the Svenson-183 dataset.
+
+# Raw Data
+
+```{r data-input}
+library(readr) #loads the readr package
+expression.filename <- "GSE72759_DO192_RNAseq_UpperQuartileNormalized_n21454genes_forGEOSubmission.txt"
+expression.data <- read_tsv(expression.filename, show_col_types = F) %>%
+  dplyr::rename(ENSEMBL.ID=1)
+
+genotype.filename <- 'Svenson-183_Svenson_DO-MegaMUGA-calls.csv'
+genotype.data <- read_csv(genotype.filename,
+                          col_types = cols(
+  .default = col_character(),
+  chr = col_factor(levels=NULL),
+  pos = col_double()
+))
+
+phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
+phenotype.data <- read_csv(phenotype.filename, na='-999999')
+
+phenotype.data[phenotype.data=='-999999'] <- NA
+  
+
+mean.expression <- 
+  expression.data %>%
+  dplyr::select(contains(phenotype.data$sample))%>%
+  rowMeans()
+
+expression.data <-
+   expression.data %>%
+   filter(mean.expression>10)
+```
+
+# Analysis
+
+Only evaluated gene expression for genes with >10 TPM
+
+## Cholesterol Levels 
+
+Regressed cholesterol levels by diet and sex
+
+```{r cholesterol-analysis-ncd}
+summary.data <-
+  phenotype.data %>%
+  group_by(sex,diet) %>%
+  summarize_at(.vars=vars(chol1), .funs=list(mean=mean,
+                                             se=se,
+                                             sd=sd,
+                                             n=length))
+
+kable(summary.data,caption="Summary statistics for cholesterol levels at 8 weeks")
+
+library(broom)
+lm(chol1~sex*diet, data=phenotype.data) %>%
+  tidy %>%
+  kable(caption="Global interactions between sex and diet")
+
+chol.lm <- lm(chol1~sex+diet, data=phenotype.data)
+chol.lm.ncd <- lm(chol1~sex, data=filter(phenotype.data, diet=='chow'))
+
+cholesterol.data.ncd <-
+  phenotype.data %>%
+  filter(!is.na(chol1)) %>%
+  filter(diet=='chow') %>%
+  mutate(adj.chol.ncd=residuals(chol.lm.ncd)+coefficients(chol.lm.ncd)['(Intercept)'])
+```
+
+
+```{r cholesterol-analysis-hfd}
+summary.data <-
+  phenotype.data %>%
+  group_by(sex,diet) %>%
+  summarize_at(.vars=vars(chol1), .funs=list(mean=mean,
+                                             se=se,
+                                             sd=sd,
+                                             n=length))
+
+kable(summary.data,caption="Summary statistics for cholesterol levels at 8 weeks")
+
+library(broom)
+lm(chol1~sex*diet, data=phenotype.data) %>%
+  tidy %>%
+  kable(caption="Global interactions between sex and diet")
+
+chol.lm <- lm(chol1~sex+diet, data=phenotype.data)
+chol.lm.hf <- lm(chol1~sex, data=filter(phenotype.data, diet=='hf'))
+
+cholesterol.data.hfd <-
+  phenotype.data %>%
+    filter(!is.na(chol1)) %>%
+  filter(diet=='hf') %>%
+  mutate(adj.chol.hf=residuals(chol.lm.hf)+coefficients(chol.lm.hf)['(Intercept)'])
+```
+
+# TWAS with Cholesterol Levels for NCD
+
+```{r cholesterol-twas-NCD}
+library("org.Mm.eg.db")
+
+library(purrr)
+possible.lm <- possibly(.f = lm, otherwise=NULL) # to catch errors when we only have one sex and a contrasts error occurs
+
+twas.data.ncd <- 
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.ncd,by='sample') %>%
+  dplyr::select(chol1,sex,sample,ENSEMBL.ID,expression) %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  filter(term=='chol1') %>%
+  arrange(p.value)%>%
+  mutate(p.adj=p.adjust(p.value,method="BH"))
+
+twas.data.ncd.all <- 
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.ncd,by='sample') %>%
+  dplyr::select(chol1,sex,sample,ENSEMBL.ID,expression) %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  filter(term %in% c('chol1', '(Intercept)')) %>%
+  dplyr::select(ENSEMBL.ID,term,estimate,std.error) %>%
+  pivot_wider(id_cols=ENSEMBL.ID,
+              names_from = 'term',
+              values_from = c(estimate,std.error)) %>%
+  mutate(estimate.rel = estimate_chol1/`estimate_(Intercept)`,
+         std.error.rel = std.error_chol1/`estimate_(Intercept)`)
+
+twas.data.ncd.r2 <-
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.ncd,by='sample') %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::glance(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  arrange(p.value)%>%
+  mutate(p.adj=p.adjust(p.value,method="BH"))
+
+twas.data.ncd.int <-
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.ncd,by='sample') %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol1*sex, data = .x))) %>%
+  filter(term=='chol1:sexM') %>%
+  arrange(p.value) %>%
+  mutate(p.adj=p.adjust(p.value,method="BH"))
+
+twas.data.ncd$symbol <- mapIds(org.Mm.eg.db,
+                           keys=twas.data.ncd$ENSEMBL.ID,
+                           column="SYMBOL", 
+                           keytype="ENSEMBL", 
+                           multiVals="first")
+
+twas.data.ncd.int$symbol <- mapIds(org.Mm.eg.db,
+                           keys=twas.data.ncd.int$ENSEMBL.ID,
+                           column="SYMBOL", 
+                           keytype="ENSEMBL", 
+                           multiVals="first")
+
+twas.data.ncd.all$symbol <- mapIds(org.Mm.eg.db,
+                           keys=twas.data.ncd.all$ENSEMBL.ID,
+                           column="SYMBOL", 
+                           keytype="ENSEMBL", 
+                           multiVals="first")
+
+
+twas.data.ncd %>%
+  head(10) %>%
+  kable(caption="Top 10 liver TWAS assocations with cholesterol levels")
+
+twas.data.ncd.int %>%
+  head(10) %>%
+  kable(caption="Top 10 liver TWAS assocations with cholesterol levels that are modified by sex")
+
+write_csv(twas.data.ncd,
+          file="NCD TWAS Results.csv")
+write_csv(twas.data.ncd.int,
+          file="NCD TWAS Interaction Results.csv")
+
+twas.data.ncd.combined <- 
+  left_join(twas.data.ncd,
+            filter(twas.data.ncd.int, p.value<0.05), #only append interaction values when significant
+             by=c('ENSEMBL.ID','symbol'),
+             suffix = c('_main','_int'))
+
+write_csv(twas.data.ncd.combined,
+          file="NCD TWAS Results - Combined.csv")
+```
+
+# TWAS with Cholesterol Levels for HFD
+
+```{r cholesterol-twas-hf}
+twas.data.hf <- 
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.hfd,by='sample') %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  filter(term=='chol1') %>%
+  arrange(p.value)%>%
+  mutate(p.adj=p.adjust(p.value,method="BH"))
+
+twas.data.hf.all<- 
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.hfd,by='sample') %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  filter(term %in% c('chol1', '(Intercept)')) %>%
+  dplyr::select(ENSEMBL.ID,term,estimate,std.error) %>%
+  pivot_wider(id_cols=ENSEMBL.ID,
+              names_from = 'term',
+              values_from = c(estimate,std.error)) %>%
+  mutate(estimate.rel = estimate_chol1/`estimate_(Intercept)`*100,
+         std.error.rel = std.error_chol1/`estimate_(Intercept)`*100)
+  
+
+twas.data.hf.r2 <-
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.hfd,by='sample') %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::glance(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  arrange(p.value)%>%
+  mutate(p.adj=p.adjust(p.value,method="BH"))
+
+twas.data.int.hf <-
+  expression.data %>%
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(cholesterol.data.hfd,by='sample') %>%
+  group_by(ENSEMBL.ID) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol1*sex, data = .x))) %>%
+  filter(term=='chol1:sexM') %>%
+  arrange(p.value) %>%
+  mutate(p.adj=p.adjust(p.value,method="BH"))
+
+twas.data.hf$symbol <- mapIds(org.Mm.eg.db,
+                           keys=twas.data.hf$ENSEMBL.ID,
+                           column="SYMBOL", 
+                           keytype="ENSEMBL", 
+                           multiVals="first")
+
+twas.data.int.hf$symbol <- mapIds(org.Mm.eg.db,
+                           keys=twas.data.int.hf$ENSEMBL.ID,
+                           column="SYMBOL", 
+                           keytype="ENSEMBL", 
+                           multiVals="first")
+
+twas.data.hf.all$symbol <- mapIds(org.Mm.eg.db,
+                           keys=twas.data.hf.all$ENSEMBL.ID,
+                           column="SYMBOL", 
+                           keytype="ENSEMBL", 
+                           multiVals="first")
+
+
+twas.data.hf %>%
+  head(10) %>%
+  kable(caption="Top 10 liver TWAS a ssocations with cholesterol levels for HFD")
+
+twas.data.int.hf %>%
+  head(10) %>%
+  kable(caption="Top 10 liver TWAS assocations with cholesterol levels that are modified by sex for HFD")
+
+write_csv(twas.data.hf,
+          file="HFD TWAS Results.csv")
+write_csv(twas.data.int.hf,
+          file="HFD TWAS Interaction Results.csv")
+
+twas.data.combined.hf <- 
+  left_join(twas.data.hf,
+            filter(twas.data.int.hf, p.value<0.05), #only append interaction values when significant
+             by=c('ENSEMBL.ID','symbol'),
+             suffix = c('_main','_int'))
+
+write_csv(twas.data.combined.hf,
+          file="HFD TWAS Results - Combined.csv")
+
+sig.twas.data.hf <- 
+    twas.data.hf %>%
+  filter(p.adj<0.05)
+
+sig.twas.data.ncd <-
+  twas.data.ncd %>%
+  filter(p.adj<0.05)
+
+sig.twas.data.ncd$symbol %in% sig.twas.data.hf$symbol %>% table
+
+sig.twas.data.ncd$genes %in% sig.twas.data.hf$genes %>% table
+
+library(venneuler)
+vd.down.up <- venneuler(c("NCD"=170, "HFHS"=27, "NCD&HFHS"=0))
+vd.down.down <- venneuler(c("NCD"=43, "HFHS"=69, "NCD&HFHS"=0))
+vd.all <- venneuler(c("NCD"=dim(sig.twas.data.ncd)[1],
+                      "HFHS"=dim(sig.twas.data.hf)[1],
+                      "NCD&HFHS"=intersect(sig.twas.data.hf$symbol,sig.twas.data.ncd$symbol) %>% length()))
+plot(vd.down.up)
+plot(vd.down.down)
+plot(vd.all, main="Transcripts Associating with Cholesterol")
+```
+
+Our analysis identified **`r dim(twas.data.ncd %>% filter(p.value<0.05))[1]`** nominally significant associations between expression of genes and adjusted cholesterol levels on a normal chow diet.  Among those, `r dim(twas.data.ncd %>% filter(p.value<0.05&estimate>0))[1]` were positively correlated and `r dim(twas.data.ncd %>% filter(p.value<0.05&estimate>0))[1]` were negatively correlated with cholesterol levels.
+
+## TWAS Modification by Sex
+
+By modeling the interactions between sex and expression on cholesterol levels, we identified **`r dim(twas.data.ncd.int %>% filter(p.value<0.05))[1]`** genes where the cholesterol/expression relationship was modified by sex in a nominally significant manner.  This included `r dim(twas.data.ncd.int %>% filter(p.value<0.05&estimate>0))[1]` genes where the relationship was stronger in males, and `r dim(twas.data.ncd.int %>% filter(p.value<0.05&estimate<0))[1]` where it was stronger in females.
+
+# Comparason with mouse GWAS
+
+```{r mouse-gwas-twas}
+
+chr11.genes <- c('Znrf3', 'Xbp1', 'Ccdc117', 'Ankrd36', 'Mrps24', 'Urgcp', 'Dbnl', 'Pgam2', 'Polm', 'Aebp1','Pold2', 'Myl7', 'Gck', 'Ykt6', 'Camk2b', 'Nudcd3', 'A730071L15Rik', 'Npc1l1', 'Ddx56','Tmed4')
+genes.of.interest <- c('Cyp7a1','Fasn','Ldlr','Hmgcr')
+twas.data.ncd %>%
+  filter(symbol %in% c(chr11.genes,genes.of.interest)) %>%
+  kable(caption="Genes in the chromosome 11 interval with liver expression")
+
+```
+
+
+# Integrated TWAS Analysis
+
+```{r twas-chol-integrated}
+combined.twas.data <-
+  full_join(twas.data.ncd, twas.data.hf, by=c('ENSEMBL.ID','term','symbol'), suffix=c('_ncd','_hfd'))
+
+combined.twas.data.all <-
+  full_join(twas.data.ncd.all, twas.data.hf.all, by=c('ENSEMBL.ID','symbol'), suffix=c('_ncd','_hfd'))
+
+library(ggplot2)
+library(ggrepel)
+ggplot(combined.twas.data, 
+       aes(y=estimate_hfd, x=estimate_ncd,
+           xmin=estimate_ncd-std.error_ncd, xmax=estimate_ncd+std.error_ncd,
+           ymin=estimate_hfd-std.error_hfd, ymax=estimate_hfd+std.error_hfd )) +
+  geom_point() +
+  #geom_errorbar() +
+  #geom_errorbarh() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  geom_label_repel(aes(label=symbol),
+                   data = subset(combined.twas.data, abs(estimate_hfd) > 2|abs(estimate_ncd) > 2))
+
+sig.genes <- filter(combined.twas.data, p.adj_ncd<0.05&p.adj_hfd<0.05) %>% pull(symbol)
+ggplot(combined.twas.data.all %>% filter(symbol %in% sig.genes), 
+       aes(y=estimate.rel_hfd, x=estimate.rel_ncd,
+           xmin=estimate.rel_ncd-std.error.rel_ncd,
+           xmax=estimate.rel_ncd+std.error.rel_ncd,
+           ymin=estimate.rel_hfd-std.error.rel_hfd,
+           ymax=estimate.rel_hfd+std.error.rel_hfd )) +
+  geom_point() +
+  geom_errorbar() +
+  geom_errorbarh() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  geom_text_repel(aes(label=symbol))
+
+sig.genes <- filter(combined.twas.data, p.adj_ncd<0.05|p.adj_hfd<0.05) %>% pull(symbol)
+ggplot(combined.twas.data.all %>% filter(symbol %in% sig.genes), 
+       aes(y=estimate.rel_hfd, x=estimate.rel_ncd,
+           xmin=estimate.rel_ncd-std.error.rel_ncd,
+           xmax=estimate.rel_ncd+std.error.rel_ncd,
+           ymin=estimate.rel_hfd-std.error.rel_hfd,
+           ymax=estimate.rel_hfd+std.error.rel_hfd )) +
+  geom_point() +
+  geom_errorbar() +
+  geom_errorbarh() +
+  geom_smooth() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  xlim(-0.03,0.03) +
+  ylim(-0.03,0.03) +
+  geom_text_repel(aes(label=symbol)) +
+  labs(y="On HFHS Diet (beta)",
+       x="On NCD Diet (beta)",
+       title="Associations of Liver Transcripts with Cholesterol",
+       subtitle="Significant for at least one diet")
+
+
+cutoff <- -log10(0.05)
+ggplot(combined.twas.data, 
+       aes(y=-log10(p.adj_hfd), x=-log10(p.adj_ncd) )) +
+  geom_point() +
+  #geom_errorbar() +
+  #geom_errorbarh() +
+  geom_hline(yintercept = -log10(0.05), lty=2) +
+  geom_vline(xintercept = -log10(0.05), lty=2) +
+  geom_text_repel(aes(label=symbol),
+                   data = subset(combined.twas.data, -log10(p.adj_hfd) > cutoff|-log10(p.adj_ncd) > cutoff)) +
+  labs(y="On HFHS Diet (log10 q-value)",
+       x="On NCD Diet (log10 q-value)",
+       title="Associations of Liver Transcripts with Cholesterol") +
+  theme_classic() +
+  theme(text=element_text(size=16))
+
+
+```
+# Comparason with human GWAS
+
+Downloaded human cholesterol associated alleles from https://t2d.hugeamp.org/phenotype.html?phenotype=CHOL
+
+```{ chol-human-gwas}
+gwas.filename <- 'cholesterol-associations.csv'
+gwas.data <- read_csv(gwas.filename) %>%
+  mutate(Symbol=gsub('.{2}$', '', nearest)) %>%
+  mutate(Symbol=gsub("^.{0,2}", "",Symbol)) #removes first and last characters
+
+library(biomaRt)
+human = useMart("ensembl", dataset = "hsapiens_gene_ensembl")
+mouse = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+mapping.data <- getLDS(attributes = c("hgnc_symbol"), filters = "hgnc_symbol", values = gwas.data$Symbol , mart = human, attributesL = c("mgi_symbol"), martL = mouse, uniqueRows=T)
+
+gwas.data <-
+  full_join(gwas.data, mapping.data, by=c('Symbol'='HGNC.symbol')) %>%
+  dplyr::filter(!(is.na(MGI.symbol)))
+
+#are gwas alleles enriched in correlation analyses
+
+sig.twas.data <- filter(twas.data, p.value<0.05)
+#sig.twas.data$symbol %in% gwas.data$MGI.symbol %>% table
+
+combined.twas.data %>%
+  filter(symbol %in% gwas.data$MGI.symbol) %>%
+  arrange(p.value) %>%
+  head %>%
+  kable(caption="Most significant TWAS association hits that are also nearby GWAS hits")
+
+
+#checked if a TWAS was a GWAS hit
+twas.data.matched <-
+  combined.twas.data %>%
+  mutate(hGWAS.match=symbol %in% gwas.data$MGI.symbol)
+
+with(twas.data.matched, table(hGWAS.match,p.value<0.05)) %>% 
+  fisher.test() %>% 
+  tidy %>%
+  kable(caption='Fisher test for enrichment of GWAS hits in liver TWAS genes')
+
+
+glm(hGWAS.match~p.value, data=twas.data.matched, family='binomial') %>% 
+  tidy %>% 
+  kable(caption="Logistic regression of TWAS values against likilihood of a GWAS hit.")
+```
+
+# Pathway Analyses for NCD
+
+```{r twas-go}
+twas.list <- twas.data.ncd %>% arrange(-estimate) %>% pull(estimate)
+names(twas.list) <- twas.data.ncd %>% arrange(-estimate) %>% pull(symbol)
+twas.list <- sort(twas.list, decreasing = TRUE)
+#twas.list <- twas.list[!(is.na(names(twas.list)))]
+
+
+library(clusterProfiler)
+go.twas.bp <- gseGO(geneList=twas.list, 
+               ont="BP", 
+               keyType='SYMBOL',
+               OrgDb=org.Mm.eg.db, 
+               pvalueCutoff=0.25,
+               verbose=T,
+               by='fgsea',
+               eps=1E-25)
+
+#enrichement
+twas.data.ncd %>% 
+  filter(p.value<0.05) %>%
+  pull(symbol) ->
+  twas.sig
+
+go.twas.bp.enrich <- enrichGO(gene=twas.sig, 
+               ont="BP", 
+               keyType='SYMBOL',
+               OrgDb=org.Mm.eg.db, 
+               pvalueCutoff=0.05)
+
+go.twas.bp.enrich.simpl <- simplify(go.twas.bp.enrich,
+                             cutoff=0.7, 
+                             by="p.adjust",
+                             select_fun=min)
+
+library(enrichplot)
+
+dotplot(go.twas.bp.enrich.simpl, 
+        showCategory=50,
+        color='pvalue',
+        font.size=8)
+barplot(go.twas.bp.enrich.simpl,font.size=8)
+cnetplot(go.twas.bp.enrich.simpl, 
+         showCategory=100,
+         node_label="gene",
+         cex_label_gene=0.5)
+cnetplot(go.twas.bp.enrich.simpl, 
+         showCategory=100,
+         node_label="category",
+         cex_label_category=0.5)
+heatplot(go.twas.bp.enrich.simpl)
+library(ggupset)
+upsetplot(go.twas.bp.enrich.simpl)
+
+dotplot(go.twas.bp, showCategory=30)
+heatplot(go.twas.bp, foldChange=twas.list)
+upsetplot(go.twas.bp)
+
+
+as.data.frame(go.twas.bp) %>% select("Description","setSize","enrichmentScore","NES","pvalue","p.adjust") %>%
+  kable(caption="NCD GO BP Analysis of TWAS Associations from GSEA")
+
+as.data.frame(go.twas.bp) %>%
+  write_csv(file="NCD TWAS GO-BP GSEA.csv")
+
+as.data.frame(go.twas.bp.enrich.simpl) %>% select("Description","GeneRatio","Count","pvalue","p.adjust") %>% 
+  kable(caption="NCD GO BP Analysis of TWAS Associations from Enrichment")
+
+as.data.frame(go.twas.bp.enrich.simpl) %>%
+  write_csv(file="NCD TWAS GO-BP Enrichment.csv")
+
+steroid.enrichment <- as.data.frame(go.twas.bp) %>% filter(ID=='GO:0016126')
+```
+
+
+
+The `r steroid.enrichment$Description` pathway (`r steroid.enrichment$ID`) was enriched with `r steroid.enrichment$GeneRatio` significant TWAS associations (p=`r steroid.enrichment$pvalue`).  The genes that were part of the core enrichment of this pathway were `r steroid.enrichment$core_enrichment %>% strsplit('/') %>% unlist() %>% paste(collapse=', ')`.
+
+## Strongest Associations
+
+```{ strongest-associations}
+library(ggplot2)
+genes <- twas.data.ncd.combined %>% 
+  arrange(p.value_main) %>%
+  filter(is.na(p.value_main)) %>%
+  filter(!(is.na(symbol))) %>% 
+  head(6) %>%  
+  pull(symbol)
+p <- list()
+
+for(i in 1:6){
+  gene <- genes[i] 
+  gene.ens <- filter(twas.data.ncd.int, symbol==genes[i]) %>% pull(ENSEMBL.ID)
+
+p[[i]] <- expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol1,expression,col=sex)) +
+  geom_point(size=0.1) +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep="")) +
+  theme(text=element_text(size=8),
+        legend.position = "none")
+}
+library(gridExtra)
+do.call(grid.arrange,p)
+```
+
+## Strongest Interactions Between Expression and Sex
+
+```{ strongest-interactions}
+genes <- twas.data.ncd.combined %>% 
+  arrange(p.value_int) %>%
+  filter(!(is.na(symbol))) %>% 
+  head(6) %>%  
+  pull(symbol)
+p <- list()
+
+for(i in 1:6){
+  gene <- genes[i] 
+  gene.ens <- filter(twas.data.ncd.int, symbol==genes[i]) %>% pull(ENSEMBL.ID)
+
+p[[i]] <- expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol1,expression,col=sex)) +
+  geom_point(size=0.1) +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep="")) +
+  theme(text=element_text(size=8),
+        legend.position = "none")
+}
+library(gridExtra)
+do.call(grid.arrange,p)
+```
+
+
+```{r Fbp1-associations}
+gene <- 'Fbp1'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+library(ggplot2)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol1,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') %>%
+  ggplot(aes(y=chol1,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> fbp1.chow.data
+
+lm(data=fbp1.chow.data, chol1 ~ expression + sex) %>%
+  glance
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) -> fbp.hf.data
+  
+
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```
+

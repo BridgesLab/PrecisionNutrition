@@ -1,0 +1,40 @@
+# This CITATION.cff file was generated with cffinit.
+# Visit https://bit.ly/cffinit to generate yours today!
+
+cff-version: 1.2.0
+title: BridgesLab Precision Nutrition Datasets
+message: >-
+  If you use these data please cite Cousineau et al BioRxiv
+  2023
+type: dataset
+authors:
+  - given-names: Dave
+    family-names: Bridges
+    email: davebrid@umich.edu
+    affiliation: University of Michigan School of Public Health
+    orcid: 'https://orcid.org/0000-0002-5334-972X'
+  - given-names: Cody
+    family-names: Cousineau
+    email: ccousz@umich.edu
+    affiliation: University of Michigan School of Public Health
+    orcid: 'https://orcid.org/0000-0003-0168-5083'
+  - given-names: Kaelin
+    family-names: Loftus
+    orcid: 'https://orcid.org/0000-0001-8045-9169'
+  - given-names: Gary
+    family-names: Churchull
+identifiers:
+  - type: doi
+    value: 10.1101/2023.02.08.527123
+    description: Preprint of Cousineau et al
+repository-code: 'https://github.com/BridgesLab/PrecisionNutrition'
+url: 'https://bridgeslab.sph.umich.edu'
+keywords:
+  - calcium
+  - cholesterol
+  - precision nutrition
+  - genetics
+  - diversity outbred
+license: ODC-By-1.0
+version: 0.1.0
+date-released: '2023-02-22'

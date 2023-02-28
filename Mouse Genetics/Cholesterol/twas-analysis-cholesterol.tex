@@ -183,7 +183,7 @@ Regressed cholesterol levels by diet and sex
 \NormalTok{summary.data }\OtherTok{\textless{}{-}}
 \NormalTok{  phenotype.data }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\NormalTok{mean,}
+  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol2), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\NormalTok{mean,}
                                              \AttributeTok{se=}\NormalTok{se,}
                                              \AttributeTok{sd=}\NormalTok{sd,}
                                              \AttributeTok{n=}\NormalTok{length))}
@@ -203,17 +203,17 @@ sex & diet & mean & se & sd & n \\
 sex & diet & mean & se & sd & n \\
 \midrule()
 \endhead
-F & chow & NA & 1.16 & NA & 225 \\
-F & hf & 108 & 1.78 & 25 & 198 \\
-M & chow & NA & 1.47 & NA & 224 \\
-M & hf & NA & 2.09 & NA & 193 \\
+F & chow & NA & 1.48 & NA & 225 \\
+F & hf & NA & 2.40 & NA & 198 \\
+M & chow & NA & 1.57 & NA & 224 \\
+M & hf & NA & 2.33 & NA & 193 \\
 \bottomrule()
 \end{longtable}
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \FunctionTok{library}\NormalTok{(broom)}
-\FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{*}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data) }\SpecialCharTok{\%\textgreater{}\%}
+\FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{*}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Global interactions between sex and diet"}\NormalTok{)}
 \end{Highlighting}
@@ -229,21 +229,21 @@ term & estimate & std.error & statistic & p.value \\
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 79.99 & 1.68 & 47.751 & 0.000 \\
-sexM & 16.43 & 2.37 & 6.925 & 0.000 \\
-diethf & 28.48 & 2.38 & 11.989 & 0.000 \\
-sexM:diethf & 3.33 & 3.37 & 0.986 & 0.324 \\
+(Intercept) & 78.67 & 1.88 & 41.887 & 0.000 \\
+sexM & 17.80 & 2.68 & 6.648 & 0.000 \\
+diethf & 34.64 & 2.75 & 12.615 & 0.000 \\
+sexM:diethf & -1.86 & 3.94 & -0.474 & 0.636 \\
 \bottomrule()
 \end{longtable}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{chol.lm }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data)}
-\NormalTok{chol.lm.ncd }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex, }\AttributeTok{data=}\FunctionTok{filter}\NormalTok{(phenotype.data, diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{))}
+\NormalTok{chol.lm }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data)}
+\NormalTok{chol.lm.ncd }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex, }\AttributeTok{data=}\FunctionTok{filter}\NormalTok{(phenotype.data, diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{))}
 
 \NormalTok{cholesterol.data.ncd }\OtherTok{\textless{}{-}}
 \NormalTok{  phenotype.data }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(chol1)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(chol2)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{adj.chol.ncd=}\FunctionTok{residuals}\NormalTok{(chol.lm.ncd)}\SpecialCharTok{+}\FunctionTok{coefficients}\NormalTok{(chol.lm.ncd)[}\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{])}
 \end{Highlighting}
@@ -254,7 +254,7 @@ sexM:diethf & 3.33 & 3.37 & 0.986 & 0.324 \\
 \NormalTok{summary.data }\OtherTok{\textless{}{-}}
 \NormalTok{  phenotype.data }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(sex,diet) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol1), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\NormalTok{mean,}
+  \FunctionTok{summarize\_at}\NormalTok{(}\AttributeTok{.vars=}\FunctionTok{vars}\NormalTok{(chol2), }\AttributeTok{.funs=}\FunctionTok{list}\NormalTok{(}\AttributeTok{mean=}\NormalTok{mean,}
                                              \AttributeTok{se=}\NormalTok{se,}
                                              \AttributeTok{sd=}\NormalTok{sd,}
                                              \AttributeTok{n=}\NormalTok{length))}
@@ -274,17 +274,17 @@ sex & diet & mean & se & sd & n \\
 sex & diet & mean & se & sd & n \\
 \midrule()
 \endhead
-F & chow & NA & 1.16 & NA & 225 \\
-F & hf & 108 & 1.78 & 25 & 198 \\
-M & chow & NA & 1.47 & NA & 224 \\
-M & hf & NA & 2.09 & NA & 193 \\
+F & chow & NA & 1.48 & NA & 225 \\
+F & hf & NA & 2.40 & NA & 198 \\
+M & chow & NA & 1.57 & NA & 224 \\
+M & hf & NA & 2.33 & NA & 193 \\
 \bottomrule()
 \end{longtable}
 
 \begin{Shaded}
 \begin{Highlighting}[]
 \FunctionTok{library}\NormalTok{(broom)}
-\FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{*}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data) }\SpecialCharTok{\%\textgreater{}\%}
+\FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{*}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Global interactions between sex and diet"}\NormalTok{)}
 \end{Highlighting}
@@ -300,21 +300,21 @@ term & estimate & std.error & statistic & p.value \\
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 79.99 & 1.68 & 47.751 & 0.000 \\
-sexM & 16.43 & 2.37 & 6.925 & 0.000 \\
-diethf & 28.48 & 2.38 & 11.989 & 0.000 \\
-sexM:diethf & 3.33 & 3.37 & 0.986 & 0.324 \\
+(Intercept) & 78.67 & 1.88 & 41.887 & 0.000 \\
+sexM & 17.80 & 2.68 & 6.648 & 0.000 \\
+diethf & 34.64 & 2.75 & 12.615 & 0.000 \\
+sexM:diethf & -1.86 & 3.94 & -0.474 & 0.636 \\
 \bottomrule()
 \end{longtable}
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\NormalTok{chol.lm }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data)}
-\NormalTok{chol.lm.hf }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol1}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex, }\AttributeTok{data=}\FunctionTok{filter}\NormalTok{(phenotype.data, diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}hf\textquotesingle{}}\NormalTok{))}
+\NormalTok{chol.lm }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex}\SpecialCharTok{+}\NormalTok{diet, }\AttributeTok{data=}\NormalTok{phenotype.data)}
+\NormalTok{chol.lm.hf }\OtherTok{\textless{}{-}} \FunctionTok{lm}\NormalTok{(chol2}\SpecialCharTok{\textasciitilde{}}\NormalTok{sex, }\AttributeTok{data=}\FunctionTok{filter}\NormalTok{(phenotype.data, diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}hf\textquotesingle{}}\NormalTok{))}
 
 \NormalTok{cholesterol.data.hfd }\OtherTok{\textless{}{-}}
 \NormalTok{  phenotype.data }\SpecialCharTok{\%\textgreater{}\%}
-    \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(chol1)) }\SpecialCharTok{\%\textgreater{}\%}
+    \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(chol2)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}hf\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{adj.chol.hf=}\FunctionTok{residuals}\NormalTok{(chol.lm.hf)}\SpecialCharTok{+}\FunctionTok{coefficients}\NormalTok{(chol.lm.hf)[}\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{])}
 \end{Highlighting}
@@ -338,10 +338,10 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
                \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol1,sex,mouse.id,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol2,sex,mouse.id,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol2\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value)}\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{p.adj=}\FunctionTok{p.adjust}\NormalTok{(p.value,}\AttributeTok{method=}\StringTok{"BH"}\NormalTok{))}
 
@@ -352,16 +352,16 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
                \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol1,sex,mouse.id,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol2,sex,mouse.id,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}chol2\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,term,estimate,std.error) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{id\_cols=}\NormalTok{ENSEMBL.ID,}
               \AttributeTok{names\_from =} \StringTok{\textquotesingle{}term\textquotesingle{}}\NormalTok{,}
               \AttributeTok{values\_from =} \FunctionTok{c}\NormalTok{(estimate,std.error)) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{estimate.rel =}\NormalTok{ estimate\_chol1}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\NormalTok{,}
-         \AttributeTok{std.error.rel =}\NormalTok{ std.error\_chol1}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\NormalTok{)}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{estimate.rel =}\NormalTok{ estimate\_chol2}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\NormalTok{,}
+         \AttributeTok{std.error.rel =}\NormalTok{ std.error\_chol2}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\NormalTok{)}
 
 \NormalTok{twas.data.ncd.r2 }\OtherTok{\textless{}{-}}
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
@@ -371,7 +371,7 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value)}\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{p.adj=}\FunctionTok{p.adjust}\NormalTok{(p.value,}\AttributeTok{method=}\StringTok{"BH"}\NormalTok{))}
 
@@ -383,8 +383,8 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{*}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1:sexM\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{*}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol2:sexM\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{p.adj=}\FunctionTok{p.adjust}\NormalTok{(p.value,}\AttributeTok{method=}\StringTok{"BH"}\NormalTok{))}
 
@@ -464,26 +464,26 @@ symbol
 \end{minipage} \\
 \midrule()
 \endhead
-ENSMUSG00000069805 & chol1 & -0.600 & 0.150 & -3.99 & 0.000 & 0.000 &
-Fbp1 \\
-ENSMUSG00000026895 & chol1 & -0.026 & 0.007 & -3.89 & 0.000 & 0.000 &
-Ndufa8 \\
-ENSMUSG00000026814 & chol1 & -0.045 & 0.012 & -3.71 & 0.000 & 0.000 &
-Eng \\
-ENSMUSG00000000088 & chol1 & -0.058 & 0.016 & -3.71 & 0.000 & 0.000 &
-Cox5a \\
-ENSMUSG00000040048 & chol1 & -0.041 & 0.011 & -3.70 & 0.000 & 0.000 &
-Ndufb10 \\
-ENSMUSG00000049422 & chol1 & -0.207 & 0.057 & -3.63 & 0.000 & 0.000 &
-Chchd10 \\
-ENSMUSG00000038462 & chol1 & -0.074 & 0.020 & -3.60 & 0.001 & 0.001 &
-Uqcrfs1 \\
-ENSMUSG00000083863 & chol1 & 2.112 & 0.591 & 3.58 & 0.001 & 0.001 &
+ENSMUSG00000089943 & chol2 & 0.279 & 0.067 & 4.18 & 0.000 & 0.000 &
+Ugt1a5 \\
+ENSMUSG00000006567 & chol2 & 0.044 & 0.013 & 3.52 & 0.001 & 0.001 &
+Atp7b \\
+ENSMUSG00000028412 & chol2 & 0.078 & 0.023 & 3.33 & 0.001 & 0.001 &
+Slc44a1 \\
+ENSMUSG00000024981 & chol2 & 0.326 & 0.100 & 3.27 & 0.002 & 0.002 &
+Acsl5 \\
+ENSMUSG00000025809 & chol2 & -0.054 & 0.016 & -3.26 & 0.002 & 0.002 &
+Itgb1 \\
+ENSMUSG00000083863 & chol2 & 1.847 & 0.572 & 3.23 & 0.002 & 0.002 &
 NA \\
-ENSMUSG00000026238 & chol1 & -0.086 & 0.025 & -3.41 & 0.001 & 0.001 &
+ENSMUSG00000026238 & chol2 & -0.078 & 0.024 & -3.20 & 0.002 & 0.002 &
 Ptma \\
-ENSMUSG00000025481 & chol1 & -0.071 & 0.021 & -3.37 & 0.001 & 0.001 &
-Urah \\
+ENSMUSG00000049940 & chol2 & 0.048 & 0.016 & 3.09 & 0.003 & 0.003 &
+Pgrmc2 \\
+ENSMUSG00000024066 & chol2 & 0.105 & 0.034 & 3.08 & 0.003 & 0.003 &
+Xdh \\
+ENSMUSG00000090555 & chol2 & -1.371 & 0.446 & -3.08 & 0.003 & 0.003 &
+Gm8893 \\
 \bottomrule()
 \end{longtable}
 
@@ -546,26 +546,26 @@ symbol
 \end{minipage} \\
 \midrule()
 \endhead
-ENSMUSG00000071644 & chol1:sexM & -0.123 & 0.032 & -3.90 & 0.000 & 0.000
-& Eef1g \\
-ENSMUSG00000063001 & chol1:sexM & -0.098 & 0.028 & -3.44 & 0.001 & 0.001
-& Gm9701 \\
-ENSMUSG00000028798 & chol1:sexM & -0.039 & 0.012 & -3.38 & 0.001 & 0.001
-& Eif3i \\
-ENSMUSG00000025794 & chol1:sexM & -0.099 & 0.029 & -3.37 & 0.001 & 0.001
-& Rpl14 \\
-ENSMUSG00000003546 & chol1:sexM & -0.065 & 0.019 & -3.33 & 0.001 & 0.001
-& Klc4 \\
-ENSMUSG00000074227 & chol1:sexM & -0.062 & 0.019 & -3.23 & 0.002 & 0.002
-& Spint2 \\
-ENSMUSG00000040715 & chol1:sexM & 0.187 & 0.059 & 3.18 & 0.002 & 0.002 &
-Rsc1a1 \\
-ENSMUSG00000024038 & chol1:sexM & -0.053 & 0.017 & -3.15 & 0.002 & 0.002
-& Ndufv3 \\
-ENSMUSG00000061477 & chol1:sexM & -0.240 & 0.076 & -3.13 & 0.002 & 0.002
-& Rps7 \\
-ENSMUSG00000040048 & chol1:sexM & -0.068 & 0.022 & -3.13 & 0.002 & 0.002
-& Ndufb10 \\
+ENSMUSG00000071644 & chol2:sexM & -0.146 & 0.029 & -5.06 & 0 & 0 &
+Eef1g \\
+ENSMUSG00000024120 & chol2:sexM & -0.179 & 0.040 & -4.43 & 0 & 0 &
+Lrpprc \\
+ENSMUSG00000021595 & chol2:sexM & -0.112 & 0.026 & -4.29 & 0 & 0 &
+Nsun2 \\
+ENSMUSG00000026895 & chol2:sexM & -0.053 & 0.012 & -4.29 & 0 & 0 &
+Ndufa8 \\
+ENSMUSG00000010608 & chol2:sexM & -0.069 & 0.017 & -4.15 & 0 & 0 &
+Rbm25 \\
+ENSMUSG00000069874 & chol2:sexM & 0.221 & 0.054 & 4.12 & 0 & 0 &
+Irgm2 \\
+ENSMUSG00000034422 & chol2:sexM & 0.128 & 0.031 & 4.08 & 0 & 0 &
+Parp14 \\
+ENSMUSG00000031877 & chol2:sexM & -0.081 & 0.021 & -3.85 & 0 & 0 &
+Ces2g \\
+ENSMUSG00000050043 & chol2:sexM & -0.072 & 0.019 & -3.80 & 0 & 0 &
+Tmx2 \\
+ENSMUSG00000021610 & chol2:sexM & -0.082 & 0.022 & -3.79 & 0 & 0 &
+Clptm1l \\
 \bottomrule()
 \end{longtable}
 
@@ -601,8 +601,8 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol2\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value)}\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{p.adj=}\FunctionTok{p.adjust}\NormalTok{(p.value,}\AttributeTok{method=}\StringTok{"BH"}\NormalTok{))}
 
@@ -614,14 +614,14 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}chol2\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,term,estimate,std.error) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_wider}\NormalTok{(}\AttributeTok{id\_cols=}\NormalTok{ENSEMBL.ID,}
               \AttributeTok{names\_from =} \StringTok{\textquotesingle{}term\textquotesingle{}}\NormalTok{,}
               \AttributeTok{values\_from =} \FunctionTok{c}\NormalTok{(estimate,std.error)) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{estimate.rel =}\NormalTok{ estimate\_chol1}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}
-         \AttributeTok{std.error.rel =}\NormalTok{ std.error\_chol1}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\SpecialCharTok{*}\DecValTok{100}\NormalTok{)}
+  \FunctionTok{mutate}\NormalTok{(}\AttributeTok{estimate.rel =}\NormalTok{ estimate\_chol2}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\SpecialCharTok{*}\DecValTok{100}\NormalTok{,}
+         \AttributeTok{std.error.rel =}\NormalTok{ std.error\_chol2}\SpecialCharTok{/}\StringTok{\textasciigrave{}}\AttributeTok{estimate\_(Intercept)}\StringTok{\textasciigrave{}}\SpecialCharTok{*}\DecValTok{100}\NormalTok{)}
   
 
 \NormalTok{twas.data.hf.r2 }\OtherTok{\textless{}{-}}
@@ -632,7 +632,7 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value)}\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{p.adj=}\FunctionTok{p.adjust}\NormalTok{(p.value,}\AttributeTok{method=}\StringTok{"BH"}\NormalTok{))}
 
@@ -644,8 +644,8 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{*}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1:sexM\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol2}\SpecialCharTok{*}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol2:sexM\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{mutate}\NormalTok{(}\AttributeTok{p.adj=}\FunctionTok{p.adjust}\NormalTok{(p.value,}\AttributeTok{method=}\StringTok{"BH"}\NormalTok{))}
 
@@ -675,14 +675,14 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
 \end{Shaded}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2500}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0789}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1184}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1316}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1316}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1053}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0789}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1053}}@{}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2436}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0769}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1154}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1282}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1282}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1026}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0769}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1282}}@{}}
 \caption{Top 10 liver TWAS a ssocations with cholesterol levels for
 HFD}\tabularnewline
 \toprule()
@@ -725,26 +725,26 @@ symbol
 \end{minipage} \\
 \midrule()
 \endhead
-ENSMUSG00000022615 & chol1 & -0.073 & 0.022 & -3.29 & 0.001 & 0.001 &
-Tymp \\
-ENSMUSG00000052914 & chol1 & 0.043 & 0.015 & 2.92 & 0.004 & 0.004 &
-Cyp2j6 \\
-ENSMUSG00000028760 & chol1 & -0.028 & 0.010 & -2.84 & 0.006 & 0.006 &
-Eif4g3 \\
-ENSMUSG00000024913 & chol1 & -0.032 & 0.012 & -2.76 & 0.007 & 0.007 &
-Lrp5 \\
-ENSMUSG00000028656 & chol1 & 0.014 & 0.005 & 2.71 & 0.008 & 0.008 &
-Cap1 \\
-ENSMUSG00000025003 & chol1 & 0.319 & 0.118 & 2.70 & 0.008 & 0.008 &
+ENSMUSG00000038366 & chol2 & -0.044 & 0.014 & -3.21 & 0.002 & 0.002 &
+Lasp1 \\
+ENSMUSG00000054469 & chol2 & 0.018 & 0.006 & 3.19 & 0.002 & 0.002 &
+Lclat1 \\
+ENSMUSG00000037266 & chol2 & 0.070 & 0.023 & 3.10 & 0.003 & 0.003 &
+Rsrp1 \\
+ENSMUSG00000030662 & chol2 & 0.014 & 0.004 & 3.07 & 0.003 & 0.003 &
+Ipo5 \\
+ENSMUSG00000025003 & chol2 & 0.309 & 0.103 & 3.01 & 0.003 & 0.003 &
 Cyp2c39 \\
-ENSMUSG00000052520 & chol1 & 0.352 & 0.131 & 2.69 & 0.009 & 0.009 &
-Cyp2j5 \\
-ENSMUSG00000057530 & chol1 & -0.106 & 0.040 & -2.68 & 0.009 & 0.009 &
-Ece1 \\
-ENSMUSG00000074063 & chol1 & -0.140 & 0.052 & -2.68 & 0.009 & 0.009 &
-Osgin1 \\
-ENSMUSG00000024456 & chol1 & -0.018 & 0.007 & -2.68 & 0.009 & 0.009 &
-Diaph1 \\
+ENSMUSG00000000631 & chol2 & 0.036 & 0.012 & 2.94 & 0.004 & 0.004 &
+Myo18a \\
+ENSMUSG00000022615 & chol2 & -0.058 & 0.020 & -2.92 & 0.004 & 0.004 &
+Tymp \\
+ENSMUSG00000031762 & chol2 & 0.165 & 0.057 & 2.90 & 0.005 & 0.005 &
+Mt2 \\
+ENSMUSG00000024140 & chol2 & 0.063 & 0.022 & 2.88 & 0.005 & 0.005 &
+Epas1 \\
+ENSMUSG00000079012 & chol2 & 0.235 & 0.082 & 2.86 & 0.005 & 0.005 &
+Serpina3m \\
 \bottomrule()
 \end{longtable}
 
@@ -757,14 +757,14 @@ Diaph1 \\
 \end{Shaded}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2289}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1325}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1084}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1205}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1205}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0964}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0723}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1205}}@{}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.2317}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1341}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1098}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1220}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1220}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0976}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.0732}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 14\tabcolsep) * \real{0.1098}}@{}}
 \caption{Top 10 liver TWAS assocations with cholesterol levels that are
 modified by sex for HFD}\tabularnewline
 \toprule()
@@ -807,26 +807,26 @@ symbol
 \end{minipage} \\
 \midrule()
 \endhead
-ENSMUSG00000090231 & chol1:sexM & -1.177 & 0.316 & -3.72 & 0.000 & 0.000
-& Cfb \\
-ENSMUSG00000040855 & chol1:sexM & -0.044 & 0.012 & -3.57 & 0.001 & 0.001
-& Reps2 \\
-ENSMUSG00000052520 & chol1:sexM & -0.886 & 0.249 & -3.56 & 0.001 & 0.001
-& Cyp2j5 \\
-ENSMUSG00000031138 & chol1:sexM & -0.214 & 0.065 & -3.28 & 0.001 & 0.001
-& F9 \\
-ENSMUSG00000016534 & chol1:sexM & -0.345 & 0.105 & -3.27 & 0.002 & 0.002
-& Lamp2 \\
-ENSMUSG00000021091 & chol1:sexM & -0.802 & 0.246 & -3.26 & 0.002 & 0.002
-& Serpina3n \\
-ENSMUSG00000039197 & chol1:sexM & -0.380 & 0.119 & -3.19 & 0.002 & 0.002
-& Adk \\
-ENSMUSG00000023175 & chol1:sexM & -0.198 & 0.063 & -3.15 & 0.002 & 0.002
-& Bsg \\
-ENSMUSG00000068036 & chol1:sexM & -0.042 & 0.013 & -3.12 & 0.002 & 0.002
-& Afdn \\
-ENSMUSG00000021794 & chol1:sexM & -0.739 & 0.238 & -3.11 & 0.003 & 0.003
-& Glud1 \\
+ENSMUSG00000087579 & chol2:sexM & -0.141 & 0.038 & -3.69 & 0.000 & 0.000
+& Hectd2os \\
+ENSMUSG00000060407 & chol2:sexM & -0.763 & 0.222 & -3.44 & 0.001 & 0.001
+& Cyp2a12 \\
+ENSMUSG00000018102 & chol2:sexM & -0.084 & 0.024 & -3.44 & 0.001 & 0.001
+& H2bc4 \\
+ENSMUSG00000022010 & chol2:sexM & -0.304 & 0.091 & -3.33 & 0.001 & 0.001
+& Tsc22d1 \\
+ENSMUSG00000006529 & chol2:sexM & -0.670 & 0.211 & -3.18 & 0.002 & 0.002
+& Itih1 \\
+ENSMUSG00000026405 & chol2:sexM & -0.450 & 0.149 & -3.03 & 0.003 & 0.003
+& C4bp \\
+ENSMUSG00000037780 & chol2:sexM & -0.119 & 0.039 & -3.03 & 0.003 & 0.003
+& Mbl1 \\
+ENSMUSG00000035540 & chol2:sexM & -2.960 & 0.983 & -3.01 & 0.003 & 0.003
+& Gc \\
+ENSMUSG00000038521 & chol2:sexM & -0.326 & 0.112 & -2.91 & 0.005 & 0.005
+& C1s1 \\
+ENSMUSG00000030695 & chol2:sexM & 0.034 & 0.012 & 2.79 & 0.007 & 0.007 &
+Aldoa \\
 \bottomrule()
 \end{longtable}
 
@@ -861,7 +861,7 @@ ENSMUSG00000021794 & chol1:sexM & -0.739 & 0.238 & -3.11 & 0.003 & 0.003
 \begin{verbatim}
 ## .
 ## FALSE  TRUE 
-##   208     8
+##   106     7
 \end{verbatim}
 
 \begin{Shaded}
@@ -904,19 +904,19 @@ ENSMUSG00000021794 & chol1:sexM & -0.739 & 0.238 & -3.11 & 0.003 & 0.003
 
 \includegraphics{figures/cholesterol-twas-hf-3.png}
 
-Our analysis identified \textbf{216} nominally significant associations
+Our analysis identified \textbf{113} nominally significant associations
 between expression of genes and adjusted cholesterol levels on a normal
-chow diet. Among those, 44 were positively correlated and 44 were
+chow diet. Among those, 68 were positively correlated and 68 were
 negatively correlated with cholesterol levels.
 
 \hypertarget{twas-modification-by-sex}{%
 \subsection{TWAS Modification by Sex}\label{twas-modification-by-sex}}
 
 By modeling the interactions between sex and expression on cholesterol
-levels, we identified \textbf{205} genes where the
+levels, we identified \textbf{526} genes where the
 cholesterol/expression relationship was modified by sex in a nominally
-significant manner. This included 19 genes where the relationship was
-stronger in males, and 186 where it was stronger in females.
+significant manner. This included 14 genes where the relationship was
+stronger in males, and 512 where it was stronger in females.
 
 \hypertarget{comparason-with-mouse-gwas}{%
 \section{Comparason with mouse GWAS}\label{comparason-with-mouse-gwas}}
@@ -982,22 +982,22 @@ symbol
 \end{minipage} \\
 \midrule()
 \endhead
-ENSMUSG00000004394 & chol1 & -0.015 & 0.006 & -2.495 & 0.014 & 0.014 &
-Tmed4 \\
-ENSMUSG00000002741 & chol1 & -0.012 & 0.008 & -1.433 & 0.155 & 0.155 &
+ENSMUSG00000002741 & chol2 & -0.014 & 0.008 & -1.699 & 0.093 & 0.093 &
 Ykt6 \\
-ENSMUSG00000025153 & chol1 & -0.903 & 0.657 & -1.374 & 0.173 & 0.173 &
-Fasn \\
-ENSMUSG00000021670 & chol1 & 0.106 & 0.094 & 1.121 & 0.265 & 0.265 &
-Hmgcr \\
-ENSMUSG00000028240 & chol1 & 0.102 & 0.144 & 0.712 & 0.478 & 0.478 &
-Cyp7a1 \\
-ENSMUSG00000032193 & chol1 & -0.017 & 0.045 & -0.387 & 0.700 & 0.700 &
-Ldlr \\
-ENSMUSG00000020484 & chol1 & 0.022 & 0.083 & 0.272 & 0.786 & 0.786 &
-Xbp1 \\
-ENSMUSG00000041798 & chol1 & -0.015 & 0.056 & -0.262 & 0.794 & 0.794 &
+ENSMUSG00000004394 & chol2 & -0.008 & 0.006 & -1.381 & 0.170 & 0.170 &
+Tmed4 \\
+ENSMUSG00000041798 & chol2 & 0.055 & 0.053 & 1.027 & 0.307 & 0.307 &
 Gck \\
+ENSMUSG00000020484 & chol2 & -0.064 & 0.079 & -0.812 & 0.419 & 0.419 &
+Xbp1 \\
+ENSMUSG00000021670 & chol2 & 0.050 & 0.091 & 0.556 & 0.580 & 0.580 &
+Hmgcr \\
+ENSMUSG00000028240 & chol2 & -0.049 & 0.138 & -0.355 & 0.724 & 0.724 &
+Cyp7a1 \\
+ENSMUSG00000032193 & chol2 & -0.004 & 0.043 & -0.090 & 0.928 & 0.928 &
+Ldlr \\
+ENSMUSG00000025153 & chol2 & 0.050 & 0.636 & 0.078 & 0.938 & 0.938 &
+Fasn \\
 \bottomrule()
 \end{longtable}
 
@@ -1244,7 +1244,7 @@ dotplot(go.twas.bp.enrich.simpl,
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{dotplot}\NormalTok{(go.twas.bp, }\AttributeTok{showCategory=}\DecValTok{30}\NormalTok{)}
+\FunctionTok{dotplot}\NormalTok{(go.twas.bp.enrich.simpl, }\AttributeTok{showCategory=}\DecValTok{30}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1252,7 +1252,7 @@ dotplot(go.twas.bp.enrich.simpl,
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{heatplot}\NormalTok{(go.twas.bp, }\AttributeTok{foldChange=}\NormalTok{twas.list)}
+\FunctionTok{heatplot}\NormalTok{(go.twas.bp.enrich.simpl, }\AttributeTok{foldChange=}\NormalTok{twas.list)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1260,7 +1260,7 @@ dotplot(go.twas.bp.enrich.simpl,
 
 \begin{Shaded}
 \begin{Highlighting}[]
-\FunctionTok{upsetplot}\NormalTok{(go.twas.bp)}
+\FunctionTok{upsetplot}\NormalTok{(go.twas.bp.enrich.simpl)}
 \end{Highlighting}
 \end{Shaded}
 
@@ -1273,52 +1273,17 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1375}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.2875}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1000}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.2000}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.0750}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.0875}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1125}}@{}}
+\begin{longtable}[]{@{}lrrrrr@{}}
 \caption{NCD GO BP Analysis of TWAS Associations from
 GSEA}\tabularnewline
 \toprule()
-\begin{minipage}[b]{\linewidth}\raggedright
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Description
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-setSize
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-enrichmentScore
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-NES
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-pvalue
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-p.adjust
-\end{minipage} \\
+Description & setSize & enrichmentScore & NES & pvalue & p.adjust \\
 \midrule()
 \endfirsthead
 \toprule()
-\begin{minipage}[b]{\linewidth}\raggedright
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
-Description
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-setSize
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-enrichmentScore
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-NES
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-pvalue
-\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
-p.adjust
-\end{minipage} \\
+Description & setSize & enrichmentScore & NES & pvalue & p.adjust \\
 \midrule()
 \endhead
-\url{GO:0051640} & organelle localization & 113 & -0.874 & -1.81 & 0 &
-0.131 \\
 \bottomrule()
 \end{longtable}
 
@@ -1333,12 +1298,12 @@ p.adjust
 \end{Shaded}
 
 \begin{longtable}[]{@{}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0917}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.6417}}
-  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0833}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0500}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0583}}
-  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0750}}@{}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0840}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.6718}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0763}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0458}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0534}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0687}}@{}}
 \caption{NCD GO BP Analysis of TWAS Associations from
 Enrichment}\tabularnewline
 \toprule()
@@ -1371,186 +1336,175 @@ p.adjust
 \end{minipage} \\
 \midrule()
 \endhead
-\url{GO:0046034} & ATP metabolic process & 27/208 & 27 & 0.000 &
+\url{GO:0006790} & sulfur compound metabolic process & 13/109 & 13 &
+0.000 & 0.000 \\
+\url{GO:0044282} & small molecule catabolic process & 13/109 & 13 &
+0.000 & 0.000 \\
+\url{GO:0046394} & carboxylic acid biosynthetic process & 12/109 & 12 &
+0.000 & 0.000 \\
+\url{GO:0016053} & organic acid biosynthetic process & 12/109 & 12 &
+0.000 & 0.000 \\
+\url{GO:0006631} & fatty acid metabolic process & 14/109 & 14 & 0.000 &
 0.000 \\
-\url{GO:0006119} & oxidative phosphorylation & 20/208 & 20 & 0.000 &
+\url{GO:0033865} & nucleoside bisphosphate metabolic process & 8/109 & 8
+& 0.000 & 0.000 \\
+\url{GO:0033875} & ribonucleoside bisphosphate metabolic process & 8/109
+& 8 & 0.000 & 0.000 \\
+\url{GO:0034032} & purine nucleoside bisphosphate metabolic process &
+8/109 & 8 & 0.000 & 0.000 \\
+\url{GO:0006066} & alcohol metabolic process & 11/109 & 11 & 0.000 &
 0.000 \\
-\url{GO:0009060} & aerobic respiration & 22/208 & 22 & 0.000 & 0.000 \\
-\url{GO:0006163} & purine nucleotide metabolic process & 23/208 & 23 &
+\url{GO:0046395} & carboxylic acid catabolic process & 9/109 & 9 & 0.000
+& 0.000 \\
+\url{GO:0019693} & ribose phosphate metabolic process & 11/109 & 11 &
 0.000 & 0.000 \\
-\url{GO:0019693} & ribose phosphate metabolic process & 23/208 & 23 &
-0.000 & 0.000 \\
-\url{GO:0005996} & monosaccharide metabolic process & 13/208 & 13 &
-0.000 & 0.000 \\
-\url{GO:0006898} & receptor-mediated endocytosis & 12/208 & 12 & 0.000 &
+\url{GO:0008202} & steroid metabolic process & 10/109 & 10 & 0.000 &
 0.000 \\
-\url{GO:0006790} & sulfur compound metabolic process & 13/208 & 13 &
+\url{GO:0043648} & dicarboxylic acid metabolic process & 6/109 & 6 &
 0.000 & 0.000 \\
-\url{GO:1902600} & proton transmembrane transport & 7/208 & 7 & 0.000 &
+\url{GO:0006622} & protein targeting to lysosome & 4/109 & 4 & 0.000 &
 0.000 \\
-\url{GO:0010257} & NADH dehydrogenase complex assembly & 6/208 & 6 &
+\url{GO:0062012} & regulation of small molecule metabolic process &
+10/109 & 10 & 0.000 & 0.000 \\
+\url{GO:0019216} & regulation of lipid metabolic process & 10/109 & 10 &
 0.000 & 0.000 \\
-\url{GO:0032981} & mitochondrial respiratory chain complex I assembly &
-6/208 & 6 & 0.000 & 0.000 \\
-\url{GO:0044282} & small molecule catabolic process & 12/208 & 12 &
-0.000 & 0.000 \\
-\url{GO:0018208} & peptidyl-proline modification & 5/208 & 5 & 0.000 &
+\url{GO:0071616} & acyl-CoA biosynthetic process & 4/109 & 4 & 0.000 &
 0.000 \\
-\url{GO:0050821} & protein stabilization & 9/208 & 9 & 0.000 & 0.001 \\
-\url{GO:0043161} & proteasome-mediated ubiquitin-dependent protein
-catabolic process & 13/208 & 13 & 0.000 & 0.001 \\
-\url{GO:0006090} & pyruvate metabolic process & 7/208 & 7 & 0.000 &
+\url{GO:0042180} & cellular ketone metabolic process & 8/109 & 8 & 0.000
+& 0.000 \\
+\url{GO:0010876} & lipid localization & 10/109 & 10 & 0.000 & 0.000 \\
+\url{GO:0009120} & deoxyribonucleoside metabolic process & 3/109 & 3 &
+0.000 & 0.001 \\
+\url{GO:0061462} & protein localization to lysosome & 4/109 & 4 & 0.000
+& 0.001 \\
+\url{GO:0010565} & regulation of cellular ketone metabolic process &
+6/109 & 6 & 0.000 & 0.001 \\
+\url{GO:1901617} & organic hydroxy compound biosynthetic process & 7/109
+& 7 & 0.000 & 0.001 \\
+\url{GO:0009410} & response to xenobiotic stimulus & 8/109 & 8 & 0.000 &
 0.001 \\
-\url{GO:0019320} & hexose catabolic process & 4/208 & 4 & 0.000 &
-0.002 \\
-\url{GO:0048193} & Golgi vesicle transport & 10/208 & 10 & 0.000 &
-0.002 \\
-\url{GO:0019079} & viral genome replication & 7/208 & 7 & 0.000 &
-0.002 \\
-\url{GO:0045807} & positive regulation of endocytosis & 7/208 & 7 &
-0.000 & 0.002 \\
-\url{GO:0045069} & regulation of viral genome replication & 6/208 & 6 &
-0.000 & 0.002 \\
-\url{GO:0045861} & negative regulation of proteolysis & 11/208 & 11 &
-0.000 & 0.003 \\
-\url{GO:0045454} & cell redox homeostasis & 4/208 & 4 & 0.000 & 0.003 \\
-\url{GO:0048845} & venous blood vessel morphogenesis & 3/208 & 3 & 0.000
-& 0.003 \\
-\url{GO:0050731} & positive regulation of peptidyl-tyrosine
-phosphorylation & 8/208 & 8 & 0.000 & 0.003 \\
-\url{GO:0010631} & epithelial cell migration & 10/208 & 10 & 0.000 &
-0.004 \\
-\url{GO:0090132} & epithelium migration & 10/208 & 10 & 0.000 & 0.004 \\
-\url{GO:0034976} & response to endoplasmic reticulum stress & 9/208 & 9
-& 0.000 & 0.004 \\
-\url{GO:0009154} & purine ribonucleotide catabolic process & 4/208 & 4 &
-0.000 & 0.004 \\
-\url{GO:0046939} & nucleotide phosphorylation & 6/208 & 6 & 0.000 &
-0.004 \\
-\url{GO:0043462} & regulation of ATP-dependent activity & 5/208 & 5 &
-0.000 & 0.005 \\
-\url{GO:0042326} & negative regulation of phosphorylation & 11/208 & 11
-& 0.000 & 0.005 \\
-\url{GO:0009615} & response to virus & 10/208 & 10 & 0.000 & 0.005 \\
-\url{GO:1905897} & regulation of response to endoplasmic reticulum
-stress & 5/208 & 5 & 0.000 & 0.006 \\
-\url{GO:0051604} & protein maturation & 10/208 & 10 & 0.000 & 0.006 \\
-\url{GO:0006066} & alcohol metabolic process & 10/208 & 10 & 0.000 &
-0.006 \\
-\url{GO:0051897} & positive regulation of protein kinase B signaling &
-6/208 & 6 & 0.000 & 0.006 \\
-\url{GO:1903358} & regulation of Golgi organization & 3/208 & 3 & 0.000
-& 0.006 \\
-\url{GO:0032781} & positive regulation of ATP-dependent activity & 4/208
-& 4 & 0.000 & 0.007 \\
-\url{GO:0055001} & muscle cell development & 8/208 & 8 & 0.000 &
-0.007 \\
-\url{GO:2001242} & regulation of intrinsic apoptotic signaling pathway &
-7/208 & 7 & 0.000 & 0.008 \\
-\url{GO:0072523} & purine-containing compound catabolic process & 4/208
-& 4 & 0.000 & 0.008 \\
-\url{GO:0052547} & regulation of peptidase activity & 11/208 & 11 &
-0.000 & 0.010 \\
-\url{GO:0006631} & fatty acid metabolic process & 11/208 & 11 & 0.000 &
-0.010 \\
-\url{GO:0072593} & reactive oxygen species metabolic process & 8/208 & 8
-& 0.000 & 0.010 \\
-\url{GO:0007030} & Golgi organization & 6/208 & 6 & 0.000 & 0.011 \\
-\url{GO:0034341} & response to interferon-gamma & 6/208 & 6 & 0.001 &
-0.012 \\
-\url{GO:0060348} & bone development & 8/208 & 8 & 0.001 & 0.013 \\
-\url{GO:0048732} & gland development & 11/208 & 11 & 0.001 & 0.015 \\
-\url{GO:0071453} & cellular response to oxygen levels & 6/208 & 6 &
-0.001 & 0.015 \\
-\url{GO:0006979} & response to oxidative stress & 10/208 & 10 & 0.001 &
-0.017 \\
-\url{GO:0030970} & retrograde protein transport, ER to cytosol & 3/208 &
-3 & 0.001 & 0.017 \\
-\url{GO:1903513} & endoplasmic reticulum to cytosol transport & 3/208 &
-3 & 0.001 & 0.017 \\
-\url{GO:0010634} & positive regulation of epithelial cell migration &
-6/208 & 6 & 0.001 & 0.019 \\
-\url{GO:0001666} & response to hypoxia & 7/208 & 7 & 0.001 & 0.020 \\
-\url{GO:0001933} & negative regulation of protein phosphorylation &
-9/208 & 9 & 0.001 & 0.021 \\
-\url{GO:0022411} & cellular component disassembly & 10/208 & 10 & 0.001
-& 0.021 \\
-\url{GO:0043254} & regulation of protein-containing complex assembly &
-10/208 & 10 & 0.001 & 0.022 \\
-\url{GO:0045862} & positive regulation of proteolysis & 9/208 & 9 &
-0.001 & 0.022 \\
-\url{GO:0021549} & cerebellum development & 5/208 & 5 & 0.001 & 0.023 \\
-\url{GO:0006641} & triglyceride metabolic process & 5/208 & 5 & 0.001 &
-0.024 \\
-\url{GO:0001936} & regulation of endothelial cell proliferation & 6/208
-& 6 & 0.001 & 0.024 \\
-\url{GO:0051346} & negative regulation of hydrolase activity & 9/208 & 9
-& 0.001 & 0.025 \\
-\url{GO:0007565} & female pregnancy & 6/208 & 6 & 0.002 & 0.026 \\
-\url{GO:0006734} & NADH metabolic process & 3/208 & 3 & 0.002 & 0.027 \\
-\url{GO:0045446} & endothelial cell differentiation & 5/208 & 5 & 0.002
-& 0.028 \\
-\url{GO:0002064} & epithelial cell development & 7/208 & 7 & 0.002 &
-0.028 \\
-\url{GO:0150117} & positive regulation of cell-substrate junction
-organization & 3/208 & 3 & 0.002 & 0.029 \\
-\url{GO:0097193} & intrinsic apoptotic signaling pathway & 8/208 & 8 &
-0.002 & 0.031 \\
-\url{GO:0035335} & peptidyl-tyrosine dephosphorylation & 3/208 & 3 &
-0.002 & 0.031 \\
-\url{GO:0071466} & cellular response to xenobiotic stimulus & 6/208 & 6
-& 0.002 & 0.033 \\
-\url{GO:0001935} & endothelial cell proliferation & 6/208 & 6 & 0.002 &
-0.034 \\
-\url{GO:0006735} & NADH regeneration & 2/208 & 2 & 0.002 & 0.034 \\
-\url{GO:0061718} & glucose catabolic process to pyruvate & 2/208 & 2 &
-0.002 & 0.034 \\
-\url{GO:0070862} & negative regulation of protein exit from endoplasmic
-reticulum & 2/208 & 2 & 0.002 & 0.034 \\
-\url{GO:0032456} & endocytic recycling & 4/208 & 4 & 0.002 & 0.034 \\
-\url{GO:0045927} & positive regulation of growth & 8/208 & 8 & 0.002 &
-0.037 \\
-\url{GO:1901361} & organic cyclic compound catabolic process & 10/208 &
-10 & 0.003 & 0.038 \\
-\url{GO:0009410} & response to xenobiotic stimulus & 8/208 & 8 & 0.003 &
-0.038 \\
-\url{GO:0048638} & regulation of developmental growth & 9/208 & 9 &
-0.003 & 0.038 \\
-\url{GO:0002176} & male germ cell proliferation & 2/208 & 2 & 0.003 &
-0.038 \\
-\url{GO:0036302} & atrioventricular canal development & 2/208 & 2 &
-0.003 & 0.038 \\
-\url{GO:0045050} & protein insertion into ER membrane by stop-transfer
-membrane-anchor sequence & 2/208 & 2 & 0.003 & 0.038 \\
-\url{GO:0045602} & negative regulation of endothelial cell
-differentiation & 2/208 & 2 & 0.003 & 0.038 \\
-\url{GO:0060020} & Bergmann glial cell differentiation & 2/208 & 2 &
-0.003 & 0.038 \\
-\url{GO:0061635} & regulation of protein complex stability & 2/208 & 2 &
-0.003 & 0.038 \\
-\url{GO:0090160} & Golgi to lysosome transport & 2/208 & 2 & 0.003 &
-0.038 \\
-\url{GO:0003158} & endothelium development & 5/208 & 5 & 0.003 &
-0.038 \\
-\url{GO:0031623} & receptor internalization & 5/208 & 5 & 0.003 &
-0.042 \\
-\url{GO:0008202} & steroid metabolic process & 8/208 & 8 & 0.003 &
-0.043 \\
-\url{GO:0032527} & protein exit from endoplasmic reticulum & 3/208 & 3 &
-0.003 & 0.044 \\
-\url{GO:0010811} & positive regulation of cell-substrate adhesion &
-5/208 & 5 & 0.004 & 0.045 \\
-\url{GO:0044706} & multi-multicellular organism process & 6/208 & 6 &
-0.004 & 0.046 \\
+\url{GO:0120254} & olefinic compound metabolic process & 6/109 & 6 &
+0.000 & 0.001 \\
+\url{GO:1905952} & regulation of lipid localization & 6/109 & 6 & 0.000
+& 0.002 \\
+\url{GO:0006695} & cholesterol biosynthetic process & 4/109 & 4 & 0.000
+& 0.002 \\
+\url{GO:0009164} & nucleoside catabolic process & 3/109 & 3 & 0.000 &
+0.003 \\
+\url{GO:1901361} & organic cyclic compound catabolic process & 9/109 & 9
+& 0.000 & 0.003 \\
+\url{GO:0006869} & lipid transport & 8/109 & 8 & 0.000 & 0.004 \\
 \url{GO:0006575} & cellular modified amino acid metabolic process &
-6/208 & 6 & 0.004 & 0.046 \\
-\url{GO:0048675} & axon extension & 5/208 & 5 & 0.004 & 0.047 \\
-\url{GO:0009120} & deoxyribonucleoside metabolic process & 2/208 & 2 &
-0.004 & 0.047 \\
-\url{GO:0033627} & cell adhesion mediated by integrin & 4/208 & 4 &
-0.004 & 0.049 \\
-\url{GO:0044270} & cellular nitrogen compound catabolic process & 9/208
-& 9 & 0.004 & 0.050 \\
+6/109 & 6 & 0.000 & 0.004 \\
+\url{GO:0044262} & cellular carbohydrate metabolic process & 7/109 & 7 &
+0.000 & 0.004 \\
+\url{GO:0010038} & response to metal ion & 7/109 & 7 & 0.000 & 0.004 \\
+\url{GO:0009264} & deoxyribonucleotide catabolic process & 3/109 & 3 &
+0.000 & 0.004 \\
+\url{GO:0030258} & lipid modification & 6/109 & 6 & 0.000 & 0.005 \\
+\url{GO:1901658} & glycosyl compound catabolic process & 3/109 & 3 &
+0.000 & 0.005 \\
+\url{GO:0042445} & hormone metabolic process & 6/109 & 6 & 0.000 &
+0.005 \\
+\url{GO:0009072} & aromatic amino acid family metabolic process & 3/109
+& 3 & 0.000 & 0.006 \\
+\url{GO:0042403} & thyroid hormone metabolic process & 3/109 & 3 & 0.000
+& 0.008 \\
+\url{GO:0019439} & aromatic compound catabolic process & 8/109 & 8 &
+0.000 & 0.008 \\
+\url{GO:0010675} & regulation of cellular carbohydrate metabolic process
+& 5/109 & 5 & 0.000 & 0.010 \\
+\url{GO:1903573} & negative regulation of response to endoplasmic
+reticulum stress & 3/109 & 3 & 0.000 & 0.011 \\
+\url{GO:0055088} & lipid homeostasis & 5/109 & 5 & 0.001 & 0.013 \\
+\url{GO:0010874} & regulation of cholesterol efflux & 3/109 & 3 & 0.001
+& 0.013 \\
+\url{GO:2001243} & negative regulation of intrinsic apoptotic signaling
+pathway & 4/109 & 4 & 0.001 & 0.013 \\
+\url{GO:0005996} & monosaccharide metabolic process & 6/109 & 6 & 0.001
+& 0.013 \\
+\url{GO:0019217} & regulation of fatty acid metabolic process & 4/109 &
+4 & 0.001 & 0.013 \\
+\url{GO:0036473} & cell death in response to oxidative stress & 4/109 &
+4 & 0.001 & 0.013 \\
+\url{GO:0071466} & cellular response to xenobiotic stimulus & 5/109 & 5
+& 0.001 & 0.013 \\
+\url{GO:1990264} & peptidyl-tyrosine dephosphorylation involved in
+inactivation of protein kinase activity & 2/109 & 2 & 0.001 & 0.013 \\
+\url{GO:0008631} & intrinsic apoptotic signaling pathway in response to
+oxidative stress & 3/109 & 3 & 0.001 & 0.014 \\
+\url{GO:0000041} & transition metal ion transport & 4/109 & 4 & 0.001 &
+0.016 \\
+\url{GO:0034310} & primary alcohol catabolic process & 2/109 & 2 & 0.001
+& 0.017 \\
+\url{GO:0007041} & lysosomal transport & 4/109 & 4 & 0.001 & 0.019 \\
+\url{GO:0010883} & regulation of lipid storage & 3/109 & 3 & 0.001 &
+0.020 \\
+\url{GO:0044270} & cellular nitrogen compound catabolic process & 7/109
+& 7 & 0.001 & 0.021 \\
+\url{GO:0046700} & heterocycle catabolic process & 7/109 & 7 & 0.001 &
+0.021 \\
+\url{GO:1902969} & mitotic DNA replication & 2/109 & 2 & 0.001 &
+0.021 \\
+\url{GO:0016042} & lipid catabolic process & 6/109 & 6 & 0.002 &
+0.025 \\
+\url{GO:0008654} & phospholipid biosynthetic process & 5/109 & 5 & 0.002
+& 0.025 \\
+\url{GO:0009074} & aromatic amino acid family catabolic process & 2/109
+& 2 & 0.002 & 0.025 \\
+\url{GO:0051893} & regulation of focal adhesion assembly & 3/109 & 3 &
+0.002 & 0.027 \\
+\url{GO:0090109} & regulation of cell-substrate junction assembly &
+3/109 & 3 & 0.002 & 0.027 \\
+\url{GO:0071243} & cellular response to arsenic-containing substance &
+2/109 & 2 & 0.002 & 0.027 \\
+\url{GO:1905039} & carboxylic acid transmembrane transport & 4/109 & 4 &
+0.002 & 0.028 \\
+\url{GO:0016052} & carbohydrate catabolic process & 4/109 & 4 & 0.002 &
+0.028 \\
+\url{GO:0071241} & cellular response to inorganic substance & 5/109 & 5
+& 0.002 & 0.030 \\
+\url{GO:0007584} & response to nutrient & 3/109 & 3 & 0.002 & 0.030 \\
+\url{GO:0015711} & organic anion transport & 6/109 & 6 & 0.002 &
+0.031 \\
+\url{GO:0150116} & regulation of cell-substrate junction organization &
+3/109 & 3 & 0.002 & 0.031 \\
+\url{GO:0009110} & vitamin biosynthetic process & 2/109 & 2 & 0.003 &
+0.033 \\
+\url{GO:1902430} & negative regulation of amyloid-beta formation & 2/109
+& 2 & 0.003 & 0.033 \\
+\url{GO:0071404} & cellular response to low-density lipoprotein particle
+stimulus & 2/109 & 2 & 0.003 & 0.038 \\
+\url{GO:1901657} & glycosyl compound metabolic process & 3/109 & 3 &
+0.003 & 0.038 \\
+\url{GO:0010466} & negative regulation of peptidase activity & 5/109 & 5
+& 0.003 & 0.039 \\
+\url{GO:0031998} & regulation of fatty acid beta-oxidation & 2/109 & 2 &
+0.003 & 0.040 \\
+\url{GO:0090201} & negative regulation of release of cytochrome c from
+mitochondria & 2/109 & 2 & 0.003 & 0.040 \\
+\url{GO:0009060} & aerobic respiration & 4/109 & 4 & 0.004 & 0.041 \\
+\url{GO:0006766} & vitamin metabolic process & 3/109 & 3 & 0.004 &
+0.044 \\
+\url{GO:0050860} & negative regulation of T cell receptor signaling
+pathway & 2/109 & 2 & 0.004 & 0.044 \\
+\url{GO:0042326} & negative regulation of phosphorylation & 6/109 & 6 &
+0.004 & 0.045 \\
+\url{GO:0048041} & focal adhesion assembly & 3/109 & 3 & 0.004 &
+0.045 \\
+\url{GO:0046386} & deoxyribose phosphate catabolic process & 2/109 & 2 &
+0.004 & 0.045 \\
+\url{GO:0046685} & response to arsenic-containing substance & 2/109 & 2
+& 0.004 & 0.045 \\
+\url{GO:0051896} & regulation of protein kinase B signaling & 4/109 & 4
+& 0.005 & 0.047 \\
+\url{GO:0006979} & response to oxidative stress & 6/109 & 6 & 0.005 &
+0.047 \\
+\url{GO:0031016} & pancreas development & 3/109 & 3 & 0.005 & 0.049 \\
+\url{GO:0046364} & monosaccharide biosynthetic process & 3/109 & 3 &
+0.005 & 0.049 \\
+\url{GO:0042059} & negative regulation of epidermal growth factor
+receptor signaling pathway & 2/109 & 2 & 0.005 & 0.049 \\
 \bottomrule()
 \end{longtable}
 
@@ -1563,70 +1517,10 @@ differentiation & 2/208 & 2 & 0.003 & 0.038 \\
 \end{Highlighting}
 \end{Shaded}
 
-The pathway () was enriched with significant TWAS associations (p=). The
-genes that were part of the core enrichment of this pathway were .
+\hypertarget{specific-associations}{%
+\section{Specific Associations}\label{specific-associations}}
 
-\hypertarget{strongest-associations}{%
-\subsection{Strongest Associations}\label{strongest-associations}}
-
-```\{ strongest-associations\} library(ggplot2) genes \textless-
-twas.data.ncd.combined \%\textgreater\% arrange(p.value\_main)
-\%\textgreater\% filter(is.na(p.value\_main)) \%\textgreater\%
-filter(!(is.na(symbol))) \%\textgreater\% head(6) \%\textgreater\%\\
-pull(symbol) p \textless- list()
-
-for(i in 1:6)\{ gene \textless- genes{[}i{]} gene.ens \textless-
-filter(twas.data.ncd.int, symbol==genes{[}i{]}) \%\textgreater\%
-pull(ENSEMBL.ID)
-
-p{[}{[}i{]}{]} \textless- expression.data \%\textgreater\%
-filter(ENSEMBL.ID == gene.ens) \%\textgreater\%
-pivot\_longer(cols=c(starts\_with(`F'), starts\_with(`M')),
-names\_to=`mouse.id', values\_to=`expression') \%\textgreater\%
-full\_join(phenotype.data,by=`mouse.id') \%\textgreater\%
-filter(!is.na(diet)) \%\textgreater\%
-ggplot(aes(y=chol1,expression,col=sex)) + geom\_point(size=0.1) +
-geom\_smooth(method=`lm',se=F) + facet\_grid(\textasciitilde diet) +
-labs(y=``Cholesterol (mg/dL)'', x=paste(`Expression of', gene,
-sep=````)) + theme(text=element\_text(size=8), legend.position
-=''none'') \} library(gridExtra) do.call(grid.arrange,p)
-
-\begin{verbatim}
-
-## Strongest Interactions Between Expression and Sex
-
-```{ strongest-interactions}
-genes <- twas.data.ncd.combined %>% 
-  arrange(p.value_int) %>%
-  filter(!(is.na(symbol))) %>% 
-  head(6) %>%  
-  pull(symbol)
-p <- list()
-
-for(i in 1:6){
-  gene <- genes[i] 
-  gene.ens <- filter(twas.data.ncd.int, symbol==genes[i]) %>% pull(ENSEMBL.ID)
-
-p[[i]] <- expression.data %>%
-  filter(ENSEMBL.ID == gene.ens) %>%
-  pivot_longer(cols=c(starts_with('F'),
-                      starts_with('M')),
-               names_to='mouse.id',
-               values_to='expression') %>%
-  full_join(phenotype.data,by='mouse.id') %>%
-  filter(!is.na(diet)) %>%
-  ggplot(aes(y=chol1,expression,col=sex)) +
-  geom_point(size=0.1) +
-  geom_smooth(method='lm',se=F) +
-  facet_grid(~diet) +
-  labs(y="Cholesterol (mg/dL)",
-       x=paste('Expression of ', gene, sep="")) +
-  theme(text=element_text(size=8),
-        legend.position = "none")
-}
-library(gridExtra)
-do.call(grid.arrange,p)
-\end{verbatim}
+Fbp1 was one of the most highly associated results on NCD.
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1642,7 +1536,7 @@ do.call(grid.arrange,p)
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
   \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
   \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
@@ -1664,7 +1558,7 @@ do.call(grid.arrange,p)
   \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
   \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
   \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
@@ -1687,7 +1581,7 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ fbp1.chow.data}
 
-\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{fbp1.chow.data, chol1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{fbp1.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  glance}
 \end{Highlighting}
 \end{Shaded}
@@ -1696,7 +1590,7 @@ do.call(grid.arrange,p)
 ## # A tibble: 1 x 12
 ##   r.squ~1 adj.r~2 sigma stati~3 p.value    df logLik   AIC   BIC devia~4 df.re~5
 ##     <dbl>   <dbl> <dbl>   <dbl>   <dbl> <dbl>  <dbl> <dbl> <dbl>   <dbl>   <int>
-## 1   0.287   0.272  18.7    19.1 1.07e-7     2  -424.  857.  867.  33158.      95
+## 1   0.176   0.159  20.6    10.2 9.96e-5     2  -434.  876.  886.  40231.      95
 ## # ... with 1 more variable: nobs <int>, and abbreviated variable names
 ## #   1: r.squared, 2: adj.r.squared, 3: statistic, 4: deviance, 5: df.residual
 \end{verbatim}
@@ -1715,7 +1609,10 @@ do.call(grid.arrange,p)
 \end{Shaded}
 
 \hypertarget{bile-acid-metabolism}{%
-\section{Bile Acid Metabolism}\label{bile-acid-metabolism}}
+\subsection{Bile Acid Metabolism}\label{bile-acid-metabolism}}
+
+CYP7A1 is the rate limiting step for de novo \emph{bile acid}
+biosynthesis
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1730,7 +1627,7 @@ do.call(grid.arrange,p)
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
   \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
   \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
   \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
@@ -1753,7 +1650,7 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
 
-\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Cyp7a1 and cholesterol on chow"}\NormalTok{)}
 \end{Highlighting}
@@ -1770,9 +1667,9 @@ term & estimate & std.error & statistic & p.value \\
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 72.968 & 4.666 & 15.637 & 0.000 \\
-expression & 0.052 & 0.073 & 0.712 & 0.478 \\
-sexM & 18.851 & 4.320 & 4.364 & 0.000 \\
+(Intercept) & 76.191 & 4.881 & 15.611 & 0.000 \\
+expression & -0.027 & 0.076 & -0.355 & 0.724 \\
+sexM & 15.954 & 4.518 & 3.531 & 0.001 \\
 \bottomrule()
 \end{longtable}
 
@@ -1787,7 +1684,7 @@ sexM & 18.851 & 4.320 & 4.364 & 0.000 \\
   \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
 
-\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
 \NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Cyp7a1 and cholesterol on HFD"}\NormalTok{)}
 \end{Highlighting}
@@ -1804,9 +1701,9 @@ term & estimate & std.error & statistic & p.value \\
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 95.946 & 5.33 & 18.003 & 0.000 \\
-expression & -0.015 & 0.09 & -0.171 & 0.865 \\
-sexM & 16.476 & 4.86 & 3.391 & 0.001 \\
+(Intercept) & 100.060 & 6.108 & 16.381 & 0.000 \\
+expression & -0.026 & 0.103 & -0.255 & 0.799 \\
+sexM & 13.262 & 5.565 & 2.383 & 0.018 \\
 \bottomrule()
 \end{longtable}
 

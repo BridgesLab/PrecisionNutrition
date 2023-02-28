@@ -93,7 +93,7 @@ Regressed cholesterol levels by diet and sex
 summary.data <-
   phenotype.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol1), .funs=list(mean=mean,
+  summarize_at(.vars=vars(chol2), .funs=list(mean=mean,
                                              se=se,
                                              sd=sd,
                                              n=length))
@@ -101,16 +101,16 @@ summary.data <-
 kable(summary.data,caption="Summary statistics for cholesterol levels at 8 weeks")
 
 library(broom)
-lm(chol1~sex*diet, data=phenotype.data) %>%
+lm(chol2~sex*diet, data=phenotype.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 
-chol.lm <- lm(chol1~sex+diet, data=phenotype.data)
-chol.lm.ncd <- lm(chol1~sex, data=filter(phenotype.data, diet=='chow'))
+chol.lm <- lm(chol2~sex+diet, data=phenotype.data)
+chol.lm.ncd <- lm(chol2~sex, data=filter(phenotype.data, diet=='chow'))
 
 cholesterol.data.ncd <-
   phenotype.data %>%
-  filter(!is.na(chol1)) %>%
+  filter(!is.na(chol2)) %>%
   filter(diet=='chow') %>%
   mutate(adj.chol.ncd=residuals(chol.lm.ncd)+coefficients(chol.lm.ncd)['(Intercept)'])
 ```
@@ -120,7 +120,7 @@ cholesterol.data.ncd <-
 summary.data <-
   phenotype.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol1), .funs=list(mean=mean,
+  summarize_at(.vars=vars(chol2), .funs=list(mean=mean,
                                              se=se,
                                              sd=sd,
                                              n=length))
@@ -128,16 +128,16 @@ summary.data <-
 kable(summary.data,caption="Summary statistics for cholesterol levels at 8 weeks")
 
 library(broom)
-lm(chol1~sex*diet, data=phenotype.data) %>%
+lm(chol2~sex*diet, data=phenotype.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 
-chol.lm <- lm(chol1~sex+diet, data=phenotype.data)
-chol.lm.hf <- lm(chol1~sex, data=filter(phenotype.data, diet=='hf'))
+chol.lm <- lm(chol2~sex+diet, data=phenotype.data)
+chol.lm.hf <- lm(chol2~sex, data=filter(phenotype.data, diet=='hf'))
 
 cholesterol.data.hfd <-
   phenotype.data %>%
-    filter(!is.na(chol1)) %>%
+    filter(!is.na(chol2)) %>%
   filter(diet=='hf') %>%
   mutate(adj.chol.hf=residuals(chol.lm.hf)+coefficients(chol.lm.hf)['(Intercept)'])
 ```
@@ -157,10 +157,10 @@ twas.data.ncd <-
                names_to='mouse.id',
                values_to='expression') %>%
   full_join(cholesterol.data.ncd,by='mouse.id') %>%
-  dplyr::select(chol1,sex,mouse.id,ENSEMBL.ID,expression) %>%
+  dplyr::select(chol2,sex,mouse.id,ENSEMBL.ID,expression) %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
-  filter(term=='chol1') %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol2+sex, data = .x))) %>%
+  filter(term=='chol2') %>%
   arrange(p.value)%>%
   mutate(p.adj=p.adjust(p.value,method="BH"))
 
@@ -171,16 +171,16 @@ twas.data.ncd.all <-
                names_to='mouse.id',
                values_to='expression') %>%
   full_join(cholesterol.data.ncd,by='mouse.id') %>%
-  dplyr::select(chol1,sex,mouse.id,ENSEMBL.ID,expression) %>%
+  dplyr::select(chol2,sex,mouse.id,ENSEMBL.ID,expression) %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
-  filter(term %in% c('chol1', '(Intercept)')) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol2+sex, data = .x))) %>%
+  filter(term %in% c('chol2', '(Intercept)')) %>%
   dplyr::select(ENSEMBL.ID,term,estimate,std.error) %>%
   pivot_wider(id_cols=ENSEMBL.ID,
               names_from = 'term',
               values_from = c(estimate,std.error)) %>%
-  mutate(estimate.rel = estimate_chol1/`estimate_(Intercept)`,
-         std.error.rel = std.error_chol1/`estimate_(Intercept)`)
+  mutate(estimate.rel = estimate_chol2/`estimate_(Intercept)`,
+         std.error.rel = std.error_chol2/`estimate_(Intercept)`)
 
 twas.data.ncd.r2 <-
   expression.data %>%
@@ -190,7 +190,7 @@ twas.data.ncd.r2 <-
                values_to='expression') %>%
   full_join(cholesterol.data.ncd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::glance(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  group_modify(~ broom::glance(possible.lm(expression ~ chol2+sex, data = .x))) %>%
   arrange(p.value)%>%
   mutate(p.adj=p.adjust(p.value,method="BH"))
 
@@ -202,8 +202,8 @@ twas.data.ncd.int <-
                values_to='expression') %>%
   full_join(cholesterol.data.ncd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::tidy(possible.lm(expression ~ chol1*sex, data = .x))) %>%
-  filter(term=='chol1:sexM') %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol2*sex, data = .x))) %>%
+  filter(term=='chol2:sexM') %>%
   arrange(p.value) %>%
   mutate(p.adj=p.adjust(p.value,method="BH"))
 
@@ -260,8 +260,8 @@ twas.data.hf <-
                values_to='expression') %>%
   full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
-  filter(term=='chol1') %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol2+sex, data = .x))) %>%
+  filter(term=='chol2') %>%
   arrange(p.value)%>%
   mutate(p.adj=p.adjust(p.value,method="BH"))
 
@@ -273,14 +273,14 @@ twas.data.hf.all<-
                values_to='expression') %>%
   full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
-  filter(term %in% c('chol1', '(Intercept)')) %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol2+sex, data = .x))) %>%
+  filter(term %in% c('chol2', '(Intercept)')) %>%
   dplyr::select(ENSEMBL.ID,term,estimate,std.error) %>%
   pivot_wider(id_cols=ENSEMBL.ID,
               names_from = 'term',
               values_from = c(estimate,std.error)) %>%
-  mutate(estimate.rel = estimate_chol1/`estimate_(Intercept)`*100,
-         std.error.rel = std.error_chol1/`estimate_(Intercept)`*100)
+  mutate(estimate.rel = estimate_chol2/`estimate_(Intercept)`*100,
+         std.error.rel = std.error_chol2/`estimate_(Intercept)`*100)
   
 
 twas.data.hf.r2 <-
@@ -291,7 +291,7 @@ twas.data.hf.r2 <-
                values_to='expression') %>%
   full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::glance(possible.lm(expression ~ chol1+sex, data = .x))) %>%
+  group_modify(~ broom::glance(possible.lm(expression ~ chol2+sex, data = .x))) %>%
   arrange(p.value)%>%
   mutate(p.adj=p.adjust(p.value,method="BH"))
 
@@ -303,8 +303,8 @@ twas.data.int.hf <-
                values_to='expression') %>%
   full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
-  group_modify(~ broom::tidy(possible.lm(expression ~ chol1*sex, data = .x))) %>%
-  filter(term=='chol1:sexM') %>%
+  group_modify(~ broom::tidy(possible.lm(expression ~ chol2*sex, data = .x))) %>%
+  filter(term=='chol2:sexM') %>%
   arrange(p.value) %>%
   mutate(p.adj=p.adjust(p.value,method="BH"))
 
@@ -571,9 +571,9 @@ heatplot(go.twas.bp.enrich.simpl)
 library(ggupset)
 upsetplot(go.twas.bp.enrich.simpl)
 
-dotplot(go.twas.bp, showCategory=30)
-heatplot(go.twas.bp, foldChange=twas.list)
-upsetplot(go.twas.bp)
+dotplot(go.twas.bp.enrich.simpl, showCategory=30)
+heatplot(go.twas.bp.enrich.simpl, foldChange=twas.list)
+upsetplot(go.twas.bp.enrich.simpl)
 
 
 as.data.frame(go.twas.bp) %>% select("Description","setSize","enrichmentScore","NES","pvalue","p.adjust") %>%
@@ -591,81 +591,9 @@ as.data.frame(go.twas.bp.enrich.simpl) %>%
 steroid.enrichment <- as.data.frame(go.twas.bp) %>% filter(ID=='GO:0016126')
 ```
 
+# Specific Associations
 
-
-The `r steroid.enrichment$Description` pathway (`r steroid.enrichment$ID`) was enriched with `r steroid.enrichment$GeneRatio` significant TWAS associations (p=`r steroid.enrichment$pvalue`).  The genes that were part of the core enrichment of this pathway were `r steroid.enrichment$core_enrichment %>% strsplit('/') %>% unlist() %>% paste(collapse=', ')`.
-
-## Strongest Associations
-
-```{ strongest-associations}
-library(ggplot2)
-genes <- twas.data.ncd.combined %>% 
-  arrange(p.value_main) %>%
-  filter(is.na(p.value_main)) %>%
-  filter(!(is.na(symbol))) %>% 
-  head(6) %>%  
-  pull(symbol)
-p <- list()
-
-for(i in 1:6){
-  gene <- genes[i] 
-  gene.ens <- filter(twas.data.ncd.int, symbol==genes[i]) %>% pull(ENSEMBL.ID)
-
-p[[i]] <- expression.data %>%
-  filter(ENSEMBL.ID == gene.ens) %>%
-  pivot_longer(cols=c(starts_with('F'),
-                      starts_with('M')),
-               names_to='mouse.id',
-               values_to='expression') %>%
-  full_join(phenotype.data,by='mouse.id') %>%
-  filter(!is.na(diet)) %>%
-  ggplot(aes(y=chol1,expression,col=sex)) +
-  geom_point(size=0.1) +
-  geom_smooth(method='lm',se=F) +
-  facet_grid(~diet) +
-  labs(y="Cholesterol (mg/dL)",
-       x=paste('Expression of ', gene, sep="")) +
-  theme(text=element_text(size=8),
-        legend.position = "none")
-}
-library(gridExtra)
-do.call(grid.arrange,p)
-```
-
-## Strongest Interactions Between Expression and Sex
-
-```{ strongest-interactions}
-genes <- twas.data.ncd.combined %>% 
-  arrange(p.value_int) %>%
-  filter(!(is.na(symbol))) %>% 
-  head(6) %>%  
-  pull(symbol)
-p <- list()
-
-for(i in 1:6){
-  gene <- genes[i] 
-  gene.ens <- filter(twas.data.ncd.int, symbol==genes[i]) %>% pull(ENSEMBL.ID)
-
-p[[i]] <- expression.data %>%
-  filter(ENSEMBL.ID == gene.ens) %>%
-  pivot_longer(cols=c(starts_with('F'),
-                      starts_with('M')),
-               names_to='mouse.id',
-               values_to='expression') %>%
-  full_join(phenotype.data,by='mouse.id') %>%
-  filter(!is.na(diet)) %>%
-  ggplot(aes(y=chol1,expression,col=sex)) +
-  geom_point(size=0.1) +
-  geom_smooth(method='lm',se=F) +
-  facet_grid(~diet) +
-  labs(y="Cholesterol (mg/dL)",
-       x=paste('Expression of ', gene, sep="")) +
-  theme(text=element_text(size=8),
-        legend.position = "none")
-}
-library(gridExtra)
-do.call(grid.arrange,p)
-```
+Fbp1 was one of the most highly associated results on NCD.
 
 
 ```{r Fbp1-associations}
@@ -681,7 +609,7 @@ expression.data %>%
                values_to='expression') %>%
   full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
-  ggplot(aes(y=chol1,expression,col=sex)) +
+  ggplot(aes(y=chol2,expression,col=sex)) +
   geom_point() +
   geom_smooth(method='lm',se=F) +
   facet_grid(~diet) +
@@ -697,7 +625,7 @@ expression.data %>%
   full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') %>%
-  ggplot(aes(y=chol1,expression,col=sex)) +
+  ggplot(aes(y=chol2,expression,col=sex)) +
   geom_point() +
   geom_smooth(method='lm',se=F) +
   facet_grid(~diet) +
@@ -715,7 +643,7 @@ expression.data %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') -> fbp1.chow.data
 
-lm(data=fbp1.chow.data, chol1 ~ expression + sex) %>%
+lm(data=fbp1.chow.data, chol2 ~ expression + sex) %>%
   glance
 
 expression.data %>%
@@ -730,7 +658,9 @@ expression.data %>%
 
 ```
 
-# Bile Acid Metabolism
+## Bile Acid Metabolism
+
+CYP7A1 is the rate limiting step for de novo *bile acid* biosynthesis
 
 ```{r cyp7a1-associations}
 gene <- 'Cyp7a1'
@@ -744,7 +674,7 @@ expression.data %>%
                values_to='expression') %>%
   full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
-  ggplot(aes(y=chol1,expression,col=sex)) +
+  ggplot(aes(y=chol2,expression,col=sex)) +
   geom_point() +
   geom_smooth(method='lm',se=F) +
   facet_grid(~diet) +
@@ -761,7 +691,7 @@ expression.data %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') -> gene.chow.data
 
-lm(data=gene.chow.data, chol1 ~ expression + sex) %>%
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
   tidy %>%
   kable(caption="Summary associations of Cyp7a1 and cholesterol on chow")
 
@@ -774,7 +704,7 @@ expression.data %>%
   full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) -> gene.hf.data
 
-lm(data=gene.hf.data, chol1 ~ expression + sex) %>%
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
   tidy %>%
   kable(caption="Summary associations of Cyp7a1 and cholesterol on HFD")
 ```

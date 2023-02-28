@@ -362,13 +362,9 @@ sig.twas.data.ncd$symbol %in% sig.twas.data.hf$symbol %>% table
 sig.twas.data.ncd$genes %in% sig.twas.data.hf$genes %>% table
 
 library(venneuler)
-vd.down.up <- venneuler(c("NCD"=170, "HFHS"=27, "NCD&HFHS"=0))
-vd.down.down <- venneuler(c("NCD"=43, "HFHS"=69, "NCD&HFHS"=0))
 vd.all <- venneuler(c("NCD"=dim(sig.twas.data.ncd)[1],
                       "HFHS"=dim(sig.twas.data.hf)[1],
                       "NCD&HFHS"=intersect(sig.twas.data.hf$symbol,sig.twas.data.ncd$symbol) %>% length()))
-plot(vd.down.up)
-plot(vd.down.down)
 plot(vd.all, main="Transcripts Associating with Cholesterol")
 ```
 
@@ -518,7 +514,7 @@ glm(hGWAS.match~p.value, data=twas.data.matched, family='binomial') %>%
 
 # Pathway Analyses for NCD
 
-```{r twas-go}
+```{r twas-go-ncd}
 twas.list <- twas.data.ncd %>% arrange(-estimate) %>% pull(estimate)
 names(twas.list) <- twas.data.ncd %>% arrange(-estimate) %>% pull(symbol)
 twas.list <- sort(twas.list, decreasing = TRUE)
@@ -587,6 +583,81 @@ as.data.frame(go.twas.bp.enrich.simpl) %>% select("Description","GeneRatio","Cou
 
 as.data.frame(go.twas.bp.enrich.simpl) %>%
   write_csv(file="NCD TWAS GO-BP Enrichment.csv")
+
+steroid.enrichment <- as.data.frame(go.twas.bp) %>% filter(ID=='GO:0016126')
+```
+
+# Pathway Analyses for HFD
+
+```{r twas-go-hfd}
+twas.list <- twas.data.hf %>% arrange(-estimate) %>% pull(estimate)
+names(twas.list) <- twas.data.hf %>% arrange(-estimate) %>% pull(symbol)
+twas.list <- sort(twas.list, decreasing = TRUE)
+#twas.list <- twas.list[!(is.na(names(twas.list)))]
+
+
+library(clusterProfiler)
+go.twas.bp <- gseGO(geneList=twas.list, 
+               ont="BP", 
+               keyType='SYMBOL',
+               OrgDb=org.Mm.eg.db, 
+               pvalueCutoff=0.25,
+               verbose=T,
+               by='fgsea',
+               eps=1E-25)
+
+#enrichement
+twas.data.hf %>% 
+  filter(p.value<0.05) %>%
+  pull(symbol) ->
+  twas.sig
+
+go.twas.bp.enrich <- enrichGO(gene=twas.sig, 
+               ont="BP", 
+               keyType='SYMBOL',
+               OrgDb=org.Mm.eg.db, 
+               pvalueCutoff=0.05)
+
+go.twas.bp.enrich.simpl <- simplify(go.twas.bp.enrich,
+                             cutoff=0.7, 
+                             by="p.adjust",
+                             select_fun=min)
+
+library(enrichplot)
+
+dotplot(go.twas.bp.enrich.simpl, 
+        showCategory=50,
+        color='pvalue',
+        font.size=8)
+barplot(go.twas.bp.enrich.simpl,font.size=8)
+cnetplot(go.twas.bp.enrich.simpl, 
+         showCategory=100,
+         node_label="gene",
+         cex_label_gene=0.5)
+cnetplot(go.twas.bp.enrich.simpl, 
+         showCategory=100,
+         node_label="category",
+         cex_label_category=0.5)
+heatplot(go.twas.bp.enrich.simpl)
+library(ggupset)
+upsetplot(go.twas.bp.enrich.simpl)
+
+dotplot(go.twas.bp.enrich.simpl, showCategory=30)
+heatplot(go.twas.bp.enrich.simpl, foldChange=twas.list)
+upsetplot(go.twas.bp.enrich.simpl)
+
+
+as.data.frame(go.twas.bp) %>% dplyr::select("Description","setSize","enrichmentScore","NES","pvalue","p.adjust") %>%
+  kable(caption="HFD GO BP Analysis of TWAS Associations from GSEA")
+
+as.data.frame(go.twas.bp) %>%
+  write_csv(file="HFD TWAS GO-BP GSEA.csv")
+
+as.data.frame(go.twas.bp.enrich.simpl) %>% dplyr::select("Description","GeneRatio","Count","pvalue","p.adjust") %>% 
+  kable(caption="HFD GO BP Analysis of TWAS Associations from Enrichment")
+
+as.data.frame(go.twas.bp.enrich.simpl) %>%
+  write_csv(file="HFD TWAS GO-BP Enrichment.csv")
 
 steroid.enrichment <- as.data.frame(go.twas.bp) %>% filter(ID=='GO:0016126')
 ```
@@ -707,6 +778,232 @@ expression.data %>%
 lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
   tidy %>%
   kable(caption="Summary associations of Cyp7a1 and cholesterol on HFD")
+```
+
+## SCD1
+
+SCD1 is the gene with the biggest effect size on NCD
+
+```{r scd1-associations}
+gene <- 'Scd1'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Scd1 and cholesterol on chow")
+
+library(MASS)
+rlm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Scd1 and cholesterol on chow, using robust linear models")
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Scd1 and cholesterol on HFD")
+```
+
+
+
+## Serpina3k
+
+Serpina3k is the gene with the biggest inverse effect size on NCD
+
+```{r serpina3k-associations}
+gene <- 'Serpina3k'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Serpina3k and cholesterol on chow")
+
+library(MASS)
+rlm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Serpina3k and cholesterol on chow, using robust linear models")
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Serpina3k and cholesterol on HFD")
+```
+
+## Ugt1a5
+
+Ugt1a5 is the gene with the most significant effect on ncd
+
+```{r Ugt1a5-associations}
+gene <- 'Ugt1a5'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Ugt1a5 and cholesterol on chow")
+
+library(MASS)
+rlm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Ugt1a5 and cholesterol on chow, using robust linear models")
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Ugt1a5 and cholesterol on HFD")
+```
+
+## Lasp1
+
+Lasp1 is the gene with the most significant effect on HFD
+
+```{r Lasp1-associations}
+gene <- 'Lasp1'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Lasp1 and cholesterol on chow")
+
+library(MASS)
+rlm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Lasp1 and cholesterol on chow, using robust linear models")
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Lasp1 and cholesterol on HFD")
 ```
 
 # Session Information

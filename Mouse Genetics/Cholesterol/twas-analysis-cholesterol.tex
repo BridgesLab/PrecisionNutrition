@@ -877,32 +877,14 @@ Aldoa \\
 \begin{Shaded}
 \begin{Highlighting}[]
 \FunctionTok{library}\NormalTok{(venneuler)}
-\NormalTok{vd.down.up }\OtherTok{\textless{}{-}} \FunctionTok{venneuler}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"NCD"}\OtherTok{=}\DecValTok{170}\NormalTok{, }\StringTok{"HFHS"}\OtherTok{=}\DecValTok{27}\NormalTok{, }\StringTok{"NCD\&HFHS"}\OtherTok{=}\DecValTok{0}\NormalTok{))}
-\NormalTok{vd.down.down }\OtherTok{\textless{}{-}} \FunctionTok{venneuler}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"NCD"}\OtherTok{=}\DecValTok{43}\NormalTok{, }\StringTok{"HFHS"}\OtherTok{=}\DecValTok{69}\NormalTok{, }\StringTok{"NCD\&HFHS"}\OtherTok{=}\DecValTok{0}\NormalTok{))}
 \NormalTok{vd.all }\OtherTok{\textless{}{-}} \FunctionTok{venneuler}\NormalTok{(}\FunctionTok{c}\NormalTok{(}\StringTok{"NCD"}\OtherTok{=}\FunctionTok{dim}\NormalTok{(sig.twas.data.ncd)[}\DecValTok{1}\NormalTok{],}
                       \StringTok{"HFHS"}\OtherTok{=}\FunctionTok{dim}\NormalTok{(sig.twas.data.hf)[}\DecValTok{1}\NormalTok{],}
                       \StringTok{"NCD\&HFHS"}\OtherTok{=}\FunctionTok{intersect}\NormalTok{(sig.twas.data.hf}\SpecialCharTok{$}\NormalTok{symbol,sig.twas.data.ncd}\SpecialCharTok{$}\NormalTok{symbol) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{length}\NormalTok{()))}
-\FunctionTok{plot}\NormalTok{(vd.down.up)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/cholesterol-twas-hf-1.png}
-
-\begin{Shaded}
-\begin{Highlighting}[]
-\FunctionTok{plot}\NormalTok{(vd.down.down)}
-\end{Highlighting}
-\end{Shaded}
-
-\includegraphics{figures/cholesterol-twas-hf-2.png}
-
-\begin{Shaded}
-\begin{Highlighting}[]
 \FunctionTok{plot}\NormalTok{(vd.all, }\AttributeTok{main=}\StringTok{"Transcripts Associating with Cholesterol"}\NormalTok{)}
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/cholesterol-twas-hf-3.png}
+\includegraphics{figures/cholesterol-twas-hf-1.png}
 
 Our analysis identified \textbf{113} nominally significant associations
 between expression of genes and adjusted cholesterol levels on a normal
@@ -1193,7 +1175,7 @@ dotplot(go.twas.bp.enrich.simpl,
         font.size=8)
 \end{verbatim}
 
-\includegraphics{figures/twas-go-1.png}
+\includegraphics{figures/twas-go-ncd-1.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1201,7 +1183,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-2.png}
+\includegraphics{figures/twas-go-ncd-2.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1212,7 +1194,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-3.png}
+\includegraphics{figures/twas-go-ncd-3.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1223,7 +1205,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-4.png}
+\includegraphics{figures/twas-go-ncd-4.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1231,7 +1213,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-5.png}
+\includegraphics{figures/twas-go-ncd-5.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1240,7 +1222,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-6.png}
+\includegraphics{figures/twas-go-ncd-6.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1248,7 +1230,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-7.png}
+\includegraphics{figures/twas-go-ncd-7.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1256,7 +1238,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-8.png}
+\includegraphics{figures/twas-go-ncd-8.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1264,7 +1246,7 @@ dotplot(go.twas.bp.enrich.simpl,
 \end{Highlighting}
 \end{Shaded}
 
-\includegraphics{figures/twas-go-9.png}
+\includegraphics{figures/twas-go-ncd-9.png}
 
 \begin{Shaded}
 \begin{Highlighting}[]
@@ -1517,6 +1499,343 @@ receptor signaling pathway & 2/109 & 2 & 0.005 & 0.049 \\
 \end{Highlighting}
 \end{Shaded}
 
+\hypertarget{pathway-analyses-for-hfd}{%
+\section{Pathway Analyses for HFD}\label{pathway-analyses-for-hfd}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{twas.list }\OtherTok{\textless{}{-}}\NormalTok{ twas.data.hf }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{arrange}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{estimate) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(estimate)}
+\FunctionTok{names}\NormalTok{(twas.list) }\OtherTok{\textless{}{-}}\NormalTok{ twas.data.hf }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{arrange}\NormalTok{(}\SpecialCharTok{{-}}\NormalTok{estimate) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(symbol)}
+\NormalTok{twas.list }\OtherTok{\textless{}{-}} \FunctionTok{sort}\NormalTok{(twas.list, }\AttributeTok{decreasing =} \ConstantTok{TRUE}\NormalTok{)}
+\CommentTok{\#twas.list \textless{}{-} twas.list[!(is.na(names(twas.list)))]}
+
+
+\FunctionTok{library}\NormalTok{(clusterProfiler)}
+\NormalTok{go.twas.bp }\OtherTok{\textless{}{-}} \FunctionTok{gseGO}\NormalTok{(}\AttributeTok{geneList=}\NormalTok{twas.list, }
+               \AttributeTok{ont=}\StringTok{"BP"}\NormalTok{, }
+               \AttributeTok{keyType=}\StringTok{\textquotesingle{}SYMBOL\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{OrgDb=}\NormalTok{org.Mm.eg.db, }
+               \AttributeTok{pvalueCutoff=}\FloatTok{0.25}\NormalTok{,}
+               \AttributeTok{verbose=}\NormalTok{T,}
+               \AttributeTok{by=}\StringTok{\textquotesingle{}fgsea\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{eps=}\FloatTok{1E{-}25}\NormalTok{)}
+
+\CommentTok{\#enrichement}
+\NormalTok{twas.data.hf }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{filter}\NormalTok{(p.value}\SpecialCharTok{\textless{}}\FloatTok{0.05}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pull}\NormalTok{(symbol) }\OtherTok{{-}\textgreater{}}
+\NormalTok{  twas.sig}
+
+\NormalTok{go.twas.bp.enrich }\OtherTok{\textless{}{-}} \FunctionTok{enrichGO}\NormalTok{(}\AttributeTok{gene=}\NormalTok{twas.sig, }
+               \AttributeTok{ont=}\StringTok{"BP"}\NormalTok{, }
+               \AttributeTok{keyType=}\StringTok{\textquotesingle{}SYMBOL\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{OrgDb=}\NormalTok{org.Mm.eg.db, }
+               \AttributeTok{pvalueCutoff=}\FloatTok{0.05}\NormalTok{)}
+
+\NormalTok{go.twas.bp.enrich.simpl }\OtherTok{\textless{}{-}} \FunctionTok{simplify}\NormalTok{(go.twas.bp.enrich,}
+                             \AttributeTok{cutoff=}\FloatTok{0.7}\NormalTok{, }
+                             \AttributeTok{by=}\StringTok{"p.adjust"}\NormalTok{,}
+                             \AttributeTok{select\_fun=}\NormalTok{min)}
+
+\FunctionTok{library}\NormalTok{(enrichplot)}
+
+\FunctionTok{dotplot}\NormalTok{(go.twas.bp.enrich.simpl, }
+        \AttributeTok{showCategory=}\DecValTok{50}\NormalTok{,}
+        \AttributeTok{color=}\StringTok{\textquotesingle{}pvalue\textquotesingle{}}\NormalTok{,}
+        \AttributeTok{font.size=}\DecValTok{8}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{barplot}\NormalTok{(go.twas.bp.enrich.simpl,}\AttributeTok{font.size=}\DecValTok{8}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-2.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cnetplot}\NormalTok{(go.twas.bp.enrich.simpl, }
+         \AttributeTok{showCategory=}\DecValTok{100}\NormalTok{,}
+         \AttributeTok{node\_label=}\StringTok{"gene"}\NormalTok{,}
+         \AttributeTok{cex\_label\_gene=}\FloatTok{0.5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-3.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{cnetplot}\NormalTok{(go.twas.bp.enrich.simpl, }
+         \AttributeTok{showCategory=}\DecValTok{100}\NormalTok{,}
+         \AttributeTok{node\_label=}\StringTok{"category"}\NormalTok{,}
+         \AttributeTok{cex\_label\_category=}\FloatTok{0.5}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-4.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{heatplot}\NormalTok{(go.twas.bp.enrich.simpl)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-5.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(ggupset)}
+\FunctionTok{upsetplot}\NormalTok{(go.twas.bp.enrich.simpl)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-6.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{dotplot}\NormalTok{(go.twas.bp.enrich.simpl, }\AttributeTok{showCategory=}\DecValTok{30}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-7.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{heatplot}\NormalTok{(go.twas.bp.enrich.simpl, }\AttributeTok{foldChange=}\NormalTok{twas.list)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-8.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{upsetplot}\NormalTok{(go.twas.bp.enrich.simpl)}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/twas-go-hfd-9.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{as.data.frame}\NormalTok{(go.twas.bp) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(}\StringTok{"Description"}\NormalTok{,}\StringTok{"setSize"}\NormalTok{,}\StringTok{"enrichmentScore"}\NormalTok{,}\StringTok{"NES"}\NormalTok{,}\StringTok{"pvalue"}\NormalTok{,}\StringTok{"p.adjust"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"HFD GO BP Analysis of TWAS Associations from GSEA"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1392}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.2911}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1013}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.2025}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.0633}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.0886}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 12\tabcolsep) * \real{0.1139}}@{}}
+\caption{HFD GO BP Analysis of TWAS Associations from
+GSEA}\tabularnewline
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+setSize
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+enrichmentScore
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+NES
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+pvalue
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.adjust
+\end{minipage} \\
+\midrule()
+\endfirsthead
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+setSize
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+enrichmentScore
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+NES
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+pvalue
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.adjust
+\end{minipage} \\
+\midrule()
+\endhead
+\url{GO:0051640} & organelle localization & 113 & 0.959 & 1.82 & 0 &
+0 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{as.data.frame}\NormalTok{(go.twas.bp) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{write\_csv}\NormalTok{(}\AttributeTok{file=}\StringTok{"HFD TWAS GO{-}BP GSEA.csv"}\NormalTok{)}
+
+\FunctionTok{as.data.frame}\NormalTok{(go.twas.bp.enrich.simpl) }\SpecialCharTok{\%\textgreater{}\%}\NormalTok{ dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(}\StringTok{"Description"}\NormalTok{,}\StringTok{"GeneRatio"}\NormalTok{,}\StringTok{"Count"}\NormalTok{,}\StringTok{"pvalue"}\NormalTok{,}\StringTok{"p.adjust"}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%} 
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"HFD GO BP Analysis of TWAS Associations from Enrichment"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0894}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.6504}}
+  >{\raggedright\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0813}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0488}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0569}}
+  >{\raggedleft\arraybackslash}p{(\columnwidth - 10\tabcolsep) * \real{0.0732}}@{}}
+\caption{HFD GO BP Analysis of TWAS Associations from
+Enrichment}\tabularnewline
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+GeneRatio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Count
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+pvalue
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.adjust
+\end{minipage} \\
+\midrule()
+\endfirsthead
+\toprule()
+\begin{minipage}[b]{\linewidth}\raggedright
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+Description
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedright
+GeneRatio
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+Count
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+pvalue
+\end{minipage} & \begin{minipage}[b]{\linewidth}\raggedleft
+p.adjust
+\end{minipage} \\
+\midrule()
+\endhead
+\url{GO:0006805} & xenobiotic metabolic process & 7/116 & 7 & 0.000 &
+0.001 \\
+\url{GO:0006790} & sulfur compound metabolic process & 10/116 & 10 &
+0.000 & 0.001 \\
+\url{GO:0006882} & cellular zinc ion homeostasis & 4/116 & 4 & 0.000 &
+0.002 \\
+\url{GO:0006576} & cellular biogenic amine metabolic process & 6/116 & 6
+& 0.000 & 0.002 \\
+\url{GO:0006584} & catecholamine metabolic process & 5/116 & 5 & 0.000 &
+0.002 \\
+\url{GO:0009712} & catechol-containing compound metabolic process &
+5/116 & 5 & 0.000 & 0.002 \\
+\url{GO:0055069} & zinc ion homeostasis & 4/116 & 4 & 0.000 & 0.002 \\
+\url{GO:0009410} & response to xenobiotic stimulus & 9/116 & 9 & 0.000 &
+0.002 \\
+\url{GO:0097501} & stress response to metal ion & 3/116 & 3 & 0.000 &
+0.002 \\
+\url{GO:0009308} & amine metabolic process & 6/116 & 6 & 0.000 &
+0.002 \\
+\url{GO:0019373} & epoxygenase P450 pathway & 4/116 & 4 & 0.000 &
+0.002 \\
+\url{GO:0006631} & fatty acid metabolic process & 10/116 & 10 & 0.000 &
+0.002 \\
+\url{GO:0005996} & monosaccharide metabolic process & 8/116 & 8 & 0.000
+& 0.002 \\
+\url{GO:0051346} & negative regulation of hydrolase activity & 9/116 & 9
+& 0.000 & 0.002 \\
+\url{GO:0006690} & icosanoid metabolic process & 6/116 & 6 & 0.000 &
+0.002 \\
+\url{GO:0042445} & hormone metabolic process & 7/116 & 7 & 0.000 &
+0.003 \\
+\url{GO:0051402} & neuron apoptotic process & 8/116 & 8 & 0.000 &
+0.004 \\
+\url{GO:0120254} & olefinic compound metabolic process & 6/116 & 6 &
+0.000 & 0.004 \\
+\url{GO:0006457} & protein folding & 6/116 & 6 & 0.000 & 0.005 \\
+\url{GO:0070997} & neuron death & 9/116 & 9 & 0.000 & 0.005 \\
+\url{GO:0010466} & negative regulation of peptidase activity & 7/116 & 7
+& 0.000 & 0.007 \\
+\url{GO:0071577} & zinc ion transmembrane transport & 3/116 & 3 & 0.000
+& 0.007 \\
+\url{GO:0043524} & negative regulation of neuron apoptotic process &
+6/116 & 6 & 0.000 & 0.007 \\
+\url{GO:0009636} & response to toxic substance & 5/116 & 5 & 0.000 &
+0.008 \\
+\url{GO:1901214} & regulation of neuron death & 8/116 & 8 & 0.000 &
+0.010 \\
+\url{GO:0006829} & zinc ion transport & 3/116 & 3 & 0.000 & 0.012 \\
+\url{GO:0045454} & cell redox homeostasis & 3/116 & 3 & 0.000 & 0.012 \\
+\url{GO:0000096} & sulfur amino acid metabolic process & 3/116 & 3 &
+0.000 & 0.013 \\
+\url{GO:1901617} & organic hydroxy compound biosynthetic process & 6/116
+& 6 & 0.000 & 0.017 \\
+\url{GO:0044282} & small molecule catabolic process & 7/116 & 7 & 0.000
+& 0.018 \\
+\url{GO:0051881} & regulation of mitochondrial membrane potential &
+4/116 & 4 & 0.000 & 0.018 \\
+\url{GO:0052547} & regulation of peptidase activity & 8/116 & 8 & 0.000
+& 0.018 \\
+\url{GO:0008202} & steroid metabolic process & 7/116 & 7 & 0.000 &
+0.018 \\
+\url{GO:1902686} & mitochondrial outer membrane permeabilization
+involved in programmed cell death & 3/116 & 3 & 0.000 & 0.019 \\
+\url{GO:0006066} & alcohol metabolic process & 7/116 & 7 & 0.001 &
+0.020 \\
+\url{GO:0071248} & cellular response to metal ion & 5/116 & 5 & 0.001 &
+0.023 \\
+\url{GO:0043434} & response to peptide hormone & 7/116 & 7 & 0.001 &
+0.023 \\
+\url{GO:0006520} & cellular amino acid metabolic process & 6/116 & 6 &
+0.001 & 0.023 \\
+\url{GO:0009309} & amine biosynthetic process & 3/116 & 3 & 0.001 &
+0.023 \\
+\url{GO:0042401} & cellular biogenic amine biosynthetic process & 3/116
+& 3 & 0.001 & 0.023 \\
+\url{GO:0006068} & ethanol catabolic process & 2/116 & 2 & 0.001 &
+0.027 \\
+\url{GO:0061299} & retina vasculature morphogenesis in camera-type eye &
+2/116 & 2 & 0.001 & 0.027 \\
+\url{GO:0009068} & aspartate family amino acid catabolic process & 2/116
+& 2 & 0.001 & 0.031 \\
+\url{GO:0090161} & Golgi ribbon formation & 2/116 & 2 & 0.001 & 0.031 \\
+\url{GO:0003254} & regulation of membrane depolarization & 3/116 & 3 &
+0.001 & 0.031 \\
+\url{GO:0042593} & glucose homeostasis & 6/116 & 6 & 0.001 & 0.034 \\
+\url{GO:0008637} & apoptotic mitochondrial changes & 4/116 & 4 & 0.001 &
+0.037 \\
+\url{GO:0010823} & negative regulation of mitochondrion organization &
+3/116 & 3 & 0.001 & 0.037 \\
+\url{GO:2000378} & negative regulation of reactive oxygen species
+metabolic process & 3/116 & 3 & 0.001 & 0.037 \\
+\url{GO:0048102} & autophagic cell death & 2/116 & 2 & 0.002 & 0.041 \\
+\url{GO:0050922} & negative regulation of chemotaxis & 3/116 & 3 & 0.002
+& 0.044 \\
+\url{GO:0042416} & dopamine biosynthetic process & 2/116 & 2 & 0.002 &
+0.044 \\
+\url{GO:0010713} & negative regulation of collagen metabolic process &
+2/116 & 2 & 0.002 & 0.048 \\
+\url{GO:0032966} & negative regulation of collagen biosynthetic process
+& 2/116 & 2 & 0.002 & 0.048 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{as.data.frame}\NormalTok{(go.twas.bp.enrich.simpl) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{write\_csv}\NormalTok{(}\AttributeTok{file=}\StringTok{"HFD TWAS GO{-}BP Enrichment.csv"}\NormalTok{)}
+
+\NormalTok{steroid.enrichment }\OtherTok{\textless{}{-}} \FunctionTok{as.data.frame}\NormalTok{(go.twas.bp) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{filter}\NormalTok{(ID}\SpecialCharTok{==}\StringTok{\textquotesingle{}GO:0016126\textquotesingle{}}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
 \hypertarget{specific-associations}{%
 \section{Specific Associations}\label{specific-associations}}
 
@@ -1707,6 +2026,502 @@ sexM & 13.262 & 5.565 & 2.383 & 0.018 \\
 \bottomrule()
 \end{longtable}
 
+\hypertarget{scd1}{%
+\subsection{SCD1}\label{scd1}}
+
+SCD1 is the gene with the biggest effect size on NCD
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gene }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Scd1\textquotesingle{}}
+\NormalTok{gene.ens }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(twas.data.ncd, symbol}\SpecialCharTok{==}\NormalTok{gene) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(ENSEMBL.ID)}
+
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Cholesterol (mg/dL)"}\NormalTok{,}
+       \AttributeTok{x=}\FunctionTok{paste}\NormalTok{(}\StringTok{\textquotesingle{}Expression of \textquotesingle{}}\NormalTok{, gene, }\AttributeTok{sep=}\StringTok{""}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/scd1-associations-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Scd1 and cholesterol on chow"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Scd1 and cholesterol on
+chow}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 68.093 & 3.775 & 18.04 & 0.000 \\
+expression & 0.007 & 0.003 & 2.74 & 0.007 \\
+sexM & 17.118 & 4.105 & 4.17 & 0.000 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(MASS)}
+\FunctionTok{rlm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Scd1 and cholesterol on chow, using robust linear models"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Summary associations of Scd1 and cholesterol on chow, using
+robust linear models}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endhead
+(Intercept) & 65.735 & 3.908 & 16.82 \\
+expression & 0.009 & 0.003 & 3.30 \\
+sexM & 16.623 & 4.250 & 3.91 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Scd1 and cholesterol on HFD"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Scd1 and cholesterol on
+HFD}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 80.778 & 4.398 & 18.37 & 0 \\
+expression & 0.008 & 0.001 & 6.40 & 0 \\
+sexM & 18.589 & 4.874 & 3.81 & 0 \\
+\bottomrule()
+\end{longtable}
+
+\hypertarget{serpina3k}{%
+\subsection{Serpina3k}\label{serpina3k}}
+
+Serpina3k is the gene with the biggest inverse effect size on NCD
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gene }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Serpina3k\textquotesingle{}}
+\NormalTok{gene.ens }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(twas.data.ncd, symbol}\SpecialCharTok{==}\NormalTok{gene) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(ENSEMBL.ID)}
+
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Cholesterol (mg/dL)"}\NormalTok{,}
+       \AttributeTok{x=}\FunctionTok{paste}\NormalTok{(}\StringTok{\textquotesingle{}Expression of \textquotesingle{}}\NormalTok{, gene, }\AttributeTok{sep=}\StringTok{""}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/serpina3k-associations-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Serpina3k and cholesterol on chow"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Serpina3k and cholesterol on
+chow}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 82.390 & 4.331 & 19.02 & 0.000 \\
+expression & -0.007 & 0.003 & -2.35 & 0.021 \\
+sexM & 30.226 & 7.160 & 4.22 & 0.000 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(MASS)}
+\FunctionTok{rlm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Serpina3k and cholesterol on chow, using robust linear models"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Summary associations of Serpina3k and cholesterol on chow,
+using robust linear models}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endhead
+(Intercept) & 81.991 & 4.226 & 19.40 \\
+expression & -0.008 & 0.003 & -2.74 \\
+sexM & 32.690 & 6.985 & 4.68 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Serpina3k and cholesterol on HFD"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Serpina3k and cholesterol on
+HFD}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 111.314 & 4.516 & 24.65 & 0 \\
+expression & -0.014 & 0.003 & -4.46 & 0 \\
+sexM & 38.748 & 7.554 & 5.13 & 0 \\
+\bottomrule()
+\end{longtable}
+
+\hypertarget{ugt1a5}{%
+\subsection{Ugt1a5}\label{ugt1a5}}
+
+Ugt1a5 is the gene with the most significant effect on ncd
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gene }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Ugt1a5\textquotesingle{}}
+\NormalTok{gene.ens }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(twas.data.ncd, symbol}\SpecialCharTok{==}\NormalTok{gene) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(ENSEMBL.ID)}
+
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Cholesterol (mg/dL)"}\NormalTok{,}
+       \AttributeTok{x=}\FunctionTok{paste}\NormalTok{(}\StringTok{\textquotesingle{}Expression of \textquotesingle{}}\NormalTok{, gene, }\AttributeTok{sep=}\StringTok{""}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/Ugt1a5-associations-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Ugt1a5 and cholesterol on chow"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Ugt1a5 and cholesterol on
+chow}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 55.979 & 5.277 & 10.61 & 0 \\
+expression & 0.556 & 0.133 & 4.18 & 0 \\
+sexM & 30.772 & 5.197 & 5.92 & 0 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(MASS)}
+\FunctionTok{rlm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Ugt1a5 and cholesterol on chow, using robust linear models"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Summary associations of Ugt1a5 and cholesterol on chow, using
+robust linear models}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endhead
+(Intercept) & 54.556 & 5.512 & 9.90 \\
+expression & 0.586 & 0.139 & 4.22 \\
+sexM & 30.864 & 5.428 & 5.69 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Ugt1a5 and cholesterol on HFD"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Ugt1a5 and cholesterol on
+HFD}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 80.915 & 6.12 & 13.22 & 0 \\
+expression & 0.436 & 0.12 & 3.62 & 0 \\
+sexM & 28.021 & 6.49 & 4.32 & 0 \\
+\bottomrule()
+\end{longtable}
+
+\hypertarget{lasp1}{%
+\subsection{Lasp1}\label{lasp1}}
+
+Lasp1 is the gene with the most significant effect on HFD
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gene }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Lasp1\textquotesingle{}}
+\NormalTok{gene.ens }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(twas.data.ncd, symbol}\SpecialCharTok{==}\NormalTok{gene) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(ENSEMBL.ID)}
+
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol2,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Cholesterol (mg/dL)"}\NormalTok{,}
+       \AttributeTok{x=}\FunctionTok{paste}\NormalTok{(}\StringTok{\textquotesingle{}Expression of \textquotesingle{}}\NormalTok{, gene, }\AttributeTok{sep=}\StringTok{""}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/Lasp1-associations-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Lasp1 and cholesterol on chow"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Lasp1 and cholesterol on
+chow}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 75.387 & 10.515 & 7.170 & 0.000 \\
+expression & -0.022 & 0.394 & -0.056 & 0.955 \\
+sexM & 16.663 & 5.225 & 3.189 & 0.002 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{library}\NormalTok{(MASS)}
+\FunctionTok{rlm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Lasp1 and cholesterol on chow, using robust linear models"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrr@{}}
+\caption{Summary associations of Lasp1 and cholesterol on chow, using
+robust linear models}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic \\
+\midrule()
+\endhead
+(Intercept) & 77.547 & 11.157 & 6.951 \\
+expression & -0.167 & 0.418 & -0.399 \\
+sexM & 18.260 & 5.544 & 3.294 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol2 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Lasp1 and cholesterol on HFD"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Lasp1 and cholesterol on
+HFD}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 156.11 & 11.333 & 13.78 & 0 \\
+expression & -2.42 & 0.455 & -5.31 & 0 \\
+sexM & 31.96 & 6.032 & 5.30 & 0 \\
+\bottomrule()
+\end{longtable}
+
 \hypertarget{session-information}{%
 \section{Session Information}\label{session-information}}
 
@@ -1733,13 +2548,13 @@ sexM & 13.262 & 5.565 & 2.383 & 0.018 \\
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] ggupset_0.3.0         enrichplot_1.16.2     clusterProfiler_4.4.4
-##  [4] ggrepel_0.9.2         ggplot2_3.4.0         venneuler_1.1-3      
-##  [7] rJava_1.0-6           purrr_1.0.1           org.Mm.eg.db_3.15.0  
-## [10] AnnotationDbi_1.58.0  IRanges_2.30.1        S4Vectors_0.34.0     
-## [13] Biobase_2.56.0        BiocGenerics_0.42.0   broom_1.0.2          
-## [16] readr_2.1.3           dplyr_1.0.10          tidyr_1.2.1          
-## [19] knitr_1.41           
+##  [1] MASS_7.3-58.1         ggupset_0.3.0         enrichplot_1.16.2    
+##  [4] clusterProfiler_4.4.4 ggrepel_0.9.2         ggplot2_3.4.0        
+##  [7] venneuler_1.1-3       rJava_1.0-6           purrr_1.0.1          
+## [10] org.Mm.eg.db_3.15.0   AnnotationDbi_1.58.0  IRanges_2.30.1       
+## [13] S4Vectors_0.34.0      Biobase_2.56.0        BiocGenerics_0.42.0  
+## [16] broom_1.0.2           readr_2.1.3           dplyr_1.0.10         
+## [19] tidyr_1.2.1           knitr_1.41           
 ## 
 ## loaded via a namespace (and not attached):
 ##   [1] fgsea_1.22.0           colorspace_2.0-3       ggtree_3.4.4          
@@ -1759,25 +2574,24 @@ sexM & 13.262 & 5.565 & 2.383 & 0.018 \\
 ##  [43] Biostrings_2.64.1      ape_5.6-2              nlme_3.1-161          
 ##  [46] ggraph_2.1.0           xfun_0.36              stringr_1.5.0         
 ##  [49] lifecycle_1.0.3        DOSE_3.22.1            zlibbioc_1.42.0       
-##  [52] MASS_7.3-58.1          scales_1.2.1           tidygraph_1.2.2       
-##  [55] vroom_1.6.0            hms_1.1.2              parallel_4.2.2        
-##  [58] RColorBrewer_1.1-3     yaml_2.3.6             memoise_2.0.1         
-##  [61] gridExtra_2.3          downloader_0.4         ggfun_0.0.9           
-##  [64] yulab.utils_0.0.6      stringi_1.7.12         RSQLite_2.2.20        
-##  [67] highr_0.10             tidytree_0.4.2         BiocParallel_1.30.4   
-##  [70] GenomeInfoDb_1.32.4    rlang_1.0.6            pkgconfig_2.0.3       
-##  [73] bitops_1.0-7           evaluate_0.19          lattice_0.20-45       
-##  [76] treeio_1.20.2          patchwork_1.1.2        labeling_0.4.2        
-##  [79] shadowtext_0.1.2       bit_4.0.5              tidyselect_1.2.0      
-##  [82] plyr_1.8.8             magrittr_2.0.3         R6_2.5.1              
-##  [85] magick_2.7.3           generics_0.1.3         DBI_1.1.3             
-##  [88] pillar_1.8.1           withr_2.5.0            mgcv_1.8-41           
-##  [91] KEGGREST_1.36.3        RCurl_1.98-1.9         tibble_3.1.8          
-##  [94] crayon_1.5.2           utf8_1.2.2             tzdb_0.3.0            
-##  [97] rmarkdown_2.19         viridis_0.6.2          grid_4.2.2            
-## [100] data.table_1.14.6      blob_1.2.3             digest_0.6.31         
-## [103] gridGraphics_0.5-1     munsell_0.5.0          viridisLite_0.4.1     
-## [106] ggplotify_0.1.0
+##  [52] scales_1.2.1           tidygraph_1.2.2        vroom_1.6.0           
+##  [55] hms_1.1.2              parallel_4.2.2         RColorBrewer_1.1-3    
+##  [58] yaml_2.3.6             memoise_2.0.1          gridExtra_2.3         
+##  [61] downloader_0.4         ggfun_0.0.9            yulab.utils_0.0.6     
+##  [64] stringi_1.7.12         RSQLite_2.2.20         highr_0.10            
+##  [67] tidytree_0.4.2         BiocParallel_1.30.4    GenomeInfoDb_1.32.4   
+##  [70] rlang_1.0.6            pkgconfig_2.0.3        bitops_1.0-7          
+##  [73] evaluate_0.19          lattice_0.20-45        treeio_1.20.2         
+##  [76] patchwork_1.1.2        labeling_0.4.2         shadowtext_0.1.2      
+##  [79] bit_4.0.5              tidyselect_1.2.0       plyr_1.8.8            
+##  [82] magrittr_2.0.3         R6_2.5.1               magick_2.7.3          
+##  [85] generics_0.1.3         DBI_1.1.3              pillar_1.8.1          
+##  [88] withr_2.5.0            mgcv_1.8-41            KEGGREST_1.36.3       
+##  [91] RCurl_1.98-1.9         tibble_3.1.8           crayon_1.5.2          
+##  [94] utf8_1.2.2             tzdb_0.3.0             rmarkdown_2.19        
+##  [97] viridis_0.6.2          grid_4.2.2             data.table_1.14.6     
+## [100] blob_1.2.3             digest_0.6.31          gridGraphics_0.5-1    
+## [103] munsell_0.5.0          viridisLite_0.4.1      ggplotify_0.1.0
 \end{verbatim}
 
 \end{document}

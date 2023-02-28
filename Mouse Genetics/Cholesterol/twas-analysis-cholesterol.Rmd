@@ -65,15 +65,15 @@ genotype.data <- read_csv(genotype.filename,
   pos = col_double()
 ))
 
-phenotype.filename <- 'Svenson-183_Svenson_DO-phenotypes.csv'
-phenotype.data <- read_csv(phenotype.filename, na='-999999')
+phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
+phenotype.data <- read_csv(phenotype.filename)
 
 phenotype.data[phenotype.data=='-999999'] <- NA
   
 
 mean.expression <- 
   expression.data %>%
-  dplyr::select(contains(phenotype.data$sample))%>%
+  dplyr::select(contains(phenotype.data$mouse.id))%>%
   rowMeans()
 
 expression.data <-
@@ -152,12 +152,12 @@ possible.lm <- possibly(.f = lm, otherwise=NULL) # to catch errors when we only 
 
 twas.data.ncd <- 
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.ncd,by='sample') %>%
-  dplyr::select(chol1,sex,sample,ENSEMBL.ID,expression) %>%
+  full_join(cholesterol.data.ncd,by='mouse.id') %>%
+  dplyr::select(chol1,sex,mouse.id,ENSEMBL.ID,expression) %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
   filter(term=='chol1') %>%
@@ -166,12 +166,12 @@ twas.data.ncd <-
 
 twas.data.ncd.all <- 
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.ncd,by='sample') %>%
-  dplyr::select(chol1,sex,sample,ENSEMBL.ID,expression) %>%
+  full_join(cholesterol.data.ncd,by='mouse.id') %>%
+  dplyr::select(chol1,sex,mouse.id,ENSEMBL.ID,expression) %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
   filter(term %in% c('chol1', '(Intercept)')) %>%
@@ -184,11 +184,11 @@ twas.data.ncd.all <-
 
 twas.data.ncd.r2 <-
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.ncd,by='sample') %>%
+  full_join(cholesterol.data.ncd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::glance(possible.lm(expression ~ chol1+sex, data = .x))) %>%
   arrange(p.value)%>%
@@ -196,11 +196,11 @@ twas.data.ncd.r2 <-
 
 twas.data.ncd.int <-
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.ncd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.ncd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.ncd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.ncd,by='sample') %>%
+  full_join(cholesterol.data.ncd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::tidy(possible.lm(expression ~ chol1*sex, data = .x))) %>%
   filter(term=='chol1:sexM') %>%
@@ -254,11 +254,11 @@ write_csv(twas.data.ncd.combined,
 ```{r cholesterol-twas-hf}
 twas.data.hf <- 
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.hfd,by='sample') %>%
+  full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
   filter(term=='chol1') %>%
@@ -267,11 +267,11 @@ twas.data.hf <-
 
 twas.data.hf.all<- 
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.hfd,by='sample') %>%
+  full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::tidy(possible.lm(expression ~ chol1+sex, data = .x))) %>%
   filter(term %in% c('chol1', '(Intercept)')) %>%
@@ -285,11 +285,11 @@ twas.data.hf.all<-
 
 twas.data.hf.r2 <-
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.hfd,by='sample') %>%
+  full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::glance(possible.lm(expression ~ chol1+sex, data = .x))) %>%
   arrange(p.value)%>%
@@ -297,11 +297,11 @@ twas.data.hf.r2 <-
 
 twas.data.int.hf <-
   expression.data %>%
-  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$sample))%>%
-  pivot_longer(cols=one_of(cholesterol.data.hfd$sample),
-               names_to='sample',
+  dplyr::select(ENSEMBL.ID,one_of(cholesterol.data.hfd$mouse.id))%>%
+  pivot_longer(cols=one_of(cholesterol.data.hfd$mouse.id),
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(cholesterol.data.hfd,by='sample') %>%
+  full_join(cholesterol.data.hfd,by='mouse.id') %>%
   group_by(ENSEMBL.ID) %>%
   group_modify(~ broom::tidy(possible.lm(expression ~ chol1*sex, data = .x))) %>%
   filter(term=='chol1:sexM') %>%
@@ -615,9 +615,9 @@ p[[i]] <- expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   ggplot(aes(y=chol1,expression,col=sex)) +
   geom_point(size=0.1) +
@@ -650,9 +650,9 @@ p[[i]] <- expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   ggplot(aes(y=chol1,expression,col=sex)) +
   geom_point(size=0.1) +
@@ -677,9 +677,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   ggplot(aes(y=chol1,expression,col=sex)) +
   geom_point() +
@@ -692,9 +692,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') %>%
   ggplot(aes(y=chol1,expression,col=sex)) +
@@ -709,9 +709,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') -> fbp1.chow.data
 
@@ -722,9 +722,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) -> fbp.hf.data
   
 
@@ -740,9 +740,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   ggplot(aes(y=chol1,expression,col=sex)) +
   geom_point() +
@@ -755,9 +755,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') -> gene.chow.data
 
@@ -769,9 +769,9 @@ expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) -> gene.hf.data
 
 lm(data=gene.hf.data, chol1 ~ expression + sex) %>%

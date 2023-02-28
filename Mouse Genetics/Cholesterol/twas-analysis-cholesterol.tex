@@ -151,15 +151,15 @@ and compared with genotypes from the Svenson-183 dataset.
   \AttributeTok{pos =} \FunctionTok{col\_double}\NormalTok{()}
 \NormalTok{))}
 
-\NormalTok{phenotype.filename }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Svenson{-}183\_Svenson\_DO{-}phenotypes.csv\textquotesingle{}}
-\NormalTok{phenotype.data }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(phenotype.filename, }\AttributeTok{na=}\StringTok{\textquotesingle{}{-}999999\textquotesingle{}}\NormalTok{)}
+\NormalTok{phenotype.filename }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Svenson\_HFD\_DO\_phenotype\_V12.csv\textquotesingle{}}
+\NormalTok{phenotype.data }\OtherTok{\textless{}{-}} \FunctionTok{read\_csv}\NormalTok{(phenotype.filename)}
 
 \NormalTok{phenotype.data[phenotype.data}\SpecialCharTok{==}\StringTok{\textquotesingle{}{-}999999\textquotesingle{}}\NormalTok{] }\OtherTok{\textless{}{-}} \ConstantTok{NA}
   
 
 \NormalTok{mean.expression }\OtherTok{\textless{}{-}} 
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(}\FunctionTok{contains}\NormalTok{(phenotype.data}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(}\FunctionTok{contains}\NormalTok{(phenotype.data}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{rowMeans}\NormalTok{()}
 
 \NormalTok{expression.data }\OtherTok{\textless{}{-}}
@@ -204,9 +204,9 @@ sex & diet & mean & se & sd & n \\
 \midrule()
 \endhead
 F & chow & NA & 1.16 & NA & 225 \\
-F & hf & 108 & 1.79 & 25.3 & 200 \\
+F & hf & 108 & 1.78 & 25 & 198 \\
 M & chow & NA & 1.47 & NA & 224 \\
-M & hf & NA & 2.06 & NA & 197 \\
+M & hf & NA & 2.09 & NA & 193 \\
 \bottomrule()
 \end{longtable}
 
@@ -229,10 +229,10 @@ term & estimate & std.error & statistic & p.value \\
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 80.0 & 1.68 & 47.63 & 0.000 \\
-sexM & 16.4 & 2.38 & 6.91 & 0.000 \\
-diethf & 28.0 & 2.38 & 11.81 & 0.000 \\
-sexM:diethf & 3.9 & 3.37 & 1.16 & 0.248 \\
+(Intercept) & 79.99 & 1.68 & 47.751 & 0.000 \\
+sexM & 16.43 & 2.37 & 6.925 & 0.000 \\
+diethf & 28.48 & 2.38 & 11.989 & 0.000 \\
+sexM:diethf & 3.33 & 3.37 & 0.986 & 0.324 \\
 \bottomrule()
 \end{longtable}
 
@@ -275,9 +275,9 @@ sex & diet & mean & se & sd & n \\
 \midrule()
 \endhead
 F & chow & NA & 1.16 & NA & 225 \\
-F & hf & 108 & 1.79 & 25.3 & 200 \\
+F & hf & 108 & 1.78 & 25 & 198 \\
 M & chow & NA & 1.47 & NA & 224 \\
-M & hf & NA & 2.06 & NA & 197 \\
+M & hf & NA & 2.09 & NA & 193 \\
 \bottomrule()
 \end{longtable}
 
@@ -300,10 +300,10 @@ term & estimate & std.error & statistic & p.value \\
 term & estimate & std.error & statistic & p.value \\
 \midrule()
 \endhead
-(Intercept) & 80.0 & 1.68 & 47.63 & 0.000 \\
-sexM & 16.4 & 2.38 & 6.91 & 0.000 \\
-diethf & 28.0 & 2.38 & 11.81 & 0.000 \\
-sexM:diethf & 3.9 & 3.37 & 1.16 & 0.248 \\
+(Intercept) & 79.99 & 1.68 & 47.751 & 0.000 \\
+sexM & 16.43 & 2.37 & 6.925 & 0.000 \\
+diethf & 28.48 & 2.38 & 11.989 & 0.000 \\
+sexM:diethf & 3.33 & 3.37 & 0.986 & 0.324 \\
 \bottomrule()
 \end{longtable}
 
@@ -333,12 +333,12 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
 
 \NormalTok{twas.data.ncd }\OtherTok{\textless{}{-}} 
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol1,sex,sample,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol1,sex,mouse.id,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
@@ -347,12 +347,12 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
 
 \NormalTok{twas.data.ncd.all }\OtherTok{\textless{}{-}} 
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol1,sex,sample,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(chol1,sex,mouse.id,ENSEMBL.ID,expression) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
@@ -365,11 +365,11 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
 
 \NormalTok{twas.data.ncd.r2 }\OtherTok{\textless{}{-}}
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value)}\SpecialCharTok{\%\textgreater{}\%}
@@ -377,11 +377,11 @@ NCD}\label{twas-with-cholesterol-levels-for-ncd}}
 
 \NormalTok{twas.data.ncd.int }\OtherTok{\textless{}{-}}
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.ncd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.ncd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{*}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1:sexM\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
@@ -595,11 +595,11 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
 \begin{Highlighting}[]
 \NormalTok{twas.data.hf }\OtherTok{\textless{}{-}} 
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
@@ -608,11 +608,11 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
 
 \NormalTok{twas.data.hf.all}\OtherTok{\textless{}{-}} 
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(term }\SpecialCharTok{\%in\%} \FunctionTok{c}\NormalTok{(}\StringTok{\textquotesingle{}chol1\textquotesingle{}}\NormalTok{, }\StringTok{\textquotesingle{}(Intercept)\textquotesingle{}}\NormalTok{)) }\SpecialCharTok{\%\textgreater{}\%}
@@ -626,11 +626,11 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
 
 \NormalTok{twas.data.hf.r2 }\OtherTok{\textless{}{-}}
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{glance}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{+}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{arrange}\NormalTok{(p.value)}\SpecialCharTok{\%\textgreater{}\%}
@@ -638,11 +638,11 @@ HFD}\label{twas-with-cholesterol-levels-for-hfd}}
 
 \NormalTok{twas.data.int.hf }\OtherTok{\textless{}{-}}
 \NormalTok{  expression.data }\SpecialCharTok{\%\textgreater{}\%}
-\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample))}\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{sample),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+\NormalTok{  dplyr}\SpecialCharTok{::}\FunctionTok{select}\NormalTok{(ENSEMBL.ID,}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id))}\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{one\_of}\NormalTok{(cholesterol.data.hfd}\SpecialCharTok{$}\NormalTok{mouse.id),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(cholesterol.data.hfd,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_by}\NormalTok{(ENSEMBL.ID) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{group\_modify}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{ broom}\SpecialCharTok{::}\FunctionTok{tidy}\NormalTok{(}\FunctionTok{possible.lm}\NormalTok{(expression }\SpecialCharTok{\textasciitilde{}}\NormalTok{ chol1}\SpecialCharTok{*}\NormalTok{sex, }\AttributeTok{data =}\NormalTok{ .x))) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(term}\SpecialCharTok{==}\StringTok{\textquotesingle{}chol1:sexM\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
@@ -1317,8 +1317,8 @@ p.adjust
 \end{minipage} \\
 \midrule()
 \endhead
-\url{GO:0051640} & organelle localization & 113 & -0.874 & -1.79 & 0 &
-0.204 \\
+\url{GO:0051640} & organelle localization & 113 & -0.874 & -1.81 & 0 &
+0.131 \\
 \bottomrule()
 \end{longtable}
 
@@ -1582,8 +1582,8 @@ pull(ENSEMBL.ID)
 p{[}{[}i{]}{]} \textless- expression.data \%\textgreater\%
 filter(ENSEMBL.ID == gene.ens) \%\textgreater\%
 pivot\_longer(cols=c(starts\_with(`F'), starts\_with(`M')),
-names\_to=`sample', values\_to=`expression') \%\textgreater\%
-full\_join(phenotype.data,by=`sample') \%\textgreater\%
+names\_to=`mouse.id', values\_to=`expression') \%\textgreater\%
+full\_join(phenotype.data,by=`mouse.id') \%\textgreater\%
 filter(!is.na(diet)) \%\textgreater\%
 ggplot(aes(y=chol1,expression,col=sex)) + geom\_point(size=0.1) +
 geom\_smooth(method=`lm',se=F) + facet\_grid(\textasciitilde diet) +
@@ -1611,9 +1611,9 @@ p[[i]] <- expression.data %>%
   filter(ENSEMBL.ID == gene.ens) %>%
   pivot_longer(cols=c(starts_with('F'),
                       starts_with('M')),
-               names_to='sample',
+               names_to='mouse.id',
                values_to='expression') %>%
-  full_join(phenotype.data,by='sample') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
   filter(!is.na(diet)) %>%
   ggplot(aes(y=chol1,expression,col=sex)) +
   geom_point(size=0.1) +
@@ -1638,9 +1638,9 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
   \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
@@ -1659,9 +1659,9 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
@@ -1681,9 +1681,9 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ fbp1.chow.data}
 
@@ -1707,9 +1707,9 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ fbp.hf.data}
 \end{Highlighting}
 \end{Shaded}
@@ -1726,9 +1726,9 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
   \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
@@ -1747,9 +1747,9 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
 
@@ -1782,9 +1782,9 @@ sexM & 18.851 & 4.320 & 4.364 & 0.000 \\
   \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
                       \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
-               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{,}
                \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
-  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}mouse.id\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
 
 \FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}

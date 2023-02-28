@@ -3,14 +3,14 @@ title: "TWAS Analysis of Diversity Outbred Strain RNAseq Data"
 author: "Dave Bridges"
 date: "July 7, 2020"
 output:
-  pdf_document:
-    highlight: tango
-    keep_tex: yes
-    number_sections: yes
-    toc: yes
   html_document:
     highlight: tango
     keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
     number_sections: yes
     toc: yes
 ---

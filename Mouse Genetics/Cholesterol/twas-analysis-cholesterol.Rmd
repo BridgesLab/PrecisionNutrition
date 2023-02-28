@@ -730,6 +730,55 @@ expression.data %>%
 
 ```
 
+# Bile Acid Metabolism
+
+```{r cyp7a1-associations}
+gene <- 'Cyp7a1'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol1,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol1 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 and cholesterol on chow")
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='sample',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='sample') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol1 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 and cholesterol on HFD")
+```
+
 # Session Information
 
 ```{r session-information, echo=T}

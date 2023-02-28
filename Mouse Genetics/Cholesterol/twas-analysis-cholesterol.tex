@@ -1317,8 +1317,8 @@ p.adjust
 \end{minipage} \\
 \midrule()
 \endhead
-\url{GO:0051640} & organelle localization & 113 & -0.874 & -1.83 & 0 &
-0.209 \\
+\url{GO:0051640} & organelle localization & 113 & -0.874 & -1.79 & 0 &
+0.204 \\
 \bottomrule()
 \end{longtable}
 
@@ -1713,6 +1713,102 @@ do.call(grid.arrange,p)
   \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ fbp.hf.data}
 \end{Highlighting}
 \end{Shaded}
+
+\hypertarget{bile-acid-metabolism}{%
+\section{Bile Acid Metabolism}\label{bile-acid-metabolism}}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{gene }\OtherTok{\textless{}{-}} \StringTok{\textquotesingle{}Cyp7a1\textquotesingle{}}
+\NormalTok{gene.ens }\OtherTok{\textless{}{-}} \FunctionTok{filter}\NormalTok{(twas.data.ncd, symbol}\SpecialCharTok{==}\NormalTok{gene) }\SpecialCharTok{\%\textgreater{}\%} \FunctionTok{pull}\NormalTok{(ENSEMBL.ID)}
+
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{ggplot}\NormalTok{(}\FunctionTok{aes}\NormalTok{(}\AttributeTok{y=}\NormalTok{chol1,expression,}\AttributeTok{col=}\NormalTok{sex)) }\SpecialCharTok{+}
+  \FunctionTok{geom\_point}\NormalTok{() }\SpecialCharTok{+}
+  \FunctionTok{geom\_smooth}\NormalTok{(}\AttributeTok{method=}\StringTok{\textquotesingle{}lm\textquotesingle{}}\NormalTok{,}\AttributeTok{se=}\NormalTok{F) }\SpecialCharTok{+}
+  \FunctionTok{facet\_grid}\NormalTok{(}\SpecialCharTok{\textasciitilde{}}\NormalTok{diet) }\SpecialCharTok{+}
+  \FunctionTok{labs}\NormalTok{(}\AttributeTok{y=}\StringTok{"Cholesterol (mg/dL)"}\NormalTok{,}
+       \AttributeTok{x=}\FunctionTok{paste}\NormalTok{(}\StringTok{\textquotesingle{}Expression of \textquotesingle{}}\NormalTok{, gene, }\AttributeTok{sep=}\StringTok{""}\NormalTok{))}
+\end{Highlighting}
+\end{Shaded}
+
+\includegraphics{figures/cyp7a1-associations-1.png}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(diet}\SpecialCharTok{==}\StringTok{\textquotesingle{}chow\textquotesingle{}}\NormalTok{) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.chow.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.chow.data, chol1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Cyp7a1 and cholesterol on chow"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Cyp7a1 and cholesterol on
+chow}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 72.968 & 4.666 & 15.637 & 0.000 \\
+expression & 0.052 & 0.073 & 0.712 & 0.478 \\
+sexM & 18.851 & 4.320 & 4.364 & 0.000 \\
+\bottomrule()
+\end{longtable}
+
+\begin{Shaded}
+\begin{Highlighting}[]
+\NormalTok{expression.data }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(ENSEMBL.ID }\SpecialCharTok{==}\NormalTok{ gene.ens) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{pivot\_longer}\NormalTok{(}\AttributeTok{cols=}\FunctionTok{c}\NormalTok{(}\FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}F\textquotesingle{}}\NormalTok{),}
+                      \FunctionTok{starts\_with}\NormalTok{(}\StringTok{\textquotesingle{}M\textquotesingle{}}\NormalTok{)),}
+               \AttributeTok{names\_to=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{,}
+               \AttributeTok{values\_to=}\StringTok{\textquotesingle{}expression\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{full\_join}\NormalTok{(phenotype.data,}\AttributeTok{by=}\StringTok{\textquotesingle{}sample\textquotesingle{}}\NormalTok{) }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{filter}\NormalTok{(}\SpecialCharTok{!}\FunctionTok{is.na}\NormalTok{(diet)) }\OtherTok{{-}\textgreater{}}\NormalTok{ gene.hf.data}
+
+\FunctionTok{lm}\NormalTok{(}\AttributeTok{data=}\NormalTok{gene.hf.data, chol1 }\SpecialCharTok{\textasciitilde{}}\NormalTok{ expression }\SpecialCharTok{+}\NormalTok{ sex) }\SpecialCharTok{\%\textgreater{}\%}
+\NormalTok{  tidy }\SpecialCharTok{\%\textgreater{}\%}
+  \FunctionTok{kable}\NormalTok{(}\AttributeTok{caption=}\StringTok{"Summary associations of Cyp7a1 and cholesterol on HFD"}\NormalTok{)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{longtable}[]{@{}lrrrr@{}}
+\caption{Summary associations of Cyp7a1 and cholesterol on
+HFD}\tabularnewline
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endfirsthead
+\toprule()
+term & estimate & std.error & statistic & p.value \\
+\midrule()
+\endhead
+(Intercept) & 95.946 & 5.33 & 18.003 & 0.000 \\
+expression & -0.015 & 0.09 & -0.171 & 0.865 \\
+sexM & 16.476 & 4.86 & 3.391 & 0.001 \\
+\bottomrule()
+\end{longtable}
 
 \hypertarget{session-information}{%
 \section{Session Information}\label{session-information}}

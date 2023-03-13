@@ -1199,6 +1199,7 @@ expression.data %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') -> gene.chow.data
 
+
 lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
   tidy %>%
   kable(caption="Summary associations of Cyp7a1 and cholesterol on chow")
@@ -1238,6 +1239,200 @@ Table: Summary associations of Cyp7a1 and cholesterol on HFD
 |(Intercept) |  100.060|     6.108|    16.381|   0.000|
 |expression  |   -0.026|     0.103|    -0.255|   0.799|
 |sexM        |   13.262|     5.565|     2.383|   0.018|
+
+```r
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex + diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 and cholesterol", digits =c(0,3,3,2,99))
+```
+
+
+
+Table: Summary associations of Cyp7a1 and cholesterol
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    75.30|     3.715|     20.27| 3.53e-57|
+|expression  |     0.01|     0.058|      0.18| 8.60e-01|
+|sexM        |    14.67|     3.219|      4.56| 7.71e-06|
+|diethf      |    46.51|     3.278|     14.19| 6.34e-35|
+
+```r
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 and cholesterol", digits =c(0,3,3,2,99))
+```
+
+
+
+Table: Summary associations of Cyp7a1 and cholesterol
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |   74.114|     3.913|     18.94| 2.70e-52|
+|expression  |    0.014|     0.058|      0.24| 8.09e-01|
+|sexM        |   16.770|     3.888|      4.31| 2.22e-05|
+|diethf      |   49.643|     4.616|     10.76| 7.40e-23|
+|sexM:diethf |   -6.331|     6.561|     -0.96| 3.35e-01|
+
+```r
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(select(phenotype.data, mouse.id,diet,sex),by='mouse.id') %>% 
+  group_by(diet,sex) %>%
+  summarize(mean=mean(expression,na.rm=T),
+            se=se(expression)) %>%
+  ggplot(aes(y=mean,
+             ymin=mean-se,
+             ymax=mean+se,
+             x=sex,
+             fill=diet)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9),width=0.5) +
+  labs(y="Relative Expression",
+       title="Cyp7a1")
+```
+
+![](figures/cyp7a1-associations-2.png)<!-- -->
+
+
+```r
+gene <- 'Cyp27a1'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+```
+
+![](figures/cyp27a1-associations-1.png)<!-- -->
+
+```r
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol on chow")
+```
+
+
+
+Table: Summary associations of Cyp27a1 and cholesterol on chow
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |   71.576|     9.706|     7.375|   0.000|
+|expression  |    0.048|     0.137|     0.351|   0.726|
+|sexM        |   15.130|     5.758|     2.628|   0.010|
+
+```r
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol on HFD")
+```
+
+
+
+Table: Summary associations of Cyp27a1 and cholesterol on HFD
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |  135.127|     8.841|     15.28|       0|
+|expression  |   -0.601|     0.134|     -4.48|       0|
+|sexM        |   28.368|     6.019|      4.71|       0|
+
+```r
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex + diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol", digits =c(0,3,3,2,99))
+```
+
+
+
+Table: Summary associations of Cyp27a1 and cholesterol
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |   73.410|     6.975|     10.53| 4.21e-22|
+|expression  |    0.035|     0.095|      0.36| 7.15e-01|
+|sexM        |   13.593|     3.923|      3.47| 6.11e-04|
+|diethf      |   47.129|     3.734|     12.62| 2.57e-29|
+
+```r
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol", digits =c(0,3,3,2,99))
+```
+
+
+
+Table: Summary associations of Cyp27a1 and cholesterol
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |   73.160|     6.982|     10.48| 6.17e-22|
+|expression  |    0.025|     0.096|      0.26| 7.98e-01|
+|sexM        |   15.796|     4.604|      3.43| 6.91e-04|
+|diethf      |   49.909|     4.815|     10.37| 1.46e-21|
+|sexM:diethf |   -6.028|     6.591|     -0.91| 3.61e-01|
+
+```r
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(select(phenotype.data, mouse.id,diet,sex),by='mouse.id') %>% 
+  group_by(diet,sex) %>%
+  summarize(mean=mean(expression,na.rm=T),
+            se=se(expression)) %>%
+  ggplot(aes(y=mean,
+             ymin=mean-se,
+             ymax=mean+se,
+             x=sex,
+             fill=diet)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9),width=0.5) +
+  labs(y="Relative Expression",
+       title="Cyp27a1")
+```
+
+![](figures/cyp27a1-associations-2.png)<!-- -->
+
 
 ## SCD1
 
@@ -1651,7 +1846,7 @@ sessionInfo()
 ## [10] org.Mm.eg.db_3.15.0   AnnotationDbi_1.58.0  IRanges_2.30.1       
 ## [13] S4Vectors_0.34.0      Biobase_2.56.0        BiocGenerics_0.42.0  
 ## [16] broom_1.0.2           readr_2.1.3           dplyr_1.0.10         
-## [19] tidyr_1.2.1           knitr_1.41           
+## [19] tidyr_1.3.0           knitr_1.41           
 ## 
 ## loaded via a namespace (and not attached):
 ##   [1] fgsea_1.22.0           colorspace_2.0-3       ggtree_3.4.4          
@@ -1668,7 +1863,7 @@ sessionInfo()
 ##  [34] igraph_1.3.5           gtable_0.3.1           glue_1.6.2            
 ##  [37] GenomeInfoDbData_1.2.8 reshape2_1.4.4         DO.db_2.9             
 ##  [40] fastmatch_1.1-3        Rcpp_1.0.9             jquerylib_0.1.4       
-##  [43] vctrs_0.5.1            Biostrings_2.64.1      ape_5.6-2             
+##  [43] vctrs_0.5.2            Biostrings_2.64.1      ape_5.6-2             
 ##  [46] nlme_3.1-161           ggraph_2.1.0           xfun_0.36             
 ##  [49] stringr_1.5.0          lifecycle_1.0.3        DOSE_3.22.1           
 ##  [52] zlibbioc_1.42.0        scales_1.2.1           tidygraph_1.2.2       

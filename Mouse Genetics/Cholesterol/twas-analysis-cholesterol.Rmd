@@ -762,6 +762,7 @@ expression.data %>%
   filter(!is.na(diet)) %>%
   filter(diet=='chow') -> gene.chow.data
 
+
 lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
   tidy %>%
   kable(caption="Summary associations of Cyp7a1 and cholesterol on chow")
@@ -778,7 +779,115 @@ expression.data %>%
 lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
   tidy %>%
   kable(caption="Summary associations of Cyp7a1 and cholesterol on HFD")
+
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex + diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 and cholesterol", digits =c(0,3,3,2,99))
+
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 and cholesterol", digits =c(0,3,3,2,99))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(select(phenotype.data, mouse.id,diet,sex),by='mouse.id') %>% 
+  group_by(diet,sex) %>%
+  summarize(mean=mean(expression,na.rm=T),
+            se=se(expression)) %>%
+  ggplot(aes(y=mean,
+             ymin=mean-se,
+             ymax=mean+se,
+             x=sex,
+             fill=diet)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9),width=0.5) +
+  labs(y="Relative Expression",
+       title="Cyp7a1")
 ```
+
+```{r cyp27a1-associations}
+gene <- 'Cyp27a1'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol on chow")
+
+
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol on HFD")
+
+
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex + diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol", digits =c(0,3,3,2,99))
+
+lm(data=bind_rows(gene.chow.data, gene.hf.data), chol2 ~ expression + sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 and cholesterol", digits =c(0,3,3,2,99))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(select(phenotype.data, mouse.id,diet,sex),by='mouse.id') %>% 
+  group_by(diet,sex) %>%
+  summarize(mean=mean(expression,na.rm=T),
+            se=se(expression)) %>%
+  ggplot(aes(y=mean,
+             ymin=mean-se,
+             ymax=mean+se,
+             x=sex,
+             fill=diet)) +
+  geom_bar(stat='identity', position=position_dodge()) +
+  geom_errorbar(position=position_dodge(width=0.9),width=0.5) +
+  labs(y="Relative Expression",
+       title="Cyp27a1")
+```
+
 
 ## SCD1
 

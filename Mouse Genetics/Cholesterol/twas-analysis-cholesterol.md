@@ -999,7 +999,7 @@ Table: HFD GO BP Analysis of TWAS Associations from GSEA
 
 |           |Description            | setSize| enrichmentScore|  NES| pvalue| p.adjust|
 |:----------|:----------------------|-------:|---------------:|----:|------:|--------:|
-|GO:0051640 |organelle localization |     113|           0.959| 1.77|      0|        0|
+|GO:0051640 |organelle localization |     113|           0.959| 1.79|      0|        0|
 
 ```r
 as.data.frame(go.twas.bp) %>%
@@ -1299,6 +1299,23 @@ expression.data %>%
 
 ![](figures/cyp7a1-associations-2.png)<!-- -->
 
+```r
+lm(data=bind_rows(gene.chow.data, gene.hf.data), expression ~ sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 expression", digits =c(0,3,3,2,99))
+```
+
+
+
+Table: Summary associations of Cyp7a1 expression
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    50.70|      2.66|     19.03| 9.74e-53|
+|sexM        |   -19.92|      3.81|     -5.23| 3.21e-07|
+|diethf      |    -7.38|      4.68|     -1.58| 1.16e-01|
+|sexM:diethf |     7.84|      6.69|      1.17| 2.42e-01|
+
 
 ```r
 gene <- 'Cyp27a1'
@@ -1432,6 +1449,23 @@ expression.data %>%
 ```
 
 ![](figures/cyp27a1-associations-2.png)<!-- -->
+
+```r
+lm(data=bind_rows(gene.chow.data, gene.hf.data), expression ~ sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 expression", digits =c(0,3,3,2,99))
+```
+
+
+
+Table: Summary associations of Cyp27a1 expression
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    67.67|      1.61|     41.96| 0.00e+00|
+|sexM        |    28.42|      2.31|     12.33| 2.65e-28|
+|diethf      |   -14.41|      2.83|     -5.09| 6.61e-07|
+|sexM:diethf |    -8.56|      4.05|     -2.12| 3.53e-02|
 
 
 ## SCD1

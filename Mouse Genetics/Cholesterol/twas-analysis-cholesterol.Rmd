@@ -807,6 +807,10 @@ expression.data %>%
   geom_errorbar(position=position_dodge(width=0.9),width=0.5) +
   labs(y="Relative Expression",
        title="Cyp7a1")
+
+lm(data=bind_rows(gene.chow.data, gene.hf.data), expression ~ sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp7a1 expression", digits =c(0,3,3,2,99))
 ```
 
 ```{r cyp27a1-associations}
@@ -886,6 +890,10 @@ expression.data %>%
   geom_errorbar(position=position_dodge(width=0.9),width=0.5) +
   labs(y="Relative Expression",
        title="Cyp27a1")
+
+lm(data=bind_rows(gene.chow.data, gene.hf.data), expression ~ sex * diet) %>%
+  tidy %>%
+  kable(caption="Summary associations of Cyp27a1 expression", digits =c(0,3,3,2,99))
 ```
 
 

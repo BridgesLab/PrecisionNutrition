@@ -115,7 +115,9 @@ cholesterol.data %>%
 summary.data.complete <-
   cholesterol.data %>%
   group_by(sex,Diet) %>%
-  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),
+                                                            se=se,
+                                                            sd=~sd(., na.rm=T)))
 
 kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
 
@@ -135,7 +137,7 @@ summary.data.complete %>%
                           "Average"="chol.avg",
                           `8 Weeks`="chol1",
                           `19 Weeks`="chol2")) %>%
-  ggplot(aes(y=mean,ymin=mean-se,ymax=mean+se,x=Value)) +
+  ggplot(aes(y=mean,ymin=mean-sd,ymax=mean+sd,x=Value)) +
   geom_bar(stat='identity') +
   geom_errorbar(width=0.5) +
   facet_grid(Diet~sex) +
@@ -152,7 +154,9 @@ summary.data.complete %>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),
+                                             se=se,
+                                             sd=~sd(., na.rm=T)))
 
 library(broom)
 lm(chol2~sex*diet, data=cholesterol.data) %>%
@@ -359,7 +363,9 @@ anova(lm.calcium,lm.calcium.tg)%>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),
+                                                se=se,
+                                                sd=~sd(., na.rm=T)))
 
 lm(calcium2~sex*diet, data=cholesterol.data) %>%
   tidy %>%

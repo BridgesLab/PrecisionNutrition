@@ -119,7 +119,9 @@ cholesterol.data %>%
 summary.data.complete <-
   cholesterol.data %>%
   group_by(sex,Diet) %>%
-  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),
+                                                            se=se,
+                                                            sd=~sd(., na.rm=T)))
 
 kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
 ```
@@ -128,12 +130,12 @@ kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
 
 Table: Cholesterol levels at 11 and 18 weeks
 
-|sex |Diet | chol1_mean| chol2_mean| chol.avg_mean| chol1_se| chol2_se| chol.avg_se|
-|:---|:----|----------:|----------:|-------------:|--------:|--------:|-----------:|
-|F   |NCD  |       80.0|       78.7|            79|     1.16|     1.48|        1.23|
-|F   |HFHS |      108.5|      113.3|           111|     1.78|     2.40|        1.87|
-|M   |NCD  |       96.4|       96.5|            97|     1.47|     1.57|        1.37|
-|M   |HFHS |      128.2|      129.3|           128|     2.09|     2.33|        1.92|
+|sex |Diet | chol1_mean| chol2_mean| chol.avg_mean| chol1_se| chol2_se| chol.avg_se| chol1_sd| chol2_sd| chol.avg_sd|
+|:---|:----|----------:|----------:|-------------:|--------:|--------:|-----------:|--------:|--------:|-----------:|
+|F   |NCD  |       80.0|       78.7|            79|     1.16|     1.48|        1.23|     17.4|     22.2|        18.4|
+|F   |HFHS |      108.5|      113.3|           111|     1.78|     2.40|        1.87|     25.0|     33.7|        26.3|
+|M   |NCD  |       96.4|       96.5|            97|     1.47|     1.57|        1.37|     22.0|     23.5|        20.6|
+|M   |HFHS |      128.2|      129.3|           128|     2.09|     2.33|        1.92|     29.1|     32.3|        26.7|
 
 ```r
 library(broom)
@@ -162,7 +164,7 @@ summary.data.complete %>%
                           "Average"="chol.avg",
                           `8 Weeks`="chol1",
                           `19 Weeks`="chol2")) %>%
-  ggplot(aes(y=mean,ymin=mean-se,ymax=mean+se,x=Value)) +
+  ggplot(aes(y=mean,ymin=mean-sd,ymax=mean+sd,x=Value)) +
   geom_bar(stat='identity') +
   geom_errorbar(width=0.5) +
   facet_grid(Diet~sex) +
@@ -182,7 +184,9 @@ summary.data.complete %>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),
+                                             se=se,
+                                             sd=~sd(., na.rm=T)))
 
 library(broom)
 lm(chol2~sex*diet, data=cholesterol.data) %>%
@@ -363,18 +367,18 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
 | 0.247|      0|     1.000|  1.004| 0.059|
-| 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.731| 0.045|
-| 0.036|      3|     0.629|  0.643| 0.041|
-| 0.023|      4|     0.593|  0.634| 0.043|
-| 0.022|      5|     0.569|  0.640| 0.044|
-| 0.015|      6|     0.547|  0.644| 0.044|
-| 0.015|      7|     0.532|  0.651| 0.045|
-| 0.014|      8|     0.516|  0.655| 0.045|
-| 0.011|      9|     0.502|  0.661| 0.046|
-| 0.011|     10|     0.491|  0.664| 0.046|
-| 0.010|     11|     0.481|  0.668| 0.047|
-| 0.010|     12|     0.470|  0.668| 0.047|
+| 0.064|      1|     0.753|  0.757| 0.045|
+| 0.060|      2|     0.689|  0.716| 0.044|
+| 0.036|      3|     0.629|  0.639| 0.040|
+| 0.023|      4|     0.593|  0.639| 0.043|
+| 0.022|      5|     0.569|  0.633| 0.043|
+| 0.015|      6|     0.547|  0.618| 0.043|
+| 0.015|      7|     0.532|  0.634| 0.042|
+| 0.014|      8|     0.516|  0.631| 0.042|
+| 0.011|      9|     0.502|  0.638| 0.042|
+| 0.011|     10|     0.491|  0.650| 0.042|
+| 0.010|     11|     0.481|  0.650| 0.042|
+| 0.010|     12|     0.470|  0.644| 0.042|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -759,7 +763,9 @@ Table: Comparason of models with or without triglyceride levels
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),
+                                                se=se,
+                                                sd=~sd(., na.rm=T)))
 
 lm(calcium2~sex*diet, data=cholesterol.data) %>%
   tidy %>%
@@ -1449,7 +1455,7 @@ sessionInfo()
 ##  [7] bitops_1.0-7         tibble_3.1.8         rpart_4.1.19        
 ## [10] tree_1.0-42          broom_1.0.2          ggplot2_3.4.0       
 ## [13] forcats_0.5.2        readr_2.1.3          dplyr_1.0.10        
-## [16] tidyr_1.2.1          knitr_1.41          
+## [16] tidyr_1.3.0          knitr_1.41          
 ## 
 ## loaded via a namespace (and not attached):
 ##  [1] TH.data_1.1-1        colorspace_2.0-3     ellipsis_0.3.2      
@@ -1463,7 +1469,7 @@ sessionInfo()
 ## [25] fastmap_1.1.0        cli_3.6.0            htmltools_0.5.4     
 ## [28] tools_4.2.2          coda_0.19-4          gtable_0.3.1        
 ## [31] glue_1.6.2           reshape2_1.4.4       Rcpp_1.0.9          
-## [34] jquerylib_0.1.4      vctrs_0.5.1          nlme_3.1-161        
+## [34] jquerylib_0.1.4      vctrs_0.5.2          nlme_3.1-161        
 ## [37] iterators_1.0.14     insight_0.18.8       timeDate_4022.108   
 ## [40] gower_1.0.1          xfun_0.36            stringr_1.5.0       
 ## [43] globals_0.16.2       timechange_0.1.1     lifecycle_1.0.3     

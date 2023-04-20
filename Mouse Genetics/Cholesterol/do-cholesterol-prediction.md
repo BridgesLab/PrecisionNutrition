@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.004| 0.059|
-| 0.064|      1|     0.753|  0.757| 0.045|
-| 0.060|      2|     0.689|  0.716| 0.044|
-| 0.036|      3|     0.629|  0.639| 0.040|
-| 0.023|      4|     0.593|  0.639| 0.043|
-| 0.022|      5|     0.569|  0.633| 0.043|
-| 0.015|      6|     0.547|  0.618| 0.043|
-| 0.015|      7|     0.532|  0.634| 0.042|
-| 0.014|      8|     0.516|  0.631| 0.042|
-| 0.011|      9|     0.502|  0.638| 0.042|
-| 0.011|     10|     0.491|  0.650| 0.042|
-| 0.010|     11|     0.481|  0.650| 0.042|
-| 0.010|     12|     0.470|  0.644| 0.042|
+| 0.247|      0|     1.000|  1.002| 0.059|
+| 0.064|      1|     0.753|  0.756| 0.045|
+| 0.060|      2|     0.689|  0.733| 0.045|
+| 0.036|      3|     0.629|  0.636| 0.040|
+| 0.023|      4|     0.593|  0.652| 0.045|
+| 0.022|      5|     0.569|  0.683| 0.048|
+| 0.015|      6|     0.547|  0.690| 0.049|
+| 0.015|      7|     0.532|  0.704| 0.049|
+| 0.014|      8|     0.516|  0.709| 0.050|
+| 0.011|      9|     0.502|  0.713| 0.052|
+| 0.011|     10|     0.491|  0.717| 0.052|
+| 0.010|     11|     0.481|  0.717| 0.052|
+| 0.010|     12|     0.470|  0.717| 0.052|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -755,6 +755,126 @@ Table: Comparason of models with or without triglyceride levels
 |------:|------:|--:|---------:|--:|--------:|
 |    762| 460649| NA|        NA| NA|       NA|
 |    761| 432050|  1|     28600| 50| 2.91e-12|
+
+```r
+lm.calcium.chol <- lm(chol2~calcium2, cholesterol.data)
+summary(lm.calcium.chol) %>% glance %>% kable(caption="Linear model of calcium on cholesterol")
+```
+
+
+
+Table: Linear model of calcium on cholesterol
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
+|     0.202|         0.201|  29.6|       194|       0|  1|         764|  766|
+
+```r
+lm.calcium.chol.sex <- lm(chol2~calcium2+sex, cholesterol.data)
+summary(lm.calcium.chol.sex) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex")
+```
+
+
+
+Table: Linear model of calcium on cholesterol adjusting for sex
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
+|     0.273|         0.271|  28.3|       143|       0|  2|         763|  766|
+
+```r
+lm.calcium.chol.sex.bw <- lm(chol2~calcium2+sex+bw.19, cholesterol.data)
+summary(lm.calcium.chol.sex.bw) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and bw")
+```
+
+
+
+Table: Linear model of calcium on cholesterol adjusting for sex and bw
+
+| r.squared| adj.r.squared| sigma| statistic| p.value| df| df.residual| nobs|
+|---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
+|     0.334|         0.331|  27.1|       127|       0|  3|         761|  765|
+
+```r
+summary(lm.calcium.chol)
+```
+
+```
+## 
+## Call:
+## lm(formula = chol2 ~ calcium2, data = cholesterol.data)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -67.61 -19.86  -3.02  15.93 123.89 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)   -28.22       9.52   -2.96   0.0031 ** 
+## calcium2       14.37       1.03   13.91   <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 29.6 on 764 degrees of freedom
+##   (74 observations deleted due to missingness)
+## Multiple R-squared:  0.202,	Adjusted R-squared:  0.201 
+## F-statistic:  194 on 1 and 764 DF,  p-value: <2e-16
+```
+
+```r
+summary(lm.calcium.chol.sex)
+```
+
+```
+## 
+## Call:
+## lm(formula = chol2 ~ calcium2 + sex, data = cholesterol.data)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -61.35 -19.54  -2.63  15.95 129.36 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  -39.072      9.180   -4.26 0.000023 ***
+## calcium2      14.553      0.987   14.75  < 2e-16 ***
+## sexM          17.628      2.048    8.61  < 2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 28.3 on 763 degrees of freedom
+##   (74 observations deleted due to missingness)
+## Multiple R-squared:  0.273,	Adjusted R-squared:  0.271 
+## F-statistic:  143 on 2 and 763 DF,  p-value: <2e-16
+```
+
+```r
+summary(lm.calcium.chol.sex.bw)
+```
+
+```
+## 
+## Call:
+## lm(formula = chol2 ~ calcium2 + sex + bw.19, data = cholesterol.data)
+## 
+## Residuals:
+##    Min     1Q Median     3Q    Max 
+## -67.96 -18.41  -2.14  14.44 128.30 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(>|t|)    
+## (Intercept)  -60.515      9.169   -6.60  7.7e-11 ***
+## calcium2      12.903      0.966   13.35  < 2e-16 ***
+## sexM           6.592      2.378    2.77   0.0057 ** 
+## bw.19          1.242      0.150    8.29  5.1e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Residual standard error: 27.1 on 761 degrees of freedom
+##   (75 observations deleted due to missingness)
+## Multiple R-squared:  0.334,	Adjusted R-squared:  0.331 
+## F-statistic:  127 on 3 and 761 DF,  p-value: <2e-16
+```
 
 ## Effects of Diet and Sex on Calcium
 
@@ -1198,6 +1318,8 @@ dplyr::filter(cholesterol.data, sex == "M")
 ## #   bw.6 <dbl>, bw.7 <dbl>, bw.8 <dbl>, bw.9 <dbl>, bw.pc1 <dbl>, …
 ```
 
+# Mediating Effect of Body Weight
+
 
 ```r
 ggplot(data=cholesterol.data,
@@ -1206,55 +1328,31 @@ ggplot(data=cholesterol.data,
            col=diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm) +
+    labs(y="Cholesterol (mg/dL)",
+       x="Body Weight (g)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
 ```
 
-![](figures/BW_19-1.png)<!-- -->
+![](figures/calcium-BW_19-1.png)<!-- -->
 
 ```r
-lm.bw.1 <- lm(chol2~bw.19, data=cholesterol.data)
-lm.bw.2 <- lm(chol2~bw.19+sex, data=cholesterol.data)
-lm.bw.3 <- lm(chol2~sex+diet+bw.19, data=cholesterol.data)
-lm.bw.4 <- lm(chol2~sex+calcium2+bw.19, data=cholesterol.data)
-lm.bw.5 <- lm(chol2~sex+tg2+bw.19, data=cholesterol.data)
-lm.bw.6 <- lm(chol2~sex+diet+bw.19+tg2, data=cholesterol.data)
-lm.bw.7 <- lm(chol2~sex+diet+bw.19+tg2+calcium2, data=cholesterol.data)
+lm.bw.model <- lm(chol2~sex+diet+bw.19, data=cholesterol.data)
 
-lm.bw.6 <- lm(chol2~sex+diet*bw.19, data=cholesterol.data)
-aov.calcium <- aov(chol2~sex+diet+bw.19, data=cholesterol.data)
-summary(lm.bw.1) %>% tidy %>% kable(caption="Effects of calcium on cholesterol at 18w", digits=50)
+summary(lm.bw.model) %>% tidy %>% kable(caption="Effects of body weight on cholesterol at 18w, ajdusting for sex and diet", digits=50)
 ```
 
 
 
-Table: Effects of calcium on cholesterol at 18w
-
-|term        | estimate| std.error| statistic|  p.value|
-|:-----------|--------:|---------:|---------:|--------:|
-|(Intercept) |    43.36|     4.690|      9.25| 1.99e-19|
-|bw.19       |     1.76|     0.135|     13.07| 1.44e-35|
-
-```r
-summary(lm.bw.2) %>% tidy %>% kable(caption="Sex adjusted effects of calcium on cholesterol at 18w", digits=50)
-```
-
-
-
-Table: Sex adjusted effects of calcium on cholesterol at 18w
-
-|term        | estimate| std.error| statistic|  p.value|
-|:-----------|--------:|---------:|---------:|--------:|
-|(Intercept) |    44.74|      4.99|     8.959| 2.20e-18|
-|bw.19       |     1.69|      0.16|    10.527| 2.19e-24|
-|sexM        |     2.06|      2.56|     0.803| 4.22e-01|
-
-```r
-summary(lm.bw.3) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w", digits=50)
-```
-
-
-
-Table: Sex and diet adjusted effects of calcium on cholesterol at 18w
+Table: Effects of body weight on cholesterol at 18w, ajdusting for sex and diet
 
 |term        | estimate| std.error| statistic|  p.value|
 |:-----------|--------:|---------:|---------:|--------:|
@@ -1264,100 +1362,32 @@ Table: Sex and diet adjusted effects of calcium on cholesterol at 18w
 |bw.19       |    0.852|     0.156|      5.46| 6.17e-08|
 
 ```r
-summary(lm.bw.4) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
+# mediating effect of body weight on the calcium, cholesterol relationship
+lm.bw.1 <- lm(chol2~calcium2, data=cholesterol.data)
+lm.bw.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
+lm.bw.3 <- lm(chol2~calcium2+sex+bw.19, data=cholesterol.data)
+lm.bw.4 <- lm(chol2~calcium2+sex+bw.19+diet, data=cholesterol.data)
+
+bind_rows(tidy(lm.bw.1) %>% mutate(Model='cholesterol~calcium'),
+          tidy(lm.bw.2) %>% mutate(Model='cholesterol~calcium+sex'),
+          tidy(lm.bw.3) %>% mutate(Model='cholesterol~calcium+sex+body.weight'),
+          tidy(lm.bw.4) %>% mutate(Model='cholesterol~calcium+sex+body.weight+diet')) %>%
+  filter(term=='calcium2') %>%
+  mutate(beta.calcium=paste(round(estimate,2),round(std.error,2),sep="+/-")) %>%
+  select(Model,beta.calcium,p.value) %>%
+  kable(caption="Summary of effects of body weight mediation",digits=c(0,0,99))
 ```
 
 
 
-Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
+Table: Summary of effects of body weight mediation
 
-|term        | estimate| std.error| statistic|  p.value|
-|:-----------|--------:|---------:|---------:|--------:|
-|(Intercept) |   -60.52|     9.169|     -6.60| 7.69e-11|
-|sexM        |     6.59|     2.378|      2.77| 5.70e-03|
-|calcium2    |    12.90|     0.966|     13.35| 1.08e-36|
-|bw.19       |     1.24|     0.150|      8.29| 5.12e-16|
-
-```r
-summary(lm.bw.5) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
-```
-
-
-
-Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
-
-|term        | estimate| std.error| statistic|  p.value|
-|:-----------|--------:|---------:|---------:|--------:|
-|(Intercept) |  36.4401|    5.2549|     6.934| 8.32e-12|
-|sexM        |  -0.4276|    2.5861|    -0.165| 8.69e-01|
-|tg2         |   0.0865|    0.0189|     4.582| 5.33e-06|
-|bw.19       |   1.6579|    0.1587|    10.450| 4.53e-24|
-
-```r
-lm.bw.chow <- lm(chol2~sex+bw.19, filter(cholesterol.data, diet == "chow"))
-summary(lm.bw.chow) %>% glance %>% kable
-```
-
-
-
-| r.squared| adj.r.squared| sigma| statistic| p.value| df| df.residual| nobs|
-|---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
-|      0.18|         0.176|  22.3|      47.8|       0|  2|         435|  438|
-
-```r
-lm.bw.hf <- lm(chol2~sex+bw.19, filter(cholesterol.data, diet == "hf"))
-summary(lm.bw.hf) %>% glance %>% kable
-```
-
-
-
-| r.squared| adj.r.squared| sigma| statistic| p.value| df| df.residual| nobs|
-|---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
-|     0.081|         0.076|  32.6|      16.5|       0|  2|         376|  379|
-
-```r
-library(effectsize)
-omega_squared(aov.calcium, partial = TRUE) %>%
-  kable(caption="Partial effect size estimates for predictors of continuous cholesterol levels")
-```
-
-
-
-Table: Partial effect size estimates for predictors of continuous cholesterol levels
-
-|Parameter | Omega2_partial|   CI| CI_low| CI_high|
-|:---------|--------------:|----:|------:|-------:|
-|sex       |          0.083| 0.95|  0.055|       1|
-|diet      |          0.270| 0.95|  0.229|       1|
-|bw.19     |          0.034| 0.95|  0.017|       1|
-
-```r
-dplyr::filter(cholesterol.data, sex == "M")
-```
-
-```
-## # A tibble: 417 × 173
-##    mouse.id sex     gen litter diet  coat.…¹  acr1  acr2 adipo…² b.area1 b.area2
-##    <chr>    <fct> <dbl>  <dbl> <fct> <chr>   <dbl> <dbl>   <dbl>   <dbl>   <dbl>
-##  1 F142     M         7      2 hf    agouti     NA    NA      NA    8.31    8.74
-##  2 M01      M         4      2 hf    agouti     NA    NA      NA    9.97    9.82
-##  3 M02      M         4      2 hf    agouti     NA    NA      NA    9.02    8.57
-##  4 M03      M         4      2 hf    agouti     NA    NA      NA    9.05    9.48
-##  5 M04      M         4      2 hf    black      NA    NA      NA    9.55    9.36
-##  6 M05      M         4      2 hf    agouti     NA    NA      NA    8.78    8.47
-##  7 M06      M         4      2 hf    agouti     NA    NA      NA   11.4    10.9 
-##  8 M07      M         4      2 hf    agouti     NA    NA      NA    9.24    9.81
-##  9 M08      M         4      2 hf    black      NA    NA      NA   10.7    11.0 
-## 10 M09      M         4      2 hf    agouti     NA    NA      NA   NA      NA   
-## # … with 407 more rows, 162 more variables: bmc1 <dbl>, bmc2 <dbl>, bmd1 <dbl>,
-## #   bmd2 <dbl>, bun1 <dbl>, bun2 <dbl>, bw.10 <dbl>, bw.11 <dbl>, bw.12 <dbl>,
-## #   bw.13 <dbl>, bw.14 <dbl>, bw.15 <dbl>, bw.16 <dbl>, bw.17 <dbl>,
-## #   bw.18 <dbl>, bw.19 <dbl>, bw.20 <dbl>, bw.21 <dbl>, bw.22 <dbl>,
-## #   bw.23 <dbl>, bw.24 <dbl>, bw.25 <dbl>, bw.26 <dbl>, bw.27 <dbl>,
-## #   bw.28 <dbl>, bw.29 <dbl>, bw.3 <dbl>, bw.30 <dbl>, bw.4 <dbl>, bw.5 <dbl>,
-## #   bw.6 <dbl>, bw.7 <dbl>, bw.8 <dbl>, bw.9 <dbl>, bw.pc1 <dbl>, …
-```
-
+|Model                                    |beta.calcium |  p.value|
+|:----------------------------------------|:------------|--------:|
+|cholesterol~calcium                      |14.37+/-1.03 | 2.17e-39|
+|cholesterol~calcium+sex                  |14.55+/-0.99 | 1.75e-43|
+|cholesterol~calcium+sex+body.weight      |12.9+/-0.97  | 1.08e-36|
+|cholesterol~calcium+sex+body.weight+diet |12.05+/-0.87 | 5.59e-39|
 
 
 # Random Forests

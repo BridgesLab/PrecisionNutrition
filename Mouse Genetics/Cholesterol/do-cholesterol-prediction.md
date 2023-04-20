@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.002| 0.059|
+| 0.247|      0|     1.000|  1.001| 0.059|
 | 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.733| 0.045|
-| 0.036|      3|     0.629|  0.636| 0.040|
-| 0.023|      4|     0.593|  0.652| 0.045|
-| 0.022|      5|     0.569|  0.683| 0.048|
-| 0.015|      6|     0.547|  0.690| 0.049|
-| 0.015|      7|     0.532|  0.704| 0.049|
-| 0.014|      8|     0.516|  0.709| 0.050|
-| 0.011|      9|     0.502|  0.713| 0.052|
-| 0.011|     10|     0.491|  0.717| 0.052|
-| 0.010|     11|     0.481|  0.717| 0.052|
-| 0.010|     12|     0.470|  0.717| 0.052|
+| 0.060|      2|     0.689|  0.717| 0.045|
+| 0.036|      3|     0.629|  0.643| 0.041|
+| 0.023|      4|     0.593|  0.663| 0.045|
+| 0.022|      5|     0.569|  0.659| 0.045|
+| 0.015|      6|     0.547|  0.676| 0.047|
+| 0.015|      7|     0.532|  0.693| 0.048|
+| 0.014|      8|     0.516|  0.692| 0.048|
+| 0.011|      9|     0.502|  0.714| 0.048|
+| 0.011|     10|     0.491|  0.720| 0.048|
+| 0.010|     11|     0.481|  0.719| 0.048|
+| 0.010|     12|     0.470|  0.721| 0.049|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1389,6 +1389,47 @@ Table: Summary of effects of body weight mediation
 |cholesterol~calcium+sex+body.weight      |12.9+/-0.97  | 1.08e-36|
 |cholesterol~calcium+sex+body.weight+diet |12.05+/-0.87 | 5.59e-39|
 
+## Mediation Analysis for Body Weight
+
+Did a mediation analysis for the effects of body weight on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
+
+
+```r
+library(mediation)
+#need a dataset that is complete with respect to calcium and cholesterol
+mediation.cholesterol.data <-
+  cholesterol.data %>%
+  filter(!is.na(calcium2)) %>%
+  filter(!is.na(chol2))
+mediator.model <- lm(bw.19 ~ calcium2+sex, mediation.cholesterol.data)
+model.full <- lm(chol2 ~ calcium2 + sex+bw.19, mediation.cholesterol.data)
+
+bw.mediation.results <- mediate(mediator.model, model.full, treat='calcium2', mediator='bw.19',
+                   boot=TRUE, sims=1000)
+summary(bw.mediation.results) 
+```
+
+```
+## 
+## Causal Mediation Analysis 
+## 
+## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
+## 
+##                Estimate 95% CI Lower 95% CI Upper p-value    
+## ACME             1.6482       1.0072         2.43  <2e-16 ***
+## ADE             12.9034      11.2783        14.59  <2e-16 ***
+## Total Effect    14.5516      12.9106        16.16  <2e-16 ***
+## Prop. Mediated   0.1133       0.0704         0.16  <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Sample Size Used: 765 
+## 
+## 
+## Simulations: 1000
+```
+
+Differences in body weight partially mediate the relationship between calcium and cholesterol.
 
 # Random Forests
 
@@ -1481,45 +1522,52 @@ sessionInfo()
 ## 
 ## other attached packages:
 ##  [1] randomForest_4.7-1.1 ipred_0.9-13         caret_6.0-93        
-##  [4] lattice_0.20-45      effectsize_0.8.2     rattle_5.5.1        
-##  [7] bitops_1.0-7         tibble_3.1.8         rpart_4.1.19        
-## [10] tree_1.0-42          broom_1.0.2          ggplot2_3.4.0       
-## [13] forcats_0.5.2        readr_2.1.3          dplyr_1.0.10        
-## [16] tidyr_1.3.0          knitr_1.41          
+##  [4] lattice_0.20-45      mediation_4.5.0      sandwich_3.0-2      
+##  [7] mvtnorm_1.1-3        Matrix_1.5-3         MASS_7.3-58.1       
+## [10] effectsize_0.8.2     rattle_5.5.1         bitops_1.0-7        
+## [13] tibble_3.1.8         rpart_4.1.19         tree_1.0-42         
+## [16] broom_1.0.2          ggplot2_3.4.0        forcats_0.5.2       
+## [19] readr_2.1.3          dplyr_1.0.10         tidyr_1.3.0         
+## [22] knitr_1.41          
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] TH.data_1.1-1        colorspace_2.0-3     ellipsis_0.3.2      
-##  [4] class_7.3-20         estimability_1.4.1   parameters_0.20.1   
-##  [7] rstudioapi_0.14      listenv_0.9.0        farver_2.1.1        
-## [10] bit64_4.0.5          prodlim_2019.11.13   fansi_1.0.3         
-## [13] mvtnorm_1.1-3        lubridate_1.9.0      codetools_0.2-18    
-## [16] splines_4.2.2        cachem_1.0.6         jsonlite_1.8.4      
-## [19] pROC_1.18.0          compiler_4.2.2       emmeans_1.8.3       
-## [22] backports_1.4.1      assertthat_0.2.1     Matrix_1.5-3        
-## [25] fastmap_1.1.0        cli_3.6.0            htmltools_0.5.4     
-## [28] tools_4.2.2          coda_0.19-4          gtable_0.3.1        
-## [31] glue_1.6.2           reshape2_1.4.4       Rcpp_1.0.9          
-## [34] jquerylib_0.1.4      vctrs_0.5.2          nlme_3.1-161        
-## [37] iterators_1.0.14     insight_0.18.8       timeDate_4022.108   
-## [40] gower_1.0.1          xfun_0.36            stringr_1.5.0       
-## [43] globals_0.16.2       timechange_0.1.1     lifecycle_1.0.3     
-## [46] future_1.30.0        MASS_7.3-58.1        zoo_1.8-11          
-## [49] scales_1.2.1         vroom_1.6.0          hms_1.1.2           
-## [52] parallel_4.2.2       sandwich_3.0-2       RColorBrewer_1.1-3  
-## [55] rpart.plot_3.1.1     yaml_2.3.6           sass_0.4.4          
-## [58] stringi_1.7.12       highr_0.10           bayestestR_0.13.0   
-## [61] foreach_1.5.2        hardhat_1.2.0        lava_1.7.1          
-## [64] rlang_1.0.6          pkgconfig_2.0.3      evaluate_0.19       
-## [67] purrr_1.0.1          recipes_1.0.4        labeling_0.4.2      
-## [70] bit_4.0.5            tidyselect_1.2.0     parallelly_1.33.0   
-## [73] plyr_1.8.8           magrittr_2.0.3       R6_2.5.1            
-## [76] generics_0.1.3       multcomp_1.4-20      DBI_1.1.3           
-## [79] pillar_1.8.1         withr_2.5.0          mgcv_1.8-41         
-## [82] survival_3.5-0       datawizard_0.6.5     nnet_7.3-18         
-## [85] future.apply_1.10.0  crayon_1.5.2         utf8_1.2.2          
-## [88] tzdb_0.3.0           rmarkdown_2.19       grid_4.2.2          
-## [91] data.table_1.14.6    ModelMetrics_1.2.2.2 digest_0.6.31       
-## [94] xtable_1.8-4         stats4_4.2.2         munsell_0.5.0       
-## [97] bslib_0.4.2
+##   [1] TH.data_1.1-1        minqa_1.2.5          colorspace_2.0-3    
+##   [4] deldir_1.0-6         class_7.3-20         ellipsis_0.3.2      
+##   [7] estimability_1.4.1   htmlTable_2.4.1      parameters_0.20.1   
+##  [10] base64enc_0.1-3      rstudioapi_0.14      listenv_0.9.0       
+##  [13] farver_2.1.1         bit64_4.0.5          lubridate_1.9.0     
+##  [16] prodlim_2019.11.13   fansi_1.0.3          codetools_0.2-18    
+##  [19] splines_4.2.2        cachem_1.0.6         Formula_1.2-4       
+##  [22] jsonlite_1.8.4       nloptr_2.0.3         pROC_1.18.0         
+##  [25] cluster_2.1.4        png_0.1-8            compiler_4.2.2      
+##  [28] emmeans_1.8.3        backports_1.4.1      assertthat_0.2.1    
+##  [31] fastmap_1.1.0        cli_3.6.0            htmltools_0.5.4     
+##  [34] tools_4.2.2          coda_0.19-4          gtable_0.3.1        
+##  [37] glue_1.6.2           reshape2_1.4.4       Rcpp_1.0.9          
+##  [40] jquerylib_0.1.4      vctrs_0.5.2          nlme_3.1-161        
+##  [43] iterators_1.0.14     insight_0.18.8       timeDate_4022.108   
+##  [46] gower_1.0.1          xfun_0.36            stringr_1.5.0       
+##  [49] globals_0.16.2       lme4_1.1-31          timechange_0.1.1    
+##  [52] lpSolve_5.6.17       lifecycle_1.0.3      future_1.30.0       
+##  [55] zoo_1.8-11           scales_1.2.1         vroom_1.6.0         
+##  [58] hms_1.1.2            parallel_4.2.2       RColorBrewer_1.1-3  
+##  [61] rpart.plot_3.1.1     yaml_2.3.6           gridExtra_2.3       
+##  [64] sass_0.4.4           latticeExtra_0.6-30  stringi_1.7.12      
+##  [67] highr_0.10           bayestestR_0.13.0    foreach_1.5.2       
+##  [70] checkmate_2.1.0      hardhat_1.2.0        boot_1.3-28.1       
+##  [73] lava_1.7.1           rlang_1.0.6          pkgconfig_2.0.3     
+##  [76] evaluate_0.19        purrr_1.0.1          recipes_1.0.4       
+##  [79] htmlwidgets_1.6.1    labeling_0.4.2       bit_4.0.5           
+##  [82] tidyselect_1.2.0     parallelly_1.33.0    plyr_1.8.8          
+##  [85] magrittr_2.0.3       R6_2.5.1             generics_0.1.3      
+##  [88] Hmisc_4.7-2          multcomp_1.4-20      DBI_1.1.3           
+##  [91] pillar_1.8.1         foreign_0.8-84       withr_2.5.0         
+##  [94] mgcv_1.8-41          survival_3.5-0       datawizard_0.6.5    
+##  [97] nnet_7.3-18          future.apply_1.10.0  crayon_1.5.2        
+## [100] interp_1.1-3         utf8_1.2.2           tzdb_0.3.0          
+## [103] rmarkdown_2.19       jpeg_0.1-10          grid_4.2.2          
+## [106] data.table_1.14.6    ModelMetrics_1.2.2.2 digest_0.6.31       
+## [109] xtable_1.8-4         stats4_4.2.2         munsell_0.5.0       
+## [112] bslib_0.4.2
 ```
 

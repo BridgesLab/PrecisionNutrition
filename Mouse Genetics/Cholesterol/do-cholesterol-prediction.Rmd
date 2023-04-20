@@ -567,6 +567,26 @@ bind_rows(tidy(lm.bw.1) %>% mutate(Model='cholesterol~calcium'),
   kable(caption="Summary of effects of body weight mediation",digits=c(0,0,99))
 ```
 
+## Mediation Analysis for Body Weight
+
+Did a mediation analysis for the effects of body weight on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
+
+```{r bw-mediation}
+library(mediation)
+#need a dataset that is complete with respect to calcium and cholesterol
+mediation.cholesterol.data <-
+  cholesterol.data %>%
+  filter(!is.na(calcium2)) %>%
+  filter(!is.na(chol2))
+mediator.model <- lm(bw.19 ~ calcium2+sex, mediation.cholesterol.data)
+model.full <- lm(chol2 ~ calcium2 + sex+bw.19, mediation.cholesterol.data)
+
+bw.mediation.results <- mediate(mediator.model, model.full, treat='calcium2', mediator='bw.19',
+                   boot=TRUE, sims=1000)
+summary(bw.mediation.results) 
+```
+
+Differences in body weight partially mediate the relationship between calcium and cholesterol.
 
 # Random Forests
 

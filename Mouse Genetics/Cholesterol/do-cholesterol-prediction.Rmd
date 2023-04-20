@@ -355,6 +355,16 @@ anova(lm.calcium,lm.calcium.tg)%>%
   kable(caption="Comparason of models with or without triglyceride levels",
         digits=c(0,0,0,0,0,99))
 
+lm.calcium.chol <- lm(chol2~calcium2, cholesterol.data)
+summary(lm.calcium.chol) %>% glance %>% kable(caption="Linear model of calcium on cholesterol")
+lm.calcium.chol.sex <- lm(chol2~calcium2+sex, cholesterol.data)
+summary(lm.calcium.chol.sex) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex")
+lm.calcium.chol.sex.bw <- lm(chol2~calcium2+sex+bw.19, cholesterol.data)
+summary(lm.calcium.chol.sex.bw) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and bw")
+summary(lm.calcium.chol)
+summary(lm.calcium.chol.sex)
+summary(lm.calcium.chol.sex.bw)
+
 ```
 
 ## Effects of Diet and Sex on Calcium

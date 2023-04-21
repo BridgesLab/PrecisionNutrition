@@ -365,6 +365,25 @@ summary(lm.calcium.chol)
 summary(lm.calcium.chol.sex)
 summary(lm.calcium.chol.sex.bw)
 
+ggplot(data=cholesterol.data,
+       aes(y=chol2,
+           x=bw.19,
+           col=Diet)) +
+  geom_point() +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Cholesterol (mg/dL)",
+       x="Body Weight (grams)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
+
 ```
 
 ## Effects of Diet and Sex on Calcium

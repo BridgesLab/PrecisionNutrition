@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.001| 0.059|
+| 0.247|      0|     1.000|  1.005| 0.059|
 | 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.729| 0.044|
-| 0.036|      3|     0.629|  0.634| 0.040|
-| 0.023|      4|     0.593|  0.636| 0.042|
-| 0.022|      5|     0.569|  0.628| 0.043|
-| 0.015|      6|     0.547|  0.609| 0.044|
-| 0.015|      7|     0.532|  0.636| 0.046|
-| 0.014|      8|     0.516|  0.637| 0.046|
-| 0.011|      9|     0.502|  0.655| 0.046|
-| 0.011|     10|     0.491|  0.650| 0.046|
-| 0.010|     11|     0.481|  0.651| 0.046|
-| 0.010|     12|     0.470|  0.649| 0.046|
+| 0.060|      2|     0.689|  0.713| 0.044|
+| 0.036|      3|     0.629|  0.665| 0.045|
+| 0.023|      4|     0.593|  0.657| 0.045|
+| 0.022|      5|     0.569|  0.656| 0.045|
+| 0.015|      6|     0.547|  0.665| 0.046|
+| 0.015|      7|     0.532|  0.669| 0.047|
+| 0.014|      8|     0.516|  0.663| 0.046|
+| 0.011|      9|     0.502|  0.665| 0.047|
+| 0.011|     10|     0.491|  0.667| 0.047|
+| 0.010|     11|     0.481|  0.667| 0.047|
+| 0.010|     12|     0.470|  0.664| 0.047|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1432,10 +1432,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       0.9711         2.38  <2e-16 ***
-## ADE             12.9034      11.1844        14.72  <2e-16 ***
-## Total Effect    14.5516      12.8398        16.28  <2e-16 ***
-## Prop. Mediated   0.1133       0.0666         0.17  <2e-16 ***
+## ACME             1.6482       1.0397         2.46  <2e-16 ***
+## ADE             12.9034      11.3292        14.74  <2e-16 ***
+## Total Effect    14.5516      13.0087        16.36  <2e-16 ***
+## Prop. Mediated   0.1133       0.0714         0.17  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1454,7 +1454,7 @@ Differences in body weight partially mediate the relationship between calcium an
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=percfat2*100,
-           col=diet)) +
+           col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
   geom_smooth(method=lm) +
@@ -1471,7 +1471,7 @@ ggplot(data=cholesterol.data,
         legend.background=element_blank())
 ```
 
-![](figures/calcium-fm_19-1.png)<!-- -->
+![](figures/chol-fm_19-1.png)<!-- -->
 
 ```r
 lm.bw.model.1 <- lm(chol2~sex+percfat2, data=cholesterol.data)
@@ -1506,6 +1506,74 @@ Table: Effects of percent fat mass on cholesterol at 18w, ajdusting for sex and 
 |diethf      |     25.9|      2.31|     11.20| 3.51e-27|
 |percfat2    |     75.9|     12.35|      6.14| 1.28e-09|
 
+### Is there an effect of diet beyond the effect of fat mass?
+
+
+```r
+# mediating effect of body weight on the calcium, cholesterol relationship
+lm.fm.1 <- lm(chol2~percfat2, data=cholesterol.data)
+lm.fm.2 <- lm(chol2~sex+percfat2, data=cholesterol.data)
+lm.fm.3 <- lm(chol2~sex+percfat2+diet, data=cholesterol.data)
+
+bind_rows(tidy(lm.fm.1) %>% mutate(Model='cholesterol~sex'),
+          tidy(lm.fm.2) %>% mutate(Model='cholesterol~sex+fat.mass'),
+          tidy(lm.fm.3) %>% mutate(Model='cholesterol~sex+fat.mass+diet')) %>%
+  filter(term=='percfat2') %>%
+  mutate(beta.pct.fat.mass=paste(round(estimate,2),round(std.error,2),sep="+/-")) %>%
+  dplyr::select(Model,beta.pct.fat.mass,p.value) %>%
+  kable(caption="Summary of effects of diet and percent fat mass mediation",digits=c(0,0,99))
+```
+
+
+
+Table: Summary of effects of diet and percent fat mass mediation
+
+|Model                         |beta.pct.fat.mass |  p.value|
+|:-----------------------------|:-----------------|--------:|
+|cholesterol~sex               |130.28+/-11.62    | 3.18e-27|
+|cholesterol~sex+fat.mass      |151.53+/-11.12    | 3.11e-38|
+|cholesterol~sex+fat.mass+diet |75.88+/-12.35     | 1.28e-09|
+
+```r
+mediation.cholesterol.data <-
+  cholesterol.data %>%
+  filter(!is.na(calcium2)) %>%
+  filter(!is.na(chol2)) %>%
+  filter(!is.na(percfat2))
+
+mediator.model <- lm(percfat2 ~ diet + sex, mediation.cholesterol.data)
+model.full <- lm(chol2 ~ diet + sex + percfat2, mediation.cholesterol.data)
+
+fm.mediation.results <- mediate(mediator.model, model.full, treat='diet', mediator='percfat2',
+                   boot=TRUE, sims=1000)
+summary(fm.mediation.results) 
+```
+
+```
+## 
+## Causal Mediation Analysis 
+## 
+## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
+## 
+##                Estimate 95% CI Lower 95% CI Upper p-value    
+## ACME              8.110        5.558        10.71  <2e-16 ***
+## ADE              24.010       19.487        28.84  <2e-16 ***
+## Total Effect     32.119       28.276        36.31  <2e-16 ***
+## Prop. Mediated    0.252        0.171         0.34  <2e-16 ***
+## ---
+## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
+## 
+## Sample Size Used: 758 
+## 
+## 
+## Simulations: 1000
+```
+
+## Mediation Analysis for Percent Fat Mass
+
+Did a mediation analysis for the effects of percent fat mass on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
+
+
 ```r
 # mediating effect of body weight on the calcium, cholesterol relationship
 lm.fm.1 <- lm(chol2~calcium2, data=cholesterol.data)
@@ -1534,11 +1602,6 @@ Table: Summary of effects of percent fat mass mediation
 |cholesterol~calcium+sex+fat.mass      |12.56+/-0.93 | 1.16e-37|
 |cholesterol~calcium+sex+fat.mass+diet |12.04+/-0.87 | 2.72e-39|
 
-## Mediation Analysis for Percent Fat Mass
-
-Did a mediation analysis for the effects of percent fat mass on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
-
-
 ```r
 #need a dataset that is complete with respect to calcium and cholesterol
 mediation.cholesterol.data <-
@@ -1560,10 +1623,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2178         2.93  <2e-16 ***
-## ADE             12.5614      10.8843        14.48  <2e-16 ***
-## Total Effect    14.6397      13.0375        16.48  <2e-16 ***
-## Prop. Mediated   0.1420       0.0818         0.20  <2e-16 ***
+## ACME             2.0783       1.2478         3.01  <2e-16 ***
+## ADE             12.5614      10.9438        14.40  <2e-16 ***
+## Total Effect    14.6397      13.1130        16.45  <2e-16 ***
+## Prop. Mediated   0.1420       0.0872         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 

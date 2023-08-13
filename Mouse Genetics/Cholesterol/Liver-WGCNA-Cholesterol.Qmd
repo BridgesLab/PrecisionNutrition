@@ -1,0 +1,172 @@
+---
+title: "WGCNA Analysis of DO Livers"
+author: "Dave Bridges"
+format: html
+execute:
+  keep-md: true
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+Followed instructions on https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/, which was based on the method used in https://doi.org/10.1371/journal.pgen.0020130
+
+# Input
+
+Wrote this out to read in in the script Liver-WGCNA-Construction.Qmd
+
+```{r read}
+load("ncd_hf_wcgna_networks.RData")
+library(WGCNA)
+```
+
+# Analysis of Constructed Network
+
+```{r wgcna-genes-per-module}
+table(net$colors) %>%
+  kable(caption="Genes per module (0 indicates unassigned")
+```
+
+# Integation with Cholesterol Data
+
+```{r cholesterol-correlations}
+MEs0.ncd <- moduleEigengenes(expr=multiExpr[[1]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.hf <- moduleEigengenes(expr=multiExpr[[2]]$data,
+                         colors=moduleColors)$eigengenes
+
+MEs.ncd=orderMEs(MEs0.ncd)
+MEs.hf=orderMEs(MEs0.hf)
+
+#correlate eigengenes with cholesterol levels for ncd
+moduleTraitCor.ncd <-cor(MEs.ncd,
+                     phenotype.data[rownames(MEs.ncd),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.ncd <- corPvalueStudent(moduleTraitCor.ncd,nSamples)
+
+#correlate eigengenes with cholesterol levels for hfd
+moduleTraitCor.hf <-cor(MEs.hf,
+                     phenotype.data[rownames(MEs.hf),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.hf=corPvalueStudent(moduleTraitCor.hf,nSamples)
+
+#Will display correlations and their p-values
+textMatrix.ncd <- paste(signif(moduleTraitCor.ncd,2),
+                    "\n(",signif(moduleTraitPvalue.ncd,1),")",
+                    sep="")
+
+textMatrix.hf <- paste(signif(moduleTraitCor.hf,2),
+                    "\n(",signif(moduleTraitPvalue.hf,1),")",
+                    sep="")
+
+
+dim(textMatrix.ncd) <- dim(moduleTraitCor.ncd)
+dim(textMatrix.hf) <- dim(moduleTraitCor.hf)
+#Display the correlation values within a heatmap plot
+
+labeledHeatmap(Matrix=moduleTraitCor.hf, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.hf),
+                ySymbols=names(MEs.hf), 
+                colorLabels=FALSE, 
+                colors=greenWhiteRed(50), 
+                textMatrix=textMatrix.hf, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for HFD"))
+
+labeledHeatmap(Matrix=moduleTraitCor.ncd, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.ncd),
+                ySymbols=names(MEs.ncd), 
+                colorLabels=FALSE, 
+                colors=greenWhiteRed(50), 
+                textMatrix=textMatrix.ncd, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for NCD"))
+
+labeledHeatmap(Matrix=cbind(moduleTraitCor.ncd,moduleTraitCor.hf), 
+               xLabels=c("NCD","HFHS"), 
+               yLabels=names(MEs.ncd), 
+               ySymbols=names(MEs.ncd), 
+               colorLabels=FALSE, 
+               colors=greenWhiteRed(50), 
+               textMatrix=cbind(textMatrix.ncd,textMatrix.hf), 
+               setStdMargins=FALSE, 
+               cex.text=0.6, 
+               cex.lab.y=0.4,
+               zlim=c(-1,1), 
+               main=paste("Module-cholesterol relationships"))
+```
+
+```{r gene-trait-correlations}
+geneModuleMembership.ncd <- as.data.frame(
+  cor(
+    phenotype.data[rownames(MEs.ncd),'chol2'],
+    MEs.ncd,
+    use="a",
+    method="spearman"))
+
+MMPvalue <- as.data.frame(
+  corPvalueStudent(
+    as.matrix(
+      geneModuleMembership.ncd),
+    nSamples[1]))
+
+modNames=substring(names(MEs.ncd),3)
+names(geneModuleMembership.ncd) <- paste("MM",modNames,sep="")
+names(MMPvalue)=paste("p.MM",modNames,sep="")
+
+geneTraitSignificance <- as.data.frame(
+  cor(multiExpr[[1]]$data,
+      phenotype.data[multiExpr[[1]]$data %>% rownames,'chol2'],
+      use="p",
+      method="spearman"))
+
+GSPvalue <- as.data.frame(
+  corPvalueStudent(
+    as.matrix(geneTraitSignificance),nSamples[1]))
+
+module <- "blue"
+column <- match(module,modNames)
+moduleGenes <- moduleColors==module
+#stuck on verbose scatter plot
+```
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

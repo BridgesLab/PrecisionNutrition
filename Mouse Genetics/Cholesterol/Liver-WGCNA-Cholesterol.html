@@ -156,19 +156,43 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">0</td>
-<td style="text-align: right;">17706</td>
+<td style="text-align: right;">19779</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">1</td>
-<td style="text-align: right;">3392</td>
+<td style="text-align: right;">517</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">2</td>
-<td style="text-align: right;">270</td>
+<td style="text-align: right;">372</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">3</td>
-<td style="text-align: right;">84</td>
+<td style="text-align: right;">171</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">163</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">151</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">83</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7</td>
+<td style="text-align: right;">58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8</td>
+<td style="text-align: right;">47</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">35</td>
 </tr>
 </tbody>
 </table>
@@ -178,124 +202,185 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <section id="integation-with-cholesterol-data" class="level1">
 <h1>Integation with Cholesterol Data</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>MEs0.ncd <span class="ot">&lt;-</span> <span class="fu">moduleEigengenes</span>(<span class="at">expr=</span>multiExpr[[<span class="dv">1</span>]]<span class="sc">$</span>data,</span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>MEs0.ncd.m <span class="ot">&lt;-</span> <span class="fu">moduleEigengenes</span>(<span class="at">expr=</span>multiExpr[[<span class="dv">1</span>]]<span class="sc">$</span>data,</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">colors=</span>moduleColors)<span class="sc">$</span>eigengenes</span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>MEs0.hf <span class="ot">&lt;-</span> <span class="fu">moduleEigengenes</span>(<span class="at">expr=</span>multiExpr[[<span class="dv">2</span>]]<span class="sc">$</span>data,</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>MEs0.hf.m <span class="ot">&lt;-</span> <span class="fu">moduleEigengenes</span>(<span class="at">expr=</span>multiExpr[[<span class="dv">2</span>]]<span class="sc">$</span>data,</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>                         <span class="at">colors=</span>moduleColors)<span class="sc">$</span>eigengenes</span>
-<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>MEs.ncd<span class="ot">=</span><span class="fu">orderMEs</span>(MEs0.ncd)</span>
-<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>MEs.hf<span class="ot">=</span><span class="fu">orderMEs</span>(MEs0.hf)</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a><span class="co">#correlate eigengenes with cholesterol levels for ncd</span></span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>moduleTraitCor.ncd <span class="ot">&lt;-</span><span class="fu">cor</span>(MEs.ncd,</span>
-<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>                     phenotype.data[<span class="fu">rownames</span>(MEs.ncd),<span class="st">'chol2'</span>],</span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>                     <span class="at">use=</span><span class="st">"p"</span>,</span>
-<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>                     <span class="at">method=</span><span class="st">"spearman"</span>)</span>
-<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>moduleTraitPvalue.ncd <span class="ot">&lt;-</span> <span class="fu">corPvalueStudent</span>(moduleTraitCor.ncd,nSamples)</span>
-<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a><span class="co">#correlate eigengenes with cholesterol levels for hfd</span></span>
-<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>moduleTraitCor.hf <span class="ot">&lt;-</span><span class="fu">cor</span>(MEs.hf,</span>
-<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                     phenotype.data[<span class="fu">rownames</span>(MEs.hf),<span class="st">'chol2'</span>],</span>
-<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                     <span class="at">use=</span><span class="st">"p"</span>,</span>
-<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                     <span class="at">method=</span><span class="st">"spearman"</span>)</span>
-<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>moduleTraitPvalue.hf<span class="ot">=</span><span class="fu">corPvalueStudent</span>(moduleTraitCor.hf,nSamples)</span>
-<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co">#Will display correlations and their p-values</span></span>
-<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>textMatrix.ncd <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">signif</span>(moduleTraitCor.ncd,<span class="dv">2</span>),</span>
-<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"</span><span class="sc">\n</span><span class="st">("</span>,<span class="fu">signif</span>(moduleTraitPvalue.ncd,<span class="dv">1</span>),<span class="st">")"</span>,</span>
-<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>                    <span class="at">sep=</span><span class="st">""</span>)</span>
-<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>textMatrix.hf <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">signif</span>(moduleTraitCor.hf,<span class="dv">2</span>),</span>
-<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"</span><span class="sc">\n</span><span class="st">("</span>,<span class="fu">signif</span>(moduleTraitPvalue.hf,<span class="dv">1</span>),<span class="st">")"</span>,</span>
-<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>                    <span class="at">sep=</span><span class="st">""</span>)</span>
-<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(textMatrix.ncd) <span class="ot">&lt;-</span> <span class="fu">dim</span>(moduleTraitCor.ncd)</span>
-<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(textMatrix.hf) <span class="ot">&lt;-</span> <span class="fu">dim</span>(moduleTraitCor.hf)</span>
-<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a><span class="co">#Display the correlation values within a heatmap plot</span></span>
-<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span>moduleTraitCor.hf, </span>
-<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>                <span class="at">xLabels=</span><span class="st">'Cholesterol'</span>,</span>
-<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>                <span class="at">yLabels=</span><span class="fu">names</span>(MEs.hf),</span>
-<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>                <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.hf), </span>
-<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>                <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
-<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>                <span class="at">colors=</span><span class="fu">greenWhiteRed</span>(<span class="dv">50</span>), </span>
-<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>                <span class="at">textMatrix=</span>textMatrix.hf, </span>
-<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>                <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
-<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                <span class="at">cex.text=</span><span class="fl">0.5</span>, </span>
-<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>                <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
-<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>                <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships for HFD"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>MEs0.ncd.f <span class="ot">&lt;-</span> <span class="fu">moduleEigengenes</span>(<span class="at">expr=</span>multiExpr[[<span class="dv">3</span>]]<span class="sc">$</span>data,</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                         <span class="at">colors=</span>moduleColors)<span class="sc">$</span>eigengenes</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>MEs0.hf.f <span class="ot">&lt;-</span> <span class="fu">moduleEigengenes</span>(<span class="at">expr=</span>multiExpr[[<span class="dv">4</span>]]<span class="sc">$</span>data,</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>                         <span class="at">colors=</span>moduleColors)<span class="sc">$</span>eigengenes</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>MEs.ncd.m<span class="ot">=</span><span class="fu">orderMEs</span>(MEs0.ncd.m)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>MEs.hf.m<span class="ot">=</span><span class="fu">orderMEs</span>(MEs0.hf.m)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>MEs.ncd.f<span class="ot">=</span><span class="fu">orderMEs</span>(MEs0.ncd.f)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>MEs.hf.f<span class="ot">=</span><span class="fu">orderMEs</span>(MEs0.hf.f)</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="co">#correlate eigengenes with cholesterol levels for ncd males</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>moduleTraitCor.ncd.m <span class="ot">&lt;-</span><span class="fu">cor</span>(MEs.ncd.m,</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>                     phenotype.data[<span class="fu">rownames</span>(MEs.ncd.m),<span class="st">'chol2'</span>],</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>                     <span class="at">use=</span><span class="st">"p"</span>,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                     <span class="at">method=</span><span class="st">"spearman"</span>)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>moduleTraitPvalue.ncd.m <span class="ot">&lt;-</span> <span class="fu">corPvalueStudent</span>(moduleTraitCor.ncd.m,nSamples)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co">#correlate eigengenes with cholesterol levels for ncd females</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>moduleTraitCor.ncd.f <span class="ot">&lt;-</span><span class="fu">cor</span>(MEs.ncd.f,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                     phenotype.data[<span class="fu">rownames</span>(MEs.ncd.f),<span class="st">'chol2'</span>],</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                     <span class="at">use=</span><span class="st">"p"</span>,</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>                     <span class="at">method=</span><span class="st">"spearman"</span>)</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>moduleTraitPvalue.ncd.f <span class="ot">&lt;-</span> <span class="fu">corPvalueStudent</span>(moduleTraitCor.ncd.f,nSamples)</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="co">#correlate eigengenes with cholesterol levels for hfd males</span></span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>moduleTraitCor.hf.m <span class="ot">&lt;-</span><span class="fu">cor</span>(MEs.hf.m,</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>                     phenotype.data[<span class="fu">rownames</span>(MEs.hf.m),<span class="st">'chol2'</span>],</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>                     <span class="at">use=</span><span class="st">"p"</span>,</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>                     <span class="at">method=</span><span class="st">"spearman"</span>)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>moduleTraitPvalue.hf.m<span class="ot">=</span><span class="fu">corPvalueStudent</span>(moduleTraitCor.hf.m,nSamples)</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a><span class="co">#correlate eigengenes with cholesterol levels for hfd females</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>moduleTraitCor.hf.f <span class="ot">&lt;-</span><span class="fu">cor</span>(MEs.hf.f,</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>                     phenotype.data[<span class="fu">rownames</span>(MEs.hf.f),<span class="st">'chol2'</span>],</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>                     <span class="at">use=</span><span class="st">"p"</span>,</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>                     <span class="at">method=</span><span class="st">"spearman"</span>)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>moduleTraitPvalue.hf.f<span class="ot">=</span><span class="fu">corPvalueStudent</span>(moduleTraitCor.hf.f,nSamples)</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="co">#Will display correlations and their p-values</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>textMatrix.ncd.m <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">signif</span>(moduleTraitCor.ncd.m,<span class="dv">2</span>),</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"</span><span class="sc">\n</span><span class="st">("</span>,<span class="fu">signif</span>(moduleTraitPvalue.ncd.m,<span class="dv">1</span>),<span class="st">")"</span>,</span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>                    <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>textMatrix.hf.m <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">signif</span>(moduleTraitCor.hf.m,<span class="dv">2</span>),</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"</span><span class="sc">\n</span><span class="st">("</span>,<span class="fu">signif</span>(moduleTraitPvalue.hf.m,<span class="dv">1</span>),<span class="st">")"</span>,</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>                    <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>textMatrix.ncd.f <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">signif</span>(moduleTraitCor.ncd.f,<span class="dv">2</span>),</span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"</span><span class="sc">\n</span><span class="st">("</span>,<span class="fu">signif</span>(moduleTraitPvalue.ncd.f,<span class="dv">1</span>),<span class="st">")"</span>,</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>                    <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>textMatrix.hf.f <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="fu">signif</span>(moduleTraitCor.hf.f,<span class="dv">2</span>),</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"</span><span class="sc">\n</span><span class="st">("</span>,<span class="fu">signif</span>(moduleTraitPvalue.hf.f,<span class="dv">1</span>),<span class="st">")"</span>,</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>                    <span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(textMatrix.ncd.m) <span class="ot">&lt;-</span> <span class="fu">dim</span>(moduleTraitCor.ncd.m)</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(textMatrix.hf.m) <span class="ot">&lt;-</span> <span class="fu">dim</span>(moduleTraitCor.hf.m)</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(textMatrix.ncd.f) <span class="ot">&lt;-</span> <span class="fu">dim</span>(moduleTraitCor.ncd.f)</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a><span class="fu">dim</span>(textMatrix.hf.f) <span class="ot">&lt;-</span> <span class="fu">dim</span>(moduleTraitCor.hf.f)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a><span class="co">#Display the correlation values within a heatmap plot</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span>moduleTraitCor.hf.m, </span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>                <span class="at">xLabels=</span><span class="st">'Cholesterol'</span>,</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>                <span class="at">yLabels=</span><span class="fu">names</span>(MEs.hf.m),</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>                <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.hf.m), </span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a>                <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a>                <span class="at">colors=</span><span class="fu">blueWhiteRed</span>(<span class="dv">50</span>), </span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>                <span class="at">textMatrix=</span>textMatrix.hf.m, </span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>                <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>                <span class="at">cex.text=</span><span class="fl">0.5</span>, </span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>                <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>                <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships for HFD males"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="figures/cholesterol-correlations-1.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span>moduleTraitCor.ncd, </span>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span>moduleTraitCor.ncd.m, </span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">xLabels=</span><span class="st">'Cholesterol'</span>,</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">yLabels=</span><span class="fu">names</span>(MEs.ncd),</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.ncd), </span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">yLabels=</span><span class="fu">names</span>(MEs.ncd.m),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.ncd.m), </span>
 <span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">colors=</span><span class="fu">greenWhiteRed</span>(<span class="dv">50</span>), </span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">textMatrix=</span>textMatrix.ncd, </span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">colors=</span><span class="fu">blueWhiteRed</span>(<span class="dv">50</span>), </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">textMatrix=</span>textMatrix.ncd.m, </span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
 <span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">cex.text=</span><span class="fl">0.5</span>, </span>
 <span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships for NCD"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>                <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships for NCD males"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="figures/cholesterol-correlations-2.png" class="img-fluid" width="672"></p>
 </div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span><span class="fu">cbind</span>(moduleTraitCor.ncd,moduleTraitCor.hf), </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>               <span class="at">xLabels=</span><span class="fu">c</span>(<span class="st">"NCD"</span>,<span class="st">"HFHS"</span>), </span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">yLabels=</span><span class="fu">names</span>(MEs.ncd), </span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>               <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.ncd), </span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">colors=</span><span class="fu">greenWhiteRed</span>(<span class="dv">50</span>), </span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">textMatrix=</span><span class="fu">cbind</span>(textMatrix.ncd,textMatrix.hf), </span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">cex.text=</span><span class="fl">0.6</span>, </span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">cex.lab.y=</span><span class="fl">0.4</span>,</span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>               <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span>moduleTraitCor.hf.f, </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">xLabels=</span><span class="st">'Cholesterol'</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">yLabels=</span><span class="fu">names</span>(MEs.hf.f),</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.hf.f), </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">colors=</span><span class="fu">blueWhiteRed</span>(<span class="dv">50</span>), </span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">textMatrix=</span>textMatrix.hf.f, </span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">cex.text=</span><span class="fl">0.5</span>, </span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships for HFD females"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <p><img src="figures/cholesterol-correlations-3.png" class="img-fluid" width="672"></p>
 </div>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span>moduleTraitCor.ncd.f, </span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                <span class="at">xLabels=</span><span class="st">'Cholesterol'</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>                <span class="at">yLabels=</span><span class="fu">names</span>(MEs.ncd.f),</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>                <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.ncd.f), </span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>                <span class="at">colors=</span><span class="fu">blueWhiteRed</span>(<span class="dv">50</span>), </span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>                <span class="at">textMatrix=</span>textMatrix.ncd.f, </span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>                <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>                <span class="at">cex.text=</span><span class="fl">0.5</span>, </span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>                <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>                <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships for NCD females"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="figures/cholesterol-correlations-4.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">labeledHeatmap</span>(<span class="at">Matrix=</span><span class="fu">cbind</span>(moduleTraitCor.ncd.m,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                            moduleTraitCor.ncd.f,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                            moduleTraitCor.hf.m,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                            moduleTraitCor.hf.f), </span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">xLabels=</span><span class="fu">c</span>(<span class="st">"NCD-M"</span>,<span class="st">"NCD-F"</span>,<span class="st">"HFHS-M"</span>,<span class="st">"HFHS-F"</span>), </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">yLabels=</span><span class="fu">names</span>(MEs.ncd.m), </span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">ySymbols=</span><span class="fu">names</span>(MEs.ncd.m), </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>               <span class="at">colorLabels=</span><span class="cn">FALSE</span>, </span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>               <span class="at">colors=</span><span class="fu">blueWhiteRed</span>(<span class="dv">50</span>), </span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>               <span class="at">textMatrix=</span><span class="fu">cbind</span>(textMatrix.ncd.m,textMatrix.ncd.f,</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>                                textMatrix.hf.m,textMatrix.hf.f), </span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>               <span class="at">setStdMargins=</span><span class="cn">FALSE</span>, </span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>               <span class="at">cex.text=</span><span class="fl">0.6</span>, </span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>               <span class="at">cex.lab.y=</span><span class="fl">0.4</span>,</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>               <span class="at">zlim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>), </span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>               <span class="at">main=</span><span class="fu">paste</span>(<span class="st">"Module-cholesterol relationships"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="figures/cholesterol-correlations-5.png" class="img-fluid" width="672"></p>
+</div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>geneModuleMembership.ncd <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(</span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    phenotype.data[<span class="fu">rownames</span>(MEs.ncd),<span class="st">'chol2'</span>],</span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    MEs.ncd,</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">use=</span><span class="st">"a"</span>,</span>
-<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">method=</span><span class="st">"spearman"</span>))</span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>MMPvalue <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corPvalueStudent</span>(</span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.matrix</span>(</span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>      geneModuleMembership.ncd),</span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>    nSamples[<span class="dv">1</span>]))</span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>modNames<span class="ot">=</span><span class="fu">substring</span>(<span class="fu">names</span>(MEs.ncd),<span class="dv">3</span>)</span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(geneModuleMembership.ncd) <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"MM"</span>,modNames,<span class="at">sep=</span><span class="st">""</span>)</span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(MMPvalue)<span class="ot">=</span><span class="fu">paste</span>(<span class="st">"p.MM"</span>,modNames,<span class="at">sep=</span><span class="st">""</span>)</span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>geneTraitSignificance <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(multiExpr[[<span class="dv">1</span>]]<span class="sc">$</span>data,</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>      phenotype.data[multiExpr[[<span class="dv">1</span>]]<span class="sc">$</span>data <span class="sc">%&gt;%</span> rownames,<span class="st">'chol2'</span>],</span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">use=</span><span class="st">"p"</span>,</span>
-<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">method=</span><span class="st">"spearman"</span>))</span>
-<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>GSPvalue <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
-<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corPvalueStudent</span>(</span>
-<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.matrix</span>(geneTraitSignificance),nSamples[<span class="dv">1</span>]))</span>
-<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a>module <span class="ot">&lt;-</span> <span class="st">"blue"</span></span>
-<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>column <span class="ot">&lt;-</span> <span class="fu">match</span>(module,modNames)</span>
-<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>moduleGenes <span class="ot">&lt;-</span> moduleColors<span class="sc">==</span>module</span>
-<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a><span class="co">#stuck on verbose scatter plot</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>geneModuleMembership.ncd.m <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    phenotype.data[<span class="fu">rownames</span>(MEs.ncd.m),<span class="st">'chol2'</span>],</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    MEs.ncd.m,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">use=</span><span class="st">"a"</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">method=</span><span class="st">"spearman"</span>))</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>MMPvalue <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corPvalueStudent</span>(</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.matrix</span>(</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>      geneModuleMembership.ncd.m),</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    nSamples[<span class="dv">1</span>]))</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>modNames<span class="ot">=</span><span class="fu">substring</span>(<span class="fu">names</span>(MEs.ncd.m),<span class="dv">3</span>)</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(geneModuleMembership.ncd.m) <span class="ot">&lt;-</span> <span class="fu">paste</span>(<span class="st">"MM"</span>,modNames,<span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(MMPvalue)<span class="ot">=</span><span class="fu">paste</span>(<span class="st">"p.MM"</span>,modNames,<span class="at">sep=</span><span class="st">""</span>)</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>geneTraitSignificance <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(multiExpr[[<span class="dv">1</span>]]<span class="sc">$</span>data,</span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>      phenotype.data[multiExpr[[<span class="dv">1</span>]]<span class="sc">$</span>data <span class="sc">%&gt;%</span> rownames,<span class="st">'chol2'</span>],</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">use=</span><span class="st">"p"</span>,</span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">method=</span><span class="st">"spearman"</span>))</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>GSPvalue <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">corPvalueStudent</span>(</span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.matrix</span>(geneTraitSignificance),nSamples[<span class="dv">1</span>]))</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>module <span class="ot">&lt;-</span> <span class="st">"blue"</span></span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a>column <span class="ot">&lt;-</span> <span class="fu">match</span>(module,modNames)</span>
+<span id="cb8-30"><a href="#cb8-30" aria-hidden="true" tabindex="-1"></a>moduleGenes <span class="ot">&lt;-</span> moduleColors<span class="sc">==</span>module</span>
+<span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co">#stuck on verbose scatter plot</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="session-information" class="level1">
 <h1>Session Information</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.2.2 (2022-10-31)
 Platform: x86_64-apple-darwin17.0 (64-bit)

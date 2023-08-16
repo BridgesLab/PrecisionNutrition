@@ -41,10 +41,16 @@ Table: Genes per module (0 indicates unassigned
 
 |Var1 |  Freq|
 |:----|-----:|
-|0    | 17706|
-|1    |  3392|
-|2    |   270|
-|3    |    84|
+|0    | 19779|
+|1    |   517|
+|2    |   372|
+|3    |   171|
+|4    |   163|
+|5    |   151|
+|6    |    83|
+|7    |    58|
+|8    |    47|
+|9    |    35|
 :::
 :::
 
@@ -55,53 +61,82 @@ Table: Genes per module (0 indicates unassigned
 ::: {.cell}
 
 ```{.r .cell-code}
-MEs0.ncd <- moduleEigengenes(expr=multiExpr[[1]]$data,
+MEs0.ncd.m <- moduleEigengenes(expr=multiExpr[[1]]$data,
                          colors=moduleColors)$eigengenes
-MEs0.hf <- moduleEigengenes(expr=multiExpr[[2]]$data,
+MEs0.hf.m <- moduleEigengenes(expr=multiExpr[[2]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.ncd.f <- moduleEigengenes(expr=multiExpr[[3]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.hf.f <- moduleEigengenes(expr=multiExpr[[4]]$data,
                          colors=moduleColors)$eigengenes
 
-MEs.ncd=orderMEs(MEs0.ncd)
-MEs.hf=orderMEs(MEs0.hf)
+MEs.ncd.m=orderMEs(MEs0.ncd.m)
+MEs.hf.m=orderMEs(MEs0.hf.m)
+MEs.ncd.f=orderMEs(MEs0.ncd.f)
+MEs.hf.f=orderMEs(MEs0.hf.f)
 
-#correlate eigengenes with cholesterol levels for ncd
-moduleTraitCor.ncd <-cor(MEs.ncd,
-                     phenotype.data[rownames(MEs.ncd),'chol2'],
+#correlate eigengenes with cholesterol levels for ncd males
+moduleTraitCor.ncd.m <-cor(MEs.ncd.m,
+                     phenotype.data[rownames(MEs.ncd.m),'chol2'],
                      use="p",
                      method="spearman")
-moduleTraitPvalue.ncd <- corPvalueStudent(moduleTraitCor.ncd,nSamples)
+moduleTraitPvalue.ncd.m <- corPvalueStudent(moduleTraitCor.ncd.m,nSamples)
 
-#correlate eigengenes with cholesterol levels for hfd
-moduleTraitCor.hf <-cor(MEs.hf,
-                     phenotype.data[rownames(MEs.hf),'chol2'],
+#correlate eigengenes with cholesterol levels for ncd females
+moduleTraitCor.ncd.f <-cor(MEs.ncd.f,
+                     phenotype.data[rownames(MEs.ncd.f),'chol2'],
                      use="p",
                      method="spearman")
-moduleTraitPvalue.hf=corPvalueStudent(moduleTraitCor.hf,nSamples)
+moduleTraitPvalue.ncd.f <- corPvalueStudent(moduleTraitCor.ncd.f,nSamples)
+
+#correlate eigengenes with cholesterol levels for hfd males
+moduleTraitCor.hf.m <-cor(MEs.hf.m,
+                     phenotype.data[rownames(MEs.hf.m),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.hf.m=corPvalueStudent(moduleTraitCor.hf.m,nSamples)
+
+#correlate eigengenes with cholesterol levels for hfd females
+moduleTraitCor.hf.f <-cor(MEs.hf.f,
+                     phenotype.data[rownames(MEs.hf.f),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.hf.f=corPvalueStudent(moduleTraitCor.hf.f,nSamples)
 
 #Will display correlations and their p-values
-textMatrix.ncd <- paste(signif(moduleTraitCor.ncd,2),
-                    "\n(",signif(moduleTraitPvalue.ncd,1),")",
+textMatrix.ncd.m <- paste(signif(moduleTraitCor.ncd.m,2),
+                    "\n(",signif(moduleTraitPvalue.ncd.m,1),")",
                     sep="")
 
-textMatrix.hf <- paste(signif(moduleTraitCor.hf,2),
-                    "\n(",signif(moduleTraitPvalue.hf,1),")",
+textMatrix.hf.m <- paste(signif(moduleTraitCor.hf.m,2),
+                    "\n(",signif(moduleTraitPvalue.hf.m,1),")",
                     sep="")
 
+textMatrix.ncd.f <- paste(signif(moduleTraitCor.ncd.f,2),
+                    "\n(",signif(moduleTraitPvalue.ncd.f,1),")",
+                    sep="")
 
-dim(textMatrix.ncd) <- dim(moduleTraitCor.ncd)
-dim(textMatrix.hf) <- dim(moduleTraitCor.hf)
+textMatrix.hf.f <- paste(signif(moduleTraitCor.hf.f,2),
+                    "\n(",signif(moduleTraitPvalue.hf.f,1),")",
+                    sep="")
+
+dim(textMatrix.ncd.m) <- dim(moduleTraitCor.ncd.m)
+dim(textMatrix.hf.m) <- dim(moduleTraitCor.hf.m)
+dim(textMatrix.ncd.f) <- dim(moduleTraitCor.ncd.f)
+dim(textMatrix.hf.f) <- dim(moduleTraitCor.hf.f)
 #Display the correlation values within a heatmap plot
 
-labeledHeatmap(Matrix=moduleTraitCor.hf, 
+labeledHeatmap(Matrix=moduleTraitCor.hf.m, 
                 xLabels='Cholesterol',
-                yLabels=names(MEs.hf),
-                ySymbols=names(MEs.hf), 
+                yLabels=names(MEs.hf.m),
+                ySymbols=names(MEs.hf.m), 
                 colorLabels=FALSE, 
-                colors=greenWhiteRed(50), 
-                textMatrix=textMatrix.hf, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.hf.m, 
                 setStdMargins=FALSE, 
                 cex.text=0.5, 
                 zlim=c(-1,1), 
-                main=paste("Module-cholesterol relationships for HFD"))
+                main=paste("Module-cholesterol relationships for HFD males"))
 ```
 
 ::: {.cell-output-display}
@@ -109,17 +144,17 @@ labeledHeatmap(Matrix=moduleTraitCor.hf,
 :::
 
 ```{.r .cell-code}
-labeledHeatmap(Matrix=moduleTraitCor.ncd, 
+labeledHeatmap(Matrix=moduleTraitCor.ncd.m, 
                 xLabels='Cholesterol',
-                yLabels=names(MEs.ncd),
-                ySymbols=names(MEs.ncd), 
+                yLabels=names(MEs.ncd.m),
+                ySymbols=names(MEs.ncd.m), 
                 colorLabels=FALSE, 
-                colors=greenWhiteRed(50), 
-                textMatrix=textMatrix.ncd, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.ncd.m, 
                 setStdMargins=FALSE, 
                 cex.text=0.5, 
                 zlim=c(-1,1), 
-                main=paste("Module-cholesterol relationships for NCD"))
+                main=paste("Module-cholesterol relationships for NCD males"))
 ```
 
 ::: {.cell-output-display}
@@ -127,13 +162,53 @@ labeledHeatmap(Matrix=moduleTraitCor.ncd,
 :::
 
 ```{.r .cell-code}
-labeledHeatmap(Matrix=cbind(moduleTraitCor.ncd,moduleTraitCor.hf), 
-               xLabels=c("NCD","HFHS"), 
-               yLabels=names(MEs.ncd), 
-               ySymbols=names(MEs.ncd), 
+labeledHeatmap(Matrix=moduleTraitCor.hf.f, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.hf.f),
+                ySymbols=names(MEs.hf.f), 
+                colorLabels=FALSE, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.hf.f, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for HFD females"))
+```
+
+::: {.cell-output-display}
+![](figures/cholesterol-correlations-3.png){width=672}
+:::
+
+```{.r .cell-code}
+labeledHeatmap(Matrix=moduleTraitCor.ncd.f, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.ncd.f),
+                ySymbols=names(MEs.ncd.f), 
+                colorLabels=FALSE, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.ncd.f, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for NCD females"))
+```
+
+::: {.cell-output-display}
+![](figures/cholesterol-correlations-4.png){width=672}
+:::
+
+```{.r .cell-code}
+labeledHeatmap(Matrix=cbind(moduleTraitCor.ncd.m,
+                            moduleTraitCor.ncd.f,
+                            moduleTraitCor.hf.m,
+                            moduleTraitCor.hf.f), 
+               xLabels=c("NCD-M","NCD-F","HFHS-M","HFHS-F"), 
+               yLabels=names(MEs.ncd.m), 
+               ySymbols=names(MEs.ncd.m), 
                colorLabels=FALSE, 
-               colors=greenWhiteRed(50), 
-               textMatrix=cbind(textMatrix.ncd,textMatrix.hf), 
+               colors=blueWhiteRed(50), 
+               textMatrix=cbind(textMatrix.ncd.m,textMatrix.ncd.f,
+                                textMatrix.hf.m,textMatrix.hf.f), 
                setStdMargins=FALSE, 
                cex.text=0.6, 
                cex.lab.y=0.4,
@@ -142,28 +217,28 @@ labeledHeatmap(Matrix=cbind(moduleTraitCor.ncd,moduleTraitCor.hf),
 ```
 
 ::: {.cell-output-display}
-![](figures/cholesterol-correlations-3.png){width=672}
+![](figures/cholesterol-correlations-5.png){width=672}
 :::
 :::
 
 ::: {.cell}
 
 ```{.r .cell-code}
-geneModuleMembership.ncd <- as.data.frame(
+geneModuleMembership.ncd.m <- as.data.frame(
   cor(
-    phenotype.data[rownames(MEs.ncd),'chol2'],
-    MEs.ncd,
+    phenotype.data[rownames(MEs.ncd.m),'chol2'],
+    MEs.ncd.m,
     use="a",
     method="spearman"))
 
 MMPvalue <- as.data.frame(
   corPvalueStudent(
     as.matrix(
-      geneModuleMembership.ncd),
+      geneModuleMembership.ncd.m),
     nSamples[1]))
 
-modNames=substring(names(MEs.ncd),3)
-names(geneModuleMembership.ncd) <- paste("MM",modNames,sep="")
+modNames=substring(names(MEs.ncd.m),3)
+names(geneModuleMembership.ncd.m) <- paste("MM",modNames,sep="")
 names(MMPvalue)=paste("p.MM",modNames,sep="")
 
 geneTraitSignificance <- as.data.frame(

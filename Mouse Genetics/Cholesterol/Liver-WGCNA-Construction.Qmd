@@ -1,5 +1,6 @@
 ---
 title: "WGCNA Analysis of DO Livers"
+subtitle: "Construction of Modules"
 author: "Dave Bridges"
 format: html
 execute:
@@ -66,25 +67,32 @@ good.genes$allOK
 # Network Construction
 
 ```{r loading-datasets}
-nSets <- 2 #tw datasets
-setLabels <- c("NCD","HFHS")
+nSets <- 4 #four datasets, NCD and HFD, male and female
+setLabels <- c("NCD-M","HFHS-M","NCD-F","HFHS-F")
 multiExpr=vector(mode="list",length=nSets) #create vector with two datasets
 
-chow.mice <- phenotype.data %>% filter(diet=="chow") %>% rownames
-hf.mice <- phenotype.data %>% filter(diet=="hf") %>% rownames
+#filter for only exprerssion data where we have appropriatet phenotype data
+chow.mice.m <- phenotype.data %>% filter(diet=="chow"&sex=="M") %>% rownames
+hf.mice.m <- phenotype.data %>% filter(diet=="hf"&sex=="M") %>% rownames
+chow.mice.f <- phenotype.data %>% filter(diet=="chow"&sex=="F") %>% rownames
+hf.mice.f <- phenotype.data %>% filter(diet=="hf"&sex=="F") %>% rownames
 
-chow.expression <- expression.data[chow.mice,] %>% na.omit
-hf.expression <- expression.data[hf.mice,] %>% na.omit
+chow.expression.m <- expression.data[chow.mice.m,] %>% na.omit
+hf.expression.m <- expression.data[hf.mice.m,] %>% na.omit
+chow.expression.f <- expression.data[chow.mice.f,] %>% na.omit
+hf.expression.f <- expression.data[hf.mice.f,] %>% na.omit
 
-#for NCD data, this is not separating males from females
-multiExpr[[1]]=list(data=chow.expression)
-multiExpr[[2]]=list(data=hf.expression) 
+# enter data on expression in to multiExpr object
+multiExpr[[1]]=list(data=chow.expression.m)
+multiExpr[[2]]=list(data=hf.expression.m) 
+multiExpr[[3]]=list(data=chow.expression.f)
+multiExpr[[4]]=list(data=hf.expression.f) 
 
 exprSize <- checkSets(multiExpr)
 gsg <- goodSamplesGenesMS(multiExpr)
-#names(multiExpr[[2]]$data)=maleData$substanceBXH; 
-#rownames(multiExpr[[2]]$data)=names(maleData)[-c(1:8)];
 
+
+# remove genes with too many missing values or no variance
 if (!gsg$allOK)
 {
   # Print information about the removed genes:
@@ -102,13 +110,18 @@ if (!gsg$allOK)
   # Update exprSize
   exprSize = checkSets(multiExpr)
 }
+```
 
+## Clustering Expression Datasets
+
+```{r diet-clustered-trees}
+#crerate two sample trees
 sampleTrees = list()
 for (set in 1:nSets)
 {
   sampleTrees[[set]] = hclust(dist(multiExpr[[set]]$data), method = "average")
 }
-
+#cluster genes in each set, make a hclust tree using "average" method
 for (set in 1:nSets)
   plot(sampleTrees[[set]], 
        main = paste("Sample clustering on all genes in",
@@ -118,7 +131,7 @@ for (set in 1:nSets)
        cex = 0.7);
 
 
-# Form a multi-set structure that will hold the clinical traits.
+# Form a multi-set structure called Traits that will hold the clinical traits.
 Traits = vector(mode="list", length = nSets);
 for (set in 1:nSets)
 {
@@ -136,9 +149,8 @@ nSamples = exprSize$nSamples;
 The combined dataset includes `r nGenes` genes and `r nSamples` samples separated into `nSets` datasets (`r`paste(setLabels, collapse=",")\`).
 
 ```{r wgcna-network-construction}
-
 # Choose a set of soft-thresholding powers
-powers = c(seq(4,10,by=1), seq(12,20, by=2));
+powers = seq(4,20,by=1)
 # Initialize a list to hold the results of scale-free analysis
 powerTables = vector(mode = "list", length = nSets);
 # Call the network topology analysis function for each set in turn
@@ -148,7 +160,8 @@ for (set in 1:nSets)
                                                      verbose = 2)[[2]]);
 collectGarbage();
 # Plot the results:
-colors = c("black", "red")
+colors = color.scheme
+
 # Will plot these columns of the returned scale free analysis tables
 plotCols = c(2,5,6,7)
 colNames = c("Scale Free Topology Model Fit", "Mean connectivity", "Median connectivity",
@@ -192,23 +205,26 @@ for (col in 1:length(plotCols)) for (set in 1:nSets)
     legend("topright", legend = setLabels, col = colors, pch = 20) ;
 }
 #dev.off();
+```
 
-network.power <-10
+
+```{r network-construction}
+network.power <-6
 net = blockwiseConsensusModules(
         multiExpr, 
         power = network.power, 
-        minModuleSize = 10, #default is 20, tutorial said 30
+        minModuleSize = 20, #default is 20, tutorial said 30
         deepSplit = 2, #default
-        maxBlockSize = nrow(chow.expression),
+        maxBlockSize = nrow(chow.expression.f),
         pamRespectsDendro = FALSE, 
         mergeCutHeight = 0.25,
         numericLabels = TRUE,
-        minKMEtoStay = 0.2, #default is 0.2, tutorial said 0.1
+        minKMEtoStay = 0.1, #default is 0.2, tutorial said 0.1
         saveTOMs = TRUE, 
-        verbose = 3)
+        verbose = 1)
 ```
 
-Constructed modules with `r network.power` soft-thresholding power.
+Constructed modules with `r network.power` soft-thresholding power, based on the visualization of the .
 
 ## Plotting Samples Clustered by Consensus Modules
 

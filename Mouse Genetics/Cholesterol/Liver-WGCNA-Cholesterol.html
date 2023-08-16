@@ -348,7 +348,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cor</span>(</span>
 <span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    phenotype.data[<span class="fu">rownames</span>(MEs.ncd.m),<span class="st">'chol2'</span>],</span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    MEs.ncd.m,</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">use=</span><span class="st">"a"</span>,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">use=</span><span class="st">"p"</span>,</span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">method=</span><span class="st">"spearman"</span>))</span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>MMPvalue <span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(</span>
@@ -377,10 +377,37 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb8-31"><a href="#cb8-31" aria-hidden="true" tabindex="-1"></a><span class="co">#stuck on verbose scatter plot</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
+<section id="top-genes-in-each-module" class="level1">
+<h1>Top Genes in Each Module</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">chooseTopHubInEachModule</span>(expression.data,<span class="at">colorh=</span><span class="st">"magenta"</span>,</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">type=</span><span class="st">"unsigned"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>             magenta 
+"ENSMUSG00000059263" </code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(expression.data)[moduleColors<span class="sc">==</span><span class="st">"magenta"</span>]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "ENSMUSG00000090994" "ENSMUSG00000026938" "ENSMUSG00000045392"
+ [4] "ENSMUSG00000027799" "ENSMUSG00000027823" "ENSMUSG00000015714"
+ [7] "ENSMUSG00000027902" "ENSMUSG00000086765" "ENSMUSG00000064655"
+[10] "ENSMUSG00000006445" "ENSMUSG00000029029" "ENSMUSG00000058905"
+[13] "ENSMUSG00000029551" "ENSMUSG00000030400" "ENSMUSG00000030595"
+[16] "ENSMUSG00000030844" "ENSMUSG00000025473" "ENSMUSG00000032475"
+[19] "ENSMUSG00000019943" "ENSMUSG00000087060" "ENSMUSG00000020921"
+[22] "ENSMUSG00000039703" "ENSMUSG00000021010" "ENSMUSG00000021375"
+[25] "ENSMUSG00000079489" "ENSMUSG00000033644" "ENSMUSG00000016942"
+[28] "ENSMUSG00000068085" "ENSMUSG00000022617" "ENSMUSG00000000530"
+[31] "ENSMUSG00000075265" "ENSMUSG00000036292" "ENSMUSG00000084866"
+[34] "ENSMUSG00000038954" "ENSMUSG00000024248"</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="co">#write(names(expression.data)[moduleColors=="magenta"],"Magenta_Genes.txt")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 <section id="session-information" class="level1">
 <h1>Session Information</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.2.2 (2022-10-31)
 Platform: x86_64-apple-darwin17.0 (64-bit)

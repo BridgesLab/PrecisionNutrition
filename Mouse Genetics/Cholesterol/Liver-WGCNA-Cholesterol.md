@@ -228,7 +228,7 @@ geneModuleMembership.ncd.m <- as.data.frame(
   cor(
     phenotype.data[rownames(MEs.ncd.m),'chol2'],
     MEs.ncd.m,
-    use="a",
+    use="p",
     method="spearman"))
 
 MMPvalue <- as.data.frame(
@@ -255,6 +255,50 @@ module <- "blue"
 column <- match(module,modNames)
 moduleGenes <- moduleColors==module
 #stuck on verbose scatter plot
+```
+:::
+
+
+# Top Genes in Each Module
+
+
+::: {.cell}
+
+```{.r .cell-code}
+chooseTopHubInEachModule(expression.data,colorh="magenta",
+                         type="unsigned")
+```
+
+::: {.cell-output .cell-output-stdout}
+```
+             magenta 
+"ENSMUSG00000059263" 
+```
+:::
+
+```{.r .cell-code}
+names(expression.data)[moduleColors=="magenta"]
+```
+
+::: {.cell-output .cell-output-stdout}
+```
+ [1] "ENSMUSG00000090994" "ENSMUSG00000026938" "ENSMUSG00000045392"
+ [4] "ENSMUSG00000027799" "ENSMUSG00000027823" "ENSMUSG00000015714"
+ [7] "ENSMUSG00000027902" "ENSMUSG00000086765" "ENSMUSG00000064655"
+[10] "ENSMUSG00000006445" "ENSMUSG00000029029" "ENSMUSG00000058905"
+[13] "ENSMUSG00000029551" "ENSMUSG00000030400" "ENSMUSG00000030595"
+[16] "ENSMUSG00000030844" "ENSMUSG00000025473" "ENSMUSG00000032475"
+[19] "ENSMUSG00000019943" "ENSMUSG00000087060" "ENSMUSG00000020921"
+[22] "ENSMUSG00000039703" "ENSMUSG00000021010" "ENSMUSG00000021375"
+[25] "ENSMUSG00000079489" "ENSMUSG00000033644" "ENSMUSG00000016942"
+[28] "ENSMUSG00000068085" "ENSMUSG00000022617" "ENSMUSG00000000530"
+[31] "ENSMUSG00000075265" "ENSMUSG00000036292" "ENSMUSG00000084866"
+[34] "ENSMUSG00000038954" "ENSMUSG00000024248"
+```
+:::
+
+```{.r .cell-code}
+#write(names(expression.data)[moduleColors=="magenta"],"Magenta_Genes.txt")
 ```
 :::
 

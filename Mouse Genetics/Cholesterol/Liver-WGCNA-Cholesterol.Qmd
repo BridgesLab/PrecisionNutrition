@@ -193,7 +193,7 @@ geneModuleMembership.ncd.m <- as.data.frame(
   cor(
     phenotype.data[rownames(MEs.ncd.m),'chol2'],
     MEs.ncd.m,
-    use="a",
+    use="p",
     method="spearman"))
 
 MMPvalue <- as.data.frame(
@@ -225,7 +225,11 @@ moduleGenes <- moduleColors==module
 # Top Genes in Each Module
 
 ```{r top-genes}
-chooseTopHubInEachModule(net,colorh="magenta")
+chooseTopHubInEachModule(expression.data,colorh="magenta",
+                         type="unsigned")
+
+names(expression.data)[moduleColors=="magenta"]
+#write(names(expression.data)[moduleColors=="magenta"],"Magenta_Genes.txt")
 ```
 
 # Session Information

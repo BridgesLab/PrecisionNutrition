@@ -115,7 +115,9 @@ cholesterol.data %>%
 summary.data.complete <-
   cholesterol.data %>%
   group_by(sex,Diet) %>%
-  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(mean=~mean(., na.rm=T),
+                                                            se=se,
+                                                            sd=~sd(., na.rm=T)))
 
 kable(summary.data.complete, caption="Cholesterol levels at 11 and 18 weeks")
 
@@ -135,7 +137,7 @@ summary.data.complete %>%
                           "Average"="chol.avg",
                           `8 Weeks`="chol1",
                           `19 Weeks`="chol2")) %>%
-  ggplot(aes(y=mean,ymin=mean-se,ymax=mean+se,x=Value)) +
+  ggplot(aes(y=mean,ymin=mean-sd,ymax=mean+sd,x=Value)) +
   geom_bar(stat='identity') +
   geom_errorbar(width=0.5) +
   facet_grid(Diet~sex) +
@@ -152,7 +154,9 @@ summary.data.complete %>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(chol2), .funs=list(mean=~mean(., na.rm=T),
+                                             se=se,
+                                             sd=~sd(., na.rm=T)))
 
 library(broom)
 lm(chol2~sex*diet, data=cholesterol.data) %>%
@@ -351,6 +355,16 @@ anova(lm.calcium,lm.calcium.tg)%>%
   kable(caption="Comparason of models with or without triglyceride levels",
         digits=c(0,0,0,0,0,99))
 
+lm.calcium.chol <- lm(chol2~calcium2, cholesterol.data)
+summary(lm.calcium.chol) %>% glance %>% kable(caption="Linear model of calcium on cholesterol")
+lm.calcium.chol.sex <- lm(chol2~calcium2+sex, cholesterol.data)
+summary(lm.calcium.chol.sex) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex")
+lm.calcium.chol.sex.bw <- lm(chol2~calcium2+sex+bw.19, cholesterol.data)
+summary(lm.calcium.chol.sex.bw) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and bw")
+summary(lm.calcium.chol)
+summary(lm.calcium.chol.sex)
+summary(lm.calcium.chol.sex.bw)
+
 ```
 
 ## Effects of Diet and Sex on Calcium
@@ -359,7 +373,9 @@ anova(lm.calcium,lm.calcium.tg)%>%
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),se=se))
+  summarize_at(.vars=vars(calcium2), .funs=list(mean=~mean(., na.rm=T),
+                                                se=se,
+                                                sd=~sd(., na.rm=T)))
 
 lm(calcium2~sex*diet, data=cholesterol.data) %>%
   tidy %>%
@@ -509,47 +525,171 @@ omega_squared(aov.calcium, partial = TRUE) %>%
 dplyr::filter(cholesterol.data, sex == "M")
 ```
 
-```{R BW_19}
+# Mediating Effect of Body Weight
+
+```{r calcium-BW_19}
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=bw.19,
            col=diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm)
+  geom_smooth(method=lm) +
+    labs(y="Cholesterol (mg/dL)",
+       x="Body Weight (g)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
 
+lm.bw.model.1 <- lm(chol2~sex+bw.19, data=cholesterol.data)
 
-lm.bw.1 <- lm(chol2~bw.19, data=cholesterol.data)
-lm.bw.2 <- lm(chol2~bw.19+sex, data=cholesterol.data)
-lm.bw.3 <- lm(chol2~sex+diet+bw.19, data=cholesterol.data)
-lm.bw.4 <- lm(chol2~sex+calcium2+bw.19, data=cholesterol.data)
-lm.bw.5 <- lm(chol2~sex+tg2+bw.19, data=cholesterol.data)
-lm.bw.6 <- lm(chol2~sex+diet+bw.19+tg2, data=cholesterol.data)
-lm.bw.7 <- lm(chol2~sex+diet+bw.19+tg2+calcium2, data=cholesterol.data)
+summary(lm.bw.model.1) %>% tidy %>% kable(caption="Effects of body weight on cholesterol at 18w, ajdusting for sex", digits=50)
 
-lm.bw.6 <- lm(chol2~sex+diet*bw.19, data=cholesterol.data)
-aov.calcium <- aov(chol2~sex+diet+bw.19, data=cholesterol.data)
-summary(lm.bw.1) %>% tidy %>% kable(caption="Effects of calcium on cholesterol at 18w", digits=50)
-summary(lm.bw.2) %>% tidy %>% kable(caption="Sex adjusted effects of calcium on cholesterol at 18w", digits=50)
-summary(lm.bw.3) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w", digits=50)
-summary(lm.bw.4) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
-summary(lm.bw.5) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
+lm.bw.model.2 <- lm(chol2~sex+diet+bw.19, data=cholesterol.data)
 
+summary(lm.bw.model.2) %>% tidy %>% kable(caption="Effects of body weight on cholesterol at 18w, ajdusting for sex and diet", digits=50)
 
-lm.bw.chow <- lm(chol2~sex+bw.19, filter(cholesterol.data, diet == "chow"))
-summary(lm.bw.chow) %>% glance %>% kable
+# mediating effect of body weight on the calcium, cholesterol relationship
+lm.bw.1 <- lm(chol2~calcium2, data=cholesterol.data)
+lm.bw.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
+lm.bw.3 <- lm(chol2~calcium2+sex+bw.19, data=cholesterol.data)
+lm.bw.4 <- lm(chol2~calcium2+sex+bw.19+diet, data=cholesterol.data)
 
-lm.bw.hf <- lm(chol2~sex+bw.19, filter(cholesterol.data, diet == "hf"))
-summary(lm.bw.hf) %>% glance %>% kable
-
-library(effectsize)
-omega_squared(aov.calcium, partial = TRUE) %>%
-  kable(caption="Partial effect size estimates for predictors of continuous cholesterol levels")
-
-dplyr::filter(cholesterol.data, sex == "M")
-
+bind_rows(tidy(lm.bw.1) %>% mutate(Model='cholesterol~calcium'),
+          tidy(lm.bw.2) %>% mutate(Model='cholesterol~calcium+sex'),
+          tidy(lm.bw.3) %>% mutate(Model='cholesterol~calcium+sex+body.weight'),
+          tidy(lm.bw.4) %>% mutate(Model='cholesterol~calcium+sex+body.weight+diet')) %>%
+  filter(term=='calcium2') %>%
+  mutate(beta.calcium=paste(round(estimate,2),round(std.error,2),sep="+/-")) %>%
+  select(Model,beta.calcium,p.value) %>%
+  kable(caption="Summary of effects of body weight mediation",digits=c(0,0,99))
 ```
 
+## Mediation Analysis for Body Weight
+
+Did a mediation analysis for the effects of body weight on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
+
+```{r bw-mediation}
+library(mediation)
+#need a dataset that is complete with respect to calcium and cholesterol
+mediation.cholesterol.data <-
+  cholesterol.data %>%
+  filter(!is.na(calcium2)) %>%
+  filter(!is.na(chol2))
+mediator.model <- lm(bw.19 ~ calcium2+sex, mediation.cholesterol.data)
+model.full <- lm(chol2 ~ calcium2 + sex+bw.19, mediation.cholesterol.data)
+
+bw.mediation.results <- mediate(mediator.model, model.full, treat='calcium2', mediator='bw.19',
+                   boot=TRUE, sims=1000)
+summary(bw.mediation.results) 
+```
+
+Differences in body weight partially mediate the relationship between calcium and cholesterol.
+
+# Mediating Effect of Percent Fat Mass
+
+```{r chol-fm_19}
+ggplot(data=cholesterol.data,
+       aes(y=chol2,
+           x=percfat2*100,
+           col=Diet)) +
+  geom_point() +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm) +
+    labs(y="Cholesterol (mg/dL)",
+       x="Percent Fat Mass",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank())
+
+lm.bw.model.1 <- lm(chol2~sex+percfat2, data=cholesterol.data)
+
+summary(lm.bw.model.1) %>% tidy %>% kable(caption="Effects of percent fat mass on cholesterol at 18w, ajdusting for sex", digits=50)
+
+lm.bw.model.2 <- lm(chol2~sex+diet+percfat2, data=cholesterol.data)
+
+summary(lm.bw.model.2) %>% tidy %>% kable(caption="Effects of percent fat mass on cholesterol at 18w, ajdusting for sex and diet", digits=50)
+```
+
+### Is there an effect of diet beyond the effect of fat mass?
+
+```{r diet-fat-mass-effects}
+
+
+# mediating effect of body weight on the calcium, cholesterol relationship
+lm.fm.1 <- lm(chol2~percfat2, data=cholesterol.data)
+lm.fm.2 <- lm(chol2~sex+percfat2, data=cholesterol.data)
+lm.fm.3 <- lm(chol2~sex+percfat2+diet, data=cholesterol.data)
+
+bind_rows(tidy(lm.fm.1) %>% mutate(Model='cholesterol~sex'),
+          tidy(lm.fm.2) %>% mutate(Model='cholesterol~sex+fat.mass'),
+          tidy(lm.fm.3) %>% mutate(Model='cholesterol~sex+fat.mass+diet')) %>%
+  filter(term=='percfat2') %>%
+  mutate(beta.pct.fat.mass=paste(round(estimate,2),round(std.error,2),sep="+/-")) %>%
+  dplyr::select(Model,beta.pct.fat.mass,p.value) %>%
+  kable(caption="Summary of effects of diet and percent fat mass mediation",digits=c(0,0,99))
+
+mediation.cholesterol.data <-
+  cholesterol.data %>%
+  filter(!is.na(calcium2)) %>%
+  filter(!is.na(chol2)) %>%
+  filter(!is.na(percfat2))
+
+mediator.model <- lm(percfat2 ~ diet + sex, mediation.cholesterol.data)
+model.full <- lm(chol2 ~ diet + sex + percfat2, mediation.cholesterol.data)
+
+fm.mediation.results <- mediate(mediator.model, model.full, treat='diet', mediator='percfat2',
+                   boot=TRUE, sims=1000)
+summary(fm.mediation.results) 
+```
+
+## Mediation Analysis for Percent Fat Mass
+
+Did a mediation analysis for the effects of percent fat mass on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
+
+```{r fm-mediation}
+
+# mediating effect of body weight on the calcium, cholesterol relationship
+lm.fm.1 <- lm(chol2~calcium2, data=cholesterol.data)
+lm.fm.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
+lm.fm.3 <- lm(chol2~calcium2+sex+percfat2, data=cholesterol.data)
+lm.fm.4 <- lm(chol2~calcium2+sex+percfat2+diet, data=cholesterol.data)
+
+bind_rows(tidy(lm.fm.1) %>% mutate(Model='cholesterol~calcium'),
+          tidy(lm.fm.2) %>% mutate(Model='cholesterol~calcium+sex'),
+          tidy(lm.fm.3) %>% mutate(Model='cholesterol~calcium+sex+fat.mass'),
+          tidy(lm.fm.4) %>% mutate(Model='cholesterol~calcium+sex+fat.mass+diet')) %>%
+  filter(term=='calcium2') %>%
+  mutate(beta.calcium=paste(round(estimate,2),round(std.error,2),sep="+/-")) %>%
+  dplyr::select(Model,beta.calcium,p.value) %>%
+  kable(caption="Summary of effects of percent fat mass mediation",digits=c(0,0,99))
+
+#need a dataset that is complete with respect to calcium and cholesterol
+mediation.cholesterol.data <-
+  cholesterol.data %>%
+  filter(!is.na(calcium2)) %>%
+  filter(!is.na(chol2))
+mediator.model <- lm(percfat2 ~ calcium2+sex, mediation.cholesterol.data)
+model.full <- lm(chol2 ~ calcium2 + sex+percfat2, mediation.cholesterol.data)
+
+bw.mediation.results <- mediate(mediator.model, model.full, treat='calcium2', mediator='percfat2',
+                   boot=TRUE, sims=1000)
+summary(bw.mediation.results) 
+```
+
+Differences in body weight partially mediate the relationship between calcium and cholesterol.
 
 
 # Random Forests

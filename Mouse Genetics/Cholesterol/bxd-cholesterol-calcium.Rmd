@@ -78,7 +78,9 @@ combined.data <-
   mutate(Chol=Value_chol*38.665,
          Chol.se = SE_chol*38.665) %>% #convert to mg/dL
   mutate(Ca = Value_ca*4.005,
-         Ca.se = SE_ca*4.005)#convert to mg/dL
+         Ca.se = SE_ca*4.005) %>% #convert to mg/dL 
+  mutate(Ca.sd = Ca.se*sqrt(N_ca),
+         Chol.sd = Chol.se*sqrt(N_chol))
 
 ```
 
@@ -119,10 +121,12 @@ combined.data %>%
 combined.data %>%
   ggplot(aes(y=Chol,x=Ca)) +
   geom_point() +
-  geom_errorbar(aes(ymin=Chol-Chol.se,
-                    ymax=Chol+Chol.se)) +
-  geom_errorbarh(aes(xmin=Ca-Ca.se,
-                    xmax=Ca-Ca.se)) +
+  geom_errorbar(aes(ymin=Chol-Chol.sd,
+                    ymax=Chol+Chol.sd),
+                col="grey") +
+  geom_errorbarh(aes(xmin=Ca-Ca.sd,
+                    xmax=Ca+Ca.sd),
+                 col="grey") +
   geom_smooth(method="lm",color="grey") +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",

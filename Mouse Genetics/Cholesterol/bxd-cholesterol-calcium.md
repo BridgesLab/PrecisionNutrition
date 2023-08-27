@@ -54,7 +54,9 @@ combined.data <-
   mutate(Chol=Value_chol*38.665,
          Chol.se = SE_chol*38.665) %>% #convert to mg/dL
   mutate(Ca = Value_ca*4.005,
-         Ca.se = SE_ca*4.005)#convert to mg/dL
+         Ca.se = SE_ca*4.005) %>% #convert to mg/dL 
+  mutate(Ca.sd = Ca.se*sqrt(N_ca),
+         Chol.sd = Chol.se*sqrt(N_chol))
 ```
 
 # Sample Sizes
@@ -120,10 +122,12 @@ combined.data %>%
 combined.data %>%
   ggplot(aes(y=Chol,x=Ca)) +
   geom_point() +
-  geom_errorbar(aes(ymin=Chol-Chol.se,
-                    ymax=Chol+Chol.se)) +
-  geom_errorbarh(aes(xmin=Ca-Ca.se,
-                    xmax=Ca-Ca.se)) +
+  geom_errorbar(aes(ymin=Chol-Chol.sd,
+                    ymax=Chol+Chol.sd),
+                col="grey") +
+  geom_errorbarh(aes(xmin=Ca-Ca.sd,
+                    xmax=Ca+Ca.sd),
+                 col="grey") +
   geom_smooth(method="lm",color="grey") +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
@@ -231,9 +235,9 @@ sessionInfo()
 ```
 
 ```
-## R version 4.2.0 (2022-04-22)
+## R version 4.2.2 (2022-10-31)
 ## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur/Monterey 10.16
+## Running under: macOS Big Sur ... 10.16
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
@@ -246,24 +250,24 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] broom_1.0.1   ggrepel_0.9.2 ggplot2_3.4.0 readr_2.1.3   dplyr_1.0.10 
-## [6] tidyr_1.2.1   knitr_1.41   
+## [1] broom_1.0.2   ggrepel_0.9.2 ggplot2_3.4.0 readr_2.1.3   dplyr_1.0.10 
+## [6] tidyr_1.3.0   knitr_1.41   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.2.0 xfun_0.35        bslib_0.4.1      purrr_0.3.5     
-##  [5] splines_4.2.0    lattice_0.20-45  colorspace_2.0-3 vctrs_0.5.1     
-##  [9] generics_0.1.3   htmltools_0.5.3  yaml_2.3.6       mgcv_1.8-41     
+##  [1] tidyselect_1.2.0 xfun_0.36        bslib_0.4.2      purrr_1.0.1     
+##  [5] splines_4.2.2    lattice_0.20-45  colorspace_2.0-3 vctrs_0.5.2     
+##  [9] generics_0.1.3   htmltools_0.5.4  yaml_2.3.6       mgcv_1.8-41     
 ## [13] utf8_1.2.2       rlang_1.0.6      jquerylib_0.1.4  pillar_1.8.1    
 ## [17] glue_1.6.2       withr_2.5.0      DBI_1.1.3        bit64_4.0.5     
-## [21] lifecycle_1.0.3  stringr_1.4.1    munsell_0.5.0    gtable_0.3.1    
-## [25] evaluate_0.18    labeling_0.4.2   tzdb_0.3.0       fastmap_1.1.0   
-## [29] parallel_4.2.0   fansi_1.0.3      highr_0.9        Rcpp_1.0.9      
+## [21] lifecycle_1.0.3  stringr_1.5.0    munsell_0.5.0    gtable_0.3.1    
+## [25] evaluate_0.19    labeling_0.4.2   tzdb_0.3.0       fastmap_1.1.0   
+## [29] parallel_4.2.2   fansi_1.0.3      highr_0.10       Rcpp_1.0.9      
 ## [33] backports_1.4.1  scales_1.2.1     cachem_1.0.6     vroom_1.6.0     
-## [37] jsonlite_1.8.3   farver_2.1.1     bit_4.0.5        hms_1.1.2       
-## [41] digest_0.6.30    stringi_1.7.8    grid_4.2.0       cli_3.4.1       
-## [45] tools_4.2.0      magrittr_2.0.3   sass_0.4.3       tibble_3.1.8    
+## [37] jsonlite_1.8.4   farver_2.1.1     bit_4.0.5        hms_1.1.2       
+## [41] digest_0.6.31    stringi_1.7.12   grid_4.2.2       cli_3.6.0       
+## [45] tools_4.2.2      magrittr_2.0.3   sass_0.4.4       tibble_3.1.8    
 ## [49] crayon_1.5.2     pkgconfig_2.0.3  Matrix_1.5-3     ellipsis_0.3.2  
-## [53] assertthat_0.2.1 rmarkdown_2.18   rstudioapi_0.14  R6_2.5.1        
-## [57] nlme_3.1-160     compiler_4.2.0
+## [53] assertthat_0.2.1 rmarkdown_2.19   rstudioapi_0.14  R6_2.5.1        
+## [57] nlme_3.1-161     compiler_4.2.2
 ```
 

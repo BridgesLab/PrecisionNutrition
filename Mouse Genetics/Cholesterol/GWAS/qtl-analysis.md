@@ -238,10 +238,10 @@ Table: ANOVA for sex-genotype interaction on chow only.
 
 |term         | df| sumsq| meansq| statistic| p.value|
 |:------------|--:|-----:|------:|---------:|-------:|
-|sex          |  1|  7680|   7680|    21.036|   0.000|
-|Genotype     |  2|  5877|   2939|     8.048|   0.001|
-|sex:Genotype |  2|   338|    169|     0.463|   0.631|
-|Residuals    | 88| 32130|    365|        NA|      NA|
+|sex          |  1|  5917|   5917|    14.516|   0.000|
+|Genotype     |  2|  4557|   2279|     5.589|   0.005|
+|sex:Genotype |  2|   776|    388|     0.951|   0.390|
+|Residuals    | 88| 35873|    408|        NA|      NA|
 
 
 
@@ -249,25 +249,25 @@ Table: ANOVA for sex-genotype interaction.
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |    58.07|      8.44|     6.881|   0.000|
-|sexM        |    18.91|      4.00|     4.728|   0.000|
-|GenotypeTG  |     7.88|      8.81|     0.895|   0.373|
-|GenotypeTT  |    22.76|      8.24|     2.762|   0.007|
+|(Intercept) |     57.3|      8.97|      6.38|   0.000|
+|sexM        |     16.9|      4.25|      3.98|   0.000|
+|GenotypeTG  |     10.3|      9.36|      1.10|   0.273|
+|GenotypeTT  |     22.3|      8.75|      2.55|   0.013|
 
 
 
 Table: ANOVA for moderation of genotype effect by diet.
 
-|term              |  df| sumsq|  meansq| statistic| p.value|
-|:-----------------|---:|-----:|-------:|---------:|-------:|
-|diet              |   1| 65746| 65745.6|   115.368|   0.000|
-|sex               |   1| 10286| 10286.3|    18.050|   0.000|
-|Genotype          |   2|   239|   119.6|     0.210|   0.811|
-|diet:sex          |   1|   612|   612.0|     1.074|   0.301|
-|diet:Genotype     |   2|  9490|  4745.2|     8.327|   0.000|
-|sex:Genotype      |   2|   151|    75.7|     0.133|   0.876|
-|diet:sex:Genotype |   1|   404|   403.7|     0.708|   0.401|
-|Residuals         | 174| 99158|   569.9|        NA|      NA|
+|term              |  df|  sumsq| meansq| statistic| p.value|
+|:-----------------|---:|------:|------:|---------:|-------:|
+|diet              |   1|  96218|  96218|   123.399|   0.000|
+|sex               |   1|   6544|   6544|     8.393|   0.004|
+|Genotype          |   2|    254|    127|     0.163|   0.850|
+|diet:sex          |   1|    930|    930|     1.192|   0.276|
+|diet:Genotype     |   2|   7014|   3507|     4.498|   0.012|
+|sex:Genotype      |   2|    319|    159|     0.204|   0.815|
+|diet:sex:Genotype |   1|   1781|   1781|     2.284|   0.133|
+|Residuals         | 173| 134894|    780|        NA|      NA|
 
 
 
@@ -275,11 +275,11 @@ Table: ANOVA for moderation of genotype effect by diet.
 
 |term          |  df|  sumsq| meansq| statistic| p.value|
 |:-------------|---:|------:|------:|---------:|-------:|
-|diet          |   1|  65746|  65746|   116.672|   0.000|
-|sex           |   1|  10286|  10286|    18.254|   0.000|
-|Genotype      |   2|    239|    120|     0.212|   0.809|
-|diet:Genotype |   2|   9511|   4756|     8.439|   0.000|
-|Residuals     | 178| 100305|    564|        NA|      NA|
+|diet          |   1|  96218|  96218|   123.529|   0.000|
+|sex           |   1|   6544|   6544|     8.402|   0.004|
+|Genotype      |   2|    254|    127|     0.163|   0.850|
+|diet:Genotype |   2|   7070|   3535|     4.538|   0.012|
+|Residuals     | 177| 137867|    779|        NA|      NA|
 
 
 
@@ -287,13 +287,13 @@ Table: Model estimates for moderation of genotype effect by diet.
 
 |term              | estimate| std.error| statistic| p.value|
 |:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    61.07|     10.14|     6.025|   0.000|
-|diethf            |    71.27|     17.05|     4.181|   0.000|
-|sexM              |    15.32|      3.56|     4.299|   0.000|
-|GenotypeTG        |     6.33|     10.90|     0.580|   0.562|
-|GenotypeTT        |    21.48|     10.22|     2.101|   0.037|
-|diethf:GenotypeTG |   -17.42|     18.23|    -0.956|   0.341|
-|diethf:GenotypeTT |   -44.52|     17.61|    -2.528|   0.012|
+|(Intercept)       |    60.88|      11.9|     5.108|   0.000|
+|diethf            |    78.79|      20.0|     3.931|   0.000|
+|sexM              |    12.54|       4.2|     2.986|   0.003|
+|GenotypeTG        |     8.42|      12.8|     0.657|   0.512|
+|GenotypeTT        |    20.75|      12.0|     1.727|   0.086|
+|diethf:GenotypeTG |   -20.25|      21.4|    -0.945|   0.346|
+|diethf:GenotypeTT |   -42.44|      20.7|    -2.048|   0.042|
 
 ![](figures/second snp analysis-1.png)<!-- -->![](figures/second snp analysis-2.png)<!-- -->![](figures/second snp analysis-3.png)<!-- -->
 
@@ -301,9 +301,9 @@ Table: ANOVA for sex-genotype interaction on chow only.
 
 |term      | df| sumsq| meansq| statistic| p.value|
 |:---------|--:|-----:|------:|---------:|-------:|
-|sex       |  1|  2868|   2868|      9.84|   0.002|
-|Genotype  |  2|   968|    484|      1.66|   0.197|
-|Residuals | 73| 21271|    291|        NA|      NA|
+|sex       |  1|  3591|   3591|     9.784|   0.003|
+|Genotype  |  2|   541|    270|     0.737|   0.482|
+|Residuals | 73| 26790|    367|        NA|      NA|
 
 
 
@@ -311,33 +311,33 @@ Table: linear model for sex-genotype interaction.
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     98.0|     17.54|     5.590|   0.000|
-|sexM        |     11.0|      4.02|     2.726|   0.008|
-|GenotypeAC  |     -3.0|     24.14|    -0.124|   0.901|
-|GenotypeCC  |    -24.2|     17.35|    -1.393|   0.168|
+|(Intercept) |     53.1|     19.68|     2.698|   0.009|
+|sexM        |     14.9|      4.51|     3.300|   0.001|
+|GenotypeAC  |      6.0|     27.09|     0.221|   0.825|
+|GenotypeCC  |     19.7|     19.47|     1.012|   0.315|
 
 
 
 Table: ANOVA for moderation of genotype effect by diet.
 
-|term      |  df| sumsq| meansq| statistic| p.value|
-|:---------|---:|-----:|------:|---------:|-------:|
-|diet      |   1| 75109|  75109|   143.998|   0.000|
-|sex       |   1|  5863|   5863|    11.240|   0.001|
-|Genotype  |   2|   638|    319|     0.611|   0.544|
-|Residuals | 149| 77718|    522|        NA|      NA|
+|term      |  df|  sumsq| meansq| statistic| p.value|
+|:---------|---:|------:|------:|---------:|-------:|
+|diet      |   1| 105775| 105775|    137.72|   0.000|
+|sex       |   1|   3929|   3929|      5.12|   0.025|
+|Genotype  |   2|   2269|   1134|      1.48|   0.232|
+|Residuals | 149| 114439|    768|        NA|      NA|
 
 
 
 Table: ANOVA for moderation of genotype effect by diet.
 
-|term          |  df| sumsq| meansq| statistic| p.value|
-|:-------------|---:|-----:|------:|---------:|-------:|
-|diet          |   1| 75109|  75109|   143.911|   0.000|
-|sex           |   1|  5863|   5863|    11.233|   0.001|
-|Genotype      |   2|   638|    319|     0.611|   0.544|
-|diet:Genotype |   2|   997|    498|     0.955|   0.387|
-|Residuals     | 147| 76721|    522|        NA|      NA|
+|term          |  df|  sumsq|   meansq| statistic| p.value|
+|:-------------|---:|------:|--------:|---------:|-------:|
+|diet          |   1| 105775| 105774.6|   136.025|   0.000|
+|sex           |   1|   3929|   3928.7|     5.052|   0.026|
+|Genotype      |   2|   2269|   1134.4|     1.459|   0.236|
+|diet:Genotype |   2|    130|     65.2|     0.084|   0.920|
+|Residuals     | 147| 114309|    777.6|        NA|      NA|
 
 
 
@@ -345,13 +345,13 @@ Table: Model estimates for moderation of genotype effect by diet.
 
 |term              | estimate| std.error| statistic| p.value|
 |:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |     96.6|     23.16|     4.172|   0.000|
-|diethf            |     28.3|     26.50|     1.066|   0.288|
-|sexM              |     12.4|      3.79|     3.271|   0.001|
-|GenotypeAC        |     -3.0|     32.31|    -0.093|   0.926|
-|GenotypeCC        |    -23.3|     23.11|    -1.009|   0.315|
-|diethf:GenotypeAC |    -17.9|     37.39|    -0.479|   0.632|
-|diethf:GenotypeCC |     15.7|     26.80|     0.587|   0.558|
+|(Intercept)       |    56.58|     28.27|     2.002|   0.047|
+|diethf            |    57.61|     32.35|     1.781|   0.077|
+|sexM              |    11.42|      4.62|     2.470|   0.015|
+|GenotypeAC        |     6.00|     39.44|     0.152|   0.879|
+|GenotypeCC        |    17.61|     28.21|     0.624|   0.533|
+|diethf:GenotypeAC |   -17.28|     45.64|    -0.379|   0.706|
+|diethf:GenotypeCC |    -5.05|     32.71|    -0.154|   0.878|
 
 ![](figures/third snp analysis-1.png)<!-- -->![](figures/third snp analysis-2.png)<!-- -->![](figures/third snp analysis-3.png)<!-- -->
 
@@ -359,10 +359,10 @@ Table: ANOVA for sex-genotype interaction on chow only.
 
 |term         | df| sumsq| meansq| statistic| p.value|
 |:------------|--:|-----:|------:|---------:|-------:|
-|sex          |  1|  6342|   6342|    20.612|   0.000|
-|Genotype     |  1|  3622|   3622|    11.772|   0.001|
-|sex:Genotype |  1|   254|    254|     0.825|   0.366|
-|Residuals    | 90| 27693|    308|        NA|      NA|
+|sex          |  1|  5187|   5187|     14.14|   0.000|
+|Genotype     |  1|  2822|   2822|      7.69|   0.007|
+|sex:Genotype |  1|  1850|   1850|      5.04|   0.027|
+|Residuals    | 90| 33016|    367|        NA|      NA|
 
 
 
@@ -370,36 +370,36 @@ Table: linear model for sex-genotype interaction.
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     65.7|      3.81|     17.26|   0.000|
-|sexM        |     17.8|      3.64|      4.88|   0.000|
-|GenotypeAG  |     13.4|      3.90|      3.43|   0.001|
+|(Intercept) |     66.7|      4.25|     15.68|   0.000|
+|sexM        |     16.0|      4.06|      3.95|   0.000|
+|GenotypeAG  |     11.8|      4.36|      2.71|   0.008|
 
 
 
 Table: ANOVA for moderation of genotype effect by diet.
 
-|term              |  df| sumsq| meansq| statistic| p.value|
-|:-----------------|---:|-----:|------:|---------:|-------:|
-|diet              |   1| 67363|  67363|   127.665|   0.000|
-|sex               |   1|  8652|   8652|    16.397|   0.000|
-|Genotype          |   1|  5579|   5579|    10.574|   0.001|
-|diet:sex          |   1|   768|    768|     1.455|   0.229|
-|diet:Genotype     |   1|    64|     64|     0.121|   0.728|
-|sex:Genotype      |   1|  2191|   2191|     4.151|   0.043|
-|diet:sex:Genotype |   1|   582|    582|     1.103|   0.295|
-|Residuals         | 176| 92868|    528|        NA|      NA|
+|term              |  df|  sumsq| meansq| statistic| p.value|
+|:-----------------|---:|------:|------:|---------:|-------:|
+|diet              |   1|  96155|  96155|   125.037|   0.000|
+|sex               |   1|   5637|   5637|     7.331|   0.007|
+|Genotype          |   1|   1490|   1490|     1.937|   0.166|
+|diet:sex          |   1|    963|    963|     1.252|   0.265|
+|diet:Genotype     |   1|   1093|   1093|     1.421|   0.235|
+|sex:Genotype      |   1|   2491|   2491|     3.239|   0.074|
+|diet:sex:Genotype |   1|    119|    119|     0.155|   0.694|
+|Residuals         | 175| 134578|    769|        NA|      NA|
 
 
 
 Table: ANOVA for moderation of genotype effect by diet.
 
-|term          |  df|   sumsq|  meansq| statistic| p.value|
-|:-------------|---:|-------:|-------:|---------:|-------:|
-|diet          |   1| 67363.5| 67363.5|   125.079|   0.000|
-|sex           |   1|  8652.0|  8652.0|    16.065|   0.000|
-|Genotype      |   1|  5579.4|  5579.4|    10.360|   0.002|
-|diet:Genotype |   1|    69.3|    69.3|     0.129|   0.720|
-|Residuals     | 179| 96403.3|   538.6|        NA|      NA|
+|term          |  df|  sumsq| meansq| statistic| p.value|
+|:-------------|---:|------:|------:|---------:|-------:|
+|diet          |   1|  96155|  96155|    123.92|   0.000|
+|sex           |   1|   5637|   5637|      7.26|   0.008|
+|Genotype      |   1|   1490|   1490|      1.92|   0.168|
+|diet:Genotype |   1|   1128|   1128|      1.45|   0.229|
+|Residuals     | 178| 138115|    776|        NA|      NA|
 
 
 
@@ -407,11 +407,78 @@ Table: Model estimates for moderation of genotype effect by diet.
 
 |term              | estimate| std.error| statistic| p.value|
 |:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    67.94|      4.67|    14.562|   0.000|
-|diethf            |    40.70|      5.88|     6.917|   0.000|
-|sexM              |    13.75|      3.45|     3.990|   0.000|
-|GenotypeAG        |    12.94|      5.15|     2.512|   0.013|
-|diethf:GenotypeAG |    -2.61|      7.27|    -0.359|   0.720|
+|(Intercept)       |     69.1|      5.60|     12.34|   0.000|
+|diethf            |     53.2|      7.06|      7.53|   0.000|
+|sexM              |     11.6|      4.15|      2.80|   0.006|
+|GenotypeAG        |     11.3|      6.18|      1.83|   0.069|
+|diethf:GenotypeAG |    -10.5|      8.74|     -1.21|   0.229|
+
+### Pre-Computed SNPs
+
+This is based on the lead SNP from the precompiled viewer at https://churchilllab.jax.org/qtlviewer/svenson/DOHFD.  Lead SNP at chr1 171429283
+
+![](figures/precomputed-snp-analysis-1.png)<!-- -->![](figures/precomputed-snp-analysis-2.png)<!-- -->![](figures/precomputed-snp-analysis-3.png)<!-- -->
+
+Table: ANOVA for sex-genotype interaction on chow only.
+
+|term         | df|   sumsq| meansq| statistic| p.value|
+|:------------|--:|-------:|------:|---------:|-------:|
+|sex          |  1|  6122.7| 6122.7|    13.884|   0.000|
+|Genotype     |  2|    64.1|   32.1|     0.073|   0.930|
+|sex:Genotype |  1|  1060.4| 1060.4|     2.405|   0.124|
+|Residuals    | 91| 40130.8|  441.0|        NA|      NA|
+
+
+
+Table: linear model for sex-genotype interaction.
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |   76.110|      3.54|    21.516|   0.000|
+|sexM        |   15.675|      4.42|     3.545|   0.001|
+|GenotypeTC  |   -1.758|      4.74|    -0.371|   0.712|
+|GenotypeTT  |    0.715|     15.34|     0.047|   0.963|
+
+
+
+Table: ANOVA for moderation of genotype effect by diet.
+
+|term              |  df|  sumsq|  meansq| statistic| p.value|
+|:-----------------|---:|------:|-------:|---------:|-------:|
+|diet              |   1|  96523| 96523.2|   119.061|   0.000|
+|sex               |   1|   6974|  6973.7|     8.602|   0.004|
+|Genotype          |   2|    133|    66.4|     0.082|   0.921|
+|diet:sex          |   1|    782|   781.6|     0.964|   0.328|
+|diet:Genotype     |   2|    878|   439.1|     0.542|   0.583|
+|sex:Genotype      |   1|    706|   706.4|     0.871|   0.352|
+|diet:sex:Genotype |   1|    359|   358.6|     0.442|   0.507|
+|Residuals         | 175| 141874|   810.7|        NA|      NA|
+
+
+
+Table: ANOVA for moderation of genotype effect by diet.
+
+|term          |  df|  sumsq|  meansq| statistic| p.value|
+|:-------------|---:|------:|-------:|---------:|-------:|
+|diet          |   1|  96523| 96523.2|   119.630|   0.000|
+|sex           |   1|   6974|  6973.7|     8.643|   0.004|
+|Genotype      |   2|    133|    66.4|     0.082|   0.921|
+|diet:Genotype |   2|    979|   489.5|     0.607|   0.546|
+|Residuals     | 178| 143619|   806.9|        NA|      NA|
+
+
+
+Table: Model estimates for moderation of genotype effect by diet.
+
+|term              | estimate| std.error| statistic| p.value|
+|:-----------------|--------:|---------:|---------:|-------:|
+|(Intercept)       |    78.14|      4.21|    18.580|   0.000|
+|diethf            |    44.46|      4.88|     9.108|   0.000|
+|sexM              |    11.86|      4.24|     2.796|   0.006|
+|GenotypeTC        |    -2.38|      6.32|    -0.377|   0.706|
+|GenotypeTT        |     2.50|     20.49|     0.122|   0.903|
+|diethf:GenotypeTC |     7.47|     10.07|     0.742|   0.459|
+|diethf:GenotypeTT |   -27.10|     35.37|    -0.766|   0.445|
 
 We identified **0** SNPs at genome-wide significance, and **4** at suggestive significance.
 
@@ -429,16 +496,16 @@ Table: Coefficients for additive model
 
 |term                 | estimate| std.error| statistic| p.value|
 |:--------------------|--------:|---------:|---------:|-------:|
-|(Intercept)          |   115.18|     16.05|     7.175|   0.000|
-|sexM                 |    15.13|      3.53|     4.286|   0.000|
-|UNC19008219GG        |     5.88|     13.50|     0.436|   0.664|
-|UNC19008219TG        |    15.06|     12.19|     1.235|   0.220|
-|UNC19008219TT        |    21.51|     11.69|     1.841|   0.069|
-|UNC21619767AA        |    -5.50|     16.07|    -0.342|   0.733|
-|UNC21619767AC        |    -8.50|     16.07|    -0.529|   0.598|
-|UNC21619767CC        |   -20.52|      4.60|    -4.456|   0.000|
-|backupUNC060370616AA |   -49.30|     11.53|    -4.276|   0.000|
-|backupUNC060370616AG |   -37.32|     11.27|    -3.311|   0.001|
+|(Intercept)          |   105.07|     18.82|     5.582|   0.000|
+|sexM                 |    16.41|      4.14|     3.965|   0.000|
+|UNC19008219GG        |    -9.52|     15.83|    -0.602|   0.549|
+|UNC19008219TG        |     3.86|     14.29|     0.270|   0.788|
+|UNC19008219TT        |    10.22|     13.70|     0.746|   0.458|
+|UNC21619767AA        |   -41.85|     18.85|    -2.221|   0.029|
+|UNC21619767AC        |   -35.85|     18.85|    -1.902|   0.060|
+|UNC21619767CC        |   -14.00|      5.40|    -2.593|   0.011|
+|backupUNC060370616AA |   -34.12|     13.52|    -2.524|   0.013|
+|backupUNC060370616AG |   -21.85|     13.21|    -1.654|   0.102|
 
 
 
@@ -446,11 +513,11 @@ Table: ANOVA for additive model
 
 |term               | df| sumsq| meansq| statistic| p.value|
 |:------------------|--:|-----:|------:|---------:|-------:|
-|sex                |  1|  7601|   7601|     31.46|       0|
-|UNC19008219        |  3|  5968|   1989|      8.23|       0|
-|UNC21619767        |  3|  5912|   1971|      8.16|       0|
-|backupUNC060370616 |  2|  5851|   2926|     12.11|       0|
-|Residuals          | 86| 20776|    242|        NA|      NA|
+|sex                |  1|  6123|   6123|     18.43|   0.000|
+|UNC19008219        |  3|  4566|   1522|      4.58|   0.005|
+|UNC21619767        |  3|  4080|   1360|      4.09|   0.009|
+|backupUNC060370616 |  2|  4045|   2022|      6.09|   0.003|
+|Residuals          | 86| 28564|    332|        NA|      NA|
 
 
 
@@ -458,7 +525,7 @@ Table: Summary of additive PRS model
 
 | r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
 |---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
-|     0.549|         0.502|  15.5|      11.7|       0|  9|   -394| 811| 839|    20776|          86|   96|
+|     0.397|         0.334|  18.2|      6.29|       0|  9|   -410| 841| 869|    28564|          86|   96|
 
 
 
@@ -466,7 +533,7 @@ Table: Summary of interacting PRS model
 
 | r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
 |---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
-|     0.602|         0.527|  15.1|      8.07|       0| 15|   -388| 811| 854|    18349|          80|   96|
+|     0.438|         0.332|  18.2|      4.15|       0| 15|   -406| 847| 890|    26646|          80|   96|
 
 
 
@@ -474,8 +541,8 @@ Table: ANOVA of additive vs interacting model
 
 |term                                                         | df.residual|   rss| df| sumsq| statistic| p.value|
 |:------------------------------------------------------------|-----------:|-----:|--:|-----:|---------:|-------:|
-|chol1 ~ sex + UNC19008219 + UNC21619767 + backupUNC060370616 |          86| 20776| NA|    NA|        NA|      NA|
-|chol1 ~ sex + UNC19008219 * UNC21619767 * backupUNC060370616 |          80| 18349|  6|  2427|      1.76|   0.117|
+|chol2 ~ sex + UNC19008219 + UNC21619767 + backupUNC060370616 |          86| 28564| NA|    NA|        NA|      NA|
+|chol2 ~ sex + UNC19008219 * UNC21619767 * backupUNC060370616 |          80| 26646|  6|  1917|     0.959|   0.458|
 
 ![](figures/risk-models-1.png)<!-- -->![](figures/risk-models-2.png)<!-- -->![](figures/risk-models-3.png)<!-- -->
 
@@ -484,18 +551,18 @@ Table: ANOVA of additive vs interacting model
 Calculated the relative variance explained by the PRS model, relative to gene, sex and diet effects.
 
 
-|term                    |  df|   sumsq|  meansq| statistic| p.value|
-|:-----------------------|---:|-------:|-------:|---------:|-------:|
-|sex                     |   1|  9931.2|  9931.2|    19.884|   0.000|
-|diet                    |   1| 66555.4| 66555.4|   133.257|   0.000|
-|UNC19008219             |   3|   292.7|    97.6|     0.195|   0.899|
-|UNC21619767             |   3|  3811.1|  1270.4|     2.543|   0.058|
-|backupUNC060370616      |   2| 10559.4|  5279.7|    10.571|   0.000|
-|sex:diet                |   1|   741.2|   741.2|     1.484|   0.225|
-|diet:UNC19008219        |   2|  6253.0|  3126.5|     6.260|   0.002|
-|diet:UNC21619767        |   3|  4574.5|  1524.8|     3.053|   0.030|
-|diet:backupUNC060370616 |   2|    40.6|    20.3|     0.041|   0.960|
-|Residuals               | 168| 83908.1|   499.5|        NA|      NA|
+|term                    |  df|  sumsq|  meansq| statistic| p.value|
+|:-----------------------|---:|------:|-------:|---------:|-------:|
+|sex                     |   1|   6689|  6688.5|     9.065|   0.003|
+|diet                    |   1|  96319| 96319.2|   130.541|   0.000|
+|UNC19008219             |   3|    289|    96.2|     0.130|   0.942|
+|UNC21619767             |   3|   2622|   874.1|     1.185|   0.317|
+|backupUNC060370616      |   2|   4920|  2460.2|     3.334|   0.038|
+|sex:diet                |   1|   1377|  1376.6|     1.866|   0.174|
+|diet:UNC19008219        |   2|   6451|  3225.5|     4.372|   0.014|
+|diet:UNC21619767        |   3|   5416|  1805.4|     2.447|   0.066|
+|diet:backupUNC060370616 |   2|    971|   485.4|     0.658|   0.519|
+|Residuals               | 167| 123220|   737.8|        NA|      NA|
 
 
 
@@ -503,15 +570,15 @@ Table: Summary of variance components from PRS model
 
 |term.type   | summeansq| pct.var|model                     |
 |:-----------|---------:|-------:|:-------------------------|
-|diet        |     66555|  74.742|Unadjusted                |
-|sex         |      9931|  11.153|Unadjusted                |
-|gene        |      6648|   7.465|Unadjusted                |
-|gene x diet |      4672|   5.246|Unadjusted                |
-|sex x diet  |       741|   0.832|Unadjusted                |
-|residual    |       499|   0.561|Unadjusted                |
-|gene        |      6648|  56.247|Adjusted for diet and sex |
-|gene x diet |      4672|  39.527|Adjusted for diet and sex |
-|residual    |       499|   4.226|Adjusted for diet and sex |
+|diet        |     96319|  84.440|Unadjusted                |
+|sex         |      6689|   5.864|Unadjusted                |
+|gene x diet |      5516|   4.836|Unadjusted                |
+|gene        |      3430|   3.007|Unadjusted                |
+|sex x diet  |      1377|   1.207|Unadjusted                |
+|residual    |       738|   0.647|Unadjusted                |
+|gene x diet |      5516|  56.959|Adjusted for diet and sex |
+|gene        |      3430|  35.422|Adjusted for diet and sex |
+|residual    |       738|   7.619|Adjusted for diet and sex |
 
 ![](figures/prs-variance-1.png)<!-- -->
 

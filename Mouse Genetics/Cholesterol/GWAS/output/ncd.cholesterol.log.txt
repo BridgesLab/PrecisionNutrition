@@ -1,0 +1,37 @@
+##
+## GEMMA Version    = 0.98.5 (2021-08-25)
+## Build profile    = /gnu/store/8rvid272yb53bgascf5c468z0jhsyflj-profile
+## GCC version      = 4.2.1
+## GSL Version      = 2.7
+## OpenBlas         = OpenBLAS 0.3.15  - OpenBLAS 0.3.21 DYNAMIC_ARCH NO_AFFINITY USE_OPENMP Haswell MAX_THREADS=56
+##   arch           = Haswell
+##   threads        = 8
+##   parallel type  = openmp
+##
+## Command Line Input = gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -a SNP-annotation.txt -maf 0.05 -d output/ncd.cholesterol.eigenD.txt -u output/ncd.cholesterol.eigenU.txt -lmm 1 -o ncd.cholesterol 
+##
+## Date = Sun Oct 15 17:12:15 2023
+##
+## Summary Statistics:
+## number of total individuals = 96
+## number of analyzed individuals = 96
+## number of covariates = 2
+## number of phenotypes = 1
+## number of total SNPs/var = 77642
+## number of analyzed SNPs/var = 72766
+## REMLE log-likelihood in the null model = -416.171
+## MLE log-likelihood in the null model = -419.431
+## pve estimate in the null model = 0.695843
+## se(pve) in the null model = 0.264934
+## vg estimate in the null model = 588.16
+## ve estimate in the null model = 133.517
+## beta estimate in the null model =   90.6093  -14.4183
+## se(beta) =   2.37444  4.03762
+##
+## Computation Time:
+## total computation time = 0.237044 min 
+## computation time break down: 
+##      time on eigen-decomposition = 0 min 
+##      time on calculating UtX = 0.00306162 min 
+##      time on optimization = 0.207519 min 
+##

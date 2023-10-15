@@ -301,7 +301,7 @@ genotype.data %>%
 
 ## NCD Analysis
 
-```{sh gemma-ncd, eval=F}
+```{sh gemma-ncd, eval=T}
 #generate relatedness matrix (uses standard matrix).  this analysis is using teh non-adjusted cholesterol levels, and using ncd-gender as the covariate file
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -gk 1 -c ncd-gender.txt -o ncd.cholesterol
 #perform eigen decomposition
@@ -332,7 +332,7 @@ gemma -g DO-genotype-ncd.txt -p phenotype-chow-adjusted.txt -a SNP-annotation.tx
 
 ## HFD Analysis
 
-```{sh gemma-hf, eval=F}
+```{sh gemma-hf, eval=T}
 #generate relatedness matrix (uses standard matrix).  this analysis is using teh non-adjusted cholesterol levels, and using ncd-gender as the covariate file
 gemma -g DO-genotype-hf.txt -p phenotype-hf.txt -gk 1 -c hf-gender.txt -o hfd.cholesterol
 #perform eigen decomposition

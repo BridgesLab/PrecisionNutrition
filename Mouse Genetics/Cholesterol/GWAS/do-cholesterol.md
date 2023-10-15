@@ -83,14 +83,6 @@ There is no evidence of an interaction between sex and diet, though both covaria
 
 
 ```r
-#wrote out chol2 to a phenotype file
-cholesterol.phenotype.ncd.file <- 'phenotype-chow.txt'
-cholesterol.data %>%
-  filter(diet=='chow') %>%
-  dplyr::select(chol2) %>%
-  write_delim(col_names = F,cholesterol.phenotype.ncd.file)
-
-
 # regress chol2 to sex and wrote out those phenotypes
 lm.sex <- lm(chol2~sex,data=filter(cholesterol.data, diet=='chow'))
 cholesterol.phenotype.ncd.adjusted.file <- 'phenotype-chow-adjusted.txt'
@@ -102,15 +94,6 @@ model.frame(lm.sex) %>%
 adjusted.cholesterol.data %>%
   dplyr::select(adj.chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.ncd.adjusted.file)
-
-cholesterol.data %>%
-  filter(diet=='chow') %>%
-  dplyr::select(sex) %>%
-  mutate(intercept=1,
-         cov=case_when(sex=='F'~1,
-                       sex=='M'~0)) %>%
-  dplyr::select(-sex) %>% 
-  write_tsv(col_names = F, 'ncd-gender.txt') #this is the gender covariate file
 
 
 library(ggplot2)
@@ -166,6 +149,25 @@ formatted.genotype.data %>%
   select(marker,Ref,Alt,any_of(strains)) %>%
   write_csv(col_names = F, genotype.formattted.file.ncd)
 
+#filter for only strains with genotypes
+chow.genotypes <- formatted.genotype.data %>%
+    select(marker,Ref,Alt,any_of(strains)) %>% colnames
+
+cholesterol.phenotype.ncd.file <- 'phenotype-chow.txt'
+cholesterol.data %>%
+  filter(sample %in% chow.genotypes) %>%
+  dplyr::select(chol2) %>%
+  write_delim(col_names = F,cholesterol.phenotype.ncd.file)
+
+cholesterol.data %>%
+  filter(sample %in% chow.genotypes) %>%
+  dplyr::select(sex) %>%
+  mutate(intercept=1,
+         cov=case_when(sex=='F'~1,
+                       sex=='M'~0)) %>%
+  dplyr::select(-sex) %>% 
+  write_tsv(col_names = F, 'ncd-gender.txt') #this is the gender covariate file
+
 #making file formats for PLINK, needs a map and ped file
 genotype.formattted.map <- 'DO-genotype.map'
 genotype.data %>%
@@ -201,14 +203,6 @@ genotype.data %>%
 
 
 ```r
-#wrote out chol2 to a phenotype file
-cholesterol.phenotype.hf.file <- 'phenotype-hf.txt'
-cholesterol.data %>%
-  filter(diet=='hf') %>%
-  dplyr::select(chol2) %>%
-  write_delim(col_names = F,cholesterol.phenotype.hf.file)
-
-
 # regress chol2 to sex and wrote out those phenotypes
 lm.sex <- lm(chol2~sex,data=filter(cholesterol.data, diet=='hf'))
 cholesterol.phenotype.hf.adjusted.file <- 'phenotype-hf-adjusted.txt'
@@ -219,15 +213,6 @@ model.frame(lm.sex) %>%
 adjusted.cholesterol.data.hf %>%
   dplyr::select(adj.chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.hf.adjusted.file)
-
-cholesterol.data %>%
-  filter(diet=='hf') %>%
-  dplyr::select(sex) %>%
-  mutate(intercept=1,
-         cov=case_when(sex=='F'~1,
-                       sex=='M'~0)) %>%
-  dplyr::select(-sex) %>% 
-  write_tsv(col_names = F, 'hf-gender.txt') #this is the gender covariate file
 
 
 library(ggplot2)
@@ -279,6 +264,25 @@ genotype.data %>%
 strains.hf <- filter(cholesterol.data, diet=='hf') %>%
   pull(sample) #all strains
 
+hf.genotypes <- formatted.genotype.data %>%
+    select(marker,Ref,Alt,any_of(strains.hf)) %>% colnames
+
+cholesterol.data %>%
+  filter(sample %in% hf.genotypes) %>%
+  dplyr::select(sex) %>%
+  mutate(intercept=1,
+         cov=case_when(sex=='F'~1,
+                       sex=='M'~0)) %>%
+  dplyr::select(-sex) %>% 
+  write_tsv(col_names = F, 'hf-gender.txt') #this is the gender covariate file
+
+#wrote out chol2 to a phenotype file
+cholesterol.phenotype.hf.file <- 'phenotype-hf.txt'
+cholesterol.data %>%
+  filter(sample %in% hf.genotypes) %>%
+  dplyr::select(chol2) %>%
+  write_delim(col_names = F,cholesterol.phenotype.hf.file)
+
 formatted.genotype.data %>%
   select(marker,Ref,Alt,any_of(strains.hf)) %>%
   write_csv(col_names = F, genotype.formattted.file.hf)
@@ -320,7 +324,7 @@ genotype.data %>%
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -gk 1 -c ncd-gender.txt -o ncd.cholesterol
 #perform eigen decomposition
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -k output/ncd.cholesterol.cXX.txt -eigen -o ncd.cholesterol
-#run mixed linear model for fat.gain mass
+#run mixed linear model for cholesterol levels
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -a SNP-annotation.txt -maf 0.05 -d output/ncd.cholesterol.eigenD.txt -u output/ncd.cholesterol.eigenU.txt -lmm 1 -o ncd.cholesterol #used maf cutoff of 0.05 (Default is 0.01)
 
 ## number of total individuals = 96
@@ -334,14 +338,180 @@ gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -a SNP-anno
 
 #using pruned file
 #generate relatedness matrix (uses standard matrix)
-gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -gk 1 -o ncd.cholesterol.pruned
+#gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -gk 1 -o ncd.cholesterol.pruned
 #perform eigen decomposition
-gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -k output/ncd.cholesterol.pruned.cXX.txt -eigen -o ncd.cholesterol.pruned
+#gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -k output/ncd.cholesterol.pruned.cXX.txt -eigen -o ncd.cholesterol.pruned
 #run mixed linear model for fat.gain mass
-gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -a SNP-annotation.txt -d output/ncd.cholesterol.pruned.eigenD.txt -u output/ncd.cholesterol.pruned.eigenU.txt -lmm 1 -o ncd.cholesterol.pruned
+#gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -a SNP-annotation.txt -d output/ncd.cholesterol.pruned.eigenD.txt -u output/ncd.cholesterol.pruned.eigenU.txt -lmm 1 -o ncd.cholesterol.pruned
 
 #run bslmm (see http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf), 250,000 burnin and 1,000,000 for number of sampling iterations
-gemma -g DO-genotype-ncd.txt -p phenotype-chow-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o ncd.cholesterol
+#gemma -g DO-genotype-ncd.txt -p phenotype-chow-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o ncd.cholesterol
+```
+
+```
+## GEMMA 0.98.5 (2021-08-25) by Xiang Zhou, Pjotr Prins and team (C) 2012-2021
+## Reading Files ... 
+## ## number of total individuals = 96
+## ## number of analyzed individuals = 96
+## ## number of covariates = 2
+## ## number of phenotypes = 1
+## ## number of total SNPs/var        =    77642
+## ## number of analyzed SNPs         =    76596
+## Calculating Relatedness Matrix ... 
+##                                                    0%
+                                                   1%
+=                                                  3%
+=                                                  4%
+==                                                 5%
+===                                                6%
+===                                                8%
+====                                               9%
+=====                                              10%
+=====                                              12%
+======                                             13%
+=======                                            14%
+=======                                            15%
+========                                           17%
+=========                                          18%
+=========                                          19%
+==========                                         21%
+==========                                         22%
+===========                                        23%
+============                                       24%
+============                                       26%
+=============                                      27%
+==============                                     28%
+==============                                     30%
+===============                                    31%
+================                                   32%
+================                                   33%
+=================                                  35%
+==================                                 36%
+==================                                 37%
+===================                                39%
+===================                                40%
+====================                               41%
+=====================                              43%
+=====================                              44%
+======================                             45%
+=======================                            46%
+=======================                            48%
+========================                           49%
+=========================                          50%
+=========================                          52%
+==========================                         53%
+===========================                        54%
+===========================                        55%
+============================                       57%
+============================                       58%
+=============================                      59%
+==============================                     61%
+==============================                     62%
+===============================                    63%
+================================                   64%
+================================                   66%
+=================================                  67%
+==================================                 68%
+==================================                 70%
+===================================                71%
+====================================               72%
+====================================               73%
+=====================================              75%
+=====================================              76%
+======================================             77%
+=======================================            79%
+=======================================            80%
+========================================           81%
+=========================================          82%
+=========================================          84%
+==========================================         85%
+===========================================        86%
+===========================================        88%
+============================================       89%
+=============================================      90%
+=============================================      91%
+==============================================     93%
+===============================================    94%
+===============================================    95%
+================================================   97%
+================================================   98%
+=================================================  99%
+================================================== 100%
+## **** INFO: Done.
+## GEMMA 0.98.5 (2021-08-25) by Xiang Zhou, Pjotr Prins and team (C) 2012-2021
+## Reading Files ... 
+## ## number of total individuals = 96
+## ## number of analyzed individuals = 96
+## ## number of covariates = 2
+## ## number of phenotypes = 1
+## ## number of total SNPs/var        =    77642
+## ## number of analyzed SNPs         =    76596
+## Start Eigen-Decomposition...
+## **** INFO: Done.
+## GEMMA 0.98.5 (2021-08-25) by Xiang Zhou, Pjotr Prins and team (C) 2012-2021
+## Reading Files ... 
+## ## number of total individuals = 96
+## ## number of analyzed individuals = 96
+## ## number of covariates = 2
+## ## number of phenotypes = 1
+## ## number of total SNPs/var        =    77642
+## ## number of analyzed SNPs         =    72766
+## pve estimate =0.695843
+## se(pve) =0.264934
+##                                                    0%
+                                                   2%
+=                                                  4%
+==                                                 6%
+===                                                8%
+====                                               10%
+=====                                              12%
+======                                             14%
+=======                                            16%
+========                                           18%
+=========                                          20%
+==========                                         22%
+===========                                        24%
+============                                       26%
+=============                                      28%
+==============                                     30%
+===============                                    32%
+================                                   34%
+=================                                  36%
+==================                                 38%
+===================                                40%
+====================                               42%
+=====================                              44%
+======================                             46%
+=======================                            48%
+========================                           50%
+=========================                          52%
+==========================                         54%
+===========================                        56%
+============================                       58%
+=============================                      60%
+==============================                     62%
+===============================                    64%
+================================                   66%
+=================================                  68%
+==================================                 70%
+===================================                72%
+====================================               74%
+=====================================              76%
+======================================             78%
+=======================================            80%
+========================================           82%
+=========================================          84%
+==========================================         86%
+===========================================        88%
+============================================       90%
+=============================================      92%
+==============================================     94%
+===============================================    96%
+================================================   98%
+=================================================  100%
+================================================== 100%
+================================================== 100%
+## **** INFO: Done.
 ```
 
 ## HFD Analysis
@@ -373,7 +543,173 @@ gemma -g DO-genotype-hf.txt -p phenotype-hf.txt -c hf-gender.txt -a SNP-annotati
 #gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -a SNP-annotation.txt -d output/ncd.cholesterol.pruned.eigenD.txt -u output/ncd.cholesterol.pruned.eigenU.txt -lmm 1 -o ncd.cholesterol.pruned
 
 #run bslmm (see http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf), 250,000 burnin and 1,000,000 for number of sampling iterations
-gemma -g DO-genotype-hf.txt -p phenotype-hf-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o hfd.cholesterol
+#gemma -g DO-genotype-hf.txt -p phenotype-hf-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o hfd.cholesterol
+```
+
+```
+## GEMMA 0.98.5 (2021-08-25) by Xiang Zhou, Pjotr Prins and team (C) 2012-2021
+## Reading Files ... 
+## ## number of total individuals = 91
+## ## number of analyzed individuals = 90
+## ## number of covariates = 2
+## ## number of phenotypes = 1
+## ## number of total SNPs/var        =    77642
+## ## number of analyzed SNPs         =    75669
+## Calculating Relatedness Matrix ... 
+##                                                    0%
+                                                   1%
+=                                                  3%
+=                                                  4%
+==                                                 5%
+===                                                6%
+===                                                8%
+====                                               9%
+=====                                              10%
+=====                                              12%
+======                                             13%
+=======                                            14%
+=======                                            15%
+========                                           17%
+=========                                          18%
+=========                                          19%
+==========                                         21%
+==========                                         22%
+===========                                        23%
+============                                       24%
+============                                       26%
+=============                                      27%
+==============                                     28%
+==============                                     30%
+===============                                    31%
+================                                   32%
+================                                   33%
+=================                                  35%
+==================                                 36%
+==================                                 37%
+===================                                39%
+===================                                40%
+====================                               41%
+=====================                              43%
+=====================                              44%
+======================                             45%
+=======================                            46%
+=======================                            48%
+========================                           49%
+=========================                          50%
+=========================                          52%
+==========================                         53%
+===========================                        54%
+===========================                        55%
+============================                       57%
+============================                       58%
+=============================                      59%
+==============================                     61%
+==============================                     62%
+===============================                    63%
+================================                   64%
+================================                   66%
+=================================                  67%
+==================================                 68%
+==================================                 70%
+===================================                71%
+====================================               72%
+====================================               73%
+=====================================              75%
+=====================================              76%
+======================================             77%
+=======================================            79%
+=======================================            80%
+========================================           81%
+=========================================          82%
+=========================================          84%
+==========================================         85%
+===========================================        86%
+===========================================        88%
+============================================       89%
+=============================================      90%
+=============================================      91%
+==============================================     93%
+===============================================    94%
+===============================================    95%
+================================================   97%
+================================================   98%
+=================================================  99%
+================================================== 100%
+## **** INFO: Done.
+## GEMMA 0.98.5 (2021-08-25) by Xiang Zhou, Pjotr Prins and team (C) 2012-2021
+## Reading Files ... 
+## ## number of total individuals = 91
+## ## number of analyzed individuals = 90
+## ## number of covariates = 2
+## ## number of phenotypes = 1
+## ## number of total SNPs/var        =    77642
+## ## number of analyzed SNPs         =    75669
+## Start Eigen-Decomposition...
+## **** INFO: Done.
+## GEMMA 0.98.5 (2021-08-25) by Xiang Zhou, Pjotr Prins and team (C) 2012-2021
+## Reading Files ... 
+## ## number of total individuals = 91
+## ## number of analyzed individuals = 90
+## ## number of covariates = 2
+## ## number of phenotypes = 1
+## ## number of total SNPs/var        =    77642
+## ## number of analyzed SNPs         =    72180
+## pve estimate =0.675569
+## se(pve) =0.296664
+##                                                    0%
+                                                   2%
+=                                                  4%
+==                                                 6%
+===                                                8%
+====                                               10%
+=====                                              12%
+======                                             14%
+=======                                            16%
+========                                           18%
+=========                                          20%
+==========                                         22%
+===========                                        24%
+============                                       26%
+=============                                      28%
+==============                                     30%
+===============                                    32%
+================                                   34%
+=================                                  36%
+==================                                 38%
+===================                                40%
+====================                               42%
+=====================                              44%
+======================                             46%
+=======================                            48%
+========================                           50%
+=========================                          52%
+==========================                         54%
+===========================                        56%
+============================                       58%
+=============================                      60%
+==============================                     62%
+===============================                    64%
+================================                   66%
+=================================                  68%
+==================================                 70%
+===================================                72%
+====================================               74%
+=====================================              76%
+======================================             78%
+=======================================            80%
+========================================           82%
+=========================================          84%
+==========================================         86%
+===========================================        88%
+============================================       90%
+=============================================      92%
+==============================================     94%
+===============================================    96%
+================================================   98%
+=================================================  100%
+================================================== 100%
+================================================== 100%
+## **** INFO: Done.
 ```
 
 ## Pruning and Clumping by LD

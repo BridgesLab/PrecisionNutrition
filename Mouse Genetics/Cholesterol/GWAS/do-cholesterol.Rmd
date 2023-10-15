@@ -95,14 +95,6 @@ There is no evidence of an interaction between sex and diet, though both covaria
 ### Preparing Phenotype Data
 
 ```{r chow-phenotype-data}
-#wrote out chol2 to a phenotype file
-cholesterol.phenotype.ncd.file <- 'phenotype-chow.txt'
-cholesterol.data %>%
-  filter(diet=='chow') %>%
-  dplyr::select(chol2) %>%
-  write_delim(col_names = F,cholesterol.phenotype.ncd.file)
-
-
 # regress chol2 to sex and wrote out those phenotypes
 lm.sex <- lm(chol2~sex,data=filter(cholesterol.data, diet=='chow'))
 cholesterol.phenotype.ncd.adjusted.file <- 'phenotype-chow-adjusted.txt'
@@ -114,15 +106,6 @@ model.frame(lm.sex) %>%
 adjusted.cholesterol.data %>%
   dplyr::select(adj.chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.ncd.adjusted.file)
-
-cholesterol.data %>%
-  filter(diet=='chow') %>%
-  dplyr::select(sex) %>%
-  mutate(intercept=1,
-         cov=case_when(sex=='F'~1,
-                       sex=='M'~0)) %>%
-  dplyr::select(-sex) %>% 
-  write_tsv(col_names = F, 'ncd-gender.txt') #this is the gender covariate file
 
 
 library(ggplot2)
@@ -165,6 +148,25 @@ formatted.genotype.data %>%
   select(marker,Ref,Alt,any_of(strains)) %>%
   write_csv(col_names = F, genotype.formattted.file.ncd)
 
+#filter for only strains with genotypes
+chow.genotypes <- formatted.genotype.data %>%
+    select(marker,Ref,Alt,any_of(strains)) %>% colnames
+
+cholesterol.phenotype.ncd.file <- 'phenotype-chow.txt'
+cholesterol.data %>%
+  filter(sample %in% chow.genotypes) %>%
+  dplyr::select(chol2) %>%
+  write_delim(col_names = F,cholesterol.phenotype.ncd.file)
+
+cholesterol.data %>%
+  filter(sample %in% chow.genotypes) %>%
+  dplyr::select(sex) %>%
+  mutate(intercept=1,
+         cov=case_when(sex=='F'~1,
+                       sex=='M'~0)) %>%
+  dplyr::select(-sex) %>% 
+  write_tsv(col_names = F, 'ncd-gender.txt') #this is the gender covariate file
+
 #making file formats for PLINK, needs a map and ped file
 genotype.formattted.map <- 'DO-genotype.map'
 genotype.data %>%
@@ -200,14 +202,6 @@ genotype.data %>%
 ### Preparing Phenotype Data - HFD
 
 ```{r chow-phenotype-data-hfd}
-#wrote out chol2 to a phenotype file
-cholesterol.phenotype.hf.file <- 'phenotype-hf.txt'
-cholesterol.data %>%
-  filter(diet=='hf') %>%
-  dplyr::select(chol2) %>%
-  write_delim(col_names = F,cholesterol.phenotype.hf.file)
-
-
 # regress chol2 to sex and wrote out those phenotypes
 lm.sex <- lm(chol2~sex,data=filter(cholesterol.data, diet=='hf'))
 cholesterol.phenotype.hf.adjusted.file <- 'phenotype-hf-adjusted.txt'
@@ -218,15 +212,6 @@ model.frame(lm.sex) %>%
 adjusted.cholesterol.data.hf %>%
   dplyr::select(adj.chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.hf.adjusted.file)
-
-cholesterol.data %>%
-  filter(diet=='hf') %>%
-  dplyr::select(sex) %>%
-  mutate(intercept=1,
-         cov=case_when(sex=='F'~1,
-                       sex=='M'~0)) %>%
-  dplyr::select(-sex) %>% 
-  write_tsv(col_names = F, 'hf-gender.txt') #this is the gender covariate file
 
 
 library(ggplot2)
@@ -264,6 +249,25 @@ genotype.data %>%
 
 strains.hf <- filter(cholesterol.data, diet=='hf') %>%
   pull(sample) #all strains
+
+hf.genotypes <- formatted.genotype.data %>%
+    select(marker,Ref,Alt,any_of(strains.hf)) %>% colnames
+
+cholesterol.data %>%
+  filter(sample %in% hf.genotypes) %>%
+  dplyr::select(sex) %>%
+  mutate(intercept=1,
+         cov=case_when(sex=='F'~1,
+                       sex=='M'~0)) %>%
+  dplyr::select(-sex) %>% 
+  write_tsv(col_names = F, 'hf-gender.txt') #this is the gender covariate file
+
+#wrote out chol2 to a phenotype file
+cholesterol.phenotype.hf.file <- 'phenotype-hf.txt'
+cholesterol.data %>%
+  filter(sample %in% hf.genotypes) %>%
+  dplyr::select(chol2) %>%
+  write_delim(col_names = F,cholesterol.phenotype.hf.file)
 
 formatted.genotype.data %>%
   select(marker,Ref,Alt,any_of(strains.hf)) %>%
@@ -306,7 +310,7 @@ genotype.data %>%
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -gk 1 -c ncd-gender.txt -o ncd.cholesterol
 #perform eigen decomposition
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -k output/ncd.cholesterol.cXX.txt -eigen -o ncd.cholesterol
-#run mixed linear model for fat.gain mass
+#run mixed linear model for cholesterol levels
 gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -a SNP-annotation.txt -maf 0.05 -d output/ncd.cholesterol.eigenD.txt -u output/ncd.cholesterol.eigenU.txt -lmm 1 -o ncd.cholesterol #used maf cutoff of 0.05 (Default is 0.01)
 
 ## number of total individuals = 96
@@ -320,14 +324,14 @@ gemma -g DO-genotype-ncd.txt -p phenotype-chow.txt -c ncd-gender.txt -a SNP-anno
 
 #using pruned file
 #generate relatedness matrix (uses standard matrix)
-gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -gk 1 -o ncd.cholesterol.pruned
+#gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -gk 1 -o ncd.cholesterol.pruned
 #perform eigen decomposition
-gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -k output/ncd.cholesterol.pruned.cXX.txt -eigen -o ncd.cholesterol.pruned
+#gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -k output/ncd.cholesterol.pruned.cXX.txt -eigen -o ncd.cholesterol.pruned
 #run mixed linear model for fat.gain mass
-gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -a SNP-annotation.txt -d output/ncd.cholesterol.pruned.eigenD.txt -u output/ncd.cholesterol.pruned.eigenU.txt -lmm 1 -o ncd.cholesterol.pruned
+#gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -a SNP-annotation.txt -d output/ncd.cholesterol.pruned.eigenD.txt -u output/ncd.cholesterol.pruned.eigenU.txt -lmm 1 -o ncd.cholesterol.pruned
 
 #run bslmm (see http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf), 250,000 burnin and 1,000,000 for number of sampling iterations
-gemma -g DO-genotype-ncd.txt -p phenotype-chow-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o ncd.cholesterol
+#gemma -g DO-genotype-ncd.txt -p phenotype-chow-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o ncd.cholesterol
 ```
 
 ## HFD Analysis
@@ -358,7 +362,7 @@ gemma -g DO-genotype-hf.txt -p phenotype-hf.txt -c hf-gender.txt -a SNP-annotati
 #gemma -bfile DO-genotype-pruned -p phenotype-chow.txt -a SNP-annotation.txt -d output/ncd.cholesterol.pruned.eigenD.txt -u output/ncd.cholesterol.pruned.eigenU.txt -lmm 1 -o ncd.cholesterol.pruned
 
 #run bslmm (see http://romainvilloutreix.alwaysdata.net/romainvilloutreix/wp-content/uploads/2017/01/gwas_gemma-2017-01-17.pdf), 250,000 burnin and 1,000,000 for number of sampling iterations
-gemma -g DO-genotype-hf.txt -p phenotype-hf-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o hfd.cholesterol
+#gemma -g DO-genotype-hf.txt -p phenotype-hf-adjusted.txt -a SNP-annotation.txt -bslmm 1 -w 100000 -s 1000000 -rpace 10 -wpace 1000 -maf 0.05 -o hfd.cholesterol
 ```
 
 ## Pruning and Clumping by LD

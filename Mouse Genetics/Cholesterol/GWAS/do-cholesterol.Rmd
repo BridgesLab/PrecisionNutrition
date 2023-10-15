@@ -19,7 +19,7 @@ output:
 library(knitr)
 #figures makde will go to directory called figures, will make them as both png and pdf files 
 opts_chunk$set(fig.path='figures/',
-               echo=FALSE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
 options(scipen = 2, digits = 3)
 # set echo and message to TRUE if you want to display code blocks and code output respectively
 
@@ -64,7 +64,8 @@ genotype.data <- read_csv(genotype.filename,
 ))
 
 phenotype.filename <- '../Svenson-183_Svenson_DO-phenotypes.csv'
-phenotype.data <- read_csv(phenotype.filename, na='-999999')
+phenotype.data <- read_csv(phenotype.filename)
+phenotype.data[phenotype.data=="-999999"] <- NA
 ```
 
 # Analysis
@@ -79,10 +80,10 @@ cholesterol.data <-
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
-  summarize_at(.vars=vars(chol1), .funs=list(mean=mean,se=se))
+  summarize_at(.vars=vars(chol2), .funs=list(mean=mean,se=se))
 
 library(broom)
-lm(chol1~sex*diet, data=cholesterol.data) %>%
+lm(chol2~sex*diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global interactions between sex and diet")
 ```
@@ -94,24 +95,24 @@ There is no evidence of an interaction between sex and diet, though both covaria
 ### Preparing Phenotype Data
 
 ```{r chow-phenotype-data}
-#wrote out chol1 to a phenotype file
+#wrote out chol2 to a phenotype file
 cholesterol.phenotype.ncd.file <- 'phenotype-chow.txt'
 cholesterol.data %>%
   filter(diet=='chow') %>%
-  dplyr::select(chol1) %>%
+  dplyr::select(chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.ncd.file)
 
 
-# regress chol1 to sex and wrote out those phenotypes
-lm.sex <- lm(chol1~sex,data=filter(cholesterol.data, diet=='chow'))
+# regress chol2 to sex and wrote out those phenotypes
+lm.sex <- lm(chol2~sex,data=filter(cholesterol.data, diet=='chow'))
 cholesterol.phenotype.ncd.adjusted.file <- 'phenotype-chow-adjusted.txt'
-cholesterol.data %>% 
-  filter(diet=='chow') %>%
-  mutate(adj.chol1 = residuals(lm.sex)+coef(lm.sex)['(Intercept)']) -> 
+model.frame(lm.sex) %>% 
+  mutate(adj.chol2 = residuals(lm.sex)+coef(lm.sex)['(Intercept)']) %>% 
+  mutate(sample=paste(sex,row_number(),sep="")) -> 
   adjusted.cholesterol.data
 
 adjusted.cholesterol.data %>%
-  dplyr::select(adj.chol1) %>%
+  dplyr::select(adj.chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.ncd.adjusted.file)
 
 cholesterol.data %>%
@@ -126,13 +127,13 @@ cholesterol.data %>%
 
 library(ggplot2)
 ggplot(adjusted.cholesterol.data,
-       aes(x=adj.chol1,
+       aes(x=adj.chol2,
            fill=sex)) +
   geom_density(alpha=0.5) +
   labs(x='Sex adjusted cholesterol levels')
 
 library(broom)
-shapiro.test(adjusted.cholesterol.data$adj.chol1) %>% 
+shapiro.test(adjusted.cholesterol.data$adj.chol2) %>% 
   tidy() %>%
   kable(caption="Normality test for adjusted cholesterol levels")
 ```
@@ -161,7 +162,7 @@ strains <- filter(cholesterol.data, diet=='chow') %>%
   pull(sample) #all strains
 
 formatted.genotype.data %>%
-  select(marker,Ref,Alt,all_of(strains)) %>%
+  select(marker,Ref,Alt,any_of(strains)) %>%
   write_csv(col_names = F, genotype.formattted.file.ncd)
 
 #making file formats for PLINK, needs a map and ped file
@@ -180,7 +181,7 @@ genotype.data %>%
   mutate(fam='DO') %>% #added family
   mutate(pid=0) %>% #unknown father
   mutate(mid=0) %>% #uknnown mother 
-  rename(pheno=adj.chol1) %>% #added phenotype
+  rename(pheno=adj.chol2) %>% #added phenotype
   #mutate(sex=0) %>% #add sex from phenotype
   #mutate(id='colname') %>% #added column name
   separate(id, into=c('sex','id'), sep=1) %>% #separate name into sex and id
@@ -199,24 +200,23 @@ genotype.data %>%
 ### Preparing Phenotype Data - HFD
 
 ```{r chow-phenotype-data-hfd}
-#wrote out chol1 to a phenotype file
+#wrote out chol2 to a phenotype file
 cholesterol.phenotype.hf.file <- 'phenotype-hf.txt'
 cholesterol.data %>%
   filter(diet=='hf') %>%
-  dplyr::select(chol1) %>%
+  dplyr::select(chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.hf.file)
 
 
-# regress chol1 to sex and wrote out those phenotypes
-lm.sex <- lm(chol1~sex,data=filter(cholesterol.data, diet=='hf'))
+# regress chol2 to sex and wrote out those phenotypes
+lm.sex <- lm(chol2~sex,data=filter(cholesterol.data, diet=='hf'))
 cholesterol.phenotype.hf.adjusted.file <- 'phenotype-hf-adjusted.txt'
-cholesterol.data %>% 
-  filter(diet=='hf') %>%
-  mutate(adj.chol1 = residuals(lm.sex)+coef(lm.sex)['(Intercept)']) -> 
+model.frame(lm.sex) %>% 
+  mutate(adj.chol2 = residuals(lm.sex)+coef(lm.sex)['(Intercept)']) -> 
   adjusted.cholesterol.data.hf
 
 adjusted.cholesterol.data.hf %>%
-  dplyr::select(adj.chol1) %>%
+  dplyr::select(adj.chol2) %>%
   write_delim(col_names = F,cholesterol.phenotype.hf.adjusted.file)
 
 cholesterol.data %>%
@@ -231,13 +231,13 @@ cholesterol.data %>%
 
 library(ggplot2)
 ggplot(adjusted.cholesterol.data.hf,
-       aes(x=adj.chol1,
+       aes(x=adj.chol2,
            fill=sex)) +
   geom_density(alpha=0.5) +
   labs(x='Sex adjusted cholesterol levels')
 
 library(broom)
-shapiro.test(adjusted.cholesterol.data.hf$adj.chol1) %>% 
+shapiro.test(adjusted.cholesterol.data.hf$adj.chol2) %>% 
   tidy() %>%
   kable(caption="Normality test for adjusted cholesterol levels")
 ```
@@ -266,7 +266,7 @@ strains.hf <- filter(cholesterol.data, diet=='hf') %>%
   pull(sample) #all strains
 
 formatted.genotype.data %>%
-  select(marker,Ref,Alt,all_of(strains.hf)) %>%
+  select(marker,Ref,Alt,any_of(strains.hf)) %>%
   write_csv(col_names = F, genotype.formattted.file.hf)
 
 #making file formats for PLINK, needs a map and ped file
@@ -285,7 +285,7 @@ genotype.data %>%
   mutate(fam='DO') %>% #added family
   mutate(pid=0) %>% #unknown father
   mutate(mid=0) %>% #uknnown mother 
-  rename(pheno=adj.chol1) %>% #added phenotype
+  rename(pheno=adj.chol2) %>% #added phenotype
   #mutate(sex=0) %>% #add sex from phenotype
   #mutate(id='colname') %>% #added column name
   separate(id, into=c('sex','id'), sep=1) %>% #separate name into sex and id

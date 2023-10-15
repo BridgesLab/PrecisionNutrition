@@ -705,12 +705,12 @@ lm(chol2~sex+Genotype, data=annotated.phenotypes %>%
   filter(diet=='chow') %>%
   filter(Genotype!='--')) %>%
   tidy %>%
-  kable(caption='ANOVA for sex-genotype interaction.')
+  kable(caption='ANOVA for sex and genotype.')
 ```
 
 
 
-Table: ANOVA for sex-genotype interaction.
+Table: ANOVA for sex and genotype.
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
@@ -720,7 +720,7 @@ Table: ANOVA for sex-genotype interaction.
 |GenotypeGG  |     36.4|      9.48|      3.84|   0.000|
 
 ```r
-aov(chol2~diet*sex*Genotype, data=annotated.phenotypes %>%
+aov(chol2~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
   filter(Genotype!='--')) %>%
   tidy %>%
   kable(caption='ANOVA for moderation of genotype effect by diet.')
@@ -730,16 +730,13 @@ aov(chol2~diet*sex*Genotype, data=annotated.phenotypes %>%
 
 Table: ANOVA for moderation of genotype effect by diet.
 
-|term              |  df|    sumsq|   meansq| statistic| p.value|
-|:-----------------|---:|--------:|--------:|---------:|-------:|
-|diet              |   1|  99203.6| 99203.62|   130.952|   0.000|
-|sex               |   1|   6038.5|  6038.49|     7.971|   0.005|
-|Genotype          |   2|   9681.0|  4840.50|     6.390|   0.002|
-|diet:sex          |   1|    626.6|   626.58|     0.827|   0.364|
-|diet:Genotype     |   2|   1042.2|   521.11|     0.688|   0.504|
-|sex:Genotype      |   2|     10.1|     5.07|     0.007|   0.993|
-|diet:sex:Genotype |   2|     20.5|    10.23|     0.014|   0.987|
-|Residuals         | 171| 129542.2|   757.56|        NA|      NA|
+|term          |  df|  sumsq| meansq| statistic| p.value|
+|:-------------|---:|------:|------:|---------:|-------:|
+|diet          |   1|  99204|  99204|   134.090|   0.000|
+|sex           |   1|   6038|   6038|     8.162|   0.005|
+|Genotype      |   2|   9681|   4841|     6.543|   0.002|
+|diet:Genotype |   2|   1032|    516|     0.698|   0.499|
+|Residuals     | 176| 130209|    740|        NA|      NA|
 
 ```r
 aov(chol2~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
@@ -918,16 +915,34 @@ Table: ANOVA for sex-genotype interaction on chow only.
 |Residuals    | 88| 32815.32|  372.90|        NA|      NA|
 
 ```r
-lm(chol2~sex+Genotype, data=second.annotated.phenotypes %>%
+aov(chol2~sex+Genotype, data=second.annotated.phenotypes %>%
   filter(diet=='chow') %>%
   filter(Genotype!='--')) %>%
   tidy %>%
-  kable(caption='linear model for sex-genotype interaction.')
+  kable(caption='ANOVA for sex and genotype on chow only.')
 ```
 
 
 
-Table: linear model for sex-genotype interaction.
+Table: ANOVA for sex and genotype on chow only.
+
+|term      | df| sumsq| meansq| statistic| p.value|
+|:---------|--:|-----:|------:|---------:|-------:|
+|sex       |  1|  4907|   4907|      13.3|   0.000|
+|Genotype  |  2|  4867|   2433|       6.6|   0.002|
+|Residuals | 89| 32816|    369|        NA|      NA|
+
+```r
+lm(chol2~sex+Genotype, data=second.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='linear model for sex and genotype.')
+```
+
+
+
+Table: linear model for sex and genotype.
 
 |term        | estimate| std.error| statistic| p.value|
 |:-----------|--------:|---------:|---------:|-------:|
@@ -1095,6 +1110,24 @@ Table: ANOVA for sex-genotype interaction on chow only.
 |Residuals    | 90| 33320|    370|        NA|      NA|
 
 ```r
+aov(chol2~sex+Genotype, data=third.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex and genotype on chow only.')
+```
+
+
+
+Table: ANOVA for sex and genotype on chow only.
+
+|term      | df| sumsq| meansq| statistic| p.value|
+|:---------|--:|-----:|------:|---------:|-------:|
+|sex       |  1|  6123|   6123|     16.22|       0|
+|Genotype  |  2|  6533|   3266|      8.65|       0|
+|Residuals | 92| 34723|    377|        NA|      NA|
+
+```r
 lm(chol2~sex+Genotype, data=third.annotated.phenotypes %>%
   filter(diet=='chow') %>%
   filter(Genotype!='--')) %>%
@@ -1112,28 +1145,6 @@ Table: linear model for sex-genotype interaction.
 |sexM        |     17.6|      4.03|      4.37|   0.000|
 |GenotypeTC  |     17.0|      6.35|      2.67|   0.009|
 |GenotypeTT  |     26.1|      6.39|      4.09|   0.000|
-
-```r
-aov(chol2~diet*sex*Genotype, data=third.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term              |  df|    sumsq| meansq| statistic| p.value|
-|:-----------------|---:|--------:|------:|---------:|-------:|
-|diet              |   1|  96283.9|  96284|   127.820|   0.000|
-|sex               |   1|   6723.8|   6724|     8.926|   0.003|
-|Genotype          |   2|   3191.7|   1596|     2.119|   0.123|
-|diet:sex          |   1|   1032.0|   1032|     1.370|   0.243|
-|diet:Genotype     |   2|   8085.5|   4043|     5.367|   0.005|
-|sex:Genotype      |   2|   1824.1|    912|     1.211|   0.300|
-|diet:sex:Genotype |   2|     61.9|     31|     0.041|   0.960|
-|Residuals         | 174| 131070.4|    753|        NA|      NA|
 
 ```r
 aov(chol2~diet+sex+Genotype+diet:Genotype, data=third.annotated.phenotypes %>%
@@ -1174,6 +1185,199 @@ Table: Model estimates for moderation of genotype effect by diet.
 |GenotypeTT        |    25.59|      9.00|     2.845|   0.005|
 |diethf:GenotypeTC |    -9.75|     12.14|    -0.803|   0.423|
 |diethf:GenotypeTT |   -35.76|     13.11|    -2.727|   0.007|
+
+### BSLMM Nominated NCD SNP
+
+This is based on the lead SNP from the NCD gemma analysis using BSLMM
+
+
+```r
+precomputed.snp.id <- 'UNC19008219' 
+precomputed.snp <- lmm.results %>%
+  filter(rs==precomputed.snp.id)
+
+precomputed.snp.genotypes <- 
+  filter(genotype.data, marker==precomputed.snp.id) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+precomputed.annotated.phenotypes <-
+  full_join(phenotype.data,
+            dplyr::select(precomputed.snp.genotypes,-marker),
+            by=c('sample'='sample'))
+
+library(ggplot2)
+location <- paste('Chr',precomputed.snp$chr,precomputed.snp$pos)
+precomputed.annotated.phenotypes %>%
+  group_by(Genotype) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol2),
+            Error=se(chol2)) %>%
+  ggplot(aes(y=Mean,
+             x=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':')))
+```
+
+![](figures/bslmm-snp-analysis-1.png)<!-- -->
+
+```r
+precomputed.annotated.phenotypes %>%
+  group_by(Genotype,sex) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol2),
+            Error=se(chol2),
+            n=length(chol2)) %>%
+  ggplot(aes(y=Mean,
+             x=sex,
+             fill=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity',position='dodge',width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':')))+
+  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16))
+```
+
+![](figures/bslmm-snp-analysis-2.png)<!-- -->
+
+```r
+library(forcats)
+precomputed.annotated.phenotypes %>%
+  group_by(Genotype,sex,diet) %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol2),
+            Error=se(chol2),
+            n=length(chol2)) %>%
+  mutate(diet=fct_recode(diet,
+                         "Chow"='chow',
+                         "HFHS"='hf')) %>%
+  ggplot(aes(y=Mean,
+             fill=Genotype,
+             x=sex,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  facet_grid(diet~.) +
+  geom_bar(stat='identity',position='dodge',width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':'))) +
+  geom_text(aes(label=n,y=8), 
+            position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
+```
+
+![](figures/bslmm-snp-analysis-3.png)<!-- -->
+
+```r
+aov(chol2~sex*Genotype, data=precomputed.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex-genotype interaction on chow only.')
+```
+
+
+
+Table: ANOVA for sex-genotype interaction on chow only.
+
+|term         | df| sumsq| meansq| statistic| p.value|
+|:------------|--:|-----:|------:|---------:|-------:|
+|sex          |  1|  5917|   5917|    14.516|   0.000|
+|Genotype     |  2|  4557|   2279|     5.589|   0.005|
+|sex:Genotype |  2|   776|    388|     0.951|   0.390|
+|Residuals    | 88| 35873|    408|        NA|      NA|
+
+```r
+aov(chol2~sex+Genotype, data=precomputed.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex and genotype on chow only.')
+```
+
+
+
+Table: ANOVA for sex and genotype on chow only.
+
+|term      | df| sumsq| meansq| statistic| p.value|
+|:---------|--:|-----:|------:|---------:|-------:|
+|sex       |  1|  5917|   5917|      14.5|   0.000|
+|Genotype  |  2|  4557|   2279|       5.6|   0.005|
+|Residuals | 90| 36649|    407|        NA|      NA|
+
+```r
+lm(chol2~sex+Genotype, data=precomputed.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='linear model for sex and genotype')
+```
+
+
+
+Table: linear model for sex and genotype
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |     57.3|      8.97|      6.38|   0.000|
+|sexM        |     16.9|      4.25|      3.98|   0.000|
+|GenotypeTG  |     10.3|      9.36|      1.10|   0.273|
+|GenotypeTT  |     22.3|      8.75|      2.55|   0.013|
+
+```r
+aov(chol2~diet+sex+Genotype+diet:Genotype, data=precomputed.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+```
+
+
+
+Table: ANOVA for moderation of genotype effect by diet.
+
+|term          |  df|  sumsq| meansq| statistic| p.value|
+|:-------------|---:|------:|------:|---------:|-------:|
+|diet          |   1|  96218|  96218|   123.529|   0.000|
+|sex           |   1|   6544|   6544|     8.402|   0.004|
+|Genotype      |   2|    254|    127|     0.163|   0.850|
+|diet:Genotype |   2|   7070|   3535|     4.538|   0.012|
+|Residuals     | 177| 137867|    779|        NA|      NA|
+
+```r
+lm(chol2~diet+sex+Genotype+diet:Genotype, data=precomputed.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='Model estimates for moderation of genotype effect by diet.')
+```
+
+
+
+Table: Model estimates for moderation of genotype effect by diet.
+
+|term              | estimate| std.error| statistic| p.value|
+|:-----------------|--------:|---------:|---------:|-------:|
+|(Intercept)       |    60.88|      11.9|     5.108|   0.000|
+|diethf            |    78.79|      20.0|     3.931|   0.000|
+|sexM              |    12.54|       4.2|     2.986|   0.003|
+|GenotypeTG        |     8.42|      12.8|     0.657|   0.512|
+|GenotypeTT        |    20.75|      12.0|     1.727|   0.086|
+|diethf:GenotypeTG |   -20.25|      21.4|    -0.945|   0.346|
+|diethf:GenotypeTT |   -42.44|      20.7|    -2.048|   0.042|
 
 ### Pre-Computed SNPs
 

@@ -1,0 +1,859 @@
+---
+title: "Analysis of Diversity Outbred Strain Cholesterol Levels"
+author: "Dave Bridges"
+date: "July 7, 2020"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(readr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=FALSE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+library(broom)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+# Experimental Details
+
+This analyses the data analysed via GEMMA and provided in the various output folders.
+
+# Data Entry
+
+```{r data-entry}
+genotype.filename <- '../Svenson-183_Svenson_DO-MegaMUGA-calls.csv'
+genotype.data <- read_csv(genotype.filename,
+                          col_types = cols(
+  .default = col_character(),
+  chr = col_factor(levels=NULL),
+  pos = col_double()
+))
+
+phenotype.filename <- '../Svenson-183_Svenson_DO-phenotypes.csv'
+phenotype.data <- read_csv(phenotype.filename)
+phenotype.data[phenotype.data=="-999999"] <- NA
+```
+
+## SNP Analysis
+
+### Linear Mixed Model SNP Analysis for Chow
+
+```{r chol-snp-analysis-chow}
+lmm.filename <- 'output/ncd.cholesterol.assoc.txt'
+
+lmm.results <- read.table(lmm.filename, sep='\t', header=T)
+library(qqman)
+qq(lmm.results$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+lmm.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on NCD") 
+
+lmm.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<suggestive.pval) %>%
+   kable(caption="Suggestive associations from mixed linear models for cholesterol on NCD.") 
+
+ lmm.results %>%
+    arrange(p_wald) %>% 
+    filter(p_wald<0.05) %>%
+    head() %>%
+    kable(caption="Top nominal associations from mixed linear models for cholesterol on NCD") 
+
+library(forcats)
+
+library(GWASTools)
+with(lmm.results,manhattanPlot(p=p_wald,
+                               chromosome=chr,
+                               signif=suggestive.pval))
+
+```
+
+### Linear Mixed Model SNP Analysis for HFD
+
+```{r chol-snp-analysis-hfd}
+lmm.filename.hfd <- 'output/hfd.cholesterol.assoc.txt'
+
+lmm.results.hfd <- read.table(lmm.filename.hfd, sep='\t', header=T)
+library(qqman)
+qq(lmm.results.hfd$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+lmm.results.hfd %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on HFD") 
+
+lmm.results.hfd %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<suggestive.pval) %>%
+   kable(caption="Suggestive associations from mixed linear models for cholesterol on HFD") 
+
+ lmm.results.hfd %>%
+    arrange(p_wald) %>% 
+    filter(p_wald<0.05) %>%
+    head() %>%
+    kable(caption="Top nominal associations from mixed linear models for cholesterol on HFD") 
+
+library(forcats)
+
+library(GWASTools)
+with(lmm.results.hfd,manhattanPlot(p=p_wald,
+                               chromosome=chr,
+                               signif=suggestive.pval))
+
+```
+
+
+## BSLMM Analysis
+
+### For Normal Chow Diet 
+
+```{r bslmm-analysis-ncd}
+
+bslmm.hyp.file <- 'output/ncd.cholesterol.hyp.txt'
+bslmm.hyp <- read_tsv(bslmm.hyp.file,
+         col_types=cols(
+           h = col_double(),
+           pve = col_double(),
+           rho = col_double(),
+           pge = col_double(),
+           pi = col_double(),
+           n_gamma = col_integer()
+)) 
+
+
+# pve -> proportion of phenotypic variance explained by the genotypes
+pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
+
+# pge -> proportion of genetic variance explained by major effect loci
+pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
+
+#rho -> relatiave proportion of BVSR vs LMM
+rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
+
+# pi -> proportion of variants with non-zero effects
+pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
+
+# n.gamma -> number of variants with major effect
+n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
+
+hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
+colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
+# show table
+hyp.params.table %>% 
+  tibble() %>% 
+  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
+            .funs=as.numeric) %>%
+  kable(caption="Hyperparameters summary", digits=3)
+
+```
+
+### For High Fat Diet 
+
+```{r bslmm-analysis-hfd}
+
+bslmm.hyp.file <- 'output/hfd.cholesterol.hyp.txt'
+bslmm.hyp <- read_tsv(bslmm.hyp.file,
+         col_types=cols(
+           h = col_double(),
+           pve = col_double(),
+           rho = col_double(),
+           pge = col_double(),
+           pi = col_double(),
+           n_gamma = col_integer()
+)) 
+
+
+# pve -> proportion of phenotypic variance explained by the genotypes
+pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
+
+# pge -> proportion of genetic variance explained by major effect loci
+pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
+
+#rho -> relatiave proportion of BVSR vs LMM
+rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
+
+# pi -> proportion of variants with non-zero effects
+pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
+
+# n.gamma -> number of variants with major effect
+n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
+
+hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
+colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
+# show table
+hyp.params.table %>% 
+  tibble() %>% 
+  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
+            .funs=as.numeric) %>%
+  kable(caption="Hyperparameters summary", digits=3)
+
+```
+
+### BSLMM SNP Nomination for NCD
+
+```{r bslmm-snps-ncd}
+bslmm.results.file <- 'output/ncd.cholesterol.param.txt'
+bslmm.results <- read_tsv(bslmm.results.file, 
+                               col_types = cols(chr=col_factor(levels=NULL))) %>%
+  mutate(eff.size = beta*gamma) %>%
+  filter(eff.size >0) %>%
+  arrange(-abs(eff.size))
+  
+bslmm.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes")
+
+bslmm.results  %>% 
+  arrange(-gamma) %>%
+  head(10) %>% kable(caption="Variants with the largest posterior probability")
+top.snps <- bslmm.results
+```
+
+### BSLMM SNP Nomination for HFD
+
+```{r bslmm-snps-hfd}
+bslmm.results.file <- 'output/hfd.cholesterol.param.txt'
+bslmm.results <- read_tsv(bslmm.results.file, 
+                               col_types = cols(chr=col_factor(levels=NULL))) %>%
+  mutate(eff.size = beta*gamma) %>%
+  filter(eff.size >0) %>%
+  arrange(-abs(eff.size))
+  
+bslmm.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes for HFD")
+
+bslmm.results  %>% 
+  arrange(-gamma) %>%
+  head(10) %>% kable(caption="Variants with the largest posterior probability for HFD")
+top.snps <- bslmm.results
+```
+
+
+
+### Comparason of BSLMM and LMM Nominated SNPs
+
+```{r bslmm-lmm}
+combined.analysis <-
+  full_join(bslmm.results, lmm.results, by=c('chr','rs','ps'),
+            suffix=c('_bslmm','_lmm'))
+
+library(ggrepel)
+ggplot(combined.analysis,
+       aes(y=-log10(p_wald),
+           x=gamma,
+           col=p_wald<suggestive.pval)) +
+  geom_point() +
+  geom_text_repel(aes(label=paste('chr',paste(chr,ps,sep=":"))),
+                  data = filter(combined.analysis, p_wald < 0.01)) +
+  labs(y="Log10 p-value from LMM",
+       x="Posterior Inclusion Probability from BSLMM") +
+  theme(legend.position='none')
+```
+
+## Genomic Intervals
+
+```{r top-snp-analysis}
+lmm.results %>%
+  arrange(p_wald) %>%
+  head(25) -> top.snps #defines top snp as in lowest p_wald
+
+top.snps %>% 
+  group_by(chr) %>% #group by linkage region
+  summarize(lead.snp = first(rs),
+            chr = first(chr),
+            ps = first(ps),
+            sug.snps = length(rs),
+            p.val.log10 = log10(min(p_wald)),
+            ps.min = min(ps),
+            ps.max = max(ps),
+            effect = max(beta)) -> top.snps.summary
+
+kable(top.snps.summary %>% arrange(p.val.log10), caption="Summary of genomic regions with SNPs in the top 25 by p-value")
+
+range.gap=500000
+region<- paste(top.snps$chr[1],paste(top.snps$ps[1]-range.gap,top.snps$ps[1]+range.gap, sep=":"),sep=":")
+
+library(biomaRt)
+mart.mm <- useMart("ensembl", "mmusculus_gene_ensembl")
+getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filters = "chromosomal_region", values = region, mart = mart.mm) %>%
+  group_by(gene_biotype) %>%
+  summarize(n=length(external_gene_name),
+            genes=paste0(external_gene_name, collapse = ", ")) %>%
+  arrange(-n) -> top.snp.genes
+  
+top.snp.genes %>% kable(caption=paste("Genes near top SNP interval +/-", range.gap))
+```
+
+### Analysis of QTLs
+
+```{r analysis-snp}
+sug.snps <- 
+  lmm.results %>%
+  arrange(p_wald) %>%
+  filter(p_wald<suggestive.pval) %>%
+  pull(rs)
+
+gw.snps <- 
+  lmm.results %>%
+  arrange(p_wald) %>%
+  filter(p_wald<genome.pval) %>%
+  pull(rs)
+
+top.snp <- top.snps[1,]
+snp.genotypes <- 
+  filter(genotype.data, marker==top.snp$rs) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+second.snp <- top.snps[4,]
+second.snp.genotypes <- 
+  filter(genotype.data, marker==second.snp$rs) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+third.snp <- top.snps[6,]
+third.snp.genotypes <- 
+  filter(genotype.data, marker==third.snp$rs) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+
+annotated.phenotypes <-
+  full_join(phenotype.data,
+            dplyr::select(snp.genotypes,-marker),
+            by=c('sample'='sample'))
+
+
+library(ggplot2)
+location <- paste('Chr',top.snp$chr,top.snp$pos)
+annotated.phenotypes %>%
+  group_by(Genotype) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1)) %>%
+  ggplot(aes(y=Mean,
+             x=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',top.snp$chr,sep="")) %>% paste(top.snp$ps, sep=':')))
+
+annotated.phenotypes %>%
+  group_by(Genotype,sex) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1),
+            n=length(chol1)) %>%
+  ggplot(aes(y=Mean,
+             x=sex,
+             fill=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity',position=position_dodge(preserve='single'),width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75,preserve='single'),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',top.snp$chr,sep="")) %>% paste(top.snp$ps, sep=':')))+
+  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16))
+
+library(forcats)
+annotated.phenotypes %>%
+  group_by(Genotype,sex,diet) %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1),
+            n=length(chol1)) %>%
+  mutate(diet=fct_recode(diet,
+                         "Chow"='chow',
+                         "HFHS"='hf')) %>%
+  ggplot(aes(y=Mean,
+             fill=Genotype,
+             x=sex,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  facet_grid(diet~.) +
+  geom_bar(stat='identity',position=position_dodge(preserve='single'),width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75,preserve='single'),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',top.snp$chr,sep="")) %>% paste(top.snp$ps, sep=':'))) +
+  geom_text(aes(label=n,y=8), 
+            position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
+
+
+
+
+
+aov(chol1~sex*Genotype, data=annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex-genotype interaction on chow only.')
+
+lm(chol1~sex+Genotype, data=annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex-genotype interaction.')
+
+aov(chol1~diet*sex*Genotype, data=annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+
+aov(chol1~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+
+lm(chol1~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='Model estimates for moderation of genotype effect by diet.')
+```
+
+```{r second snp analysis}
+sug.snps <- 
+  lmm.results %>%
+  arrange(p_wald) %>%
+  filter(p_wald<suggestive.pval) %>%
+  pull(rs)
+
+gw.snps <- 
+  lmm.results %>%
+  arrange(p_wald) %>%
+  filter(p_wald<genome.pval) %>%
+  pull(rs)
+
+top.snp <- top.snps[1,]
+snp.genotypes <- 
+  filter(genotype.data, marker==top.snp$rs) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+second.snp <- top.snps[4,]
+second.snp.genotypes <- 
+  filter(genotype.data, marker==second.snp$rs) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+third.snp <- top.snps[6,]
+third.snp.genotypes <- 
+  filter(genotype.data, marker==third.snp$rs) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  pivot_longer(cols=c(starts_with('F',ignore.case=F),
+                      starts_with('M',ignore.case=F)),
+                      names_to='sample',
+               values_to='Genotype') 
+
+
+annotated.phenotypes <-
+  full_join(phenotype.data,
+            dplyr::select(snp.genotypes,-marker),
+            by=c('sample'='sample'))
+
+second.annotated.phenotypes <-
+  full_join(phenotype.data,
+            dplyr::select(second.snp.genotypes,-marker),
+            by=c('sample'='sample'))
+
+library(ggplot2)
+location <- paste('Chr',second.snp$chr,second.snp$pos)
+second.annotated.phenotypes %>%
+  group_by(Genotype) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1)) %>%
+  ggplot(aes(y=Mean,
+             x=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',second.snp$chr,sep="")) %>% paste(second.snp$ps, sep=':')))
+
+second.annotated.phenotypes %>%
+  group_by(Genotype,sex) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1),
+            n=length(chol1)) %>%
+  ggplot(aes(y=Mean,
+             x=sex,
+             fill=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity',position='dodge',width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',second.snp$chr,sep="")) %>% paste(second.snp$ps, sep=':')))+
+  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16))
+
+library(forcats)
+second.annotated.phenotypes %>%
+  group_by(Genotype,sex,diet) %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1),
+            n=length(chol1)) %>%
+  mutate(diet=fct_recode(diet,
+                         "Chow"='chow',
+                         "HFHS"='hf')) %>%
+  ggplot(aes(y=Mean,
+             fill=Genotype,
+             x=sex,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  facet_grid(diet~.) +
+  geom_bar(stat='identity',position='dodge',width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',second.snp$chr,sep="")) %>% paste(second.snp$ps, sep=':'))) +
+  geom_text(aes(label=n,y=8), 
+            position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
+
+aov(chol1~sex*Genotype, data=second.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex-genotype interaction on chow only.')
+
+lm(chol1~sex+Genotype, data=second.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='linear model for sex-genotype interaction.')
+
+aov(chol1~diet + sex + Genotype, data=second.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+
+aov(chol1~diet+sex+Genotype+diet:Genotype, data=second.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+
+lm(chol1~diet+sex+Genotype+diet:Genotype, data=second.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='Model estimates for moderation of genotype effect by diet.')
+```
+
+```{r third snp analysis}
+third.annotated.phenotypes <-
+  full_join(phenotype.data,
+            dplyr::select(third.snp.genotypes,-marker),
+            by=c('sample'='sample'))
+
+library(ggplot2)
+location <- paste('Chr',third.snp$chr,third.snp$pos)
+third.annotated.phenotypes %>%
+  group_by(Genotype) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1)) %>%
+  ggplot(aes(y=Mean,
+             x=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity') +
+  geom_errorbar(width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',third.snp$chr,sep="")) %>% paste(third.snp$ps, sep=':')))
+
+third.annotated.phenotypes %>%
+  group_by(Genotype,sex) %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1),
+            n=length(chol1)) %>%
+  ggplot(aes(y=Mean,
+             x=sex,
+             fill=Genotype,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  geom_bar(stat='identity',position='dodge',width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',third.snp$chr,sep="")) %>% paste(third.snp$ps, sep=':')))+
+  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16))
+
+library(forcats)
+third.annotated.phenotypes %>%
+  group_by(Genotype,sex,diet) %>%
+  filter(Genotype!='--') %>%
+  summarize(Mean=mean(chol1),
+            Error=se(chol1),
+            n=length(chol1)) %>%
+  mutate(diet=fct_recode(diet,
+                         "Chow"='chow',
+                         "HFHS"='hf')) %>%
+  ggplot(aes(y=Mean,
+             fill=Genotype,
+             x=sex,
+             ymin=Mean-Error,
+             ymax=Mean+Error)) +
+  facet_grid(diet~.) +
+  geom_bar(stat='identity',position='dodge',width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
+  labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',paste(paste('Chr',third.snp$chr,sep="")) %>% paste(third.snp$ps, sep=':'))) +
+  geom_text(aes(label=n,y=8), 
+            position=position_dodge(width=0.75)) +
+  theme_classic() +
+  theme(text=element_text(size=16),
+        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
+
+
+aov(chol1~sex*Genotype, data=third.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for sex-genotype interaction on chow only.')
+
+lm(chol1~sex+Genotype, data=third.annotated.phenotypes %>%
+  filter(diet=='chow') %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='linear model for sex-genotype interaction.')
+
+aov(chol1~diet*sex*Genotype, data=third.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+
+aov(chol1~diet+sex+Genotype+diet:Genotype, data=third.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='ANOVA for moderation of genotype effect by diet.')
+
+lm(chol1~diet+sex+Genotype+diet:Genotype, data=third.annotated.phenotypes %>%
+  filter(Genotype!='--')) %>%
+  tidy %>%
+  kable(caption='Model estimates for moderation of genotype effect by diet.')
+```
+
+We identified **`r length(gw.snps)`** SNPs at genome-wide significance, and **`r length(sug.snps)`** at suggestive significance.
+
+
+
+## Polygenic Risk Models and Analysis
+
+
+```{r lead-snps}
+lead.snps <- top.snps.summary %>% arrange(p.val.log10) %>% head(3) %>% pull(lead.snp)
+```
+
+Used the top three lead SNPs from the LMM analysis (`r lead.snps`).
+
+```{r risk-models}
+library(tibble)
+lead.snp.genotypes <- 
+  filter(genotype.data, marker %in% lead.snps) %>% 
+  dplyr::select(-chr,-pos) %>% 
+  column_to_rownames('marker') %>%
+  t %>% as.data.frame() %>% 
+  rownames_to_column(var='sample')
+
+#annotate data frame with phenotypes to genotype columns
+annotated.lead.phenotypes <-
+    left_join(phenotype.data%>%filter(diet=='chow'),
+            lead.snp.genotypes,sample,
+            by=c('sample'='sample')) 
+
+add.formula <- as.formula(paste('chol1~sex+', paste(lead.snps,collapse="+")))
+int.formula <- as.formula(paste('chol1~sex+', paste(lead.snps,collapse="*")))
+
+prs.add <- lm(add.formula, data=annotated.lead.phenotypes)
+prs.aov <- aov(add.formula, data=annotated.lead.phenotypes)
+prs.int <- lm(int.formula, data=annotated.lead.phenotypes)
+prs.add %>% tidy %>% kable(caption="Coefficients for additive model")
+prs.aov %>% tidy %>% kable(caption="ANOVA for additive model")
+
+prs.add %>% glance %>% kable(caption="Summary of additive PRS model")
+prs.int %>% glance %>% kable(caption="Summary of interacting PRS model")
+
+anova(prs.add,prs.int) %>% tidy %>% kable(caption="ANOVA of additive vs interacting model")
+#not significantly better with SNPs interacting
+
+ncd.r2 <- cor.test(predict(prs.add),
+                   fitted.values(prs.add)+residuals(prs.add))
+
+ncd.cor <- ggplot(prs.add,
+       aes(x=predict(prs.add),
+       y=model.frame(prs.add)$chol1)) +
+  geom_point(aes(col=sex)) +
+  geom_smooth(method='lm',se=F,col='black') +
+    scale_colour_manual(values = c("pink3",'royalblue1')) +
+  annotate('text',x=22,y=200,label=paste('R^2=',round(ncd.r2$estimate^2,3),sep="")) +
+  annotate('text',x=24,y=190,label=paste('p=',format(ncd.r2$p.value,format='s'),sep="")) +
+  expand_limits(y=c(0,200),x=c(0,200)) +
+  labs(x="PRS Predicted Cholesterol",
+       y="Observed Cholesterol (mg/dL)",
+       title="On Normal Chow Diet") +
+    theme_classic()+
+  theme(legend.position=c(0.8,0.2),
+        legend.key = element_blank(),
+        text=element_text(size=16))
+ncd.cor
+
+annotated.lead.phenotypes.hfd <-
+    left_join(phenotype.data%>%filter(diet=='hf'),
+            lead.snp.genotypes,sample,
+            by=c('sample'='sample'))
+
+hfd.r2 <- cor.test(predict(prs.add,newdata = annotated.lead.phenotypes.hfd),
+                   annotated.lead.phenotypes.hfd$chol1)
+
+hfd.cor <- ggplot(data=annotated.lead.phenotypes.hfd,
+       aes(x=predict(prs.add,newdata = annotated.lead.phenotypes.hfd),
+       y=chol1)) +
+  geom_point(aes(col=sex)) +
+  geom_smooth(method='lm',se=F,col='black') +
+  scale_colour_manual(values = c("pink3",'royalblue1')) +
+  annotate('text',x=22,y=200,label=paste('R^2=',round(hfd.r2$estimate^2,3),sep="")) +
+  annotate('text',x=16,y=190,label=paste('p=',round(hfd.r2$p.value,3),sep="")) +
+    expand_limits(y=c(0,200),x=c(0,200)) +
+  labs(x="PRS Predicted Cholesterol",
+       y="Observed Cholesterol (mg/dL)",
+       title="On HFHS Diet") +
+  theme_classic()+
+  theme(legend.position=c(0.8,0.2),
+        legend.key = element_blank(),
+        text=element_text(size=16))
+hfd.cor
+library(gridExtra)
+grid.arrange(ncd.cor,hfd.cor,nrow=1)
+
+#relative effects of gene-diet vs gene alone
+annotated.lead.phenotypes.all <-
+    left_join(phenotype.data,
+            lead.snp.genotypes,sample,
+            by=c('sample'='sample'))
+```
+
+### Variance Components for PRS Model
+
+Calculated the relative variance explained by the PRS model, relative to gene, sex and diet effects.
+
+```{r prs-variance}
+full.formula <- as.formula(chol1~sex+diet+sex:diet+UNC19008219 + UNC21619767 + backupUNC060370616+diet:UNC19008219 + diet:UNC21619767 + diet:backupUNC060370616)
+
+full.model <- lm(full.formula, data=annotated.lead.phenotypes.all)
+aov(full.model) %>% tidy %>% kable()
+
+aov(full.model) %>% tidy %>%
+  mutate(term.type = case_when(term=='sex'~'sex',
+                               term=='diet'~'diet',
+                               term=='sex:diet'~'sex x diet',
+                               term%>%startsWith('diet:')~'gene x diet',
+                               term %in% lead.snps ~ 'gene',
+                               term=='Residuals'~'residual')) %>%
+  group_by(term.type) %>%
+  summarize(summeansq=sum(meansq)) %>%
+  mutate(pct.var=summeansq/sum(summeansq)*100) %>%
+  arrange(-pct.var) %>%
+  mutate(model="Unadjusted")-> 
+  variance.summary
+
+
+variance.summary.controlled <-
+  variance.summary %>%
+  filter(term.type %in% c('gene','gene x diet','residual')) %>%  
+  mutate(pct.var=summeansq/sum(summeansq)*100) %>%
+  arrange(-pct.var) %>%
+  mutate(model="Adjusted for diet and sex")
+   
+variance.summary.all <-
+  bind_rows(variance.summary,variance.summary.controlled) %>%
+  mutate(model=relevel(as.factor(model),ref='Unadjusted'))
+
+variance.summary.all %>% kable(caption="Summary of variance components from PRS model")
+
+ggplot(variance.summary.all,
+       aes(y=pct.var,
+           x=model,
+           fill=term.type)) +
+  geom_bar(stat='identity') +
+  theme_classic() +
+  labs(y="Percent of Variance Explained",
+       x="")
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```
+

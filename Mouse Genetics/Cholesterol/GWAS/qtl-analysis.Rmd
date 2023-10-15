@@ -20,7 +20,7 @@ library(knitr)
 library(readr)
 #figures makde will go to directory called figures, will make them as both png and pdf files 
 opts_chunk$set(fig.path='figures/',
-               echo=FALSE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
 options(scipen = 2, digits = 3)
 # set echo and message to TRUE if you want to display code blocks and code output respectively
 
@@ -318,6 +318,30 @@ getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filt
   arrange(-n) -> top.snp.genes
   
 top.snp.genes %>% kable(caption=paste("Genes near top SNP interval +/-", range.gap))
+
+# second snp
+region<- paste(top.snps$chr[2],paste(top.snps$ps[2]-range.gap,top.snps$ps[2]+range.gap, sep=":"),sep=":")
+
+mart.mm <- useMart("ensembl", "mmusculus_gene_ensembl")
+getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filters = "chromosomal_region", values = region, mart = mart.mm) %>%
+  group_by(gene_biotype) %>%
+  summarize(n=length(external_gene_name),
+            genes=paste0(external_gene_name, collapse = ", ")) %>%
+  arrange(-n) -> top.snp.genes
+  
+top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", range.gap))
+
+# third snp
+region<- paste(top.snps$chr[2],paste(top.snps$ps[3]-range.gap,top.snps$ps[3]+range.gap, sep=":"),sep=":")
+
+mart.mm <- useMart("ensembl", "mmusculus_gene_ensembl")
+getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filters = "chromosomal_region", values = region, mart = mart.mm) %>%
+  group_by(gene_biotype) %>%
+  summarize(n=length(external_gene_name),
+            genes=paste0(external_gene_name, collapse = ", ")) %>%
+  arrange(-n) -> top.snp.genes
+  
+top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", range.gap))
 ```
 
 ### Analysis of QTLs
@@ -401,7 +425,7 @@ annotated.phenotypes %>%
   geom_bar(stat='identity',position=position_dodge(preserve='single'),width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75,preserve='single'),aes(group=Genotype), width=0.5)+
   labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',top.snp$chr,sep="")) %>% paste(top.snp$ps, sep=':')))+
+       x=paste('Genotype at ',top.snp$rs)) +
   geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
   theme_classic() +
   theme(text=element_text(size=16))
@@ -477,16 +501,7 @@ gw.snps <-
   filter(p_wald<genome.pval) %>%
   pull(rs)
 
-top.snp <- top.snps[1,]
-snp.genotypes <- 
-  filter(genotype.data, marker==top.snp$rs) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-second.snp <- top.snps[4,]
+second.snp <- top.snps[2,]
 second.snp.genotypes <- 
   filter(genotype.data, marker==second.snp$rs) %>% 
   dplyr::select(-chr,-pos) %>% 
@@ -495,7 +510,7 @@ second.snp.genotypes <-
                       names_to='sample',
                values_to='Genotype') 
 
-third.snp <- top.snps[6,]
+third.snp <- top.snps[3,]
 third.snp.genotypes <- 
   filter(genotype.data, marker==third.snp$rs) %>% 
   dplyr::select(-chr,-pos) %>% 
@@ -530,7 +545,7 @@ second.annotated.phenotypes %>%
   geom_bar(stat='identity') +
   geom_errorbar(width=0.5)+
   labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',second.snp$chr,sep="")) %>% paste(second.snp$ps, sep=':')))
+       x=paste('Genotype at ',second.snp$rs))
 
 second.annotated.phenotypes %>%
   group_by(Genotype,sex) %>%
@@ -546,11 +561,11 @@ second.annotated.phenotypes %>%
              ymax=Mean+Error)) +
   geom_bar(stat='identity',position='dodge',width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',second.snp$chr,sep="")) %>% paste(second.snp$ps, sep=':')))+
   geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
   theme_classic() +
-  theme(text=element_text(size=16))
+  theme(text=element_text(size=16)) +
+    labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',second.snp$rs))
 
 library(forcats)
 second.annotated.phenotypes %>%
@@ -570,8 +585,8 @@ second.annotated.phenotypes %>%
   facet_grid(diet~.) +
   geom_bar(stat='identity',position='dodge',width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',second.snp$chr,sep="")) %>% paste(second.snp$ps, sep=':'))) +
+    labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',second.snp$rs)) +
   geom_text(aes(label=n,y=8), 
             position=position_dodge(width=0.75)) +
   theme_classic() +
@@ -626,8 +641,8 @@ third.annotated.phenotypes %>%
              ymax=Mean+Error)) +
   geom_bar(stat='identity') +
   geom_errorbar(width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',third.snp$chr,sep="")) %>% paste(third.snp$ps, sep=':')))
+    labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',third.snp$rs))
 
 third.annotated.phenotypes %>%
   group_by(Genotype,sex) %>%
@@ -643,8 +658,8 @@ third.annotated.phenotypes %>%
              ymax=Mean+Error)) +
   geom_bar(stat='identity',position='dodge',width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',third.snp$chr,sep="")) %>% paste(third.snp$ps, sep=':')))+
+    labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',third.snp$rs)) +
   geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
   theme_classic() +
   theme(text=element_text(size=16))
@@ -667,8 +682,8 @@ third.annotated.phenotypes %>%
   facet_grid(diet~.) +
   geom_bar(stat='identity',position='dodge',width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',third.snp$chr,sep="")) %>% paste(third.snp$ps, sep=':'))) +
+    labs(y='Cholesterol (mg/dL)',
+       x=paste('Genotype at ',third.snp$rs)) +
   geom_text(aes(label=n,y=8), 
             position=position_dodge(width=0.75)) +
   theme_classic() +
@@ -932,7 +947,7 @@ annotated.lead.phenotypes.all <-
 Calculated the relative variance explained by the PRS model, relative to gene, sex and diet effects.
 
 ```{r prs-variance}
-full.formula <- as.formula(chol2~sex+diet+sex:diet+UNC19008219 + UNC21619767 + backupUNC060370616+diet:UNC19008219 + diet:UNC21619767 + diet:backupUNC060370616)
+full.formula <- as.formula(chol2~sex+diet+sex:diet+UNC29452833 + JAX00028600 +  JAX00124247 + diet:UNC29452833 + diet:JAX00028600 + diet:JAX00124247)
 
 full.model <- lm(full.formula, data=annotated.lead.phenotypes.all)
 aov(full.model) %>% tidy %>% kable()

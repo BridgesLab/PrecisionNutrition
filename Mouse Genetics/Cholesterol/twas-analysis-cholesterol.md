@@ -861,22 +861,22 @@ Table: NCD GO BP Analysis of TWAS Associations from Enrichment
 |GO:0150116 |regulation of cell-substrate junction organization                                      |3/109     |     3|  0.002|    0.031|
 |GO:0009110 |vitamin biosynthetic process                                                            |2/109     |     2|  0.003|    0.033|
 |GO:1902430 |negative regulation of amyloid-beta formation                                           |2/109     |     2|  0.003|    0.033|
-|GO:0071404 |cellular response to low-density lipoprotein particle stimulus                          |2/109     |     2|  0.003|    0.038|
+|GO:0071404 |cellular response to low-density lipoprotein particle stimulus                          |2/109     |     2|  0.003|    0.037|
 |GO:1901657 |glycosyl compound metabolic process                                                     |3/109     |     3|  0.003|    0.038|
 |GO:0010466 |negative regulation of peptidase activity                                               |5/109     |     5|  0.003|    0.039|
-|GO:0031998 |regulation of fatty acid beta-oxidation                                                 |2/109     |     2|  0.003|    0.040|
-|GO:0090201 |negative regulation of release of cytochrome c from mitochondria                        |2/109     |     2|  0.003|    0.040|
+|GO:0031998 |regulation of fatty acid beta-oxidation                                                 |2/109     |     2|  0.003|    0.039|
+|GO:0090201 |negative regulation of release of cytochrome c from mitochondria                        |2/109     |     2|  0.003|    0.039|
 |GO:0009060 |aerobic respiration                                                                     |4/109     |     4|  0.004|    0.041|
-|GO:0006766 |vitamin metabolic process                                                               |3/109     |     3|  0.004|    0.044|
-|GO:0050860 |negative regulation of T cell receptor signaling pathway                                |2/109     |     2|  0.004|    0.044|
+|GO:0006766 |vitamin metabolic process                                                               |3/109     |     3|  0.004|    0.043|
+|GO:0050860 |negative regulation of T cell receptor signaling pathway                                |2/109     |     2|  0.004|    0.043|
 |GO:0042326 |negative regulation of phosphorylation                                                  |6/109     |     6|  0.004|    0.045|
 |GO:0048041 |focal adhesion assembly                                                                 |3/109     |     3|  0.004|    0.045|
 |GO:0046386 |deoxyribose phosphate catabolic process                                                 |2/109     |     2|  0.004|    0.045|
 |GO:0046685 |response to arsenic-containing substance                                                |2/109     |     2|  0.004|    0.045|
 |GO:0051896 |regulation of protein kinase B signaling                                                |4/109     |     4|  0.005|    0.047|
 |GO:0006979 |response to oxidative stress                                                            |6/109     |     6|  0.005|    0.047|
-|GO:0031016 |pancreas development                                                                    |3/109     |     3|  0.005|    0.049|
-|GO:0046364 |monosaccharide biosynthetic process                                                     |3/109     |     3|  0.005|    0.049|
+|GO:0031016 |pancreas development                                                                    |3/109     |     3|  0.005|    0.048|
+|GO:0046364 |monosaccharide biosynthetic process                                                     |3/109     |     3|  0.005|    0.048|
 |GO:0042059 |negative regulation of epidermal growth factor receptor signaling pathway               |2/109     |     2|  0.005|    0.049|
 
 ```r
@@ -997,9 +997,11 @@ as.data.frame(go.twas.bp) %>% dplyr::select("Description","setSize","enrichmentS
 
 Table: HFD GO BP Analysis of TWAS Associations from GSEA
 
-|           |Description            | setSize| enrichmentScore|  NES| pvalue| p.adjust|
-|:----------|:----------------------|-------:|---------------:|----:|------:|--------:|
-|GO:0051640 |organelle localization |     113|           0.959| 1.79|      0|        0|
+|           |Description                                | setSize| enrichmentScore|  NES| pvalue| p.adjust|
+|:----------|:------------------------------------------|-------:|---------------:|----:|------:|--------:|
+|GO:0051640 |organelle localization                     |     113|           0.959| 1.77|      0|    0.000|
+|GO:0051646 |mitochondrion localization                 |      11|           0.995| 1.65|      0|    0.003|
+|GO:0050891 |multicellular organismal water homeostasis |      11|           0.980| 1.62|      0|    0.070|
 
 ```r
 as.data.frame(go.twas.bp) %>%
@@ -1064,7 +1066,7 @@ Table: HFD GO BP Analysis of TWAS Associations from Enrichment
 |GO:0008637 |apoptotic mitochondrial changes                                                 |4/116     |     4|  0.001|    0.037|
 |GO:0010823 |negative regulation of mitochondrion organization                               |3/116     |     3|  0.001|    0.037|
 |GO:2000378 |negative regulation of reactive oxygen species metabolic process                |3/116     |     3|  0.001|    0.037|
-|GO:0048102 |autophagic cell death                                                           |2/116     |     2|  0.002|    0.041|
+|GO:0048102 |autophagic cell death                                                           |2/116     |     2|  0.002|    0.040|
 |GO:0050922 |negative regulation of chemotaxis                                               |3/116     |     3|  0.002|    0.044|
 |GO:0042416 |dopamine biosynthetic process                                                   |2/116     |     2|  0.002|    0.044|
 |GO:0010713 |negative regulation of collagen metabolic process                               |2/116     |     2|  0.002|    0.048|
@@ -1143,11 +1145,10 @@ lm(data=fbp1.chow.data, chol2 ~ expression + sex) %>%
 
 ```
 ## # A tibble: 1 × 12
-##   r.squ…¹ adj.r…² sigma stati…³ p.value    df logLik   AIC   BIC devia…⁴ df.re…⁵
-##     <dbl>   <dbl> <dbl>   <dbl>   <dbl> <dbl>  <dbl> <dbl> <dbl>   <dbl>   <int>
-## 1   0.176   0.159  20.6    10.2 9.96e-5     2  -434.  876.  886.  40231.      95
-## # … with 1 more variable: nobs <int>, and abbreviated variable names
-## #   ¹​r.squared, ²​adj.r.squared, ³​statistic, ⁴​deviance, ⁵​df.residual
+##   r.squared adj.r.squared sigma statistic   p.value    df logLik   AIC   BIC
+##       <dbl>         <dbl> <dbl>     <dbl>     <dbl> <dbl>  <dbl> <dbl> <dbl>
+## 1     0.176         0.159  20.6      10.2 0.0000996     2  -434.  876.  886.
+## # ℹ 3 more variables: deviance <dbl>, df.residual <int>, nobs <int>
 ```
 
 ```r
@@ -1850,6 +1851,101 @@ Table: Summary associations of Lasp1 and cholesterol on HFD
 |expression  |    -2.42|     0.455|     -5.31|       0|
 |sexM        |    31.96|     6.032|      5.30|       0|
 
+## APOA2
+
+Apoa2 may be a mediator of chromosome 1's QTL effect on cholesterol
+
+
+```r
+gene <- 'Apoa2'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+```
+
+![](figures/Apoa2-associations-1.png)<!-- -->
+
+```r
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Apoa2 and cholesterol on chow")
+```
+
+
+
+Table: Summary associations of Apoa2 and cholesterol on chow
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |   56.730|    12.385|      4.58|   0.000|
+|expression  |    0.013|     0.009|      1.50|   0.136|
+|sexM        |   17.089|     4.227|      4.04|   0.000|
+
+```r
+library(MASS)
+rlm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Apoa2 and cholesterol on chow, using robust linear models")
+```
+
+
+
+Table: Summary associations of Apoa2 and cholesterol on chow, using robust linear models
+
+|term        | estimate| std.error| statistic|
+|:-----------|--------:|---------:|---------:|
+|(Intercept) |   52.856|    12.247|      4.32|
+|expression  |    0.015|     0.009|      1.75|
+|sexM        |   17.492|     4.180|      4.18|
+
+```r
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Apoa2 and cholesterol on HFD")
+```
+
+
+
+Table: Summary associations of Apoa2 and cholesterol on HFD
+
+|term        | estimate| std.error| statistic| p.value|
+|:-----------|--------:|---------:|---------:|-------:|
+|(Intercept) |   78.773|     14.31|      5.51|   0.000|
+|expression  |    0.015|      0.01|      1.45|   0.148|
+|sexM        |   15.653|      5.45|      2.87|   0.005|
+
 # Session Information
 
 
@@ -1874,50 +1970,53 @@ sessionInfo()
 ## [8] base     
 ## 
 ## other attached packages:
-##  [1] MASS_7.3-58.1         ggupset_0.3.0         enrichplot_1.16.2    
-##  [4] clusterProfiler_4.4.4 ggrepel_0.9.2         ggplot2_3.4.0        
-##  [7] venneuler_1.1-3       rJava_1.0-6           purrr_1.0.1          
-## [10] org.Mm.eg.db_3.15.0   AnnotationDbi_1.58.0  IRanges_2.30.1       
-## [13] S4Vectors_0.34.0      Biobase_2.56.0        BiocGenerics_0.42.0  
-## [16] broom_1.0.2           readr_2.1.3           dplyr_1.0.10         
-## [19] tidyr_1.3.0           knitr_1.41           
+##  [1] MASS_7.3-60               ggupset_0.3.0            
+##  [3] enrichplot_1.18.4         clusterProfiler_4.9.0.002
+##  [5] ggrepel_0.9.4             ggplot2_3.4.4            
+##  [7] venneuler_1.1-3           rJava_1.0-6              
+##  [9] purrr_1.0.2               org.Mm.eg.db_3.15.0      
+## [11] AnnotationDbi_1.60.2      IRanges_2.32.0           
+## [13] S4Vectors_0.36.2          Biobase_2.58.0           
+## [15] BiocGenerics_0.44.0       broom_1.0.5              
+## [17] readr_2.1.4               dplyr_1.1.3              
+## [19] tidyr_1.3.0               knitr_1.44               
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] fgsea_1.22.0           colorspace_2.0-3       ggtree_3.4.4          
-##   [4] ellipsis_0.3.2         qvalue_2.28.0          XVector_0.36.0        
-##   [7] aplot_0.1.9            rstudioapi_0.14        farver_2.1.1          
-##  [10] graphlayouts_0.8.4     bit64_4.0.5            scatterpie_0.1.8      
-##  [13] fansi_1.0.3            codetools_0.2-18       splines_4.2.2         
-##  [16] cachem_1.0.6           GOSemSim_2.22.0        polyclip_1.10-4       
-##  [19] jsonlite_1.8.4         GO.db_3.15.0           png_0.1-8             
-##  [22] ggforce_0.4.1          compiler_4.2.2         httr_1.4.4            
-##  [25] backports_1.4.1        lazyeval_0.2.2         assertthat_0.2.1      
-##  [28] Matrix_1.5-3           fastmap_1.1.0          cli_3.6.0             
-##  [31] tweenr_2.0.2           htmltools_0.5.4        tools_4.2.2           
-##  [34] igraph_1.3.5           gtable_0.3.1           glue_1.6.2            
-##  [37] GenomeInfoDbData_1.2.8 reshape2_1.4.4         DO.db_2.9             
-##  [40] fastmatch_1.1-3        Rcpp_1.0.9             jquerylib_0.1.4       
-##  [43] vctrs_0.5.2            Biostrings_2.64.1      ape_5.6-2             
-##  [46] nlme_3.1-161           ggraph_2.1.0           xfun_0.36             
-##  [49] stringr_1.5.0          lifecycle_1.0.3        DOSE_3.22.1           
-##  [52] zlibbioc_1.42.0        scales_1.2.1           tidygraph_1.2.2       
-##  [55] vroom_1.6.0            hms_1.1.2              parallel_4.2.2        
-##  [58] RColorBrewer_1.1-3     yaml_2.3.6             memoise_2.0.1         
-##  [61] gridExtra_2.3          downloader_0.4         ggfun_0.0.9           
-##  [64] yulab.utils_0.0.6      sass_0.4.4             stringi_1.7.12        
-##  [67] RSQLite_2.2.20         highr_0.10             tidytree_0.4.2        
-##  [70] BiocParallel_1.30.4    GenomeInfoDb_1.32.4    rlang_1.0.6           
-##  [73] pkgconfig_2.0.3        bitops_1.0-7           evaluate_0.19         
-##  [76] lattice_0.20-45        treeio_1.20.2          patchwork_1.1.2       
-##  [79] labeling_0.4.2         shadowtext_0.1.2       bit_4.0.5             
-##  [82] tidyselect_1.2.0       plyr_1.8.8             magrittr_2.0.3        
+##   [1] fgsea_1.24.0           colorspace_2.1-0       ggtree_3.6.2          
+##   [4] gson_0.1.0             qvalue_2.30.0          XVector_0.38.0        
+##   [7] fs_1.6.3               aplot_0.2.2            rstudioapi_0.15.0     
+##  [10] farver_2.1.1           graphlayouts_1.0.1     bit64_4.0.5           
+##  [13] scatterpie_0.2.1       fansi_1.0.5            codetools_0.2-19      
+##  [16] splines_4.2.2          cachem_1.0.8           GOSemSim_2.24.0       
+##  [19] polyclip_1.10-6        jsonlite_1.8.7         GO.db_3.16.0          
+##  [22] png_0.1-8              ggforce_0.4.1          compiler_4.2.2        
+##  [25] httr_1.4.7             backports_1.4.1        Matrix_1.5-4.1        
+##  [28] fastmap_1.1.1          lazyeval_0.2.2         cli_3.6.1             
+##  [31] tweenr_2.0.2           htmltools_0.5.6.1      tools_4.2.2           
+##  [34] igraph_1.5.1           gtable_0.3.4           glue_1.6.2            
+##  [37] GenomeInfoDbData_1.2.9 reshape2_1.4.4         fastmatch_1.1-4       
+##  [40] Rcpp_1.0.11            jquerylib_0.1.4        vctrs_0.6.4           
+##  [43] Biostrings_2.66.0      ape_5.7-1              nlme_3.1-163          
+##  [46] ggraph_2.1.0           xfun_0.40              stringr_1.5.0         
+##  [49] lifecycle_1.0.3        DOSE_3.24.2            zlibbioc_1.44.0       
+##  [52] scales_1.2.1           tidygraph_1.2.3        vroom_1.6.4           
+##  [55] hms_1.1.3              parallel_4.2.2         RColorBrewer_1.1-3    
+##  [58] yaml_2.3.7             memoise_2.0.1          gridExtra_2.3         
+##  [61] downloader_0.4         ggfun_0.1.3            HDO.db_0.99.1         
+##  [64] yulab.utils_0.1.0      sass_0.4.7             stringi_1.7.12        
+##  [67] RSQLite_2.3.1          tidytree_0.4.5         BiocParallel_1.32.6   
+##  [70] GenomeInfoDb_1.34.9    rlang_1.1.1            pkgconfig_2.0.3       
+##  [73] bitops_1.0-7           evaluate_0.22          lattice_0.21-9        
+##  [76] treeio_1.22.0          patchwork_1.1.3        labeling_0.4.3        
+##  [79] shadowtext_0.1.2       cowplot_1.1.1          bit_4.0.5             
+##  [82] tidyselect_1.2.0       plyr_1.8.9             magrittr_2.0.3        
 ##  [85] R6_2.5.1               generics_0.1.3         DBI_1.1.3             
-##  [88] pillar_1.8.1           withr_2.5.0            mgcv_1.8-41           
-##  [91] KEGGREST_1.36.3        RCurl_1.98-1.9         tibble_3.1.8          
-##  [94] crayon_1.5.2           utf8_1.2.2             tzdb_0.3.0            
-##  [97] rmarkdown_2.19         viridis_0.6.2          grid_4.2.2            
-## [100] data.table_1.14.6      blob_1.2.3             digest_0.6.31         
-## [103] gridGraphics_0.5-1     munsell_0.5.0          viridisLite_0.4.1     
-## [106] ggplotify_0.1.0        bslib_0.4.2
+##  [88] pillar_1.9.0           withr_2.5.1            mgcv_1.9-0            
+##  [91] KEGGREST_1.38.0        RCurl_1.98-1.12        tibble_3.2.1          
+##  [94] crayon_1.5.2           utf8_1.2.3             tzdb_0.4.0            
+##  [97] rmarkdown_2.25         viridis_0.6.4          grid_4.2.2            
+## [100] data.table_1.14.8      blob_1.2.4             digest_0.6.33         
+## [103] gridGraphics_0.5-1     munsell_0.5.0          viridisLite_0.4.2     
+## [106] ggplotify_0.1.2        bslib_0.5.1
 ```
 

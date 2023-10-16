@@ -1123,6 +1123,62 @@ lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
   kable(caption="Summary associations of Lasp1 and cholesterol on HFD")
 ```
 
+## APOA2
+
+Apoa2 may be a mediator of chromosome 1's QTL effect on cholesterol
+
+```{r Apoa2-associations}
+gene <- 'Apoa2'
+gene.ens <- filter(twas.data.ncd, symbol==gene) %>% pull(ENSEMBL.ID)
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  ggplot(aes(y=chol2,expression,col=sex)) +
+  geom_point() +
+  geom_smooth(method='lm',se=F) +
+  facet_grid(~diet) +
+  labs(y="Cholesterol (mg/dL)",
+       x=paste('Expression of ', gene, sep=""))
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) %>%
+  filter(diet=='chow') -> gene.chow.data
+
+lm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Apoa2 and cholesterol on chow")
+
+library(MASS)
+rlm(data=gene.chow.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Apoa2 and cholesterol on chow, using robust linear models")
+
+expression.data %>%
+  filter(ENSEMBL.ID == gene.ens) %>%
+  pivot_longer(cols=c(starts_with('F'),
+                      starts_with('M')),
+               names_to='mouse.id',
+               values_to='expression') %>%
+  full_join(phenotype.data,by='mouse.id') %>%
+  filter(!is.na(diet)) -> gene.hf.data
+
+lm(data=gene.hf.data, chol2 ~ expression + sex) %>%
+  tidy %>%
+  kable(caption="Summary associations of Apoa2 and cholesterol on HFD")
+```
+
 # Session Information
 
 ```{r session-information, echo=T}

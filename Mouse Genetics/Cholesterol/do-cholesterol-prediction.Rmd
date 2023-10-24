@@ -461,6 +461,79 @@ ggplot(data=cholesterol.data,
          digits=c(0,3,3,2,99))
 ```
 
+## Lipoprotein Subpopulations
+
+Looked at the associations between HDL-C and non-HDL-C on calcium levels.
+
+### HDL-C
+
+```{r hdl}
+ggplot(data=cholesterol.data,
+       aes(y=hdld2,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="HDL-C (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  hdlc.calcium.plot
+hdlc.calcium.plot
+
+ lm(hdld2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of HDL-C with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+### Non-HDL Cholesterol
+
+```{r non-hdl}
+cholesterol.data <-
+  cholesterol.data %>%
+  mutate(nonhdlc = chol2-hdld2)
+
+ggplot(data=cholesterol.data,
+       aes(y=nonhdlc,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Non-HDL Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  nonhdlc.calcium.plot
+
+ lm(nonhdlc~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
+         digits=c(0,3,3,2,99))
+```
+  
+### Both Apolipopotein Fraction Plots  
+ 
+```{r apolipoprotein-plots}
+library(gridExtra)
+grid.arrange(hdlc.calcium.plot,nonhdlc.calcium.plot, nrow=1)
+```
+
 
 ```{r TG}
 ggplot(data=cholesterol.data,

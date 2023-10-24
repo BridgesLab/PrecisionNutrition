@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.005| 0.059|
-| 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.713| 0.044|
-| 0.036|      3|     0.629|  0.665| 0.045|
-| 0.023|      4|     0.593|  0.657| 0.045|
-| 0.022|      5|     0.569|  0.656| 0.045|
-| 0.015|      6|     0.547|  0.665| 0.046|
-| 0.015|      7|     0.532|  0.669| 0.047|
-| 0.014|      8|     0.516|  0.663| 0.046|
-| 0.011|      9|     0.502|  0.665| 0.047|
-| 0.011|     10|     0.491|  0.667| 0.047|
-| 0.010|     11|     0.481|  0.667| 0.047|
-| 0.010|     12|     0.470|  0.664| 0.047|
+| 0.247|      0|     1.000|  1.003| 0.059|
+| 0.064|      1|     0.753|  0.758| 0.045|
+| 0.060|      2|     0.689|  0.714| 0.045|
+| 0.036|      3|     0.629|  0.647| 0.041|
+| 0.023|      4|     0.593|  0.672| 0.047|
+| 0.022|      5|     0.569|  0.671| 0.048|
+| 0.015|      6|     0.547|  0.675| 0.049|
+| 0.015|      7|     0.532|  0.686| 0.049|
+| 0.014|      8|     0.516|  0.689| 0.049|
+| 0.011|      9|     0.502|  0.672| 0.047|
+| 0.011|     10|     0.491|  0.720| 0.056|
+| 0.010|     11|     0.481|  0.720| 0.056|
+| 0.010|     12|     0.470|  0.718| 0.056|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1043,6 +1043,110 @@ Table: Diet adjusted association of cholesterol with bone mineral content
 |sexM        |    16.86|      2.22|      7.60| 8.02e-14|
 |bmc2        |    -1.04|     11.19|     -0.09| 9.26e-01|
 
+## Lipoprotein Subpopulations
+
+Looked at the associations between HDL-C and non-HDL-C on calcium levels.
+
+### HDL-C
+
+
+```r
+ggplot(data=cholesterol.data,
+       aes(y=hdld2,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="HDL-C (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  hdlc.calcium.plot
+hdlc.calcium.plot
+```
+
+![](figures/hdl-1.png)<!-- -->
+
+```r
+ lm(hdld2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of HDL-C with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of HDL-C with calcium
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -30.1|     6.207|     -4.85| 1.52e-06|
+|DietHFHS    |     29.9|     1.403|     21.29| 3.46e-79|
+|sexM        |     10.8|     1.386|      7.80| 2.01e-14|
+|calcium2    |     10.4|     0.674|     15.49| 3.13e-47|
+
+### Non-HDL Cholesterol
+
+
+```r
+cholesterol.data <-
+  cholesterol.data %>%
+  mutate(nonhdlc = chol2-hdld2)
+
+ggplot(data=cholesterol.data,
+       aes(y=nonhdlc,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Non-HDL Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="DO Strains") +
+  scale_fill_grey() +
+  scale_color_grey() +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.15,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  nonhdlc.calcium.plot
+
+ lm(nonhdlc~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of non-HDL cholesterol with calcium
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -3.29|      3.41|     -0.96| 3.35e-01|
+|DietHFHS    |    -1.44|      0.77|     -1.87| 6.16e-02|
+|sexM        |     6.95|      0.76|      9.13| 6.01e-19|
+|calcium2    |     2.04|      0.37|      5.52| 4.54e-08|
+  
+### Both Apolipopotein Fraction Plots  
+ 
+
+```r
+library(gridExtra)
+grid.arrange(hdlc.calcium.plot,nonhdlc.calcium.plot, nrow=1)
+```
+
+![](figures/apolipoprotein-plots-1.png)<!-- -->
+
 
 
 ```r
@@ -1296,7 +1400,7 @@ dplyr::filter(cholesterol.data, sex == "M")
 ```
 
 ```
-## # A tibble: 417 × 173
+## # A tibble: 417 × 174
 ##    mouse.id sex     gen litter diet  coat.color  acr1  acr2 adiponectin b.area1
 ##    <chr>    <fct> <dbl>  <dbl> <fct> <chr>      <dbl> <dbl>       <dbl>   <dbl>
 ##  1 F142     M         7      2 hf    agouti        NA    NA          NA    8.31
@@ -1310,7 +1414,7 @@ dplyr::filter(cholesterol.data, sex == "M")
 ##  9 M08      M         4      2 hf    black         NA    NA          NA   10.7 
 ## 10 M09      M         4      2 hf    agouti        NA    NA          NA   NA   
 ## # ℹ 407 more rows
-## # ℹ 163 more variables: b.area2 <dbl>, bmc1 <dbl>, bmc2 <dbl>, bmd1 <dbl>,
+## # ℹ 164 more variables: b.area2 <dbl>, bmc1 <dbl>, bmc2 <dbl>, bmd1 <dbl>,
 ## #   bmd2 <dbl>, bun1 <dbl>, bun2 <dbl>, bw.10 <dbl>, bw.11 <dbl>, bw.12 <dbl>,
 ## #   bw.13 <dbl>, bw.14 <dbl>, bw.15 <dbl>, bw.16 <dbl>, bw.17 <dbl>,
 ## #   bw.18 <dbl>, bw.19 <dbl>, bw.20 <dbl>, bw.21 <dbl>, bw.22 <dbl>,
@@ -1432,10 +1536,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0397         2.46  <2e-16 ***
-## ADE             12.9034      11.3292        14.74  <2e-16 ***
-## Total Effect    14.5516      13.0087        16.36  <2e-16 ***
-## Prop. Mediated   0.1133       0.0714         0.17  <2e-16 ***
+## ACME             1.6482       1.0220         2.35  <2e-16 ***
+## ADE             12.9034      11.2239        14.69  <2e-16 ***
+## Total Effect    14.5516      12.9433        16.42  <2e-16 ***
+## Prop. Mediated   0.1133       0.0708         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1556,10 +1660,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.558        10.71  <2e-16 ***
-## ADE              24.010       19.487        28.84  <2e-16 ***
-## Total Effect     32.119       28.276        36.31  <2e-16 ***
-## Prop. Mediated    0.252        0.171         0.34  <2e-16 ***
+## ACME              8.110        5.487        10.78  <2e-16 ***
+## ADE              24.010       19.045        28.92  <2e-16 ***
+## Total Effect     32.119       27.978        36.44  <2e-16 ***
+## Prop. Mediated    0.252        0.167         0.35  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1623,10 +1727,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2478         3.01  <2e-16 ***
-## ADE             12.5614      10.9438        14.40  <2e-16 ***
-## Total Effect    14.6397      13.1130        16.45  <2e-16 ***
-## Prop. Mediated   0.1420       0.0872         0.20  <2e-16 ***
+## ACME             2.0783       1.2240         3.07  <2e-16 ***
+## ADE             12.5614      10.9415        14.12  <2e-16 ***
+## Total Effect    14.6397      13.0185        16.34  <2e-16 ***
+## Prop. Mediated   0.1420       0.0851         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1729,52 +1833,49 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] randomForest_4.7-1.1 ipred_0.9-13         caret_6.0-93        
-##  [4] lattice_0.20-45      mediation_4.5.0      sandwich_3.0-2      
-##  [7] mvtnorm_1.1-3        Matrix_1.5-3         MASS_7.3-58.1       
-## [10] effectsize_0.8.2     rattle_5.5.1         bitops_1.0-7        
-## [13] tibble_3.2.1         rpart_4.1.19         tree_1.0-42         
-## [16] broom_1.0.2          ggplot2_3.4.2        forcats_0.5.2       
-## [19] readr_2.1.3          dplyr_1.1.2          tidyr_1.3.0         
-## [22] knitr_1.41          
+##  [1] randomForest_4.7-1.1 ipred_0.9-14         caret_6.0-94        
+##  [4] lattice_0.21-9       mediation_4.5.0      sandwich_3.0-2      
+##  [7] mvtnorm_1.2-3        Matrix_1.5-4.1       MASS_7.3-60         
+## [10] gridExtra_2.3        effectsize_0.8.6     rattle_5.5.1        
+## [13] bitops_1.0-7         tibble_3.2.1         rpart_4.1.21        
+## [16] tree_1.0-43          broom_1.0.5          ggplot2_3.4.4       
+## [19] forcats_1.0.0        readr_2.1.4          dplyr_1.1.3         
+## [22] tidyr_1.3.0          knitr_1.44          
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] TH.data_1.1-1        minqa_1.2.5          colorspace_2.1-0    
-##   [4] deldir_1.0-6         class_7.3-20         ellipsis_0.3.2      
-##   [7] estimability_1.4.1   htmlTable_2.4.1      parameters_0.20.1   
-##  [10] base64enc_0.1-3      rstudioapi_0.14      listenv_0.9.0       
-##  [13] farver_2.1.1         bit64_4.0.5          lubridate_1.9.0     
-##  [16] prodlim_2019.11.13   fansi_1.0.4          codetools_0.2-18    
-##  [19] splines_4.2.2        cachem_1.0.8         Formula_1.2-4       
-##  [22] jsonlite_1.8.4       nloptr_2.0.3         pROC_1.18.0         
-##  [25] cluster_2.1.4        png_0.1-8            compiler_4.2.2      
-##  [28] emmeans_1.8.3        backports_1.4.1      fastmap_1.1.1       
-##  [31] cli_3.6.1            htmltools_0.5.4      tools_4.2.2         
-##  [34] coda_0.19-4          gtable_0.3.3         glue_1.6.2          
-##  [37] reshape2_1.4.4       Rcpp_1.0.10          jquerylib_0.1.4     
-##  [40] vctrs_0.6.2          nlme_3.1-161         iterators_1.0.14    
-##  [43] insight_0.18.8       timeDate_4022.108    gower_1.0.1         
-##  [46] xfun_0.36            stringr_1.5.0        globals_0.16.2      
-##  [49] lme4_1.1-31          timechange_0.1.1     lpSolve_5.6.17      
-##  [52] lifecycle_1.0.3      future_1.30.0        zoo_1.8-11          
-##  [55] scales_1.2.1         vroom_1.6.0          hms_1.1.2           
-##  [58] parallel_4.2.2       RColorBrewer_1.1-3   rpart.plot_3.1.1    
-##  [61] yaml_2.3.6           gridExtra_2.3        sass_0.4.4          
-##  [64] latticeExtra_0.6-30  stringi_1.7.12       highr_0.10          
-##  [67] bayestestR_0.13.0    foreach_1.5.2        checkmate_2.1.0     
-##  [70] hardhat_1.2.0        boot_1.3-28.1        lava_1.7.1          
-##  [73] rlang_1.1.1          pkgconfig_2.0.3      evaluate_0.19       
-##  [76] purrr_1.0.1          recipes_1.0.4        htmlwidgets_1.6.1   
-##  [79] labeling_0.4.2       bit_4.0.5            tidyselect_1.2.0    
-##  [82] parallelly_1.33.0    plyr_1.8.8           magrittr_2.0.3      
-##  [85] R6_2.5.1             generics_0.1.3       Hmisc_4.7-2         
-##  [88] multcomp_1.4-20      pillar_1.9.0         foreign_0.8-84      
-##  [91] withr_2.5.0          mgcv_1.8-41          survival_3.5-0      
-##  [94] datawizard_0.6.5     nnet_7.3-18          future.apply_1.10.0 
-##  [97] crayon_1.5.2         interp_1.1-3         utf8_1.2.3          
-## [100] tzdb_0.3.0           rmarkdown_2.19       jpeg_0.1-10         
-## [103] grid_4.2.2           data.table_1.14.8    ModelMetrics_1.2.2.2
-## [106] digest_0.6.31        xtable_1.8-4         stats4_4.2.2        
-## [109] munsell_0.5.0        bslib_0.4.2
+##   [1] TH.data_1.1-2        minqa_1.2.6          colorspace_2.1-0    
+##   [4] class_7.3-22         estimability_1.4.1   htmlTable_2.4.1     
+##   [7] parameters_0.21.2    base64enc_0.1-3      rstudioapi_0.15.0   
+##  [10] listenv_0.9.0        farver_2.1.1         bit64_4.0.5         
+##  [13] lubridate_1.9.3      prodlim_2023.08.28   fansi_1.0.5         
+##  [16] codetools_0.2-19     splines_4.2.2        cachem_1.0.8        
+##  [19] Formula_1.2-5        jsonlite_1.8.7       nloptr_2.0.3        
+##  [22] pROC_1.18.4          cluster_2.1.4        compiler_4.2.2      
+##  [25] emmeans_1.8.8        backports_1.4.1      fastmap_1.1.1       
+##  [28] cli_3.6.1            htmltools_0.5.6.1    tools_4.2.2         
+##  [31] coda_0.19-4          gtable_0.3.4         glue_1.6.2          
+##  [34] reshape2_1.4.4       Rcpp_1.0.11          jquerylib_0.1.4     
+##  [37] vctrs_0.6.4          nlme_3.1-163         iterators_1.0.14    
+##  [40] insight_0.19.6       timeDate_4022.108    xfun_0.40           
+##  [43] gower_1.0.1          stringr_1.5.0        globals_0.16.2      
+##  [46] lme4_1.1-34          timechange_0.2.0     lpSolve_5.6.19      
+##  [49] lifecycle_1.0.3      future_1.33.0        zoo_1.8-12          
+##  [52] scales_1.2.1         vroom_1.6.4          hms_1.1.3           
+##  [55] parallel_4.2.2       RColorBrewer_1.1-3   rpart.plot_3.1.1    
+##  [58] yaml_2.3.7           sass_0.4.7           stringi_1.7.12      
+##  [61] bayestestR_0.13.1    foreach_1.5.2        checkmate_2.2.0     
+##  [64] hardhat_1.3.0        boot_1.3-28.1        lava_1.7.2.1        
+##  [67] rlang_1.1.1          pkgconfig_2.0.3      evaluate_0.22       
+##  [70] purrr_1.0.2          recipes_1.0.8        htmlwidgets_1.6.2   
+##  [73] labeling_0.4.3       bit_4.0.5            tidyselect_1.2.0    
+##  [76] parallelly_1.36.0    plyr_1.8.9           magrittr_2.0.3      
+##  [79] R6_2.5.1             generics_0.1.3       Hmisc_5.1-1         
+##  [82] multcomp_1.4-25      pillar_1.9.0         foreign_0.8-85      
+##  [85] withr_2.5.1          mgcv_1.9-0           survival_3.5-7      
+##  [88] datawizard_0.9.0     nnet_7.3-19          future.apply_1.11.0 
+##  [91] crayon_1.5.2         utf8_1.2.3           tzdb_0.4.0          
+##  [94] rmarkdown_2.25       grid_4.2.2           data.table_1.14.8   
+##  [97] ModelMetrics_1.2.2.2 digest_0.6.33        xtable_1.8-4        
+## [100] stats4_4.2.2         munsell_0.5.0        bslib_0.5.1
 ```
 

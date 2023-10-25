@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.003| 0.059|
-| 0.064|      1|     0.753|  0.758| 0.045|
-| 0.060|      2|     0.689|  0.714| 0.045|
-| 0.036|      3|     0.629|  0.647| 0.041|
-| 0.023|      4|     0.593|  0.672| 0.047|
-| 0.022|      5|     0.569|  0.671| 0.048|
-| 0.015|      6|     0.547|  0.675| 0.049|
-| 0.015|      7|     0.532|  0.686| 0.049|
-| 0.014|      8|     0.516|  0.689| 0.049|
-| 0.011|      9|     0.502|  0.672| 0.047|
-| 0.011|     10|     0.491|  0.720| 0.056|
-| 0.010|     11|     0.481|  0.720| 0.056|
-| 0.010|     12|     0.470|  0.718| 0.056|
+| 0.247|      0|     1.000|  1.001| 0.059|
+| 0.064|      1|     0.753|  0.756| 0.045|
+| 0.060|      2|     0.689|  0.719| 0.044|
+| 0.036|      3|     0.629|  0.633| 0.040|
+| 0.023|      4|     0.593|  0.650| 0.044|
+| 0.022|      5|     0.569|  0.649| 0.044|
+| 0.015|      6|     0.547|  0.649| 0.045|
+| 0.015|      7|     0.532|  0.655| 0.044|
+| 0.014|      8|     0.516|  0.656| 0.043|
+| 0.011|      9|     0.502|  0.639| 0.043|
+| 0.011|     10|     0.491|  0.646| 0.041|
+| 0.010|     11|     0.481|  0.646| 0.041|
+| 0.010|     12|     0.470|  0.648| 0.041|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1066,7 +1066,7 @@ ggplot(data=cholesterol.data,
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
-        legend.position = c(0.15,0.80),
+        legend.position = c(0.2,0.80),
         legend.key=element_blank(),
         legend.background=element_blank()) ->
   hdlc.calcium.plot
@@ -1116,7 +1116,7 @@ ggplot(data=cholesterol.data,
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
-        legend.position = c(0.15,0.80),
+        legend.position = c(0.2,0.80),
         legend.key=element_blank(),
         legend.background=element_blank()) ->
   nonhdlc.calcium.plot
@@ -1139,6 +1139,25 @@ Table: Diet adjusted association of non-HDL cholesterol with calcium
   
 ### Both Apolipopotein Fraction Plots  
  
+
+```r
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize_at(.vars=vars(chol2,hdld2,nonhdlc)
+               ,.funs=list(mean=~mean(.,na.rm=T))) %>%
+  mutate(fold=hdld2_mean/nonhdlc_mean)
+```
+
+```
+## # A tibble: 4 × 6
+## # Groups:   Diet [2]
+##   Diet  sex   chol2_mean hdld2_mean nonhdlc_mean  fold
+##   <fct> <fct>      <dbl>      <dbl>        <dbl> <dbl>
+## 1 NCD   F           78.7       64.2         14.5  4.43
+## 2 NCD   M           96.5       74.6         22.0  3.40
+## 3 HFHS  F          113.        99.2         14.0  7.08
+## 4 HFHS  M          129.       108.          21.3  5.07
+```
 
 ```r
 library(gridExtra)
@@ -1536,10 +1555,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0220         2.35  <2e-16 ***
-## ADE             12.9034      11.2239        14.69  <2e-16 ***
-## Total Effect    14.5516      12.9433        16.42  <2e-16 ***
-## Prop. Mediated   0.1133       0.0708         0.16  <2e-16 ***
+## ACME             1.6482       1.0346         2.39  <2e-16 ***
+## ADE             12.9034      11.3134        14.47  <2e-16 ***
+## Total Effect    14.5516      12.9932        16.21  <2e-16 ***
+## Prop. Mediated   0.1133       0.0707         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1660,10 +1679,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.487        10.78  <2e-16 ***
-## ADE              24.010       19.045        28.92  <2e-16 ***
-## Total Effect     32.119       27.978        36.44  <2e-16 ***
-## Prop. Mediated    0.252        0.167         0.35  <2e-16 ***
+## ACME              8.110        5.607        10.76  <2e-16 ***
+## ADE              24.010       19.474        28.98  <2e-16 ***
+## Total Effect     32.119       28.219        36.49  <2e-16 ***
+## Prop. Mediated    0.252        0.173         0.34  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1727,10 +1746,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2240         3.07  <2e-16 ***
-## ADE             12.5614      10.9415        14.12  <2e-16 ***
-## Total Effect    14.6397      13.0185        16.34  <2e-16 ***
-## Prop. Mediated   0.1420       0.0851         0.20  <2e-16 ***
+## ACME             2.0783       1.3106         3.02  <2e-16 ***
+## ADE             12.5614      10.8362        14.26  <2e-16 ***
+## Total Effect    14.6397      12.9106        16.34  <2e-16 ***
+## Prop. Mediated   0.1420       0.0892         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1808,6 +1827,220 @@ varImpPlot(forest)
 
 ```r
 predict_model<-predict(forest, chol.pred.data.cont)
+```
+
+# Cholesterol Associations with All Parameters
+
+
+```r
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  cor(use="pairwise.complete.obs", method="spearman") %>%
+  as.data.frame -> all.correlations
+
+chol.correlations <- dplyr::select(all.correlations, chol2) %>%
+  rownames_to_column('Parameter') %>%
+  arrange(-abs(chol2)) 
+
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  pivot_longer(cols=everything(),names_to="Parameter", values_to="Values") %>%
+  group_by(Parameter) %>%
+  summarize(n=length(Values[!(is.na(Values))])) ->
+  chol.n
+
+spearmentt <- function(r,n){r * sqrt((n-2)/((1-r)*(1+r)))} #from https://stats.stackexchange.com/questions/22816/calculating-p-value-for-spearmans-rank-correlation-coefficient-example-on-wikip
+
+chol.cor.data <-
+  left_join(chol.correlations,chol.n,by="Parameter") %>%
+  mutate(p.value = 2*pt(-abs(spearmentt(chol2,n)),n-2)) %>%
+  mutate(p.adj = p.adjust(p.value,method="BH")) %>%
+  rename(estimate=chol2)
+
+
+chol.cor.data %>%
+  kable(caption="Spearman correlation coefficients for each clinical parameter",
+        digits=c(0,3,0,99,99))
+```
+
+
+
+Table: Spearman correlation coefficients for each clinical parameter
+
+|Parameter            | estimate|   n|  p.value|    p.adj|
+|:--------------------|--------:|---:|--------:|--------:|
+|chol2                |    1.000| 818| 0.00e+00| 0.00e+00|
+|hdld2                |    0.946| 814| 0.00e+00| 0.00e+00|
+|chol1                |    0.723| 789| 0.00e+00| 0.00e+00|
+|hdld1                |    0.703| 787| 0.00e+00| 0.00e+00|
+|nonhdlc              |    0.574| 812| 2.05e-72| 6.83e-71|
+|acr2                 |    0.467| 192| 8.81e-12| 2.83e-11|
+|ftm2                 |    0.449| 818| 9.23e-42| 2.13e-40|
+|ttm2                 |    0.448| 818| 1.02e-41| 2.13e-40|
+|bw.19                |    0.447| 827| 6.44e-42| 1.79e-40|
+|bw.22                |    0.443| 776| 1.13e-38| 1.45e-37|
+|bw.20                |    0.439| 827| 2.69e-40| 5.00e-39|
+|bw.23                |    0.438| 722| 4.00e-35| 3.34e-34|
+|bw.18                |    0.438| 828| 4.82e-40| 8.06e-39|
+|bw.21                |    0.437| 824| 1.02e-39| 1.54e-38|
+|gtt.180              |    0.436| 195| 1.94e-10| 6.11e-10|
+|weight2              |    0.433| 818| 8.87e-39| 1.23e-37|
+|glucose2             |    0.431| 815| 3.46e-38| 4.12e-37|
+|bw.28                |    0.428| 143| 9.81e-08| 2.52e-07|
+|bw.17                |    0.427| 829| 3.70e-38| 4.12e-37|
+|t.area2              |    0.427| 818| 1.26e-37| 1.32e-36|
+|necr.wt              |    0.420| 840| 2.62e-37| 2.58e-36|
+|bw.26                |    0.419| 648| 5.94e-29| 3.00e-28|
+|calcium2             |    0.417| 768| 1.08e-33| 8.23e-33|
+|bw.25                |    0.416| 673| 1.37e-29| 7.91e-29|
+|perc.fat2            |    0.416| 818| 1.30e-35| 1.21e-34|
+|bw.24                |    0.416| 673| 1.49e-29| 8.31e-29|
+|fat.mri              |    0.415| 198| 1.26e-09| 3.82e-09|
+|gtt.120              |    0.414| 195| 1.87e-09| 5.56e-09|
+|bw.16                |    0.411| 831| 3.56e-35| 3.13e-34|
+|bw.29                |    0.405|  97| 3.83e-05| 8.88e-05|
+|ftm1                 |    0.404| 832| 5.41e-34| 4.30e-33|
+|bw.30                |    0.403|  97| 4.31e-05| 9.86e-05|
+|bw.15                |    0.401| 831| 2.07e-33| 1.50e-32|
+|bw.27                |    0.398| 407| 6.69e-17| 2.38e-16|
+|bw.14                |    0.395| 832| 2.00e-32| 1.39e-31|
+|bw.13                |    0.386| 835| 4.71e-31| 3.15e-30|
+|bw.12                |    0.385| 835| 5.75e-31| 3.69e-30|
+|ttm1                 |    0.381| 832| 4.53e-30| 2.80e-29|
+|leptin               |    0.380| 826| 8.96e-30| 5.34e-29|
+|perc.fat1            |    0.377| 832| 1.77e-29| 9.55e-29|
+|bw.11                |    0.373| 837| 5.27e-29| 2.75e-28|
+|acr1                 |    0.372| 197| 7.18e-08| 1.87e-07|
+|percfat2             |    0.372| 818| 3.44e-28| 1.69e-27|
+|weight1              |    0.368| 832| 3.92e-28| 1.87e-27|
+|urine.microalbumin2  |    0.367| 805| 4.60e-27| 2.14e-26|
+|bw.10                |    0.360| 837| 5.12e-27| 2.31e-26|
+|t.area1              |    0.357| 832| 1.83e-26| 8.03e-26|
+|weight.mri           |    0.355| 198| 2.83e-07| 7.06e-07|
+|gldh2                |    0.338| 766| 5.63e-22| 2.24e-21|
+|bw.9                 |    0.338| 787| 1.58e-22| 6.77e-22|
+|insulin              |    0.328| 821| 4.22e-22| 1.76e-21|
+|percfat1             |    0.326| 832| 5.45e-22| 2.22e-21|
+|bw.8                 |    0.324| 789| 8.77e-21| 3.41e-20|
+|urine.microalbumin1  |    0.315| 708| 9.63e-18| 3.57e-17|
+|bw.7                 |    0.299| 789| 1.03e-17| 3.73e-17|
+|ltm2                 |    0.296| 818| 4.67e-18| 1.77e-17|
+|gtt.t0               |    0.290| 195| 3.83e-05| 8.88e-05|
+|bw.6                 |    0.282| 790| 6.17e-16| 2.15e-15|
+|non.fast.calcium     |    0.272| 412| 2.03e-08| 5.64e-08|
+|glucose1             |    0.270| 741| 7.06e-14| 2.36e-13|
+|gtt.auc              |    0.264| 195| 1.95e-04| 4.22e-04|
+|adiponectin          |    0.263| 195| 2.00e-04| 4.28e-04|
+|ltm1                 |    0.262| 832| 1.76e-14| 6.01e-14|
+|tbil2                |    0.253| 145| 2.16e-03| 4.19e-03|
+|length2              |    0.246| 819| 9.60e-13| 3.14e-12|
+|heart.wt             |    0.242| 668| 2.17e-10| 6.71e-10|
+|nefa2                |    0.225| 677| 3.42e-09| 9.85e-09|
+|gtt.t60              |    0.220| 195| 2.00e-03| 3.93e-03|
+|bw.pc1               |    0.219| 392| 1.24e-05| 2.96e-05|
+|non.fast.crex        |   -0.218| 459| 2.34e-06| 5.76e-06|
+|tg2                  |    0.207| 819| 2.38e-09| 6.98e-09|
+|bw.5                 |    0.204| 790| 6.81e-09| 1.93e-08|
+|urine.glucose2       |   -0.196| 782| 3.13e-08| 8.58e-08|
+|urine.creatinine2    |   -0.194| 797| 3.19e-08| 8.59e-08|
+|phosphorus2          |    0.189| 769| 1.30e-07| 3.28e-07|
+|length1              |    0.188| 832| 4.72e-08| 1.25e-07|
+|spleen.wt            |    0.170| 668| 1.02e-05| 2.47e-05|
+|urine.creatinine1    |   -0.151| 706| 5.84e-05| 1.32e-04|
+|kidney.wt.r          |    0.150| 668| 9.76e-05| 2.17e-04|
+|kidney.wt.l          |    0.147| 668| 1.39e-04| 3.05e-04|
+|mcv2                 |    0.142| 601| 4.89e-04| 1.02e-03|
+|gldh1                |    0.137| 690| 2.97e-04| 6.27e-04|
+|calcium1             |    0.136| 644| 5.39e-04| 1.11e-03|
+|bw.3                 |    0.129| 250| 4.11e-02| 7.30e-02|
+|urine.glucose1       |   -0.119| 699| 1.64e-03| 3.30e-03|
+|hr                   |    0.116| 781| 1.12e-03| 2.28e-03|
+|lipase1              |    0.116|  97| 2.60e-01| 3.44e-01|
+|tbil1                |    0.115| 187| 1.19e-01| 1.85e-01|
+|chcm2                |   -0.114| 601| 5.00e-03| 9.60e-03|
+|rr                   |   -0.110| 781| 1.99e-03| 3.93e-03|
+|ghrelin              |    0.107| 195| 1.37e-01| 2.05e-01|
+|mchc2                |   -0.107| 586| 9.77e-03| 1.81e-02|
+|ct.eos1              |   -0.105| 628| 8.16e-03| 1.53e-02|
+|lean.mri             |    0.105| 198| 1.43e-01| 2.11e-01|
+|bw.4                 |    0.101| 765| 5.21e-03| 9.89e-03|
+|gtt.t30              |    0.092| 195| 2.00e-01| 2.78e-01|
+|nefa1                |    0.086| 691| 2.38e-02| 4.31e-02|
+|ct.eos2              |   -0.085| 600| 3.77e-02| 6.76e-02|
+|b.area1              |   -0.085| 832| 1.45e-02| 2.65e-02|
+|totalwater.mri       |    0.085| 198| 2.36e-01| 3.15e-01|
+|perc.mono1           |    0.080| 628| 4.57e-02| 8.03e-02|
+|perc.eos1            |   -0.078| 628| 5.17e-02| 9.00e-02|
+|retic2               |    0.076| 601| 6.16e-02| 1.06e-01|
+|mchc1                |   -0.073| 627| 6.61e-02| 1.09e-01|
+|perc.eos2            |   -0.070| 604| 8.44e-02| 1.37e-01|
+|st                   |   -0.066| 781| 6.52e-02| 1.09e-01|
+|bun2                 |    0.065| 818| 6.33e-02| 1.08e-01|
+|bmc2                 |    0.064| 818| 6.61e-02| 1.09e-01|
+|mch2                 |    0.063| 586| 1.26e-01| 1.95e-01|
+|hdw1                 |    0.063| 628| 1.14e-01| 1.80e-01|
+|bun1                 |   -0.063| 787| 7.88e-02| 1.29e-01|
+|perc.mono2           |    0.062| 604| 1.27e-01| 1.95e-01|
+|chcm1                |   -0.061| 628| 1.29e-01| 1.97e-01|
+|retic1               |   -0.060| 628| 1.36e-01| 2.05e-01|
+|hrv                  |   -0.059| 781| 1.00e-01| 1.61e-01|
+|rbc2                 |   -0.058| 601| 1.59e-01| 2.31e-01|
+|bmd2                 |    0.057| 818| 1.03e-01| 1.64e-01|
+|hct2                 |    0.054| 601| 1.85e-01| 2.62e-01|
+|hct1                 |    0.053| 628| 1.88e-01| 2.64e-01|
+|ct.mono2             |    0.052| 600| 2.02e-01| 2.78e-01|
+|rmssd                |   -0.050| 781| 1.60e-01| 2.31e-01|
+|pnn50...6ms.         |   -0.050| 781| 1.60e-01| 2.31e-01|
+|ct.mono1             |    0.049| 628| 2.18e-01| 2.96e-01|
+|qtc                  |   -0.048| 781| 1.84e-01| 2.62e-01|
+|mcv1                 |    0.047| 628| 2.36e-01| 3.15e-01|
+|wbc2                 |    0.046| 604| 2.63e-01| 3.46e-01|
+|tg1                  |    0.045| 788| 2.09e-01| 2.86e-01|
+|perc.neut2           |    0.043| 604| 2.94e-01| 3.78e-01|
+|mpv1                 |   -0.042| 628| 2.92e-01| 3.78e-01|
+|chgb1                |    0.042| 628| 2.98e-01| 3.80e-01|
+|pr                   |   -0.039| 781| 2.74e-01| 3.58e-01|
+|ct.neut2             |    0.036| 600| 3.80e-01| 4.75e-01|
+|nlr2                 |    0.036| 600| 3.81e-01| 4.75e-01|
+|non.fast.alb         |    0.035| 450| 4.61e-01| 5.56e-01|
+|qtc.dispersion       |   -0.034| 781| 3.46e-01| 4.38e-01|
+|hdw2                 |   -0.031| 601| 4.50e-01| 5.53e-01|
+|qrs                  |   -0.027| 781| 4.51e-01| 5.53e-01|
+|pq                   |   -0.026| 781| 4.62e-01| 5.56e-01|
+|wbc1                 |   -0.026| 628| 5.23e-01| 6.20e-01|
+|litter               |    0.025| 840| 4.63e-01| 5.56e-01|
+|plt2                 |    0.025| 601| 5.47e-01| 6.38e-01|
+|ct.lym1              |   -0.024| 628| 5.44e-01| 6.38e-01|
+|ct.lym2              |   -0.024| 600| 5.62e-01| 6.51e-01|
+|gen                  |    0.023| 840| 4.97e-01| 5.93e-01|
+|plt1                 |   -0.018| 628| 6.55e-01| 7.54e-01|
+|nlr1                 |   -0.017| 628| 6.78e-01| 7.73e-01|
+|ct.neut1             |   -0.016| 628| 6.81e-01| 7.73e-01|
+|mpv2                 |    0.016| 601| 6.97e-01| 7.82e-01|
+|perc.lym2            |   -0.015| 604| 7.07e-01| 7.87e-01|
+|rdw1                 |   -0.015| 628| 7.12e-01| 7.87e-01|
+|bmd1                 |   -0.014| 832| 6.97e-01| 7.82e-01|
+|fruc1                |    0.013|  93| 9.01e-01| 9.47e-01|
+|freewater.mri        |   -0.013| 198| 8.56e-01| 9.17e-01|
+|perc.lym1            |    0.011| 628| 7.76e-01| 8.53e-01|
+|non.fast.phosphorous |    0.010| 467| 8.24e-01| 8.99e-01|
+|chgb2                |   -0.009| 601| 8.33e-01| 9.02e-01|
+|b.area2              |    0.007| 818| 8.37e-01| 9.02e-01|
+|perc.neut1           |    0.007| 628| 8.68e-01| 9.23e-01|
+|mhgb2                |   -0.005| 586| 8.98e-01| 9.47e-01|
+|bw.pc2               |    0.005| 435| 9.20e-01| 9.60e-01|
+|gtt.t15              |    0.004| 195| 9.51e-01| 9.76e-01|
+|mch1                 |    0.003| 627| 9.42e-01| 9.76e-01|
+|rdw2                 |   -0.002| 601| 9.53e-01| 9.76e-01|
+|rbc1                 |    0.002| 628| 9.70e-01| 9.87e-01|
+|bmc1                 |   -0.001| 832| 9.82e-01| 9.87e-01|
+|mhgb1                |    0.001| 627| 9.86e-01| 9.87e-01|
+|phosphorus1          |    0.001| 644| 9.87e-01| 9.87e-01|
+
+```r
+write_csv(chol.cor.data,file="Correlation of clinical factors with cholesterol.csv")
 ```
 
 # Session Information

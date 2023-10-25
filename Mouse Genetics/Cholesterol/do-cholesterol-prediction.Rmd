@@ -483,7 +483,7 @@ ggplot(data=cholesterol.data,
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
-        legend.position = c(0.15,0.80),
+        legend.position = c(0.2,0.80),
         legend.key=element_blank(),
         legend.background=element_blank()) ->
   hdlc.calcium.plot
@@ -517,7 +517,7 @@ ggplot(data=cholesterol.data,
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
-        legend.position = c(0.15,0.80),
+        legend.position = c(0.2,0.80),
         legend.key=element_blank(),
         legend.background=element_blank()) ->
   nonhdlc.calcium.plot
@@ -530,6 +530,12 @@ ggplot(data=cholesterol.data,
 ### Both Apolipopotein Fraction Plots  
  
 ```{r apolipoprotein-plots}
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize_at(.vars=vars(chol2,hdld2,nonhdlc)
+               ,.funs=list(mean=~mean(.,na.rm=T))) %>%
+  mutate(fold=hdld2_mean/nonhdlc_mean)
+
 library(gridExtra)
 grid.arrange(hdlc.calcium.plot,nonhdlc.calcium.plot, nrow=1)
 ```
@@ -819,6 +825,43 @@ varImpPlot(forest)
 
 predict_model<-predict(forest, chol.pred.data.cont)
 
+```
+
+# Cholesterol Associations with All Parameters
+
+```{r chol-associations}
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  cor(use="pairwise.complete.obs", method="spearman") %>%
+  as.data.frame -> all.correlations
+
+chol.correlations <- dplyr::select(all.correlations, chol2) %>%
+  rownames_to_column('Parameter') %>%
+  arrange(-abs(chol2)) 
+
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  pivot_longer(cols=everything(),names_to="Parameter", values_to="Values") %>%
+  group_by(Parameter) %>%
+  summarize(n=length(Values[!(is.na(Values))])) ->
+  chol.n
+
+spearmentt <- function(r,n){r * sqrt((n-2)/((1-r)*(1+r)))} #from https://stats.stackexchange.com/questions/22816/calculating-p-value-for-spearmans-rank-correlation-coefficient-example-on-wikip
+
+chol.cor.data <-
+  left_join(chol.correlations,chol.n,by="Parameter") %>%
+  mutate(p.value = 2*pt(-abs(spearmentt(chol2,n)),n-2)) %>%
+  mutate(p.adj = p.adjust(p.value,method="BH")) %>%
+  rename(estimate=chol2)
+
+
+chol.cor.data %>%
+  kable(caption="Spearman correlation coefficients for each clinical parameter",
+        digits=c(0,3,0,99,99))
+
+write_csv(chol.cor.data,file="Correlation of clinical factors with cholesterol.csv")
 ```
 
 # Session Information

@@ -500,10 +500,11 @@ hdlc.calcium.plot
 ```{r non-hdl}
 cholesterol.data <-
   cholesterol.data %>%
-  mutate(nonhdlc = chol2-hdld2)
+  mutate(nonhdlc2 = chol2-hdld2,
+         nonhdlc1 = chol1-hdld1)
 
 ggplot(data=cholesterol.data,
-       aes(y=nonhdlc,
+       aes(y=nonhdlc2,
            x=calcium2,
            col=Diet)) +
   geom_point(alpha=0.5) +
@@ -520,9 +521,9 @@ ggplot(data=cholesterol.data,
         legend.position = c(0.2,0.80),
         legend.key=element_blank(),
         legend.background=element_blank()) ->
-  nonhdlc.calcium.plot
+  nonhdlc2.calcium.plot
 
- lm(nonhdlc~Diet+sex+calcium2, data=cholesterol.data) %>% 
+ lm(nonhdlc2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
          digits=c(0,3,3,2,99))
 ```
@@ -532,12 +533,12 @@ ggplot(data=cholesterol.data,
 ```{r apolipoprotein-plots}
 cholesterol.data %>%
   group_by(Diet,sex) %>%
-  summarize_at(.vars=vars(chol2,hdld2,nonhdlc)
+  summarize_at(.vars=vars(chol2,hdld2,nonhdlc2)
                ,.funs=list(mean=~mean(.,na.rm=T))) %>%
-  mutate(fold=hdld2_mean/nonhdlc_mean)
+  mutate(fold=hdld2_mean/nonhdlc2_mean)
 
 library(gridExtra)
-grid.arrange(hdlc.calcium.plot,nonhdlc.calcium.plot, nrow=1)
+grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
 ```
 
 
@@ -829,7 +830,9 @@ predict_model<-predict(forest, chol.pred.data.cont)
 
 # Cholesterol Associations with All Parameters
 
-```{r chol-associations}
+First estimated Spearman correlation coefficients for each parameter relative to chol2
+
+```{r chol-associations-spearman}
 cholesterol.data %>% 
   dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
   mutate_all(.funs=as.numeric) %>% 
@@ -852,16 +855,34 @@ spearmentt <- function(r,n){r * sqrt((n-2)/((1-r)*(1+r)))} #from https://stats.s
 
 chol.cor.data <-
   left_join(chol.correlations,chol.n,by="Parameter") %>%
-  mutate(p.value = 2*pt(-abs(spearmentt(chol2,n)),n-2)) %>%
-  mutate(p.adj = p.adjust(p.value,method="BH")) %>%
+  mutate(cor.p.value = 2*pt(-abs(spearmentt(chol2,n)),n-2)) %>%
+  mutate(cor.p.adj = p.adjust(cor.p.value,method="BH")) %>%
   rename(estimate=chol2)
+```
+
+Next constructed diet and sex adjusted linear models for each parameter
+
+```{r chol-associations-lm}
+cholesterol.data %>% 
+  dplyr::select(-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  dplyr::select(b.area1:percfat2,nonhdlc1,nonhdlc2,sex,Diet) %>%
+  pivot_longer(cols=-one_of('sex','Diet','chol2')) %>% 
+  group_by(name) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'p.value']))) %>%
+  mutate(lm.p.adj = p.adjust(lm.p.value,method="BH")) -> chol.cor.lm
+
+left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
+  arrange(-abs(estimate)) -> cor.data.combined
+
+cor.data.combined %>%
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
+        digits=c(0,3,0,99,99,3,3,99,99))
+
+write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")
 
 
-chol.cor.data %>%
-  kable(caption="Spearman correlation coefficients for each clinical parameter",
-        digits=c(0,3,0,99,99))
-
-write_csv(chol.cor.data,file="Correlation of clinical factors with cholesterol.csv")
 ```
 
 # Session Information

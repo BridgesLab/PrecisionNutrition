@@ -144,7 +144,7 @@ summary.data.complete %>%
     labs(y="Cholesterol (mg/dL)",
        x="") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -186,7 +186,7 @@ cholesterol.data %>%
   labs(y="Cholesterol (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.15,0.8))
@@ -289,7 +289,7 @@ ggplot(data=cholesterol.data,
        x="Calcium (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -403,7 +403,7 @@ cholesterol.data %>%
   labs(y="Calcium (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.85,0.15))
@@ -422,7 +422,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Density (g/cm2)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -447,7 +447,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Content (g)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -479,7 +479,7 @@ ggplot(data=cholesterol.data,
        x="Calcium (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -514,7 +514,7 @@ ggplot(data=cholesterol.data,
        x="Calcium (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -555,7 +555,7 @@ ggplot(data=cholesterol.data,
        x="Triglycerides (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -624,7 +624,8 @@ lm(chol2~tg2*sex*diet, data=cholesterol.data) %>%
         digits=c(0,3,3,2,99))
 
 omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
-  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels")
+  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels",
+        digits = c(0,5,2,5,5))
 ```
 
 # Mediating Effect of Body Weight
@@ -641,7 +642,7 @@ ggplot(data=cholesterol.data,
        x="Body Weight (g)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -703,12 +704,12 @@ ggplot(data=cholesterol.data,
            col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm) +
+  geom_smooth(method=lm,se=F) +
     labs(y="Cholesterol (mg/dL)",
        x="Percent Fat Mass",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),

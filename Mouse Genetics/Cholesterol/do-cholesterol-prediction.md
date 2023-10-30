@@ -171,7 +171,7 @@ summary.data.complete %>%
     labs(y="Cholesterol (mg/dL)",
        x="") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -254,7 +254,7 @@ cholesterol.data %>%
   labs(y="Cholesterol (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.15,0.8))
@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.003| 0.059|
-| 0.064|      1|     0.753|  0.758| 0.045|
-| 0.060|      2|     0.689|  0.707| 0.044|
-| 0.036|      3|     0.629|  0.634| 0.040|
-| 0.023|      4|     0.593|  0.631| 0.043|
-| 0.022|      5|     0.569|  0.625| 0.043|
-| 0.015|      6|     0.547|  0.638| 0.045|
-| 0.015|      7|     0.532|  0.648| 0.046|
-| 0.014|      8|     0.516|  0.647| 0.045|
-| 0.011|      9|     0.502|  0.667| 0.047|
-| 0.011|     10|     0.491|  0.680| 0.048|
-| 0.010|     11|     0.481|  0.678| 0.048|
-| 0.010|     12|     0.470|  0.683| 0.048|
+| 0.247|      0|     1.000|  1.004| 0.059|
+| 0.064|      1|     0.753|  0.759| 0.045|
+| 0.060|      2|     0.689|  0.730| 0.044|
+| 0.036|      3|     0.629|  0.665| 0.043|
+| 0.023|      4|     0.593|  0.646| 0.043|
+| 0.022|      5|     0.569|  0.648| 0.043|
+| 0.015|      6|     0.547|  0.648| 0.044|
+| 0.015|      7|     0.532|  0.655| 0.044|
+| 0.014|      8|     0.516|  0.665| 0.045|
+| 0.011|      9|     0.502|  0.693| 0.046|
+| 0.011|     10|     0.491|  0.691| 0.048|
+| 0.010|     11|     0.481|  0.690| 0.048|
+| 0.010|     12|     0.470|  0.690| 0.048|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -465,7 +465,7 @@ ggplot(data=cholesterol.data,
        x="Calcium (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -951,7 +951,7 @@ cholesterol.data %>%
   labs(y="Calcium (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.85,0.15))
@@ -973,7 +973,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Density (g/cm2)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1014,7 +1014,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Content (g)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1062,7 +1062,7 @@ ggplot(data=cholesterol.data,
        x="Calcium (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1113,7 +1113,7 @@ ggplot(data=cholesterol.data,
        x="Calcium (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1182,7 +1182,7 @@ ggplot(data=cholesterol.data,
        x="Triglycerides (mg/dL)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1480,22 +1480,23 @@ Table: Three way interaction model for triglycerides and cholesterol
 
 ```r
 omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
-  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels")
+  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels",
+        digits = c(0,5,2,5,5))
 ```
 
 
 
 Table: Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels
 
-|Parameter    | Omega2_partial|   CI| CI_low| CI_high|
-|:------------|--------------:|----:|------:|-------:|
-|tg2          |          0.074| 0.95|  0.048|       1|
-|sex          |          0.058| 0.95|  0.035|       1|
-|diet         |          0.338| 0.95|  0.297|       1|
-|tg2:sex      |          0.008| 0.95|  0.001|       1|
-|tg2:diet     |          0.001| 0.95|  0.000|       1|
-|sex:diet     |          0.001| 0.95|  0.000|       1|
-|tg2:sex:diet |          0.014| 0.95|  0.004|       1|
+|Parameter    | Omega2_partial|   CI|  CI_low| CI_high|
+|:------------|--------------:|----:|-------:|-------:|
+|tg2          |        0.07400| 0.95| 0.04764|       1|
+|sex          |        0.05836| 0.95| 0.03491|       1|
+|diet         |        0.33829| 0.95| 0.29704|       1|
+|tg2:sex      |        0.00753| 0.95| 0.00084|       1|
+|tg2:diet     |        0.00109| 0.95| 0.00000|       1|
+|sex:diet     |        0.00086| 0.95| 0.00000|       1|
+|tg2:sex:diet |        0.01378| 0.95| 0.00361|       1|
 
 # Mediating Effect of Body Weight
 
@@ -1512,7 +1513,7 @@ ggplot(data=cholesterol.data,
        x="Body Weight (g)",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1611,10 +1612,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0153         2.37  <2e-16 ***
-## ADE             12.9034      11.2257        14.55  <2e-16 ***
-## Total Effect    14.5516      12.9008        16.28  <2e-16 ***
-## Prop. Mediated   0.1133       0.0711         0.16  <2e-16 ***
+## ACME             1.6482       1.0435         2.40  <2e-16 ***
+## ADE             12.9034      11.2063        14.46  <2e-16 ***
+## Total Effect    14.5516      12.9706        16.14  <2e-16 ***
+## Prop. Mediated   0.1133       0.0724         0.17  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1636,12 +1637,12 @@ ggplot(data=cholesterol.data,
            col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm) +
+  geom_smooth(method=lm,se=F) +
     labs(y="Cholesterol (mg/dL)",
        x="Percent Fat Mass",
        title="DO Strains") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1735,10 +1736,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.484        10.71  <2e-16 ***
-## ADE              24.010       19.479        29.18  <2e-16 ***
-## Total Effect     32.119       28.271        36.46  <2e-16 ***
-## Prop. Mediated    0.252        0.164         0.34  <2e-16 ***
+## ACME              8.110        5.807        10.93  <2e-16 ***
+## ADE              24.010       19.217        28.49  <2e-16 ***
+## Total Effect     32.119       28.328        35.98  <2e-16 ***
+## Prop. Mediated    0.252        0.178         0.35  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1802,10 +1803,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.3405         2.95  <2e-16 ***
-## ADE             12.5614      10.9345        14.27  <2e-16 ***
-## Total Effect    14.6397      12.9764        16.30  <2e-16 ***
-## Prop. Mediated   0.1420       0.0941         0.20  <2e-16 ***
+## ACME             2.0783       1.2988         3.00  <2e-16 ***
+## ADE             12.5614      10.8257        14.42  <2e-16 ***
+## Total Effect    14.6397      12.9054        16.53  <2e-16 ***
+## Prop. Mediated   0.1420       0.0911         0.21  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 

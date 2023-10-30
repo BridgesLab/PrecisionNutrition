@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.001| 0.059|
-| 0.064|      1|     0.753|  0.757| 0.045|
-| 0.060|      2|     0.689|  0.710| 0.045|
-| 0.036|      3|     0.629|  0.653| 0.042|
-| 0.023|      4|     0.593|  0.648| 0.044|
-| 0.022|      5|     0.569|  0.636| 0.043|
-| 0.015|      6|     0.547|  0.638| 0.043|
-| 0.015|      7|     0.532|  0.641| 0.044|
-| 0.014|      8|     0.516|  0.644| 0.044|
-| 0.011|      9|     0.502|  0.664| 0.046|
-| 0.011|     10|     0.491|  0.678| 0.048|
-| 0.010|     11|     0.481|  0.680| 0.048|
-| 0.010|     12|     0.470|  0.680| 0.048|
+| 0.247|      0|     1.000|  1.003| 0.059|
+| 0.064|      1|     0.753|  0.758| 0.045|
+| 0.060|      2|     0.689|  0.707| 0.044|
+| 0.036|      3|     0.629|  0.634| 0.040|
+| 0.023|      4|     0.593|  0.631| 0.043|
+| 0.022|      5|     0.569|  0.625| 0.043|
+| 0.015|      6|     0.547|  0.638| 0.045|
+| 0.015|      7|     0.532|  0.648| 0.046|
+| 0.014|      8|     0.516|  0.647| 0.045|
+| 0.011|      9|     0.502|  0.667| 0.047|
+| 0.011|     10|     0.491|  0.680| 0.048|
+| 0.010|     11|     0.481|  0.678| 0.048|
+| 0.010|     12|     0.470|  0.683| 0.048|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1167,6 +1167,7 @@ grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
 
 ![](figures/apolipoprotein-plots-1.png)<!-- -->
 
+# Serum Triglycerides
 
 
 ```r
@@ -1416,31 +1417,85 @@ Table: Partial effect size estimates for predictors of continuous cholesterol le
 |calcium2  |          0.215| 0.95|  0.174|       1|
 
 ```r
-dplyr::filter(cholesterol.data, sex == "M")
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize(Estimate = cor.test(chol2,tg2, method="spearman")$estimate,
+            P.value = cor.test(chol2,tg2, method="spearman")$p.value) %>%
+  kable(caption="Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex",
+        digits=c(0,0,3,99))
 ```
 
+
+
+Table: Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex
+
+|Diet |sex | Estimate|  P.value|
+|:----|:---|--------:|--------:|
+|NCD  |F   |    0.453| 1.11e-12|
+|NCD  |M   |    0.491| 1.72e-14|
+|HFHS |F   |    0.276| 9.26e-05|
+|HFHS |M   |    0.190| 1.00e-02|
+
+```r
+cholesterol.data %>% 
+  group_by(Diet,sex) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'p.value']))) %>%
+  kable(caption="Sensitivity analyses of diet/sex groups and the relationships between triglycerides and cholesterol")
 ```
-## # A tibble: 417 × 175
-##    mouse.id sex     gen litter diet  coat.color  acr1  acr2 adiponectin b.area1
-##    <chr>    <fct> <dbl>  <dbl> <fct> <chr>      <dbl> <dbl>       <dbl>   <dbl>
-##  1 F142     M         7      2 hf    agouti        NA    NA          NA    8.31
-##  2 M01      M         4      2 hf    agouti        NA    NA          NA    9.97
-##  3 M02      M         4      2 hf    agouti        NA    NA          NA    9.02
-##  4 M03      M         4      2 hf    agouti        NA    NA          NA    9.05
-##  5 M04      M         4      2 hf    black         NA    NA          NA    9.55
-##  6 M05      M         4      2 hf    agouti        NA    NA          NA    8.78
-##  7 M06      M         4      2 hf    agouti        NA    NA          NA   11.4 
-##  8 M07      M         4      2 hf    agouti        NA    NA          NA    9.24
-##  9 M08      M         4      2 hf    black         NA    NA          NA   10.7 
-## 10 M09      M         4      2 hf    agouti        NA    NA          NA   NA   
-## # ℹ 407 more rows
-## # ℹ 165 more variables: b.area2 <dbl>, bmc1 <dbl>, bmc2 <dbl>, bmd1 <dbl>,
-## #   bmd2 <dbl>, bun1 <dbl>, bun2 <dbl>, bw.10 <dbl>, bw.11 <dbl>, bw.12 <dbl>,
-## #   bw.13 <dbl>, bw.14 <dbl>, bw.15 <dbl>, bw.16 <dbl>, bw.17 <dbl>,
-## #   bw.18 <dbl>, bw.19 <dbl>, bw.20 <dbl>, bw.21 <dbl>, bw.22 <dbl>,
-## #   bw.23 <dbl>, bw.24 <dbl>, bw.25 <dbl>, bw.26 <dbl>, bw.27 <dbl>,
-## #   bw.28 <dbl>, bw.29 <dbl>, bw.3 <dbl>, bw.30 <dbl>, bw.4 <dbl>, …
+
+
+
+Table: Sensitivity analyses of diet/sex groups and the relationships between triglycerides and cholesterol
+
+|Diet |sex |beta   |se     |lm.p.value |
+|:----|:---|:------|:------|:----------|
+|NCD  |F   |0.202  |0.0256 |1.67e-13   |
+|NCD  |M   |0.194  |0.0224 |1.08e-15   |
+|HFHS |F   |0.354  |0.0626 |5.59e-08   |
+|HFHS |M   |0.0835 |0.0364 |0.0229     |
+
+```r
+lm(chol2~tg2*sex*diet, data=cholesterol.data) %>%
+  tidy %>%
+  kable(caption="Three way interaction model for triglycerides and cholesterol",
+        digits=c(0,3,3,2,99))
 ```
+
+
+
+Table: Three way interaction model for triglycerides and cholesterol
+
+|term            | estimate| std.error| statistic|  p.value|
+|:---------------|--------:|---------:|---------:|--------:|
+|(Intercept)     |   54.282|     4.460|     12.17| 2.04e-31|
+|tg2             |    0.202|     0.034|      5.94| 4.19e-09|
+|sexM            |   13.337|     6.422|      2.08| 3.81e-02|
+|diethf          |   27.199|     6.729|      4.04| 5.80e-05|
+|tg2:sexM        |   -0.007|     0.044|     -0.16| 8.70e-01|
+|tg2:diethf      |    0.152|     0.062|      2.45| 1.45e-02|
+|sexM:diethf     |   23.907|     9.181|      2.60| 9.38e-03|
+|tg2:sexM:diethf |   -0.263|     0.075|     -3.53| 4.47e-04|
+
+```r
+omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
+  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels")
+```
+
+
+
+Table: Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels
+
+|Parameter    | Omega2_partial|   CI| CI_low| CI_high|
+|:------------|--------------:|----:|------:|-------:|
+|tg2          |          0.074| 0.95|  0.048|       1|
+|sex          |          0.058| 0.95|  0.035|       1|
+|diet         |          0.338| 0.95|  0.297|       1|
+|tg2:sex      |          0.008| 0.95|  0.001|       1|
+|tg2:diet     |          0.001| 0.95|  0.000|       1|
+|sex:diet     |          0.001| 0.95|  0.000|       1|
+|tg2:sex:diet |          0.014| 0.95|  0.004|       1|
 
 # Mediating Effect of Body Weight
 
@@ -1556,10 +1611,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0342         2.33  <2e-16 ***
-## ADE             12.9034      11.1687        14.58  <2e-16 ***
-## Total Effect    14.5516      12.8019        16.29  <2e-16 ***
-## Prop. Mediated   0.1133       0.0733         0.16  <2e-16 ***
+## ACME             1.6482       1.0153         2.37  <2e-16 ***
+## ADE             12.9034      11.2257        14.55  <2e-16 ***
+## Total Effect    14.5516      12.9008        16.28  <2e-16 ***
+## Prop. Mediated   0.1133       0.0711         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1680,10 +1735,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.556        10.78  <2e-16 ***
-## ADE              24.010       19.335        28.99  <2e-16 ***
-## Total Effect     32.119       28.140        36.27  <2e-16 ***
-## Prop. Mediated    0.252        0.168         0.34  <2e-16 ***
+## ACME              8.110        5.484        10.71  <2e-16 ***
+## ADE              24.010       19.479        29.18  <2e-16 ***
+## Total Effect     32.119       28.271        36.46  <2e-16 ***
+## Prop. Mediated    0.252        0.164         0.34  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1747,10 +1802,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              2.078        1.278         2.99  <2e-16 ***
-## ADE              12.561       10.879        14.34  <2e-16 ***
-## Total Effect     14.640       13.014        16.45  <2e-16 ***
-## Prop. Mediated    0.142        0.089         0.20  <2e-16 ***
+## ACME             2.0783       1.3405         2.95  <2e-16 ***
+## ADE             12.5614      10.9345        14.27  <2e-16 ***
+## Total Effect    14.6397      12.9764        16.30  <2e-16 ***
+## Prop. Mediated   0.1420       0.0941         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 

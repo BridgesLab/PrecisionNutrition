@@ -541,6 +541,7 @@ library(gridExtra)
 grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
 ```
 
+# Serum Triglycerides
 
 ```{r TG}
 ggplot(data=cholesterol.data,
@@ -602,7 +603,28 @@ library(effectsize)
 omega_squared(aov.calcium, partial = TRUE) %>%
   kable(caption="Partial effect size estimates for predictors of continuous cholesterol levels")
 
-dplyr::filter(cholesterol.data, sex == "M")
+
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize(Estimate = cor.test(chol2,tg2, method="spearman")$estimate,
+            P.value = cor.test(chol2,tg2, method="spearman")$p.value) %>%
+  kable(caption="Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex",
+        digits=c(0,0,3,99))
+
+cholesterol.data %>% 
+  group_by(Diet,sex) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'p.value']))) %>%
+  kable(caption="Sensitivity analyses of diet/sex groups and the relationships between triglycerides and cholesterol")
+
+lm(chol2~tg2*sex*diet, data=cholesterol.data) %>%
+  tidy %>%
+  kable(caption="Three way interaction model for triglycerides and cholesterol",
+        digits=c(0,3,3,2,99))
+
+omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
+  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels")
 ```
 
 # Mediating Effect of Body Weight

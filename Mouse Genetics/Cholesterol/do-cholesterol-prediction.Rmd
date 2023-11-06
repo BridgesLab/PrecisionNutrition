@@ -894,9 +894,21 @@ cholesterol.data %>%
   do(beta=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'estimate'])),
      se=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'std.error'])),
      lm.p.value=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'p.value']))) %>%
-  mutate(lm.p.adj = p.adjust(lm.p.value,method="BH")) -> chol.cor.lm
+  mutate(lm.p.adj = p.adjust(lm.p.value,method="BH")) %>%
+  mutate_if(is.list, as.numeric) -> chol.cor.lm
+
+annotation.dictionary <- 'Svenson-183_Svenson_DO-dictionary.csv'
+annotation.data <- read_csv(annotation.dictionary) %>%
+  add_row(data_name="nonhdlc2", description="Non-HDL Cholesterol at 19 weeks") %>%
+  add_row(data_name="nonhdlc1", description="Non-HDL Cholesterol at 8 weeks")
 
 left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
+  left_join(dplyr::select(annotation.data, data_name, description), by=c('Parameter'='data_name')) %>%
+  dplyr::select(-Parameter) %>% 
+  relocate(description, .before='estimate') %>%
+  relocate(n, .before="estimate") %>%
+  rename(Parameter = description) %>%
+  filter(!is.na(Parameter)) %>%
   arrange(-abs(estimate)) -> cor.data.combined
 
 cor.data.combined %>%

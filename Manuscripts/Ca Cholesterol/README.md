@@ -1,7 +1,7 @@
 Figure Key
 ============
 
-This document indicates where the raw data for each Figure panel can be found, and which script was used to generate the data.  Figures were typically made using Rmarkdown files and modified if needed in Adobe Illustrator.  
+This document indicates where the raw data for each Figure panel can be found, and which script was used to generate the data.  Figures were typically made using Rmarkdown files and modified if needed in Adobe Illustrator.  Manually edited the supplementary table to provide more meaningful phenotypes.
 
 | Figure | Script | Figure |
 | ------ | ------ | ------ |
@@ -18,3 +18,5 @@ This document indicates where the raw data for each Figure panel can be found, a
 | Supplementary Figure 2C | Mouse Genetics/Cholesterol/do-cholesterol-prediction.Rmd | hdl-1.pdf |
 | Supplementary Figure 2D | Mouse Genetics/Cholesterol/do-cholesterol-prediction.Rmd | bmd-1.pdf |
 | Supplementary Figure 2E | Mouse Genetics/Cholesterol/do-cholesterol-prediction.Rmd | bmc-1.pdf |
+
+| Supplementary Table | Mouse Genetics/Cholesterol/do-cholesterol-prediction.Rmd | Correlation of clinical factors with cholesterol.csv |

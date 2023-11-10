@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.003| 0.059|
+| 0.247|      0|     1.000|  1.002| 0.059|
 | 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.715| 0.044|
-| 0.036|      3|     0.629|  0.636| 0.040|
-| 0.023|      4|     0.593|  0.656| 0.044|
-| 0.022|      5|     0.569|  0.644| 0.042|
-| 0.015|      6|     0.547|  0.646| 0.042|
-| 0.015|      7|     0.532|  0.657| 0.042|
-| 0.014|      8|     0.516|  0.653| 0.042|
-| 0.011|      9|     0.502|  0.665| 0.043|
-| 0.011|     10|     0.491|  0.672| 0.044|
-| 0.010|     11|     0.481|  0.672| 0.044|
-| 0.010|     12|     0.470|  0.667| 0.044|
+| 0.060|      2|     0.689|  0.719| 0.044|
+| 0.036|      3|     0.629|  0.651| 0.044|
+| 0.023|      4|     0.593|  0.653| 0.044|
+| 0.022|      5|     0.569|  0.660| 0.044|
+| 0.015|      6|     0.547|  0.636| 0.044|
+| 0.015|      7|     0.532|  0.652| 0.044|
+| 0.014|      8|     0.516|  0.650| 0.044|
+| 0.011|      9|     0.502|  0.655| 0.046|
+| 0.011|     10|     0.491|  0.668| 0.045|
+| 0.010|     11|     0.481|  0.668| 0.045|
+| 0.010|     12|     0.470|  0.668| 0.045|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -463,7 +463,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -1060,7 +1060,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="HDL-C (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -1111,7 +1111,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Non-HDL Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -1122,6 +1122,12 @@ ggplot(data=cholesterol.data,
         legend.background=element_blank()) ->
   nonhdlc2.calcium.plot
 
+nonhdlc2.calcium.plot
+```
+
+![](figures/non-hdl-1.png)<!-- -->
+
+```r
  lm(nonhdlc2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
          digits=c(0,3,3,2,99))
@@ -1180,7 +1186,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Triglycerides (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -1511,7 +1517,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm) +
     labs(y="Cholesterol (mg/dL)",
        x="Body Weight (g)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -1612,10 +1618,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0235         2.38  <2e-16 ***
-## ADE             12.9034      11.2776        14.50  <2e-16 ***
-## Total Effect    14.5516      12.9033        16.25  <2e-16 ***
-## Prop. Mediated   0.1133       0.0721         0.16  <2e-16 ***
+## ACME              1.648        1.022         2.35  <2e-16 ***
+## ADE              12.903       11.222        14.67  <2e-16 ***
+## Total Effect     14.552       12.784        16.32  <2e-16 ***
+## Prop. Mediated    0.113        0.070         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1640,7 +1646,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm,se=F) +
     labs(y="Cholesterol (mg/dL)",
        x="Percent Fat Mass",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -1736,10 +1742,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.426        10.76  <2e-16 ***
-## ADE              24.010       19.691        28.67  <2e-16 ***
-## Total Effect     32.119       28.215        36.24  <2e-16 ***
-## Prop. Mediated    0.252        0.166         0.34  <2e-16 ***
+## ACME              8.110        5.469        10.85  <2e-16 ***
+## ADE              24.010       19.023        28.79  <2e-16 ***
+## Total Effect     32.119       27.759        36.03  <2e-16 ***
+## Prop. Mediated    0.252        0.168         0.35  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1803,10 +1809,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              2.078        1.256         3.06  <2e-16 ***
-## ADE              12.561       10.939        14.35  <2e-16 ***
-## Total Effect     14.640       13.041        16.36  <2e-16 ***
-## Prop. Mediated    0.142        0.091         0.21  <2e-16 ***
+## ACME             2.0783       1.2645         2.97  <2e-16 ***
+## ADE             12.5614      10.9327        14.24  <2e-16 ***
+## Total Effect    14.6397      13.0163        16.27  <2e-16 ***
+## Prop. Mediated   0.1420       0.0871         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 

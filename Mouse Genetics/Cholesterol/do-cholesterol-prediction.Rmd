@@ -287,7 +287,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -477,7 +477,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="HDL-C (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -512,7 +512,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Non-HDL Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -522,6 +522,8 @@ ggplot(data=cholesterol.data,
         legend.key=element_blank(),
         legend.background=element_blank()) ->
   nonhdlc2.calcium.plot
+
+nonhdlc2.calcium.plot
 
  lm(nonhdlc2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
@@ -553,7 +555,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Triglycerides (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -640,7 +642,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm) +
     labs(y="Cholesterol (mg/dL)",
        x="Body Weight (g)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +
@@ -707,7 +709,7 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm,se=F) +
     labs(y="Cholesterol (mg/dL)",
        x="Percent Fat Mass",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
   scale_color_grey(end=0.7) +
   theme_classic() +

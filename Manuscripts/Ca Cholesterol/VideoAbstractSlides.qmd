@@ -1,0 +1,138 @@
+---
+title: "Cross-sectional association between blood cholesterol and calcium levels in genetically diverse strains of mice"
+author: "Cody Cousineau, Kaelin Loftus, Gary A. Churchill and Dave Bridges"
+format: pptx
+data-notes: "We want to share some recent work our lab has done in understanding cholesterol levels.  Elevations in LDL-cholesterol cause cardiovascular disease, and is very important in preventing and treating disease.  However, separating the genetic, physiological and dietary influences of blood cholesterol in humans is difficult."
+---
+
+
+
+## Diversity Outbred Mice
+
+::: {.notes}
+
+
+CODY: To understand what drives blood cholesterol in mice, we evaluated diversity outbred mice and asked what explains variation in their blood cholesterol.  Diversity outbred mice are derived from the inter-breeding of eight founder strains. are genetically unique. We used data from 840 mice, both male and female, randomized to either a control chow diet or a high fat high sucrose diet.
+
+<DUSTIN> Can you highlight part c of this figure
+:::
+
+![Saul MC, Philip VM, Reinholdt LG; Center for Systems Neurogenetics of Addiction; Chesler EJ. High-Diversity Mouse Populations for Complex Traits. Trends Genet. 2019 Jul;35(7):501-514. doi: 10.1016/j.tig.2019.04.003. ](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6571031/bin/nihms-1530844-f0001.jpg){fig-align="center"}
+
+---
+
+## What Predicts Serum Cholesterol?
+
+::: {.notes}
+CODY: We used a machine learning approach called a regression tree, inputing 162 clinical and morphological phenotypes and used these to identify what predicts serum cholesterol.
+:::
+
+![](../../Mouse Genetics/Cholesterol/figures/full-tree-4.pdf){fig-align="center"}
+
+---
+
+## High Fat, High Sucrose Diets Increases Cholesterol
+
+:::: {.columns}
+
+::: {.notes}
+CODY: The first predictor was the diet, with high fat high sucrose diet increasing cholesterol by 33 mg/dL. 
+
+DUSTIN: can you highlight the diet branch point
+:::
+
+
+::: {.column width="20%"}
+![](../../Mouse Genetics/Cholesterol/figures/full-tree-4.pdf){fig-align="center"}
+:::
+
+::: {.column width="80%"}
+![](../../Mouse Genetics/Cholesterol/figures/cholesterol-analysis-1.pdf ){fig-align="center"}
+:::
+
+::::
+
+---
+
+## Serum Triglycerides and Cholesterol are Linked
+
+:::: {.columns}
+
+::: {.notes}
+CODY: The next best predictor was serum triglycerides.  This was expected as hyperlipidemia and hypercholeserolemia are often co-morbid.
+
+DUSTIN: can you highlight the Triglycerides branch point
+:::
+
+
+::: {.column width="20%"}
+![](../../Mouse Genetics/Cholesterol/figures/full-tree-4.pdf){fig-align="center"}
+:::
+
+::: {.column width="80%"}
+![](../../Mouse Genetics/Cholesterol/figures/TG-1.pdf ){fig-align="center"}
+:::
+
+::::
+
+---
+
+## Serum Calcium is Associated with Cholesterol
+
+:::: {.columns}
+
+::: {.column width="20%"}
+![](../../Mouse Genetics/Cholesterol/figures/full-tree-4.pdf){fig-align="center"}
+:::
+
+::: {.column width="80%"}
+![](../../Mouse Genetics/Cholesterol/figures/Calcium-1.pdf ){fig-align="center"}
+:::
+
+::: {.notes}
+CODY To our surprise, the next predictor was serum calcium.  As you can see, a 1 mg/dL increase in serum choleserol is associated with a 12.7 mg/dL increrase in cholesterol, and this is true in male and female mice, across both diets.
+
+<Dustin>can you highlight the calcium branch point
+:::
+
+::::
+
+---
+
+::: {.notes}
+DAVE or CODY: We looked into the literature and several human studies have reported positive associations between calcium and cholesterol, and between serum calcium and cardiovascular disease.  This is the first study in mice showing that this relationship is robust across diets and sexes.  While we have some hypotheses, we dont yet know whether calcium increases cholesterol, whether cholesterol increases calcium, or if something else drives both, and we look forward to studying this in the future. 
+
+<Dustin>can you sequentially increase 
+:::
+
+![](Graphicalabstract_figure.pdf){fig-align="center"}
+
+---
+
+## Acknowledgements
+
+
+
+:::: {.columns}
+
+::: {.notes}
+DAVE:  Together these data show the power of using diversity outbred mice as a tool of precision nutrition, allowing us to leverage genetic diversity under conditions of exceptional dietary and environmenal control.  We would like to thank both Kaelin Loftus and Gary Churchill for their work on this study, and for funding from the Undergraduate Research Opportunities Program at the University of Michgian, The Jackson Laboratories and National Institutes of Health.  If you have any questions or thoughts about our study please contact us at bridges_lab <at> umich.edu or on X at bridges_lab
+:::
+
+::: {.column width="40%"}
+ - Kaelin Loftus (University of Michigan)
+ - Gary A. Churchill (The Jackson Laboratories)
+ 
+ - Contact us at bridges_lab@umich.edu or bridges_lab on social
+:::
+
+::: {.column width="60%"}
+- UROP
+- The Jackson Laboratories
+- NIDDK R01DK107535 
+- NIGMS R01GM070683 
+:::
+
+::::
+
+

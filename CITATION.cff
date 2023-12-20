@@ -2,10 +2,9 @@
 # Visit https://bit.ly/cffinit to generate yours today!
 
 cff-version: 1.2.0
-title: BridgesLab Precision Nutrition Datasets
+title: Bridges Lab Precision Nutrition Dataset
 message: >-
-  If you use these data please cite Cousineau et al BioRxiv
-  2023
+  If you use these data please cite Cousineau et al. 2023
 type: dataset
 authors:
   - given-names: Dave
@@ -20,21 +19,39 @@ authors:
     orcid: 'https://orcid.org/0000-0003-0168-5083'
   - given-names: Kaelin
     family-names: Loftus
+    email: loftusk@umich.edu
+    affiliation: University of Michigan School of Public Health
     orcid: 'https://orcid.org/0000-0001-8045-9169'
   - given-names: Gary
-    family-names: Churchull
+    name-particle: A.
+    family-names: Churchill
+    orcid: 'https://orcid.org/0000-0001-9190-9284'
+    affiliation: The Jackson Laboratories
 identifiers:
   - type: doi
     value: 10.1101/2023.02.08.527123
-    description: Preprint of Cousineau et al
+    description: BioRxiv Preprint
+  - type: doi
+    value: 10.5281/zenodo.10408266
+    description: Zenodo archive (v1.0.0).
 repository-code: 'https://github.com/BridgesLab/PrecisionNutrition'
-url: 'https://bridgeslab.sph.umich.edu'
+url: 'http://bridgeslab.sph.umich.edu'
+abstract: >-
+  This dataset contains analysis code and data for human and
+  mouse studies related to precision nutrition by the
+  Bridges laboratory at the University of Michigan School of
+  Public Health.  There is one peer-reviewed publication
+  arising from these data, describing the cross-sectional
+  association between calcium and cholesterol in diversity
+  outbred mice.
 keywords:
   - calcium
   - cholesterol
+  - nutrition
   - precision nutrition
+  - metabolism
   - genetics
-  - diversity outbred
-license: ODC-By-1.0
-version: 0.1.0
-date-released: '2023-02-22'
+license: CC-BY-3.0
+commit: bcd5da1
+version: 1.0.0
+date-released: '2023-12-19'

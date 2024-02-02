@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.002| 0.059|
-| 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.719| 0.044|
-| 0.036|      3|     0.629|  0.651| 0.044|
-| 0.023|      4|     0.593|  0.653| 0.044|
-| 0.022|      5|     0.569|  0.660| 0.044|
-| 0.015|      6|     0.547|  0.636| 0.044|
-| 0.015|      7|     0.532|  0.652| 0.044|
-| 0.014|      8|     0.516|  0.650| 0.044|
-| 0.011|      9|     0.502|  0.655| 0.046|
-| 0.011|     10|     0.491|  0.668| 0.045|
-| 0.010|     11|     0.481|  0.668| 0.045|
-| 0.010|     12|     0.470|  0.668| 0.045|
+| 0.247|      0|     1.000|  1.003| 0.059|
+| 0.064|      1|     0.753|  0.760| 0.045|
+| 0.060|      2|     0.689|  0.732| 0.045|
+| 0.036|      3|     0.629|  0.641| 0.040|
+| 0.023|      4|     0.593|  0.646| 0.045|
+| 0.022|      5|     0.569|  0.643| 0.046|
+| 0.015|      6|     0.547|  0.636| 0.045|
+| 0.015|      7|     0.532|  0.619| 0.043|
+| 0.014|      8|     0.516|  0.625| 0.043|
+| 0.011|      9|     0.502|  0.647| 0.043|
+| 0.011|     10|     0.491|  0.653| 0.045|
+| 0.010|     11|     0.481|  0.653| 0.045|
+| 0.010|     12|     0.470|  0.646| 0.041|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -958,6 +958,44 @@ cholesterol.data %>%
 ```
 
 ![](figures/calcium-stratification-1.png)<!-- -->
+
+## Proportions of Elevated Calcium and Cholesterol
+
+
+```r
+cutoff.counts <- 
+  cholesterol.data %>%
+  mutate(High.Ca = calcium2>10.5,
+         High.Chol = chol2>200) %>%
+  group_by(High.Chol,High.Ca) %>%
+  count %>%
+  na.omit %>%
+  pivot_wider(names_from=High.Chol,
+              values_from=n) %>%
+  rename(High.Chol = `TRUE`,
+         Not.High.Chol=`FALSE`) %>%
+  column_to_rownames('High.Ca') 
+
+kable(cutoff.counts %>% mutate(High.Chol.pct=High.Chol/(Not.High.Chol+High.Chol)*100))
+```
+
+
+
+|      | Not.High.Chol| High.Chol| High.Chol.pct|
+|:-----|-------------:|---------:|-------------:|
+|FALSE |           727|         6|         0.819|
+|TRUE  |            31|         2|         6.061|
+
+```r
+fisher.test(as.matrix(cutoff.counts)) %>% tidy(caption="Fisher Test for enrichment of high cholesterol in mice with high calcium")
+```
+
+```
+## # A tibble: 1 × 6
+##   estimate p.value conf.low conf.high method                         alternative
+##      <dbl>   <dbl>    <dbl>     <dbl> <chr>                          <chr>      
+## 1     7.77  0.0428    0.738      45.8 Fisher's Exact Test for Count… two.sided
+```
 
 # Bone Content and Density
 
@@ -1618,10 +1656,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              1.648        1.022         2.35  <2e-16 ***
-## ADE              12.903       11.222        14.67  <2e-16 ***
-## Total Effect     14.552       12.784        16.32  <2e-16 ***
-## Prop. Mediated    0.113        0.070         0.16  <2e-16 ***
+## ACME             1.6482       1.0160         2.37  <2e-16 ***
+## ADE             12.9034      11.3874        14.66  <2e-16 ***
+## Total Effect    14.5516      12.9955        16.29  <2e-16 ***
+## Prop. Mediated   0.1133       0.0687         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1742,10 +1780,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.469        10.85  <2e-16 ***
-## ADE              24.010       19.023        28.79  <2e-16 ***
-## Total Effect     32.119       27.759        36.03  <2e-16 ***
-## Prop. Mediated    0.252        0.168         0.35  <2e-16 ***
+## ACME              8.110        5.440        10.78  <2e-16 ***
+## ADE              24.010       19.331        29.06  <2e-16 ***
+## Total Effect     32.119       28.155        36.26  <2e-16 ***
+## Prop. Mediated    0.252        0.164         0.35  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1809,10 +1847,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2645         2.97  <2e-16 ***
-## ADE             12.5614      10.9327        14.24  <2e-16 ***
-## Total Effect    14.6397      13.0163        16.27  <2e-16 ***
-## Prop. Mediated   0.1420       0.0871         0.20  <2e-16 ***
+## ACME             2.0783       1.2032         2.96  <2e-16 ***
+## ADE             12.5614      10.9362        14.33  <2e-16 ***
+## Total Effect    14.6397      13.0412        16.46  <2e-16 ***
+## Prop. Mediated   0.1420       0.0828         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 

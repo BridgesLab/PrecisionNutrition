@@ -54,17 +54,67 @@ This analyses the data analysed via GEMMA and provided in the various output fol
 # Data Entry
 
 ```{r data-entry}
-genotype.filename <- '../Svenson-183_Svenson_DO-MegaMUGA-calls.csv'
-genotype.data <- read_csv(genotype.filename,
-                          col_types = cols(
-  .default = col_character(),
-  chr = col_factor(levels=NULL),
-  pos = col_double()
-))
+bslmm.hyp.additive.file <- 'output/ncd.cholesterol.hyp.txt'
+bslmm.additive.results.file <- 'output/ncd.cholesterol.param.txt'
+bslmm.hyp <- read_tsv(bslmm.hyp.file,
+         col_types=cols(
+           h = col_double(),
+           pve = col_double(),
+           rho = col_double(),
+           pge = col_double(),
+           pi = col_double(),
+           n_gamma = col_integer()
+)) 
 
-phenotype.filename <- '../Svenson-183_Svenson_DO-phenotypes.csv'
-phenotype.data <- read_csv(phenotype.filename)
-phenotype.data[phenotype.data=="-999999"] <- NA
+```
+
+
+# Additive Models
+
+```{additive-bslmm}
+## BSLMM Analysis
+
+# pve -> proportion of phenotypic variance explained by the genotypes
+pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
+
+# pge -> proportion of genetic variance explained by major effect loci
+pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
+
+#rho -> relatiave proportion of BVSR vs LMM
+rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
+
+# pi -> proportion of variants with non-zero effects
+pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
+
+# n.gamma -> number of variants with major effect
+n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
+
+hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
+colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
+# show table
+hyp.params.table %>% 
+  tibble() %>% 
+  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
+            .funs=as.numeric) %>%
+  kable(caption="Hyperparameters summary", digits=3)
+```
+
+
+## BSLMM SNP Nomination for Additive Models
+
+```{r bslmm-snps-ncd}
+bslmm.additive.results <- read_tsv(bslmm.additive.results.file, 
+                               col_types = cols(chr=col_factor(levels=NULL))) %>%
+  mutate(eff.size = beta*gamma) %>%
+  filter(eff.size >0) %>%
+  arrange(-abs(eff.size))
+  
+bslmm.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes")
+
+bslmm.results  %>% 
+  arrange(-gamma) %>%
+  head(10) %>% kable(caption="Variants with the largest posterior probability")
+top.snps <- bslmm.results
 ```
 
 ## SNP Analysis

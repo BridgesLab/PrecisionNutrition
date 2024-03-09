@@ -129,9 +129,24 @@ ldl.c.meta <- metagen(TE = SMD,
                  hakn = TRUE,
                  title = "LDL-C Changes in Ketogenic Diet Studies")
 
+ldl.c.meta <- metacont(mean.e = `Change in LDL-C`,
+                       mean.c=rep(0,19),
+                 sd.e = Pooled.SD,
+                 sd.c= Pooled.SD,
+                 n.e=n,
+                 n.c=n,
+                 studlab = Study,
+                 data = meta.data,
+                 sm = "MD",
+                 comb.fixed = TRUE,
+                 comb.random = FALSE,
+                 #method.tau = "REML",
+                 hakn = TRUE,
+                 title = "LDL-C Changes in Ketogenic Diet Studies")
 
 
-forest.meta(ldl.c.meta, 
+
+forest(ldl.c.meta, 
             sortvar = SMD,
             #predict = F, 
             print.tau2 = TRUE,
@@ -159,7 +174,7 @@ bmi.meta <- metagen(TE = BMD,
                  hakn = TRUE,
                  title = "Weight Changes in Ketogenic Diet Studies")
 
-forest.meta(bmi.meta, 
+forest(bmi.meta, 
             sortvar = BMD,
             #predict = F, 
             print.tau2 = TRUE,

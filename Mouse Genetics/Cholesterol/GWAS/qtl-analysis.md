@@ -27,18 +27,403 @@ This analyses the data analysed via GEMMA and provided in the various output fol
 
 
 ```r
-genotype.filename <- '../Svenson-183_Svenson_DO-MegaMUGA-calls.csv'
-genotype.data <- read_csv(genotype.filename,
-                          col_types = cols(
-  .default = col_character(),
-  chr = col_factor(levels=NULL),
-  pos = col_double()
-))
+# additive lmm data
+lmm.additive.filename <- 'output/cholesterol_all.assoc.txt'
+lmm.additive.data <- read_tsv(lmm.additive.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
 
-phenotype.filename <- '../Svenson-183_Svenson_DO-phenotypes.csv'
-phenotype.data <- read_csv(phenotype.filename)
-phenotype.data[phenotype.data=="-999999"] <- NA
+lmm.ncd.filename <- 'output/cholesterol_ncd.assoc.txt'
+lmm.ncd.results <- read_tsv(lmm.ncd.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+lmm.hfd.filename <- 'output/cholesterol_hfd.assoc.txt'
+lmm.hfd.results <- read_tsv(lmm.hfd.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+
+# additive BSLMM data
+bslmm.hyp.additive.file <- 'output/cholesterol_bslmm.hyp.txt'
+bslmm.additive.results.file <- 'output/cholesterol_bslmm.param.txt'
+bslmm.hyp <- read_tsv(bslmm.hyp.additive.file,
+         col_types=cols(
+           h = col_double(),
+           pve = col_double(),
+           rho = col_double(),
+           pge = col_double(),
+           pi = col_double(),
+           n_gamma = col_integer()
+)) 
+
+bslmm.additive.results <- read_tsv(bslmm.additive.results.file, 
+                               col_types = cols(chr=col_factor(levels=NULL))) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(eff.size = beta*gamma) %>%
+  #filter(eff.size >0) %>%
+  arrange(-abs(eff.size)) %>%
+  mutate(position=as.integer(position)) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) 
 ```
+
+
+# Additive Models
+
+Ran the additive models using GEMMA, first using intercepts and additiv ecovariates for diet and sex
+
+$SNP = beta_1 SNP + \beta_2 Diet + \beta_3 Sex + \mu +\epsilon$
+
+Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of the strains as defined by
+
+## LMM Analysis for Additive Models
+
+
+```r
+library(qqman)
+qq(lmm.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+lmm.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol in additive model") 
+```
+
+
+
+Table: Genome-wide significant associations from mixed linear models for cholesterol in additive model
+
+| chr|rs              |chromosome |  position|allele |alt | ps| n_miss|allele1 |allele0 |    af| beta|   se| logl_H1| l_remle| p_wald|
+|---:|:---------------|:----------|---------:|:------|:---|--:|------:|:-------|:-------|-----:|----:|----:|-------:|-------:|------:|
+|  -9|1_171425406_H_C |1          | 171425406|H      |C   | -9|      0|C       |H       | 0.094| 14.6| 2.62|   -3815|    2.22|      0|
+|  -9|1_171431917_H_C |1          | 171431917|H      |C   | -9|      0|C       |H       | 0.094| 14.6| 2.62|   -3815|    2.22|      0|
+|  -9|1_171295194_H_C |1          | 171295194|H      |C   | -9|      0|C       |H       | 0.095| 14.5| 2.61|   -3815|    2.21|      0|
+|  -9|1_171418895_H_C |1          | 171418895|H      |C   | -9|      0|C       |H       | 0.095| 14.5| 2.62|   -3815|    2.22|      0|
+
+```r
+lmm.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position
+
+|chromosome |rs              |  position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|---------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|1          |1_138064771_D_H | 138064771|D      |H   |      0|H       |D       | 0.160| 10.41| 2.14|   -3818|    1.75|      0|
+|1          |1_143704476_D_H | 143704476|D      |H   |      0|H       |D       | 0.161|  9.94| 2.15|   -3820|    1.79|      0|
+|1          |1_155276305_H_H | 155276305|H      |H   |      0|H       |H       | 0.199|  9.83| 1.98|   -3818|    1.64|      0|
+|1          |1_169972414_F_C | 169972414|F      |C   |      0|C       |F       | 0.084| 14.85| 2.72|   -3815|    2.23|      0|
+|1          |1_171425406_H_C | 171425406|H      |C   |      0|C       |H       | 0.094| 14.59| 2.62|   -3815|    2.22|      0|
+|5          |5_123629774_B_E | 123629774|B      |E   |      0|E       |B       | 0.110| 11.66| 2.45|   -3819|    2.17|      0|
+
+```r
+lmm.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position
+
+|chromosome |rs              |  position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|---------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|1          |1_138064771_D_H | 138064771|D      |H   |      0|H       |D       | 0.160| 10.41| 2.14|   -3818|    1.75|      0|
+|1          |1_143704476_D_H | 143704476|D      |H   |      0|H       |D       | 0.161|  9.94| 2.15|   -3820|    1.79|      0|
+|1          |1_155276305_H_H | 155276305|H      |H   |      0|H       |H       | 0.199|  9.83| 1.98|   -3818|    1.64|      0|
+|1          |1_169972414_F_C | 169972414|F      |C   |      0|C       |F       | 0.084| 14.85| 2.72|   -3815|    2.23|      0|
+|1          |1_171425406_H_C | 171425406|H      |C   |      0|C       |H       | 0.094| 14.59| 2.62|   -3815|    2.22|      0|
+|3          |3_148547289_A_H | 148547289|A      |H   |      0|H       |A       | 0.109| 10.00| 2.48|   -3822|    1.99|      0|
+|5          |5_123629774_B_E | 123629774|B      |E   |      0|E       |B       | 0.110| 11.66| 2.45|   -3819|    2.17|      0|
+|13         |13_29976363_E_C |  29976363|E      |C   |      0|C       |E       | 0.156|  9.25| 2.19|   -3821|    2.10|      0|
+|13         |13_30180778_E_C |  30180778|E      |C   |      0|C       |E       | 0.156|  9.27| 2.19|   -3821|    2.10|      0|
+
+```r
+library(ggmanh)
+```
+
+![](figures/lmm-additive-1.png)<!-- -->
+
+```r
+manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet (Additive Model)", y.label = "LOD Score")
+```
+
+![](figures/lmm-additive-2.png)<!-- -->
+
+```r
+library(GWASTools)
+with(lmm.additive.data,manhattanPlot(p=p_wald,
+                               chromosome=chromosome,
+                               signif=suggestive.pval))
+```
+
+![](figures/lmm-additive-3.png)<!-- -->
+
+```r
+snp.pos <- 171425406
+library(forcats)
+peak1.b <- filter(lmm.additive.data,
+                  chromosome==1,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak1.b,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+![](figures/lmm-additive-4.png)<!-- -->
+
+
+```r
+## BSLMM Analysis
+
+# pve -> proportion of phenotypic variance explained by the genotypes
+pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
+
+# pge -> proportion of genetic variance explained by major effect loci
+pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
+
+#rho -> relatiave proportion of BVSR vs LMM
+rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
+
+# pi -> proportion of variants with non-zero effects
+pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
+
+# n.gamma -> number of variants with major effect
+n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
+
+hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
+colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
+# show table
+hyp.params.table %>% 
+  tibble() %>% 
+  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
+            .funs=as.numeric) %>%
+  kable(caption="Hyperparameters summary", digits=3)
+```
+
+
+
+Table: Hyperparameters summary
+
+|hyperparam |   mean| median|  2.5%|   97.5%|
+|:----------|------:|------:|-----:|-------:|
+|PVE        |  0.202|  0.200| 0.099|   0.311|
+|PGE        |  0.432|  0.419| 0.000|   0.955|
+|pi         |  0.000|  0.000| 0.000|   0.000|
+|n.gamma    | 42.578| 38.000| 0.000| 112.000|
+|Rho        |  0.493|  0.489| 0.037|   0.958|
+
+
+## BSLMM SNP Nomination for Additive Models
+
+
+```r
+bslmm.additive.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes")
+```
+
+
+
+Table: Variants with the largest effect sizes
+
+|chr |rs              |chromosome |  position|allele |alt | ps| n_miss| alpha| beta| gamma| eff.size|
+|:---|:---------------|:----------|---------:|:------|:---|--:|------:|-----:|----:|-----:|--------:|
+|-9  |1_138062762_D_H |1          | 138062762|D      |H   | -9|      0| 0.002| 12.3| 0.019|    0.227|
+|-9  |1_137589046_A_H |1          | 137589046|A      |H   | -9|      0| 0.002| 11.6| 0.018|    0.215|
+|-9  |1_138013580_D_H |1          | 138013580|D      |H   | -9|      0| 0.002| 12.7| 0.016|    0.205|
+|-9  |1_137999848_D_H |1          | 137999848|D      |H   | -9|      0| 0.002| 11.6| 0.017|    0.201|
+|-9  |1_138020445_D_H |1          | 138020445|D      |H   | -9|      0| 0.002| 11.5| 0.017|    0.199|
+|-9  |1_138058743_D_H |1          | 138058743|D      |H   | -9|      0| 0.002| 12.5| 0.016|    0.197|
+|-9  |1_138006714_D_H |1          | 138006714|D      |H   | -9|      0| 0.002| 12.7| 0.013|    0.171|
+|-9  |1_137512618_C_H |1          | 137512618|C      |H   | -9|      0| 0.002| 11.1| 0.015|    0.168|
+|-9  |1_137634475_D_H |1          | 137634475|D      |H   | -9|      0| 0.002| 10.9| 0.015|    0.165|
+|-9  |1_138208411_D_H |1          | 138208411|D      |H   | -9|      0| 0.002| 12.7| 0.012|    0.148|
+
+```r
+# variants with the highest sparse effects
+# ------------------------------------------------------------------------------
+# top 1% variants (above 99% quantile)
+top1<-bslmm.additive.results[bslmm.additive.results$eff.size>quantile(bslmm.additive.results$eff.size,0.99),]
+# top 0.1% variants (above 99.9% quantile)
+top01<-bslmm.additive.results[bslmm.additive.results$eff.size>quantile(bslmm.additive.results$eff.size,0.999),]
+# top 0.01% variants (above 99.99% quantile)
+top001<-bslmm.additive.results[bslmm.additive.results$eff.size>quantile(bslmm.additive.results$eff.size,0.9999),]
+
+top001 %>% kable(caption="Top 99.99 quantile variants with the highest sparse effects")
+```
+
+
+
+Table: Top 99.99 quantile variants with the highest sparse effects
+
+|chr |rs               |chromosome |  position|allele |alt | ps| n_miss| alpha|  beta| gamma| eff.size|
+|:---|:----------------|:----------|---------:|:------|:---|--:|------:|-----:|-----:|-----:|--------:|
+|-9  |1_138062762_D_H  |1          | 138062762|D      |H   | -9|      0| 0.002| 12.28| 0.019|    0.227|
+|-9  |1_137589046_A_H  |1          | 137589046|A      |H   | -9|      0| 0.002| 11.64| 0.018|    0.215|
+|-9  |1_138013580_D_H  |1          | 138013580|D      |H   | -9|      0| 0.002| 12.75| 0.016|    0.205|
+|-9  |1_137999848_D_H  |1          | 137999848|D      |H   | -9|      0| 0.002| 11.57| 0.017|    0.201|
+|-9  |1_138020445_D_H  |1          | 138020445|D      |H   | -9|      0| 0.002| 11.50| 0.017|    0.199|
+|-9  |1_138058743_D_H  |1          | 138058743|D      |H   | -9|      0| 0.002| 12.51| 0.016|    0.197|
+|-9  |1_138006714_D_H  |1          | 138006714|D      |H   | -9|      0| 0.002| 12.69| 0.013|    0.171|
+|-9  |1_137512618_C_H  |1          | 137512618|C      |H   | -9|      0| 0.002| 11.07| 0.015|    0.168|
+|-9  |1_137634475_D_H  |1          | 137634475|D      |H   | -9|      0| 0.002| 10.88| 0.015|    0.165|
+|-9  |1_138208411_D_H  |1          | 138208411|D      |H   | -9|      0| 0.002| 12.71| 0.012|    0.148|
+|-9  |1_138064771_D_H  |1          | 138064771|D      |H   | -9|      0| 0.002| 12.24| 0.012|    0.147|
+|-9  |1_138060753_D_H  |1          | 138060753|D      |H   | -9|      0| 0.002| 13.18| 0.010|    0.137|
+|-9  |1_138036660_D_H  |1          | 138036660|D      |H   | -9|      0| 0.002| 11.26| 0.012|    0.130|
+|-9  |1_138383562_D_H  |1          | 138383562|D      |H   | -9|      0| 0.002| 10.67| 0.010|    0.106|
+|-9  |1_138383057_D_H  |1          | 138383057|D      |H   | -9|      0| 0.002| 11.02| 0.010|    0.105|
+|-9  |1_137628739_D_H  |1          | 137628739|D      |H   | -9|      0| 0.002| 11.54| 0.009|    0.104|
+|-9  |1_138385079_D_H  |1          | 138385079|D      |H   | -9|      0| 0.002| 10.75| 0.010|    0.102|
+|-9  |1_137852019_D_H  |1          | 137852019|D      |H   | -9|      0| 0.002| 12.92| 0.008|    0.102|
+|-9  |1_138213512_D_H  |1          | 138213512|D      |H   | -9|      0| 0.002| 12.43| 0.008|    0.097|
+|-9  |1_138109860_D_H  |1          | 138109860|D      |H   | -9|      0| 0.002| 12.69| 0.007|    0.090|
+|-9  |1_138384573_D_H  |1          | 138384573|D      |H   | -9|      0| 0.002|  9.97| 0.009|    0.088|
+|-9  |10_86227984_F_H  |10         |  86227984|F      |H   | -9|      0| 0.001|  5.08| 0.015|    0.075|
+|-9  |1_138384068_D_H  |1          | 138384068|D      |H   | -9|      0| 0.002| 11.93| 0.006|    0.073|
+|-9  |X_59063449_G_G   |X          |  59063449|G      |G   | -9|      0| 0.002|  9.63| 0.008|    0.073|
+|-9  |1_138375160_D_H  |1          | 138375160|D      |H   | -9|      0| 0.002| 11.42| 0.006|    0.070|
+|-9  |1_138218613_D_H  |1          | 138218613|D      |H   | -9|      0| 0.002| 10.64| 0.006|    0.067|
+|-9  |6_103266509_D_C  |6          | 103266509|D      |C   | -9|      0| 0.002|  5.97| 0.010|    0.062|
+|-9  |15_6828348_F_A   |15         |   6828348|F      |A   | -9|      0| 0.001|  2.69| 0.023|    0.061|
+|-9  |1_138385584_D_H  |1          | 138385584|D      |H   | -9|      0| 0.002| 10.75| 0.006|    0.061|
+|-9  |4_131449667_H_C  |4          | 131449667|H      |C   | -9|      0| 0.001|  4.82| 0.012|    0.060|
+|-9  |X_59032536_G_G   |X          |  59032536|G      |G   | -9|      0| 0.002| 10.59| 0.005|    0.055|
+|-9  |6_142874788_D_B  |6          | 142874788|D      |B   | -9|      0| 0.001|  5.51| 0.010|    0.054|
+|-9  |12_114139385_A_B |12         | 114139385|A      |B   | -9|      0| 0.001|  5.63| 0.009|    0.053|
+|-9  |X_59406980_G_G   |X          |  59406980|G      |G   | -9|      0| 0.002|  8.50| 0.006|    0.052|
+|-9  |X_59261920_G_G   |X          |  59261920|G      |G   | -9|      0| 0.002|  9.58| 0.005|    0.051|
+|-9  |X_59032536_C_G   |X          |  59032536|C      |G   | -9|      0| 0.002|  9.89| 0.005|    0.050|
+|-9  |X_59084058_G_G   |X          |  59084058|G      |G   | -9|      0| 0.002|  9.14| 0.005|    0.050|
+|-9  |X_12538370_C_C   |X          |  12538370|C      |C   | -9|      0| 0.003|  6.53| 0.007|    0.048|
+|-9  |2_115129146_H_H  |2          | 115129146|H      |H   | -9|      0| 0.002|  7.02| 0.007|    0.048|
+|-9  |2_113976518_H_H  |2          | 113976518|H      |H   | -9|      0| 0.002|  8.02| 0.006|    0.048|
+|-9  |2_114377329_H_H  |2          | 114377329|H      |H   | -9|      0| 0.002|  6.40| 0.007|    0.047|
+|-9  |12_40595277_F_H  |12         |  40595277|F      |H   | -9|      0| 0.001|  4.47| 0.010|    0.047|
+|-9  |16_65104450_B_C  |16         |  65104450|B      |C   | -9|      0| 0.001|  4.55| 0.010|    0.047|
+|-9  |X_58458107_C_G   |X          |  58458107|C      |G   | -9|      0| 0.002| 10.33| 0.004|    0.046|
+|-9  |X_50264483_B_D   |X          |  50264483|B      |D   | -9|      0| 0.002|  4.49| 0.010|    0.046|
+|-9  |2_161245590_C_D  |2          | 161245590|C      |D   | -9|      0| 0.001|  3.78| 0.012|    0.046|
+|-9  |7_141114430_F_H  |7          | 141114430|F      |H   | -9|      0| 0.001|  4.29| 0.011|    0.045|
+|-9  |X_59053145_A_G   |X          |  59053145|A      |G   | -9|      0| 0.002|  8.94| 0.005|    0.045|
+|-9  |X_59430603_A_G   |X          |  59430603|A      |G   | -9|      0| 0.002|  9.17| 0.005|    0.043|
+|-9  |1_143704476_D_H  |1          | 143704476|D      |H   | -9|      0| 0.002| 10.33| 0.004|    0.043|
+|-9  |2_59395957_H_F   |2          |  59395957|H      |F   | -9|      0| 0.001|  4.97| 0.009|    0.042|
+|-9  |X_59053145_G_G   |X          |  59053145|G      |G   | -9|      0| 0.002|  8.55| 0.005|    0.042|
+|-9  |1_137640211_D_H  |1          | 137640211|D      |H   | -9|      0| 0.002| 11.54| 0.004|    0.042|
+|-9  |6_106609017_D_C  |6          | 106609017|D      |C   | -9|      0| 0.001|  4.94| 0.008|    0.042|
+|-9  |2_114074016_H_H  |2          | 114074016|H      |H   | -9|      0| 0.002|  7.55| 0.005|    0.041|
+|-9  |X_58455484_G_G   |X          |  58455484|G      |G   | -9|      0| 0.002|  9.44| 0.004|    0.040|
+|-9  |6_92697172_H_C   |6          |  92697172|H      |C   | -9|      0| 0.001|  3.52| 0.011|    0.040|
+
+```r
+top001 %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> top001.filtered
+
+top001.filtered %>%  
+kable(caption="Lead SNP for top 99.99 quartile variants")
+```
+
+
+
+Table: Lead SNP for top 99.99 quartile variants
+
+|chromosome |rs               |  position|allele |alt | n_miss| alpha|  beta| gamma| eff.size|
+|:----------|:----------------|---------:|:------|:---|------:|-----:|-----:|-----:|--------:|
+|1          |1_138062762_D_H  | 138062762|D      |H   |      0| 0.002| 12.28| 0.019|    0.227|
+|1          |1_143704476_D_H  | 143704476|D      |H   |      0| 0.002| 10.33| 0.004|    0.043|
+|2          |2_115129146_H_H  | 115129146|H      |H   |      0| 0.002|  7.02| 0.007|    0.048|
+|2          |2_161245590_C_D  | 161245590|C      |D   |      0| 0.001|  3.78| 0.012|    0.046|
+|2          |2_59395957_H_F   |  59395957|H      |F   |      0| 0.001|  4.97| 0.009|    0.042|
+|4          |4_131449667_H_C  | 131449667|H      |C   |      0| 0.001|  4.82| 0.012|    0.060|
+|6          |6_103266509_D_C  | 103266509|D      |C   |      0| 0.002|  5.97| 0.010|    0.062|
+|6          |6_142874788_D_B  | 142874788|D      |B   |      0| 0.001|  5.51| 0.010|    0.054|
+|6          |6_92697172_H_C   |  92697172|H      |C   |      0| 0.001|  3.52| 0.011|    0.040|
+|7          |7_141114430_F_H  | 141114430|F      |H   |      0| 0.001|  4.29| 0.011|    0.045|
+|10         |10_86227984_F_H  |  86227984|F      |H   |      0| 0.001|  5.08| 0.015|    0.075|
+|12         |12_114139385_A_B | 114139385|A      |B   |      0| 0.001|  5.63| 0.009|    0.053|
+|12         |12_40595277_F_H  |  40595277|F      |H   |      0| 0.001|  4.47| 0.010|    0.047|
+|15         |15_6828348_F_A   |   6828348|F      |A   |      0| 0.001|  2.69| 0.023|    0.061|
+|16         |16_65104450_B_C  |  65104450|B      |C   |      0| 0.001|  4.55| 0.010|    0.047|
+|X          |X_12538370_C_C   |  12538370|C      |C   |      0| 0.003|  6.53| 0.007|    0.048|
+|X          |X_50264483_B_D   |  50264483|B      |D   |      0| 0.002|  4.49| 0.010|    0.046|
+|X          |X_58458107_C_G   |  58458107|C      |G   |      0| 0.002| 10.33| 0.004|    0.046|
+|X          |X_59063449_G_G   |  59063449|G      |G   |      0| 0.002|  9.63| 0.008|    0.073|
+
+```r
+top001.filtered %>% arrange(-gamma) %>% kable(caption="Variants with the largest posterior probability as defined by gamma.  Gamma indicates the percent of times the variant was found in a MCMC simulation")
+```
+
+
+
+Table: Variants with the largest posterior probability as defined by gamma.  Gamma indicates the percent of times the variant was found in a MCMC simulation
+
+|chromosome |rs               |  position|allele |alt | n_miss| alpha|  beta| gamma| eff.size|
+|:----------|:----------------|---------:|:------|:---|------:|-----:|-----:|-----:|--------:|
+|15         |15_6828348_F_A   |   6828348|F      |A   |      0| 0.001|  2.69| 0.023|    0.061|
+|1          |1_138062762_D_H  | 138062762|D      |H   |      0| 0.002| 12.28| 0.019|    0.227|
+|10         |10_86227984_F_H  |  86227984|F      |H   |      0| 0.001|  5.08| 0.015|    0.075|
+|4          |4_131449667_H_C  | 131449667|H      |C   |      0| 0.001|  4.82| 0.012|    0.060|
+|2          |2_161245590_C_D  | 161245590|C      |D   |      0| 0.001|  3.78| 0.012|    0.046|
+|6          |6_92697172_H_C   |  92697172|H      |C   |      0| 0.001|  3.52| 0.011|    0.040|
+|7          |7_141114430_F_H  | 141114430|F      |H   |      0| 0.001|  4.29| 0.011|    0.045|
+|12         |12_40595277_F_H  |  40595277|F      |H   |      0| 0.001|  4.47| 0.010|    0.047|
+|6          |6_103266509_D_C  | 103266509|D      |C   |      0| 0.002|  5.97| 0.010|    0.062|
+|X          |X_50264483_B_D   |  50264483|B      |D   |      0| 0.002|  4.49| 0.010|    0.046|
+|16         |16_65104450_B_C  |  65104450|B      |C   |      0| 0.001|  4.55| 0.010|    0.047|
+|6          |6_142874788_D_B  | 142874788|D      |B   |      0| 0.001|  5.51| 0.010|    0.054|
+|12         |12_114139385_A_B | 114139385|A      |B   |      0| 0.001|  5.63| 0.009|    0.053|
+|2          |2_59395957_H_F   |  59395957|H      |F   |      0| 0.001|  4.97| 0.009|    0.042|
+|X          |X_59063449_G_G   |  59063449|G      |G   |      0| 0.002|  9.63| 0.008|    0.073|
+|X          |X_12538370_C_C   |  12538370|C      |C   |      0| 0.003|  6.53| 0.007|    0.048|
+|2          |2_115129146_H_H  | 115129146|H      |H   |      0| 0.002|  7.02| 0.007|    0.048|
+|X          |X_58458107_C_G   |  58458107|C      |G   |      0| 0.002| 10.33| 0.004|    0.046|
+|1          |1_143704476_D_H  | 143704476|D      |H   |      0| 0.002| 10.33| 0.004|    0.043|
+
+There were 33565 variants with detectable effect sizes.
 
 ## SNP Analysis
 
@@ -46,15 +431,13 @@ phenotype.data[phenotype.data=="-999999"] <- NA
 
 
 ```r
-lmm.filename <- 'output/ncd.cholesterol.assoc.txt'
+qq(lmm.ncd.results$p_wald)
+```
 
-lmm.results <- read.table(lmm.filename, sep='\t', header=T)
-library(qqman)
-qq(lmm.results$p_wald)
-suggestive.pval <- 1E-5
-genome.pval <- 5E-8
+![](figures/chol-snp-analysis-chow-1.png)<!-- -->
 
-lmm.results %>%
+```r
+lmm.ncd.results %>%
   arrange(p_wald) %>% 
   filter(p_wald<genome.pval) %>%
   kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on NCD") 
@@ -64,57 +447,35 @@ lmm.results %>%
 
 Table: Genome-wide significant associations from mixed linear models for cholesterol on NCD
 
-|chr |rs | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
-|:---|:--|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+| chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
 ```r
-lmm.results %>%
+lmm.ncd.results %>%
    arrange(p_wald) %>% 
    filter(p_wald<suggestive.pval) %>%
-   kable(caption="Suggestive associations from mixed linear models for cholesterol on NCD.") 
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 ```
 
 
 
-Table: Suggestive associations from mixed linear models for cholesterol on NCD.
+Table: Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position
 
-|chr |rs          |       ps| n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
-|:---|:-----------|--------:|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
-|18  |UNC29452833 | 65023371|      0|A       |X       | 0.776| -15.8| 3.28|    -402|    1.27|      0|
-
-```r
- lmm.results %>%
-    arrange(p_wald) %>% 
-    filter(p_wald<0.05) %>%
-    head() %>%
-    kable(caption="Top nominal associations from mixed linear models for cholesterol on NCD") 
-```
-
-
-
-Table: Top nominal associations from mixed linear models for cholesterol on NCD
-
-|chr |rs          |        ps| n_miss|allele1 |allele0 |    af|   beta|   se| logl_H1|   l_remle| p_wald|
-|:---|:-----------|---------:|------:|:-------|:-------|-----:|------:|----:|-------:|---------:|------:|
-|18  |UNC29452833 |  65023371|      0|A       |X       | 0.776| -15.84| 3.28|    -402|      1.27|      0|
-|11  |JAX00028600 |  68049727|      0|T       |X       | 0.250| -17.08| 3.82|    -404| 100000.00|      0|
-|4   |JAX00124247 | 125354910|      0|T       |X       | 0.651|  12.97| 2.96|    -404|     21.69|      0|
-|18  |UNC29442845 |  64377281|      0|A       |X       | 0.354|  13.04| 3.10|    -405|      1.53|      0|
-|11  |JAX00028564 |  67564947|      0|A       |X       | 0.745|  15.85| 3.79|    -405|     35.50|      0|
-|18  |UNC29416777 |  62677582|      0|G       |X       | 0.750|  -9.68| 2.35|    -404|      2.54|      0|
+|chromosome |rs              |  position|allele |alt | n_miss|allele1 |allele0 |    af| beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|---------:|:------|:---|------:|:-------|:-------|-----:|----:|----:|-------:|-------:|------:|
+|1          |1_169972414_F_C | 169972414|F      |C   |      0|C       |F       | 0.087| 14.5| 2.93|   -1960|    3.55|      0|
+|1          |1_170324641_H_C | 170324641|H      |C   |      0|C       |H       | 0.087| 14.5| 2.93|   -1960|    3.55|      0|
+|18         |18_46410922_G_A |  46410922|G      |A   |      0|A       |G       | 0.136| 11.6| 2.43|   -1961|    3.51|      0|
+|18         |18_47422415_G_A |  47422415|G      |A   |      0|A       |G       | 0.135| 10.9| 2.42|   -1962|    3.53|      0|
 
 ```r
-library(forcats)
+manhattan_plot(x = lmm.ncd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a NCD Diet", y.label = "LOD Score") -> ncd.manhattan
 
-library(GWASTools)
-```
-
-![](figures/chol-snp-analysis-chow-1.png)<!-- -->
-
-```r
-with(lmm.results,manhattanPlot(p=p_wald,
-                               chromosome=chr,
-                               signif=suggestive.pval))
+ncd.manhattan
 ```
 
 ![](figures/chol-snp-analysis-chow-2.png)<!-- -->
@@ -123,20 +484,13 @@ with(lmm.results,manhattanPlot(p=p_wald,
 
 
 ```r
-lmm.filename.hfd <- 'output/hfd.cholesterol.assoc.txt'
-
-lmm.results.hfd <- read.table(lmm.filename.hfd, sep='\t', header=T)
-library(qqman)
-qq(lmm.results.hfd$p_wald)
+qq(lmm.hfd.results$p_wald)
 ```
 
 ![](figures/chol-snp-analysis-hfd-1.png)<!-- -->
 
 ```r
-suggestive.pval <- 1E-5
-genome.pval <- 5E-8
-
-lmm.results.hfd %>%
+lmm.hfd.results %>%
   arrange(p_wald) %>% 
   filter(p_wald<genome.pval) %>%
   kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on HFD") 
@@ -146,55 +500,124 @@ lmm.results.hfd %>%
 
 Table: Genome-wide significant associations from mixed linear models for cholesterol on HFD
 
-|chr |rs | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
-|:---|:--|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+| chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
 ```r
-lmm.results.hfd %>%
+lmm.hfd.results %>%
    arrange(p_wald) %>% 
    filter(p_wald<suggestive.pval) %>%
-   kable(caption="Suggestive associations from mixed linear models for cholesterol on HFD") 
+   mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 ```
 
 
 
-Table: Suggestive associations from mixed linear models for cholesterol on HFD
+Table: Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position
 
-|chr |rs | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
-|:---|:--|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+|chromosome |rs | position|allele |alt | n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|:----------|:--|--------:|:------|:---|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
 ```r
- lmm.results.hfd %>%
-    arrange(p_wald) %>% 
-    filter(p_wald<0.05) %>%
-    head() %>%
-    kable(caption="Top nominal associations from mixed linear models for cholesterol on HFD") 
+lmm.hfd.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<1E-3) %>%
+   mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 ```
 
 
 
-Table: Top nominal associations from mixed linear models for cholesterol on HFD
+Table: Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position
 
-|chr |rs           |        ps| n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
-|:---|:------------|---------:|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
-|17  |UNC28005802  |  51845501|      0|A       |X       | 0.500|  19.8| 4.75|    -421|   1.548|      0|
-|1   |UNC534089    |  42095575|      0|C       |X       | 0.744| -17.2| 4.26|    -421|   8.529|      0|
-|1   |UNC339202    |  27569004|      0|C       |X       | 0.656|  14.3| 3.58|    -422|   0.813|      0|
-|8   |UNC14503442  |  35998298|      0|G       |X       | 0.600| -14.6| 3.66|    -421|   3.957|      0|
-|2   |JAX00512634  | 178753443|      0|A       |X       | 0.578| -18.9| 4.81|    -422|   6.583|      0|
-|9   |UNC090368888 | 108973633|      0|T       |X       | 0.539| -18.5| 4.71|    -422|   2.127|      0|
+|chromosome |rs               |  position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:----------------|---------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|1          |1_137999848_D_H  | 137999848|D      |H   |      0|H       |D       | 0.183|  13.0| 3.39|   -1813|    1.99|  0.000|
+|1          |1_145155626_A_H  | 145155626|A      |H   |      0|H       |A       | 0.169|  14.0| 3.45|   -1812|    2.00|  0.000|
+|1          |1_155454177_H_H  | 155454177|H      |H   |      0|H       |H       | 0.207|  14.2| 3.19|   -1810|    1.88|  0.000|
+|1          |1_171425406_H_C  | 171425406|H      |C   |      0|C       |H       | 0.097|  14.9| 4.42|   -1814|    3.08|  0.001|
+|1          |1_83629456_F_B   |  83629456|F      |B   |      0|B       |F       | 0.144| -12.6| 3.74|   -1814|    3.08|  0.001|
+|2          |2_44937781_H_E   |  44937781|H      |E   |      0|E       |H       | 0.076| -17.0| 4.97|   -1814|    2.97|  0.001|
+|2          |2_45843192_H_E   |  45843192|H      |E   |      0|E       |H       | 0.076| -17.0| 4.95|   -1814|    2.99|  0.001|
+|2          |2_46253198_H_E   |  46253198|H      |E   |      0|E       |H       | 0.076| -17.0| 4.95|   -1814|    3.00|  0.001|
+|2          |2_47121856_D_E   |  47121856|D      |E   |      0|E       |D       | 0.074| -16.9| 4.97|   -1814|    3.06|  0.001|
+|2          |2_5564930_G_E    |   5564930|G      |E   |      0|E       |G       | 0.133| -12.4| 3.73|   -1814|    3.13|  0.001|
+|2          |2_5611635_G_E    |   5611635|G      |E   |      0|E       |G       | 0.133| -12.4| 3.73|   -1814|    3.16|  0.001|
+|2          |2_5772554_D_E    |   5772554|D      |E   |      0|E       |D       | 0.133| -12.4| 3.70|   -1814|    3.17|  0.001|
+|2          |2_6108249_D_E    |   6108249|D      |E   |      0|E       |D       | 0.132| -12.4| 3.70|   -1814|    3.17|  0.001|
+|2          |2_6288486_D_E    |   6288486|D      |E   |      0|E       |D       | 0.131| -12.6| 3.70|   -1814|    3.17|  0.001|
+|2          |2_6368382_D_E    |   6368382|D      |E   |      0|E       |D       | 0.129| -14.1| 3.72|   -1812|    3.22|  0.000|
+|2          |2_6468723_D_E    |   6468723|D      |E   |      0|E       |D       | 0.128| -14.2| 3.73|   -1812|    3.22|  0.000|
+|2          |2_6538764_D_E    |   6538764|D      |E   |      0|E       |D       | 0.127| -14.1| 3.73|   -1812|    3.22|  0.000|
+|2          |2_6694186_D_E    |   6694186|D      |E   |      0|E       |D       | 0.127| -14.1| 3.73|   -1812|    3.22|  0.000|
+|2          |2_6785451_D_E    |   6785451|D      |E   |      0|E       |D       | 0.127| -14.1| 3.74|   -1812|    3.22|  0.000|
+|2          |2_6802081_D_E    |   6802081|D      |E   |      0|E       |D       | 0.127| -14.1| 3.74|   -1812|    3.22|  0.000|
+|2          |2_7025078_D_E    |   7025078|D      |E   |      0|E       |D       | 0.127| -14.3| 3.75|   -1812|    3.21|  0.000|
+|2          |2_7250227_D_E    |   7250227|D      |E   |      0|E       |D       | 0.127| -14.4| 3.76|   -1812|    3.21|  0.000|
+|2          |2_7501966_H_E    |   7501966|H      |E   |      0|E       |H       | 0.122| -14.8| 3.82|   -1812|    3.20|  0.000|
+|2          |2_7611414_D_E    |   7611414|D      |E   |      0|E       |D       | 0.125| -14.1| 3.80|   -1813|    3.21|  0.000|
+|2          |2_7737471_H_E    |   7737471|H      |E   |      0|E       |H       | 0.124| -14.3| 3.81|   -1813|    3.19|  0.000|
+|2          |2_7857737_H_E    |   7857737|H      |E   |      0|E       |H       | 0.124| -14.2| 3.81|   -1813|    3.16|  0.000|
+|2          |2_8011673_H_E    |   8011673|H      |E   |      0|E       |H       | 0.123| -14.4| 3.82|   -1812|    3.19|  0.000|
+|2          |2_8182575_A_E    |   8182575|A      |E   |      0|E       |A       | 0.125| -14.0| 3.78|   -1813|    3.15|  0.000|
+|2          |2_8353477_A_E    |   8353477|A      |E   |      0|E       |A       | 0.127| -14.2| 3.77|   -1812|    3.15|  0.000|
+|2          |2_8524379_A_E    |   8524379|A      |E   |      0|E       |A       | 0.127| -14.2| 3.76|   -1812|    3.15|  0.000|
+|2          |2_8690542_A_E    |   8690542|A      |E   |      0|E       |A       | 0.128| -13.5| 3.80|   -1813|    3.06|  0.000|
+|2          |2_8861444_A_E    |   8861444|A      |E   |      0|E       |A       | 0.127| -14.1| 3.76|   -1813|    3.18|  0.000|
+|2          |2_9196139_H_E    |   9196139|H      |E   |      0|E       |H       | 0.128| -12.7| 3.81|   -1814|    3.04|  0.001|
+|5          |5_117508066_B_E  | 117508066|B      |E   |      0|E       |B       | 0.153|  13.2| 3.58|   -1813|    2.80|  0.000|
+|5          |5_123629774_B_E  | 123629774|B      |E   |      0|E       |B       | 0.099|  16.4| 4.36|   -1812|    3.00|  0.000|
+|5          |5_39679307_E_A   |  39679307|E      |A   |      0|A       |E       | 0.090| -15.7| 4.39|   -1813|    2.83|  0.000|
+|5          |5_40272493_E_A   |  40272493|E      |A   |      0|A       |E       | 0.095| -15.6| 4.30|   -1813|    2.79|  0.000|
+|5          |5_54858991_E_A   |  54858991|E      |A   |      0|A       |E       | 0.102| -14.6| 4.24|   -1814|    2.87|  0.001|
+|5          |5_55215630_E_A   |  55215630|E      |A   |      0|A       |E       | 0.101| -14.7| 4.26|   -1814|    2.88|  0.001|
+|6          |6_107008934_D_A  | 107008934|D      |A   |      0|A       |D       | 0.077| -16.9| 4.56|   -1813|    3.23|  0.000|
+|8          |8_3000000_H_C    |   3000000|H      |C   |      0|C       |H       | 0.077| -15.1| 4.35|   -1814|    3.00|  0.001|
+|8          |8_3410751_H_C    |   3410751|H      |C   |      0|C       |H       | 0.077| -15.2| 4.36|   -1813|    3.01|  0.001|
+|10         |10_100114175_D_D | 100114175|D      |D   |      0|D       |D       | 0.171| -11.0| 3.25|   -1814|    2.30|  0.001|
+|10         |10_57753923_G_C  |  57753923|G      |C   |      0|C       |G       | 0.101|  15.3| 4.38|   -1813|    2.66|  0.001|
+|10         |10_58072086_G_C  |  58072086|G      |C   |      0|C       |G       | 0.101|  15.1| 4.39|   -1814|    2.66|  0.001|
+|10         |10_60353971_F_C  |  60353971|F      |C   |      0|C       |F       | 0.084|  16.4| 4.78|   -1814|    2.71|  0.001|
+|10         |10_95418856_F_E  |  95418856|F      |E   |      0|E       |F       | 0.120|  13.1| 3.86|   -1814|    3.28|  0.001|
+|10         |10_96637576_F_E  |  96637576|F      |E   |      0|E       |F       | 0.116|  13.1| 3.92|   -1814|    3.28|  0.001|
+|10         |10_99490238_H_D  |  99490238|H      |D   |      0|D       |H       | 0.163| -12.6| 3.26|   -1812|    2.17|  0.000|
+|12         |12_108748974_D_C | 108748974|D      |C   |      0|C       |D       | 0.122|  14.9| 3.78|   -1812|    2.92|  0.000|
+|12         |12_110011843_A_C | 110011843|A      |C   |      0|C       |A       | 0.121|  12.9| 3.86|   -1814|    2.96|  0.001|
+|13         |13_26871268_G_C  |  26871268|G      |C   |      0|C       |G       | 0.147|  12.4| 3.67|   -1814|    2.57|  0.001|
+|13         |13_27924769_G_C  |  27924769|G      |C   |      0|C       |G       | 0.147|  13.3| 3.64|   -1813|    2.63|  0.000|
+|13         |13_28620475_G_C  |  28620475|G      |C   |      0|C       |G       | 0.153|  14.0| 3.56|   -1812|    2.56|  0.000|
+|13         |13_29976363_E_C  |  29976363|E      |C   |      0|C       |E       | 0.161|  15.5| 3.49|   -1810|    2.57|  0.000|
+|13         |13_30180778_E_C  |  30180778|E      |C   |      0|C       |E       | 0.161|  15.5| 3.49|   -1810|    2.57|  0.000|
+|13         |13_31072103_E_C  |  31072103|E      |C   |      0|C       |E       | 0.159|  13.9| 3.52|   -1812|    2.56|  0.000|
+|13         |13_32418268_A_C  |  32418268|A      |C   |      0|C       |A       | 0.155|  13.0| 3.54|   -1813|    2.49|  0.000|
+|16         |16_63647011_B_B  |  63647011|B      |B   |      0|B       |B       | 0.156| -12.2| 3.60|   -1814|    3.60|  0.001|
+|19         |19_25487123_G_G  |  25487123|G      |G   |      0|G       |G       | 0.129|  14.2| 3.98|   -1813|    3.05|  0.000|
 
 ```r
-library(forcats)
+manhattan_plot(x = lmm.hfd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a HFHS Diet", y.label = "LOD Score") -> hfd.manhattan
 
-library(GWASTools)
-with(lmm.results.hfd,manhattanPlot(p=p_wald,
-                               chromosome=chr,
-                               signif=suggestive.pval))
+hfd.manhattan
 ```
 
 ![](figures/chol-snp-analysis-hfd-2.png)<!-- -->
 
+### Comparason of NCD and HFHS GWAS
+
+
+```r
+library(cowplot)
+
+# plots are drawn without alignment
+plot_grid(ncd.manhattan, hfd.manhattan, labels = "AUTO", align="v",ncol=1)
+```
+
+![](figures/ncd-hfd-comparason-1.png)<!-- -->
 
 ## BSLMM Analysis
 
@@ -427,19 +850,17 @@ top.snps <- bslmm.results
 
 ```r
 combined.analysis <-
-  full_join(bslmm.results, lmm.results, by=c('chr','rs','ps'),
+  full_join(bslmm.additive.results, lmm.ncd.results %>% mutate(chr=as.factor(chr)), by=c('chromosome','rs','position'),
             suffix=c('_bslmm','_lmm'))
 
 library(ggrepel)
 ggplot(combined.analysis,
        aes(y=-log10(p_wald),
-           x=gamma,
+           x=eff.size,
            col=p_wald<suggestive.pval)) +
   geom_point() +
-  geom_text_repel(aes(label=paste('chr',paste(chr,ps,sep=":"))),
-                  data = filter(combined.analysis, p_wald < 0.01)) +
   labs(y="Log10 p-value from LMM",
-       x="Posterior Inclusion Probability from BSLMM") +
+       x="Effect size from BSLMM") +
   theme(legend.position='none')
 ```
 
@@ -449,7 +870,7 @@ ggplot(combined.analysis,
 
 
 ```r
-lmm.results %>%
+lmm.additive.data %>%
   arrange(p_wald) %>%
   head(25) -> top.snps #defines top snp as in lowest p_wald
 
@@ -471,15 +892,9 @@ kable(top.snps.summary %>% arrange(p.val.log10), caption="Summary of genomic reg
 
 Table: Summary of genomic regions with SNPs in the top 25 by p-value
 
-|chr |lead.snp    |        ps| sug.snps| p.val.log10|    ps.min|    ps.max| effect|
-|:---|:-----------|---------:|--------:|-----------:|---------:|---------:|------:|
-|18  |UNC29452833 |  65023371|        4|       -5.27|  65023371|  65023371|  13.04|
-|11  |JAX00028600 |  68049727|        6|       -4.66|  68049727|  68049727|  15.85|
-|4   |JAX00124247 | 125354910|        3|       -4.51| 125354910| 125354910|  15.76|
-|1   |JAX00263476 | 115418267|        7|       -4.06| 115418267| 115418267| -11.33|
-|3   |UNC6501900  | 148236019|        3|       -3.56| 148236019| 148236019|  10.31|
-|9   |JAX00690676 |  37907023|        1|       -3.54|  37907023|  37907023|  -8.89|
-|19  |UNC30286875 |  38227322|        1|       -3.47|  38227322|  38227322|   9.34|
+| chr|lead.snp        | ps| sug.snps| p.val.log10| ps.min| ps.max| effect|
+|---:|:---------------|--:|--------:|-----------:|------:|------:|------:|
+|  -9|1_171425406_H_C | -9|       25|       -7.46|     -9|     -9|   14.9|
 
 ```r
 range.gap=500000
@@ -500,15 +915,8 @@ top.snp.genes %>% kable(caption=paste("Genes near top SNP interval +/-", range.g
 
 Table: Genes near top SNP interval +/- 500000
 
-|gene_biotype                     |  n|genes                                                                                       |
-|:--------------------------------|--:|:-------------------------------------------------------------------------------------------|
-|lncRNA                           |  9|Gm50353, Gm29860, A330084C13Rik, Gm50368, Gm56499, Gm56505, Gm29966, F730048M01Rik, Gm41757 |
-|protein_coding                   |  6|Onecut2, Fech, Nars, Atp8b1, Nedd4l, Alpk2                                                  |
-|processed_pseudogene             |  4|Gm36804, Amd-ps3, Gm50352, Gm50220                                                          |
-|TEC                              |  2|Gm50338, Gm50354                                                                            |
-|snRNA                            |  2|Gm23016, Gm24504                                                                            |
-|miRNA                            |  1|Mir122                                                                                      |
-|transcribed_processed_pseudogene |  1|Gm6978                                                                                      |
+|gene_biotype |  n|genes |
+|:------------|--:|:-----|
 
 ```r
 # second snp
@@ -528,13 +936,8 @@ top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", rang
 
 Table: Genes near second SNP interval +/- 500000
 
-|gene_biotype         |  n|genes                                                                                         |
-|:--------------------|--:|:---------------------------------------------------------------------------------------------|
-|protein_coding       | 13|Gas7, Glp2r, Rcvrn, Gsg1l2, Dhrs7c, Usp43, Cfap52, Stx8, Ntn1, Pik3r5, Pik3r6, Mfsd6l, Ccdc42 |
-|lncRNA               |  5|9130017K11Rik, C78197, Gm12305, Gm32046, Ccdc42os                                             |
-|processed_pseudogene |  2|Gm12303, Gm12304                                                                              |
-|miRNA                |  1|Mir6406                                                                                       |
-|rRNA                 |  1|Gm55958                                                                                       |
+|gene_biotype |  n|genes |
+|:------------|--:|:-----|
 
 ```r
 # third snp
@@ -557,1301 +960,6 @@ Table: Genes near second SNP interval +/- 500000
 |gene_biotype |  n|genes |
 |:------------|--:|:-----|
 
-### Analysis of QTLs
-
-
-```r
-sug.snps <- 
-  lmm.results %>%
-  arrange(p_wald) %>%
-  filter(p_wald<suggestive.pval) %>%
-  pull(rs)
-
-gw.snps <- 
-  lmm.results %>%
-  arrange(p_wald) %>%
-  filter(p_wald<genome.pval) %>%
-  pull(rs)
-
-top.snp <- top.snps[1,]
-snp.genotypes <- 
-  filter(genotype.data, marker==top.snp$rs) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-second.snp <- top.snps[4,]
-second.snp.genotypes <- 
-  filter(genotype.data, marker==second.snp$rs) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-third.snp <- top.snps[6,]
-third.snp.genotypes <- 
-  filter(genotype.data, marker==third.snp$rs) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-
-annotated.phenotypes <-
-  full_join(phenotype.data,
-            dplyr::select(snp.genotypes,-marker),
-            by=c('sample'='sample'))
-
-
-library(ggplot2)
-location <- paste('Chr',top.snp$chr,top.snp$pos)
-annotated.phenotypes %>%
-  group_by(Genotype) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity') +
-  geom_errorbar(width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',top.snp$chr,sep="")) %>% paste(top.snp$ps, sep=':')))
-```
-
-![](figures/analysis-snp-1.png)<!-- -->
-
-```r
-annotated.phenotypes %>%
-  group_by(Genotype,sex) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=sex,
-             fill=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity',position=position_dodge(preserve='single'),width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75,preserve='single'),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',top.snp$rs)) +
-  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16))
-```
-
-![](figures/analysis-snp-2.png)<!-- -->
-
-```r
-library(forcats)
-annotated.phenotypes %>%
-  group_by(Genotype,sex,diet) %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  mutate(diet=fct_recode(diet,
-                         "Chow"='chow',
-                         "HFHS"='hf')) %>%
-  ggplot(aes(y=Mean,
-             fill=Genotype,
-             x=sex,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  facet_grid(diet~.) +
-  geom_bar(stat='identity',position=position_dodge(preserve='single'),width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75,preserve='single'),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',top.snp$chr,sep="")) %>% paste(top.snp$ps, sep=':'))) +
-  geom_text(aes(label=n,y=8), 
-            position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16),
-        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
-```
-
-![](figures/analysis-snp-3.png)<!-- -->
-
-```r
-aov(chol2~sex*Genotype, data=annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex-genotype interaction on chow only.')
-```
-
-
-
-Table: ANOVA for sex-genotype interaction on chow only.
-
-|term         | df|    sumsq|  meansq| statistic| p.value|
-|:------------|--:|--------:|-------:|---------:|-------:|
-|sex          |  1|  4950.30| 4950.30|    14.493|   0.000|
-|Genotype     |  2|  7620.17| 3810.09|    11.155|   0.000|
-|sex:Genotype |  2|     6.13|    3.07|     0.009|   0.991|
-|Residuals    | 88| 30057.61|  341.56|        NA|      NA|
-
-```r
-lm(chol2~sex+Genotype, data=annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex and genotype.')
-```
-
-
-
-Table: ANOVA for sex and genotype.
-
-|term        | estimate| std.error| statistic| p.value|
-|:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     69.0|      2.98|     23.13|   0.000|
-|sexM        |     15.3|      3.79|      4.03|   0.000|
-|GenotypeAG  |     13.6|      4.06|      3.36|   0.001|
-|GenotypeGG  |     36.4|      9.48|      3.84|   0.000|
-
-```r
-aov(chol2~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term          |  df|  sumsq| meansq| statistic| p.value|
-|:-------------|---:|------:|------:|---------:|-------:|
-|diet          |   1|  99204|  99204|   134.090|   0.000|
-|sex           |   1|   6038|   6038|     8.162|   0.005|
-|Genotype      |   2|   9681|   4841|     6.543|   0.002|
-|diet:Genotype |   2|   1032|    516|     0.698|   0.499|
-|Residuals     | 176| 130209|    740|        NA|      NA|
-
-```r
-aov(chol2~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term          |  df|  sumsq| meansq| statistic| p.value|
-|:-------------|---:|------:|------:|---------:|-------:|
-|diet          |   1|  99204|  99204|   134.090|   0.000|
-|sex           |   1|   6038|   6038|     8.162|   0.005|
-|Genotype      |   2|   9681|   4841|     6.543|   0.002|
-|diet:Genotype |   2|   1032|    516|     0.698|   0.499|
-|Residuals     | 176| 130209|    740|        NA|      NA|
-
-```r
-lm(chol2~diet+sex+Genotype+diet:Genotype, data=annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='Model estimates for moderation of genotype effect by diet.')
-```
-
-
-
-Table: Model estimates for moderation of genotype effect by diet.
-
-|term              | estimate| std.error| statistic| p.value|
-|:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    70.76|      4.03|    17.574|   0.000|
-|diethf            |    49.33|      5.12|     9.631|   0.000|
-|sexM              |    11.61|      4.04|     2.875|   0.005|
-|GenotypeAG        |    13.79|      6.04|     2.285|   0.023|
-|GenotypeGG        |    35.59|     14.08|     2.527|   0.012|
-|diethf:GenotypeAG |    -9.03|      8.75|    -1.032|   0.304|
-|diethf:GenotypeGG |   -13.17|     17.85|    -0.738|   0.461|
-
-
-```r
-sug.snps <- 
-  lmm.results %>%
-  arrange(p_wald) %>%
-  filter(p_wald<suggestive.pval) %>%
-  pull(rs)
-
-gw.snps <- 
-  lmm.results %>%
-  arrange(p_wald) %>%
-  filter(p_wald<genome.pval) %>%
-  pull(rs)
-
-second.snp <- top.snps[2,]
-second.snp.genotypes <- 
-  filter(genotype.data, marker==second.snp$rs) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-third.snp <- top.snps[3,]
-third.snp.genotypes <- 
-  filter(genotype.data, marker==third.snp$rs) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-
-annotated.phenotypes <-
-  full_join(phenotype.data,
-            dplyr::select(snp.genotypes,-marker),
-            by=c('sample'='sample'))
-
-second.annotated.phenotypes <-
-  full_join(phenotype.data,
-            dplyr::select(second.snp.genotypes,-marker),
-            by=c('sample'='sample'))
-
-library(ggplot2)
-location <- paste('Chr',second.snp$chr,second.snp$pos)
-second.annotated.phenotypes %>%
-  group_by(Genotype) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity') +
-  geom_errorbar(width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',second.snp$rs))
-```
-
-![](figures/second snp analysis-1.png)<!-- -->
-
-```r
-second.annotated.phenotypes %>%
-  group_by(Genotype,sex) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=sex,
-             fill=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16)) +
-    labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',second.snp$rs))
-```
-
-![](figures/second snp analysis-2.png)<!-- -->
-
-```r
-library(forcats)
-second.annotated.phenotypes %>%
-  group_by(Genotype,sex,diet) %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  mutate(diet=fct_recode(diet,
-                         "Chow"='chow',
-                         "HFHS"='hf')) %>%
-  ggplot(aes(y=Mean,
-             fill=Genotype,
-             x=sex,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  facet_grid(diet~.) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-    labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',second.snp$rs)) +
-  geom_text(aes(label=n,y=8), 
-            position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16),
-        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
-```
-
-![](figures/second snp analysis-3.png)<!-- -->
-
-```r
-aov(chol2~sex*Genotype, data=second.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex-genotype interaction on chow only.')
-```
-
-
-
-Table: ANOVA for sex-genotype interaction on chow only.
-
-|term         | df|    sumsq|  meansq| statistic| p.value|
-|:------------|--:|--------:|-------:|---------:|-------:|
-|sex          |  1|  4906.98| 4906.98|    13.159|   0.000|
-|Genotype     |  2|  4866.63| 2433.32|     6.525|   0.002|
-|sex:Genotype |  1|     1.03|    1.03|     0.003|   0.958|
-|Residuals    | 88| 32815.32|  372.90|        NA|      NA|
-
-```r
-aov(chol2~sex+Genotype, data=second.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex and genotype on chow only.')
-```
-
-
-
-Table: ANOVA for sex and genotype on chow only.
-
-|term      | df| sumsq| meansq| statistic| p.value|
-|:---------|--:|-----:|------:|---------:|-------:|
-|sex       |  1|  4907|   4907|      13.3|   0.000|
-|Genotype  |  2|  4867|   2433|       6.6|   0.002|
-|Residuals | 89| 32816|    369|        NA|      NA|
-
-```r
-lm(chol2~sex+Genotype, data=second.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='linear model for sex and genotype.')
-```
-
-
-
-Table: linear model for sex and genotype.
-
-|term        | estimate| std.error| statistic| p.value|
-|:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |    81.78|      3.33|    24.575|   0.000|
-|sexM        |    16.04|      4.02|     3.988|   0.000|
-|GenotypeTC  |   -14.39|      4.02|    -3.582|   0.001|
-|GenotypeTT  |     5.21|     19.49|     0.268|   0.790|
-
-```r
-aov(chol2~diet + sex + Genotype, data=second.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term      |  df|  sumsq| meansq| statistic| p.value|
-|:---------|---:|------:|------:|---------:|-------:|
-|diet      |   1|  98752|  98752|    128.91|   0.000|
-|sex       |   1|   5763|   5763|      7.52|   0.007|
-|Genotype  |   2|   5079|   2540|      3.31|   0.039|
-|Residuals | 178| 136359|    766|        NA|      NA|
-
-```r
-aov(chol2~diet+sex+Genotype+diet:Genotype, data=second.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term          |  df|  sumsq| meansq| statistic| p.value|
-|:-------------|---:|------:|------:|---------:|-------:|
-|diet          |   1|  98752|  98752|   128.177|   0.000|
-|sex           |   1|   5763|   5763|     7.481|   0.007|
-|Genotype      |   2|   5079|   2540|     3.296|   0.039|
-|diet:Genotype |   2|    763|    381|     0.495|   0.610|
-|Residuals     | 176| 135596|    770|        NA|      NA|
-
-```r
-lm(chol2~diet+sex+Genotype+diet:Genotype, data=second.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='Model estimates for moderation of genotype effect by diet.')
-```
-
-
-
-Table: Model estimates for moderation of genotype effect by diet.
-
-|term              | estimate| std.error| statistic| p.value|
-|:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    83.60|      4.47|    18.708|   0.000|
-|diethf            |    42.78|      5.73|     7.461|   0.000|
-|sexM              |    11.88|      4.13|     2.879|   0.004|
-|GenotypeTC        |   -14.03|      5.80|    -2.420|   0.017|
-|GenotypeTT        |     3.40|     28.11|     0.121|   0.904|
-|diethf:GenotypeTC |     7.11|      8.44|     0.842|   0.401|
-|diethf:GenotypeTT |   -12.88|     30.57|    -0.421|   0.674|
-
-
-```r
-third.annotated.phenotypes <-
-  full_join(phenotype.data,
-            dplyr::select(third.snp.genotypes,-marker),
-            by=c('sample'='sample'))
-
-library(ggplot2)
-location <- paste('Chr',third.snp$chr,third.snp$pos)
-third.annotated.phenotypes %>%
-  group_by(Genotype) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity') +
-  geom_errorbar(width=0.5)+
-    labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',third.snp$rs))
-```
-
-![](figures/third snp analysis-1.png)<!-- -->
-
-```r
-third.annotated.phenotypes %>%
-  group_by(Genotype,sex) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=sex,
-             fill=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-    labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',third.snp$rs)) +
-  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16))
-```
-
-![](figures/third snp analysis-2.png)<!-- -->
-
-```r
-library(forcats)
-third.annotated.phenotypes %>%
-  group_by(Genotype,sex,diet) %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  mutate(diet=fct_recode(diet,
-                         "Chow"='chow',
-                         "HFHS"='hf')) %>%
-  ggplot(aes(y=Mean,
-             fill=Genotype,
-             x=sex,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  facet_grid(diet~.) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-    labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',third.snp$rs)) +
-  geom_text(aes(label=n,y=8), 
-            position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16),
-        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
-```
-
-![](figures/third snp analysis-3.png)<!-- -->
-
-```r
-aov(chol2~sex*Genotype, data=third.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex-genotype interaction on chow only.')
-```
-
-
-
-Table: ANOVA for sex-genotype interaction on chow only.
-
-|term         | df| sumsq| meansq| statistic| p.value|
-|:------------|--:|-----:|------:|---------:|-------:|
-|sex          |  1|  6123|   6123|     16.54|   0.000|
-|Genotype     |  2|  6533|   3266|      8.82|   0.000|
-|sex:Genotype |  2|  1403|    701|      1.90|   0.156|
-|Residuals    | 90| 33320|    370|        NA|      NA|
-
-```r
-aov(chol2~sex+Genotype, data=third.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex and genotype on chow only.')
-```
-
-
-
-Table: ANOVA for sex and genotype on chow only.
-
-|term      | df| sumsq| meansq| statistic| p.value|
-|:---------|--:|-----:|------:|---------:|-------:|
-|sex       |  1|  6123|   6123|     16.22|       0|
-|Genotype  |  2|  6533|   3266|      8.65|       0|
-|Residuals | 92| 34723|    377|        NA|      NA|
-
-```r
-lm(chol2~sex+Genotype, data=third.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='linear model for sex-genotype interaction.')
-```
-
-
-
-Table: linear model for sex-genotype interaction.
-
-|term        | estimate| std.error| statistic| p.value|
-|:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     55.9|      5.96|      9.37|   0.000|
-|sexM        |     17.6|      4.03|      4.37|   0.000|
-|GenotypeTC  |     17.0|      6.35|      2.67|   0.009|
-|GenotypeTT  |     26.1|      6.39|      4.09|   0.000|
-
-```r
-aov(chol2~diet+sex+Genotype+diet:Genotype, data=third.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term          |  df|  sumsq| meansq| statistic| p.value|
-|:-------------|---:|------:|------:|---------:|-------:|
-|diet          |   1|  96284|  96284|    128.46|   0.000|
-|sex           |   1|   6724|   6724|      8.97|   0.003|
-|Genotype      |   2|   3192|   1596|      2.13|   0.122|
-|diet:Genotype |   2|   7912|   3956|      5.28|   0.006|
-|Residuals     | 179| 134162|    750|        NA|      NA|
-
-```r
-lm(chol2~diet+sex+Genotype+diet:Genotype, data=third.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='Model estimates for moderation of genotype effect by diet.')
-```
-
-
-
-Table: Model estimates for moderation of genotype effect by diet.
-
-|term              | estimate| std.error| statistic| p.value|
-|:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    58.36|      8.16|     7.150|   0.000|
-|diethf            |    61.96|     10.81|     5.734|   0.000|
-|sexM              |    12.61|      4.08|     3.090|   0.002|
-|GenotypeTC        |    17.38|      8.94|     1.943|   0.054|
-|GenotypeTT        |    25.59|      9.00|     2.845|   0.005|
-|diethf:GenotypeTC |    -9.75|     12.14|    -0.803|   0.423|
-|diethf:GenotypeTT |   -35.76|     13.11|    -2.727|   0.007|
-
-### BSLMM Nominated NCD SNP
-
-This is based on the lead SNP from the NCD gemma analysis using BSLMM
-
-
-```r
-precomputed.snp.id <- 'UNC19008219' 
-precomputed.snp <- lmm.results %>%
-  filter(rs==precomputed.snp.id)
-
-precomputed.snp.genotypes <- 
-  filter(genotype.data, marker==precomputed.snp.id) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-precomputed.annotated.phenotypes <-
-  full_join(phenotype.data,
-            dplyr::select(precomputed.snp.genotypes,-marker),
-            by=c('sample'='sample'))
-
-library(ggplot2)
-location <- paste('Chr',precomputed.snp$chr,precomputed.snp$pos)
-precomputed.annotated.phenotypes %>%
-  group_by(Genotype) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity') +
-  geom_errorbar(width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':')))
-```
-
-![](figures/bslmm-snp-analysis-1.png)<!-- -->
-
-```r
-precomputed.annotated.phenotypes %>%
-  group_by(Genotype,sex) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=sex,
-             fill=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':')))+
-  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16))
-```
-
-![](figures/bslmm-snp-analysis-2.png)<!-- -->
-
-```r
-library(forcats)
-precomputed.annotated.phenotypes %>%
-  group_by(Genotype,sex,diet) %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  mutate(diet=fct_recode(diet,
-                         "Chow"='chow',
-                         "HFHS"='hf')) %>%
-  ggplot(aes(y=Mean,
-             fill=Genotype,
-             x=sex,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  facet_grid(diet~.) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':'))) +
-  geom_text(aes(label=n,y=8), 
-            position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16),
-        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
-```
-
-![](figures/bslmm-snp-analysis-3.png)<!-- -->
-
-```r
-aov(chol2~sex*Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex-genotype interaction on chow only.')
-```
-
-
-
-Table: ANOVA for sex-genotype interaction on chow only.
-
-|term         | df| sumsq| meansq| statistic| p.value|
-|:------------|--:|-----:|------:|---------:|-------:|
-|sex          |  1|  5917|   5917|    14.516|   0.000|
-|Genotype     |  2|  4557|   2279|     5.589|   0.005|
-|sex:Genotype |  2|   776|    388|     0.951|   0.390|
-|Residuals    | 88| 35873|    408|        NA|      NA|
-
-```r
-aov(chol2~sex+Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex and genotype on chow only.')
-```
-
-
-
-Table: ANOVA for sex and genotype on chow only.
-
-|term      | df| sumsq| meansq| statistic| p.value|
-|:---------|--:|-----:|------:|---------:|-------:|
-|sex       |  1|  5917|   5917|      14.5|   0.000|
-|Genotype  |  2|  4557|   2279|       5.6|   0.005|
-|Residuals | 90| 36649|    407|        NA|      NA|
-
-```r
-lm(chol2~sex+Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='linear model for sex and genotype')
-```
-
-
-
-Table: linear model for sex and genotype
-
-|term        | estimate| std.error| statistic| p.value|
-|:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |     57.3|      8.97|      6.38|   0.000|
-|sexM        |     16.9|      4.25|      3.98|   0.000|
-|GenotypeTG  |     10.3|      9.36|      1.10|   0.273|
-|GenotypeTT  |     22.3|      8.75|      2.55|   0.013|
-
-```r
-aov(chol2~diet+sex+Genotype+diet:Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term          |  df|  sumsq| meansq| statistic| p.value|
-|:-------------|---:|------:|------:|---------:|-------:|
-|diet          |   1|  96218|  96218|   123.529|   0.000|
-|sex           |   1|   6544|   6544|     8.402|   0.004|
-|Genotype      |   2|    254|    127|     0.163|   0.850|
-|diet:Genotype |   2|   7070|   3535|     4.538|   0.012|
-|Residuals     | 177| 137867|    779|        NA|      NA|
-
-```r
-lm(chol2~diet+sex+Genotype+diet:Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='Model estimates for moderation of genotype effect by diet.')
-```
-
-
-
-Table: Model estimates for moderation of genotype effect by diet.
-
-|term              | estimate| std.error| statistic| p.value|
-|:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    60.88|      11.9|     5.108|   0.000|
-|diethf            |    78.79|      20.0|     3.931|   0.000|
-|sexM              |    12.54|       4.2|     2.986|   0.003|
-|GenotypeTG        |     8.42|      12.8|     0.657|   0.512|
-|GenotypeTT        |    20.75|      12.0|     1.727|   0.086|
-|diethf:GenotypeTG |   -20.25|      21.4|    -0.945|   0.346|
-|diethf:GenotypeTT |   -42.44|      20.7|    -2.048|   0.042|
-
-### Pre-Computed SNPs
-
-This is based on the lead SNP from the precompiled viewer at https://churchilllab.jax.org/qtlviewer/svenson/DOHFD.  Lead SNP at chr1 171429283
-
-
-```r
-#  genotype.data %>%
-#    filter(pos>171429664-100000&pos<171429664+100000) %>%
-#    filter(chr==1)%>% 
-#    View
-# 
-# lmm.results.hfd %>%
-#   filter(chr==1) %>% View
-
-
-precomputed.snp.id <- 'JAX00276141' #not sure if this is the correct marker
-precomputed.snp <- lmm.results %>%
-  filter(rs==precomputed.snp.id)
-
-precomputed.snp.genotypes <- 
-  filter(genotype.data, marker==precomputed.snp.id) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  pivot_longer(cols=c(starts_with('F',ignore.case=F),
-                      starts_with('M',ignore.case=F)),
-                      names_to='sample',
-               values_to='Genotype') 
-
-precomputed.annotated.phenotypes <-
-  full_join(phenotype.data,
-            dplyr::select(precomputed.snp.genotypes,-marker),
-            by=c('sample'='sample'))
-
-library(ggplot2)
-location <- paste('Chr',precomputed.snp$chr,precomputed.snp$pos)
-precomputed.annotated.phenotypes %>%
-  group_by(Genotype) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity') +
-  geom_errorbar(width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':')))
-```
-
-![](figures/precomputed-snp-analysis-1.png)<!-- -->
-
-```r
-precomputed.annotated.phenotypes %>%
-  group_by(Genotype,sex) %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  ggplot(aes(y=Mean,
-             x=sex,
-             fill=Genotype,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':')))+
-  geom_text(aes(label=n,y=5), position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16))
-```
-
-![](figures/precomputed-snp-analysis-2.png)<!-- -->
-
-```r
-library(forcats)
-precomputed.annotated.phenotypes %>%
-  group_by(Genotype,sex,diet) %>%
-  filter(Genotype!='--') %>%
-  summarize(Mean=mean(chol2),
-            Error=se(chol2),
-            n=length(chol2)) %>%
-  mutate(diet=fct_recode(diet,
-                         "Chow"='chow',
-                         "HFHS"='hf')) %>%
-  ggplot(aes(y=Mean,
-             fill=Genotype,
-             x=sex,
-             ymin=Mean-Error,
-             ymax=Mean+Error)) +
-  facet_grid(diet~.) +
-  geom_bar(stat='identity',position='dodge',width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75),aes(group=Genotype), width=0.5)+
-  labs(y='Cholesterol (mg/dL)',
-       x=paste('Genotype at ',paste(paste('Chr',precomputed.snp$chr,sep="")) %>% paste(precomputed.snp$ps, sep=':'))) +
-  geom_text(aes(label=n,y=8), 
-            position=position_dodge(width=0.75)) +
-  theme_classic() +
-  theme(text=element_text(size=16),
-        legend.position=c(0.25,0.92))+ guides(fill = guide_legend(nrow = 1))
-```
-
-![](figures/precomputed-snp-analysis-3.png)<!-- -->
-
-```r
-aov(chol2~sex*Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for sex-genotype interaction on chow only.')
-```
-
-
-
-Table: ANOVA for sex-genotype interaction on chow only.
-
-|term         | df|   sumsq| meansq| statistic| p.value|
-|:------------|--:|-------:|------:|---------:|-------:|
-|sex          |  1|  6122.7| 6122.7|    13.884|   0.000|
-|Genotype     |  2|    64.1|   32.1|     0.073|   0.930|
-|sex:Genotype |  1|  1060.4| 1060.4|     2.405|   0.124|
-|Residuals    | 91| 40130.8|  441.0|        NA|      NA|
-
-```r
-lm(chol2~sex+Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(diet=='chow') %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='linear model for sex-genotype interaction.')
-```
-
-
-
-Table: linear model for sex-genotype interaction.
-
-|term        | estimate| std.error| statistic| p.value|
-|:-----------|--------:|---------:|---------:|-------:|
-|(Intercept) |   76.110|      3.54|    21.516|   0.000|
-|sexM        |   15.675|      4.42|     3.545|   0.001|
-|GenotypeTC  |   -1.758|      4.74|    -0.371|   0.712|
-|GenotypeTT  |    0.715|     15.34|     0.047|   0.963|
-
-```r
-aov(chol2~diet*sex*Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term              |  df|  sumsq|  meansq| statistic| p.value|
-|:-----------------|---:|------:|-------:|---------:|-------:|
-|diet              |   1|  96523| 96523.2|   119.061|   0.000|
-|sex               |   1|   6974|  6973.7|     8.602|   0.004|
-|Genotype          |   2|    133|    66.4|     0.082|   0.921|
-|diet:sex          |   1|    782|   781.6|     0.964|   0.328|
-|diet:Genotype     |   2|    878|   439.1|     0.542|   0.583|
-|sex:Genotype      |   1|    706|   706.4|     0.871|   0.352|
-|diet:sex:Genotype |   1|    359|   358.6|     0.442|   0.507|
-|Residuals         | 175| 141874|   810.7|        NA|      NA|
-
-```r
-aov(chol2~diet+sex+Genotype+diet:Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='ANOVA for moderation of genotype effect by diet.')
-```
-
-
-
-Table: ANOVA for moderation of genotype effect by diet.
-
-|term          |  df|  sumsq|  meansq| statistic| p.value|
-|:-------------|---:|------:|-------:|---------:|-------:|
-|diet          |   1|  96523| 96523.2|   119.630|   0.000|
-|sex           |   1|   6974|  6973.7|     8.643|   0.004|
-|Genotype      |   2|    133|    66.4|     0.082|   0.921|
-|diet:Genotype |   2|    979|   489.5|     0.607|   0.546|
-|Residuals     | 178| 143619|   806.9|        NA|      NA|
-
-```r
-lm(chol2~diet+sex+Genotype+diet:Genotype, data=precomputed.annotated.phenotypes %>%
-  filter(Genotype!='--')) %>%
-  tidy %>%
-  kable(caption='Model estimates for moderation of genotype effect by diet.')
-```
-
-
-
-Table: Model estimates for moderation of genotype effect by diet.
-
-|term              | estimate| std.error| statistic| p.value|
-|:-----------------|--------:|---------:|---------:|-------:|
-|(Intercept)       |    78.14|      4.21|    18.580|   0.000|
-|diethf            |    44.46|      4.88|     9.108|   0.000|
-|sexM              |    11.86|      4.24|     2.796|   0.006|
-|GenotypeTC        |    -2.38|      6.32|    -0.377|   0.706|
-|GenotypeTT        |     2.50|     20.49|     0.122|   0.903|
-|diethf:GenotypeTC |     7.47|     10.07|     0.742|   0.459|
-|diethf:GenotypeTT |   -27.10|     35.37|    -0.766|   0.445|
-
-We identified **0** SNPs at genome-wide significance, and **1** at suggestive significance.
-
-
-
-## Polygenic Risk Models and Analysis
-
-
-
-```r
-lead.snps <- top.snps.summary %>% arrange(p.val.log10) %>% head(3) %>% pull(lead.snp)
-```
-
-Used the top three lead SNPs from the LMM analysis (UNC29452833JAX00028600JAX00124247).
-
-
-```r
-library(tibble)
-lead.snp.genotypes <- 
-  filter(genotype.data, marker %in% lead.snps) %>% 
-  dplyr::select(-chr,-pos) %>% 
-  column_to_rownames('marker') %>%
-  t %>% as.data.frame() %>% 
-  rownames_to_column(var='sample')
-
-#annotate data frame with phenotypes to genotype columns
-annotated.lead.phenotypes <-
-    left_join(phenotype.data%>%filter(diet=='chow'),
-            lead.snp.genotypes,sample,
-            by=c('sample'='sample')) 
-
-add.formula <- as.formula(paste('chol2~sex+', paste(lead.snps,collapse="+")))
-int.formula <- as.formula(paste('chol2~sex+', paste(lead.snps,collapse="*")))
-
-prs.add <- lm(add.formula, data=annotated.lead.phenotypes)
-prs.aov <- aov(add.formula, data=annotated.lead.phenotypes)
-prs.int <- lm(int.formula, data=annotated.lead.phenotypes)
-prs.add %>% tidy %>% kable(caption="Coefficients for additive model")
-```
-
-
-
-Table: Coefficients for additive model
-
-|term          | estimate| std.error| statistic| p.value|
-|:-------------|--------:|---------:|---------:|-------:|
-|(Intercept)   |    91.47|     13.92|     6.572|   0.000|
-|sexM          |    17.14|      3.68|     4.659|   0.000|
-|UNC29452833AA |   -36.71|     21.23|    -1.729|   0.087|
-|UNC29452833AG |   -26.80|     21.60|    -1.241|   0.218|
-|UNC29452833GG |    -7.66|     23.34|    -0.328|   0.744|
-|JAX00028600CC |     6.72|     17.81|     0.378|   0.707|
-|JAX00028600TC |    -3.94|     17.86|    -0.221|   0.826|
-|JAX00028600TT |    15.14|     24.67|     0.614|   0.541|
-|JAX00124247TC |    13.68|      5.77|     2.370|   0.020|
-|JAX00124247TT |    17.09|      5.98|     2.856|   0.005|
-
-```r
-prs.aov %>% tidy %>% kable(caption="ANOVA for additive model")
-```
-
-
-
-Table: ANOVA for additive model
-
-|term        | df| sumsq| meansq| statistic| p.value|
-|:-----------|--:|-----:|------:|---------:|-------:|
-|sex         |  1|  6123|   6123|     20.57|   0.000|
-|UNC29452833 |  3|  9840|   3280|     11.02|   0.000|
-|JAX00028600 |  3|  3361|   1120|      3.76|   0.014|
-|JAX00124247 |  2|  2458|   1229|      4.13|   0.019|
-|Residuals   | 86| 25597|    298|        NA|      NA|
-
-```r
-prs.add %>% glance %>% kable(caption="Summary of additive PRS model")
-```
-
-
-
-Table: Summary of additive PRS model
-
-| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
-|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
-|      0.46|         0.403|  17.3|      8.13|       0|  9|   -404| 831| 859|    25597|          86|   96|
-
-```r
-prs.int %>% glance %>% kable(caption="Summary of interacting PRS model")
-```
-
-
-
-Table: Summary of interacting PRS model
-
-| r.squared| adj.r.squared| sigma| statistic| p.value| df| logLik| AIC| BIC| deviance| df.residual| nobs|
-|---------:|-------------:|-----:|---------:|-------:|--:|------:|---:|---:|--------:|-----------:|----:|
-|     0.508|         0.401|  17.3|      4.74|       0| 17|   -400| 838| 886|    23300|          78|   96|
-
-```r
-anova(prs.add,prs.int) %>% tidy %>% kable(caption="ANOVA of additive vs interacting model")
-```
-
-
-
-Table: ANOVA of additive vs interacting model
-
-|term                                                  | df.residual|   rss| df| sumsq| statistic| p.value|
-|:-----------------------------------------------------|-----------:|-----:|--:|-----:|---------:|-------:|
-|chol2 ~ sex + UNC29452833 + JAX00028600 + JAX00124247 |          86| 25597| NA|    NA|        NA|      NA|
-|chol2 ~ sex + UNC29452833 * JAX00028600 * JAX00124247 |          78| 23300|  8|  2297|     0.961|   0.472|
-
-```r
-#not significantly better with SNPs interacting
-
-ncd.r2 <- cor.test(predict(prs.add),
-                   fitted.values(prs.add)+residuals(prs.add))
-
-ncd.cor <- ggplot(prs.add,
-       aes(x=predict(prs.add),
-       y=model.frame(prs.add)$chol2)) +
-  geom_point(aes(col=sex)) +
-  geom_smooth(method='lm',se=F,col='black') +
-    scale_colour_manual(values = c("pink3",'royalblue1')) +
-  annotate('text',x=22,y=200,label=paste('R^2=',round(ncd.r2$estimate^2,3),sep="")) +
-  annotate('text',x=24,y=190,label=paste('p=',format(ncd.r2$p.value,format='s'),sep="")) +
-  expand_limits(y=c(0,200),x=c(0,200)) +
-  labs(x="PRS Predicted Cholesterol",
-       y="Observed Cholesterol (mg/dL)",
-       title="On Normal Chow Diet") +
-    theme_classic()+
-  theme(legend.position=c(0.8,0.2),
-        legend.key = element_blank(),
-        text=element_text(size=16))
-ncd.cor
-```
-
-![](figures/risk-models-1.png)<!-- -->
-
-```r
-annotated.lead.phenotypes.hfd <-
-    left_join(phenotype.data%>%filter(diet=='hf'),
-            lead.snp.genotypes,sample,
-            by=c('sample'='sample'))
-
-hfd.r2 <- cor.test(predict(prs.add,newdata = annotated.lead.phenotypes.hfd),
-                   annotated.lead.phenotypes.hfd$chol2)
-
-hfd.cor <- ggplot(data=annotated.lead.phenotypes.hfd,
-       aes(x=predict(prs.add,newdata = annotated.lead.phenotypes.hfd),
-       y=chol2)) +
-  geom_point(aes(col=sex)) +
-  geom_smooth(method='lm',se=F,col='black') +
-  scale_colour_manual(values = c("pink3",'royalblue1')) +
-  annotate('text',x=22,y=200,label=paste('R^2=',round(hfd.r2$estimate^2,3),sep="")) +
-  annotate('text',x=16,y=190,label=paste('p=',round(hfd.r2$p.value,3),sep="")) +
-    expand_limits(y=c(0,200),x=c(0,200)) +
-  labs(x="PRS Predicted Cholesterol",
-       y="Observed Cholesterol (mg/dL)",
-       title="On HFHS Diet") +
-  theme_classic()+
-  theme(legend.position=c(0.8,0.2),
-        legend.key = element_blank(),
-        text=element_text(size=16))
-hfd.cor
-```
-
-![](figures/risk-models-2.png)<!-- -->
-
-```r
-library(gridExtra)
-grid.arrange(ncd.cor,hfd.cor,nrow=1)
-```
-
-![](figures/risk-models-3.png)<!-- -->
-
-```r
-#relative effects of gene-diet vs gene alone
-annotated.lead.phenotypes.all <-
-    left_join(phenotype.data,
-            lead.snp.genotypes,sample,
-            by=c('sample'='sample'))
-```
-
-### Variance Components for PRS Model
-
-Calculated the relative variance explained by the PRS model, relative to gene, sex and diet effects.
-
-
-```r
-full.formula <- as.formula(chol2~sex+diet+sex:diet+UNC29452833 + JAX00028600 +  JAX00124247 + diet:UNC29452833 + diet:JAX00028600 + diet:JAX00124247)
-
-full.model <- lm(full.formula, data=annotated.lead.phenotypes.all)
-aov(full.model) %>% tidy %>% kable()
-```
-
-
-
-|term             |  df|  sumsq| meansq| statistic| p.value|
-|:----------------|---:|------:|------:|---------:|-------:|
-|sex              |   1|   6689|   6689|     9.790|   0.002|
-|diet             |   1|  96319|  96319|   140.982|   0.000|
-|UNC29452833      |   3|  10487|   3496|     5.116|   0.002|
-|JAX00028600      |   3|   6498|   2166|     3.171|   0.026|
-|JAX00124247      |   2|   3049|   1524|     2.231|   0.111|
-|sex:diet         |   1|    914|    914|     1.338|   0.249|
-|diet:UNC29452833 |   3|   1256|    419|     0.613|   0.608|
-|diet:JAX00028600 |   2|    788|    394|     0.576|   0.563|
-|diet:JAX00124247 |   2|   8179|   4090|     5.986|   0.003|
-|Residuals        | 167| 114094|    683|        NA|      NA|
-
-```r
-aov(full.model) %>% tidy %>%
-  mutate(term.type = case_when(term=='sex'~'sex',
-                               term=='diet'~'diet',
-                               term=='sex:diet'~'sex x diet',
-                               term%>%startsWith('diet:')~'gene x diet',
-                               term %in% lead.snps ~ 'gene',
-                               term=='Residuals'~'residual')) %>%
-  group_by(term.type) %>%
-  summarize(summeansq=sum(meansq)) %>%
-  mutate(pct.var=summeansq/sum(summeansq)*100) %>%
-  arrange(-pct.var) %>%
-  mutate(model="Unadjusted")-> 
-  variance.summary
-
-
-variance.summary.controlled <-
-  variance.summary %>%
-  filter(term.type %in% c('gene','gene x diet','residual')) %>%  
-  mutate(pct.var=summeansq/sum(summeansq)*100) %>%
-  arrange(-pct.var) %>%
-  mutate(model="Adjusted for diet and sex")
-   
-variance.summary.all <-
-  bind_rows(variance.summary,variance.summary.controlled) %>%
-  mutate(model=relevel(as.factor(model),ref='Unadjusted'))
-
-variance.summary.all %>% kable(caption="Summary of variance components from PRS model")
-```
-
-
-
-Table: Summary of variance components from PRS model
-
-|term.type   | summeansq| pct.var|model                     |
-|:-----------|---------:|-------:|:-------------------------|
-|diet        |     96319|  82.540|Unadjusted                |
-|gene        |      7186|   6.158|Unadjusted                |
-|sex         |      6689|   5.732|Unadjusted                |
-|gene x diet |      4902|   4.201|Unadjusted                |
-|sex x diet  |       914|   0.783|Unadjusted                |
-|residual    |       683|   0.585|Unadjusted                |
-|gene        |      7186|  56.267|Adjusted for diet and sex |
-|gene x diet |      4902|  38.384|Adjusted for diet and sex |
-|residual    |       683|   5.349|Adjusted for diet and sex |
-
-```r
-ggplot(variance.summary.all,
-       aes(y=pct.var,
-           x=model,
-           fill=term.type)) +
-  geom_bar(stat='identity') +
-  theme_classic() +
-  labs(y="Percent of Variance Explained",
-       x="")
-```
-
-![](figures/prs-variance-1.png)<!-- -->
-
 # Session Information
 
 
@@ -1860,67 +968,68 @@ sessionInfo()
 ```
 
 ```
-## R version 4.2.2 (2022-10-31)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur ... 10.16
+## R version 4.3.3 (2024-02-29)
+## Platform: x86_64-apple-darwin20 (64-bit)
+## Running under: macOS Sonoma 14.3.1
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## 
+## time zone: America/Detroit
+## tzcode source: internal
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] gridExtra_2.3       tibble_3.2.1        biomaRt_2.52.0     
-##  [4] ggrepel_0.9.4       ggplot2_3.4.4       GWASTools_1.42.1   
-##  [7] Biobase_2.58.0      BiocGenerics_0.44.0 forcats_1.0.0      
-## [10] qqman_0.1.9         broom_1.0.5         dplyr_1.1.3        
-## [13] tidyr_1.3.0         readr_2.1.4         knitr_1.44         
+##  [1] biomaRt_2.58.2      ggrepel_0.9.5       cowplot_1.1.3      
+##  [4] forcats_1.0.0       GWASTools_1.48.0    Biobase_2.62.0     
+##  [7] BiocGenerics_0.48.1 ggmanh_1.6.0        ggplot2_3.5.0      
+## [10] qqman_0.1.9         broom_1.0.5         dplyr_1.1.4        
+## [13] tidyr_1.3.1         readr_2.1.5         knitr_1.45         
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] backports_1.4.1        BiocFileCache_2.4.0    splines_4.2.2         
-##   [4] operator.tools_1.6.3   GenomeInfoDb_1.34.9    TH.data_1.1-2         
-##   [7] digest_0.6.33          foreach_1.5.2          htmltools_0.5.6.1     
-##  [10] fansi_1.0.5            magrittr_2.0.3         memoise_2.0.1         
-##  [13] tzdb_0.4.0             Biostrings_2.66.0      vroom_1.6.4           
-##  [16] formula.tools_1.7.1    sandwich_3.0-2         prettyunits_1.2.0     
-##  [19] colorspace_2.1-0       blob_1.2.4             rappdirs_0.3.3        
-##  [22] pan_1.9                xfun_0.40              crayon_1.5.2          
-##  [25] RCurl_1.98-1.12        jsonlite_1.8.7         lme4_1.1-34           
-##  [28] survival_3.5-7         zoo_1.8-12             iterators_1.0.14      
-##  [31] glue_1.6.2             gtable_0.3.4           zlibbioc_1.44.0       
-##  [34] emmeans_1.8.8          XVector_0.38.0         MatrixModels_0.5-1    
-##  [37] shape_1.4.6            jomo_2.7-6             SparseM_1.81          
-##  [40] scales_1.2.1           mvtnorm_1.2-3          DBI_1.1.3             
-##  [43] Rcpp_1.0.11            xtable_1.8-4           progress_1.2.2        
-##  [46] quantsmooth_1.62.0     bit_4.0.5              stats4_4.2.2          
-##  [49] glmnet_4.1-8           httr_1.4.7             logistf_1.26.0        
-##  [52] calibrate_1.7.7        mice_3.16.0            pkgconfig_2.0.3       
-##  [55] XML_3.99-0.14          farver_2.1.1           nnet_7.3-19           
-##  [58] sass_0.4.7             dbplyr_2.3.4           utf8_1.2.3            
-##  [61] DNAcopy_1.70.0         tidyselect_1.2.0       labeling_0.4.3        
-##  [64] rlang_1.1.1            AnnotationDbi_1.60.2   munsell_0.5.0         
-##  [67] tools_4.2.2            cachem_1.0.8           cli_3.6.1             
-##  [70] generics_0.1.3         RSQLite_2.3.1          evaluate_0.22         
-##  [73] stringr_1.5.0          fastmap_1.1.1          yaml_2.3.7            
-##  [76] bit64_4.0.5            gdsfmt_1.32.0          purrr_1.0.2           
-##  [79] KEGGREST_1.38.0        mitml_0.4-5            nlme_3.1-163          
-##  [82] GWASExactHW_1.01       quantreg_5.97          xml2_1.3.5            
-##  [85] compiler_4.2.2         rstudioapi_0.15.0      filelock_1.0.2        
-##  [88] curl_5.1.0             png_0.1-8              bslib_0.5.1           
-##  [91] stringi_1.7.12         lattice_0.21-9         Matrix_1.5-4.1        
-##  [94] nloptr_2.0.3           vctrs_0.6.4            pillar_1.9.0          
-##  [97] lifecycle_1.0.3        lmtest_0.9-40          jquerylib_0.1.4       
-## [100] estimability_1.4.1     data.table_1.14.8      bitops_1.0-7          
-## [103] R6_2.5.1               IRanges_2.32.0         codetools_0.2-19      
-## [106] boot_1.3-28.1          MASS_7.3-60            withr_2.5.1           
-## [109] multcomp_1.4-25        S4Vectors_0.36.2       GenomeInfoDbData_1.2.9
-## [112] mgcv_1.9-0             parallel_4.2.2         hms_1.1.3             
-## [115] grid_4.2.2             rpart_4.1.21           coda_0.19-4           
-## [118] minqa_1.2.6            rmarkdown_2.25
+##   [1] DBI_1.2.2               gdsfmt_1.38.0           sandwich_3.1-0         
+##   [4] rlang_1.1.3             magrittr_2.0.3          compiler_4.3.3         
+##   [7] RSQLite_2.3.5           mgcv_1.9-1              png_0.1-8              
+##  [10] vctrs_0.6.5             stringr_1.5.1           quantreg_5.97          
+##  [13] pkgconfig_2.0.3         shape_1.4.6.1           crayon_1.5.2           
+##  [16] fastmap_1.1.1           dbplyr_2.4.0            backports_1.4.1        
+##  [19] XVector_0.42.0          labeling_0.4.3          utf8_1.2.4             
+##  [22] rmarkdown_2.26          tzdb_0.4.0              nloptr_2.0.3           
+##  [25] MatrixModels_0.5-3      purrr_1.0.2             bit_4.0.5              
+##  [28] xfun_0.42               glmnet_4.1-8            jomo_2.7-6             
+##  [31] logistf_1.26.0          zlibbioc_1.48.0         cachem_1.0.8           
+##  [34] GenomeInfoDb_1.38.7     jsonlite_1.8.8          progress_1.2.3         
+##  [37] blob_1.2.4              highr_0.10              pan_1.9                
+##  [40] prettyunits_1.2.0       parallel_4.3.3          R6_2.5.1               
+##  [43] stringi_1.8.3           bslib_0.6.1             RColorBrewer_1.1-3     
+##  [46] boot_1.3-30             DNAcopy_1.76.0          rpart_4.1.23           
+##  [49] lmtest_0.9-40           jquerylib_0.1.4         Rcpp_1.0.12            
+##  [52] iterators_1.0.14        zoo_1.8-12              IRanges_2.36.0         
+##  [55] Matrix_1.6-5            splines_4.3.3           nnet_7.3-19            
+##  [58] tidyselect_1.2.0        yaml_2.3.8              codetools_0.2-19       
+##  [61] curl_5.2.1              lattice_0.22-5          tibble_3.2.1           
+##  [64] quantsmooth_1.68.0      withr_3.0.0             KEGGREST_1.42.0        
+##  [67] evaluate_0.23           survival_3.5-8          BiocFileCache_2.10.1   
+##  [70] xml2_1.3.6              Biostrings_2.70.2       filelock_1.0.3         
+##  [73] pillar_1.9.0            mice_3.16.0             foreach_1.5.2          
+##  [76] stats4_4.3.3            generics_0.1.3          vroom_1.6.5            
+##  [79] hms_1.1.3               S4Vectors_0.40.2        munsell_0.5.0          
+##  [82] scales_1.3.0            minqa_1.2.6             calibrate_1.7.7        
+##  [85] GWASExactHW_1.01        glue_1.7.0              tools_4.3.3            
+##  [88] data.table_1.15.2       lme4_1.1-35.1           SparseM_1.81           
+##  [91] XML_3.99-0.16.1         grid_4.3.3              AnnotationDbi_1.64.1   
+##  [94] colorspace_2.1-0        GenomeInfoDbData_1.2.11 nlme_3.1-164           
+##  [97] formula.tools_1.7.1     cli_3.6.2               rappdirs_0.3.3         
+## [100] fansi_1.0.6             gtable_0.3.4            sass_0.4.8             
+## [103] digest_0.6.34           operator.tools_1.6.3    farver_2.1.1           
+## [106] memoise_2.0.1           htmltools_0.5.7         lifecycle_1.0.4        
+## [109] httr_1.4.7              mitml_0.4-5             bit64_4.0.5            
+## [112] MASS_7.3-60.0.1
 ```
 

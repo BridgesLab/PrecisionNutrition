@@ -112,7 +112,7 @@ combined.data %>%
   geom_smooth(method="lm",color="grey") +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="BXD Strains") +
+       title="BXD Mice") +
   #geom_label_repel(aes(label=Name)) +
   facet_grid(.~Sex) +
   theme_classic() +
@@ -127,10 +127,10 @@ combined.data %>%
   geom_errorbarh(aes(xmin=Ca-Ca.sd,
                     xmax=Ca+Ca.sd),
                  col="grey") +
-  geom_smooth(method="lm",color="grey") +
+  geom_smooth(method="lm",color="grey",se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="BXD Strains") +
+       title="BXD Mice") +
   #geom_label_repel(aes(label=Name)) +
   facet_grid(.~Sex) +
   theme_classic() +

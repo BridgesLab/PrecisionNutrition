@@ -109,7 +109,7 @@ combined.data %>%
   geom_smooth(method="lm",color="grey") +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="BXD Strains") +
+       title="BXD Mice") +
   #geom_label_repel(aes(label=Name)) +
   facet_grid(.~Sex) +
   theme_classic() +
@@ -128,10 +128,10 @@ combined.data %>%
   geom_errorbarh(aes(xmin=Ca-Ca.sd,
                     xmax=Ca+Ca.sd),
                  col="grey") +
-  geom_smooth(method="lm",color="grey") +
+  geom_smooth(method="lm",color="grey",se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="BXD Strains") +
+       title="BXD Mice") +
   #geom_label_repel(aes(label=Name)) +
   facet_grid(.~Sex) +
   theme_classic() +
@@ -250,24 +250,22 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] broom_1.0.2   ggrepel_0.9.2 ggplot2_3.4.0 readr_2.1.3   dplyr_1.0.10 
-## [6] tidyr_1.3.0   knitr_1.41   
+## [1] broom_1.0.5   ggrepel_0.9.4 ggplot2_3.4.4 readr_2.1.4   dplyr_1.1.3  
+## [6] tidyr_1.3.0   knitr_1.44   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.2.0 xfun_0.36        bslib_0.4.2      purrr_1.0.1     
-##  [5] splines_4.2.2    lattice_0.20-45  colorspace_2.0-3 vctrs_0.5.2     
-##  [9] generics_0.1.3   htmltools_0.5.4  yaml_2.3.6       mgcv_1.8-41     
-## [13] utf8_1.2.2       rlang_1.0.6      jquerylib_0.1.4  pillar_1.8.1    
-## [17] glue_1.6.2       withr_2.5.0      DBI_1.1.3        bit64_4.0.5     
-## [21] lifecycle_1.0.3  stringr_1.5.0    munsell_0.5.0    gtable_0.3.1    
-## [25] evaluate_0.19    labeling_0.4.2   tzdb_0.3.0       fastmap_1.1.0   
-## [29] parallel_4.2.2   fansi_1.0.3      highr_0.10       Rcpp_1.0.9      
-## [33] backports_1.4.1  scales_1.2.1     cachem_1.0.6     vroom_1.6.0     
-## [37] jsonlite_1.8.4   farver_2.1.1     bit_4.0.5        hms_1.1.2       
-## [41] digest_0.6.31    stringi_1.7.12   grid_4.2.2       cli_3.6.0       
-## [45] tools_4.2.2      magrittr_2.0.3   sass_0.4.4       tibble_3.1.8    
-## [49] crayon_1.5.2     pkgconfig_2.0.3  Matrix_1.5-3     ellipsis_0.3.2  
-## [53] assertthat_0.2.1 rmarkdown_2.19   rstudioapi_0.14  R6_2.5.1        
-## [57] nlme_3.1-161     compiler_4.2.2
+##  [1] Rcpp_1.0.11       pillar_1.9.0      bslib_0.5.1       compiler_4.2.2   
+##  [5] jquerylib_0.1.4   tools_4.2.2       digest_0.6.33     bit_4.0.5        
+##  [9] lattice_0.21-9    nlme_3.1-163      gtable_0.3.4      jsonlite_1.8.7   
+## [13] evaluate_0.22     lifecycle_1.0.3   tibble_3.2.1      mgcv_1.9-0       
+## [17] pkgconfig_2.0.3   rlang_1.1.1       Matrix_1.5-4.1    cli_3.6.1        
+## [21] rstudioapi_0.15.0 yaml_2.3.7        parallel_4.2.2    xfun_0.40        
+## [25] fastmap_1.1.1     withr_2.5.2       generics_0.1.3    vctrs_0.6.4      
+## [29] sass_0.4.7        hms_1.1.3         grid_4.2.2        bit64_4.0.5      
+## [33] tidyselect_1.2.0  glue_1.6.2        R6_2.5.1          fansi_1.0.5      
+## [37] vroom_1.6.4       rmarkdown_2.25    farver_2.1.1      purrr_1.0.2      
+## [41] tzdb_0.4.0        magrittr_2.0.3    backports_1.4.1   splines_4.2.2    
+## [45] scales_1.2.1      htmltools_0.5.6.1 colorspace_2.1-0  labeling_0.4.3   
+## [49] utf8_1.2.4        munsell_0.5.0     cachem_1.0.8      crayon_1.5.2
 ```
 

@@ -23,7 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Thu May 05 14:20:22 2022.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Thu Jan 11 13:36:08 2024.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -49,7 +49,7 @@ eval.data <- exp.data %>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **C:/Users/Cody/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Thu May 05 14:20:23 2022**.
+These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **LDL Study Summary.xlsx**.  This script was most recently updated on **Thu Jan 11 13:36:08 2024**.
 
 # Analysis
 
@@ -83,7 +83,7 @@ eval.data %>%
 ```
 
 ```
-## # A tibble: 1 x 4
+## # A tibble: 1 × 4
 ##   Pct.Wt.Change `Weight Change` `Change in LDL-C` `BMI Change`
 ##           <dbl>           <dbl>             <dbl>        <dbl>
 ## 1         -6.22           -5.76              11.2        -2.24
@@ -102,7 +102,8 @@ meta.data <-
   filter(!is.na(`Endpoint SD`)) %>%
   mutate(Pooled.SD=sqrt(`Baseline SD`^2+`Endpoint SD`^2)) %>%
   mutate(SMD=`Change in LDL-C`) %>%
-  mutate(SMD.Wt = `Weight Change`) 
+  mutate(SMD.Wt = `Weight Change`) %>%
+  mutate(BMD=`BMI Change`)
 
 library(meta)
 ldl.c.meta <- metagen(TE = SMD,
@@ -118,21 +119,57 @@ ldl.c.meta <- metagen(TE = SMD,
                  hakn = TRUE,
                  title = "LDL-C Changes in Ketogenic Diet Studies")
 
-#forest.meta(ldl.c.meta, 
-            #sortvar = SMD,
+
+
+forest.meta(ldl.c.meta, 
+            sortvar = SMD,
             #predict = F, 
-            #print.tau2 = TRUE,
-           # print.I2 = TRUE,
+            print.tau2 = TRUE,
+            print.I2 = TRUE,
             #leftcols=c('Study'),
             #rightlabs=c('Change','95% CI','Weight'),
-           # layout = "RevMan5",
-          #  fontsize=8,
-          #  leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
-          #  leftlabs = c("Study","Change","SE","95% CI","Weight"),
-          #  range = F,
-          #  digits=1,
-          #  digits.se=1)
+           layout = "RevMan5",
+          fontsize=8,
+          leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+          leftlabs = c("Study","Change","SE","95% CI","Weight"),
+          range = F,
+          digits=1,
+          digits.se=1)
 ```
+
+![](figures/meta-analysis-1.png)<!-- -->
+
+```r
+bmi.meta <- metagen(TE = BMD,
+                 seTE = Pooled.SD,
+                 n.e=n,
+                 n.c=n,
+                 studlab = Study,
+                 data = meta.data,
+                 sm = "BMD",
+                 comb.fixed = TRUE,
+                 comb.random = FALSE,
+                 #method.tau = "REML",
+                 hakn = TRUE,
+                 title = "Weight Changes in Ketogenic Diet Studies")
+
+forest.meta(bmi.meta, 
+            sortvar = BMD,
+            #predict = F, 
+            print.tau2 = TRUE,
+            print.I2 = TRUE,
+            #leftcols=c('Study'),
+            #rightlabs=c('Change','95% CI','Weight'),
+           layout = "RevMan5",
+          fontsize=8,
+          leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+          leftlabs = c("Study","Change","SE","95% CI","Weight"),
+          range = F,
+          digits=1,
+          digits.se=1)
+```
+
+![](figures/meta-analysis-2.png)<!-- -->
 
 We evaluated 19 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 11.474 mg/dL (95% CI: 1.112 to 21.836) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.03. Across these studies, the I<sup>2</sup> is 0, the p-value for Q is 0.997. This is a highly consistent I^2. 
 
@@ -999,40 +1036,43 @@ sessionInfo()
 ```
 
 ```
-## R version 4.1.1 (2021-08-10)
-## Platform: x86_64-w64-mingw32/x64 (64-bit)
-## Running under: Windows 10 x64 (build 19044)
+## R version 4.2.2 (2022-10-31)
+## Platform: x86_64-apple-darwin17.0 (64-bit)
+## Running under: macOS Big Sur ... 10.16
 ## 
 ## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
 ## 
 ## locale:
-## [1] LC_COLLATE=English_United States.1252 
-## [2] LC_CTYPE=English_United States.1252   
-## [3] LC_MONETARY=English_United States.1252
-## [4] LC_NUMERIC=C                          
-## [5] LC_TIME=English_United States.1252    
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] broom_0.7.8   ggrepel_0.9.1 meta_5.1-1    ggplot2_3.3.5 readxl_1.3.1 
-## [6] dplyr_1.0.7   tidyr_1.1.3   knitr_1.33   
+## [1] broom_1.0.5   ggrepel_0.9.4 meta_6.5-0    ggplot2_3.4.4 readxl_1.4.3 
+## [6] dplyr_1.1.3   tidyr_1.3.0   knitr_1.44   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] tidyselect_1.1.1   xfun_0.24          purrr_0.3.4        splines_4.1.1     
-##  [5] lattice_0.20-44    colorspace_2.0-2   vctrs_0.3.8        generics_0.1.2    
-##  [9] htmltools_0.5.1.1  mgcv_1.8-36        yaml_2.2.1         utf8_1.2.1        
-## [13] rlang_0.4.11       nloptr_2.0.0       jquerylib_0.1.4    pillar_1.7.0      
-## [17] glue_1.4.2         withr_2.4.3        DBI_1.1.2          lifecycle_1.0.1   
-## [21] stringr_1.4.0      munsell_0.5.0      gtable_0.3.0       cellranger_1.1.0  
-## [25] evaluate_0.14      labeling_0.4.2     metafor_3.0-2      fansi_0.5.0       
-## [29] highr_0.9          Rcpp_1.0.7         backports_1.2.1    scales_1.1.1      
-## [33] farver_2.1.0       lme4_1.1-27.1      digest_0.6.27      stringi_1.7.6     
-## [37] CompQuadForm_1.4.3 mathjaxr_1.4-0     grid_4.1.1         cli_3.0.1         
-## [41] tools_4.1.1        magrittr_2.0.1     tibble_3.1.2       crayon_1.4.2      
-## [45] pkgconfig_2.0.3    ellipsis_0.3.2     MASS_7.3-54        Matrix_1.3-4      
-## [49] xml2_1.3.3         assertthat_0.2.1   minqa_1.2.4        rmarkdown_2.11    
-## [53] rstudioapi_0.13    R6_2.5.1           boot_1.3-28        nlme_3.1-152      
-## [57] compiler_4.1.1
+##  [1] tidyselect_1.2.0    xfun_0.40           bslib_0.5.1        
+##  [4] purrr_1.0.2         splines_4.2.2       lattice_0.21-9     
+##  [7] colorspace_2.1-0    vctrs_0.6.4         generics_0.1.3     
+## [10] htmltools_0.5.6.1   mgcv_1.9-0          yaml_2.3.7         
+## [13] utf8_1.2.4          rlang_1.1.1         jquerylib_0.1.4    
+## [16] pillar_1.9.0        nloptr_2.0.3        glue_1.6.2         
+## [19] withr_2.5.2         lifecycle_1.0.3     stringr_1.5.0      
+## [22] munsell_0.5.0       gtable_0.3.4        cellranger_1.1.0   
+## [25] evaluate_0.22       labeling_0.4.3      fastmap_1.1.1      
+## [28] metafor_4.4-0       fansi_1.0.5         Rcpp_1.0.11        
+## [31] backports_1.4.1     scales_1.2.1        cachem_1.0.8       
+## [34] jsonlite_1.8.7      farver_2.1.1        lme4_1.1-34        
+## [37] digest_0.6.33       stringi_1.7.12      CompQuadForm_1.4.3 
+## [40] numDeriv_2016.8-1.1 grid_4.2.2          mathjaxr_1.6-0     
+## [43] cli_3.6.1           tools_4.2.2         magrittr_2.0.3     
+## [46] sass_0.4.7          tibble_3.2.1        pkgconfig_2.0.3    
+## [49] MASS_7.3-60         Matrix_1.5-4.1      xml2_1.3.5         
+## [52] minqa_1.2.6         rmarkdown_2.25      rstudioapi_0.15.0  
+## [55] R6_2.5.1            boot_1.3-28.1       metadat_1.2-0      
+## [58] nlme_3.1-163        compiler_4.2.2
 ```

@@ -144,7 +144,7 @@ summary.data.complete %>%
     labs(y="Cholesterol (mg/dL)",
        x="") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -186,7 +186,7 @@ cholesterol.data %>%
   labs(y="Cholesterol (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.15,0.8))
@@ -287,9 +287,9 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -403,7 +403,7 @@ cholesterol.data %>%
   labs(y="Calcium (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.85,0.15))
@@ -422,7 +422,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Density (g/cm2)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -447,7 +447,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Content (g)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -461,6 +461,89 @@ ggplot(data=cholesterol.data,
          digits=c(0,3,3,2,99))
 ```
 
+## Lipoprotein Subpopulations
+
+Looked at the associations between HDL-C and non-HDL-C on calcium levels.
+
+### HDL-C
+
+```{r hdl}
+ggplot(data=cholesterol.data,
+       aes(y=hdld2,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="HDL-C (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="") +
+  scale_fill_grey() +
+  scale_color_grey(end=0.7) +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.2,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  hdlc.calcium.plot
+hdlc.calcium.plot
+
+ lm(hdld2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of HDL-C with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+### Non-HDL Cholesterol
+
+```{r non-hdl}
+cholesterol.data <-
+  cholesterol.data %>%
+  mutate(nonhdlc2 = chol2-hdld2,
+         nonhdlc1 = chol1-hdld1)
+
+ggplot(data=cholesterol.data,
+       aes(y=nonhdlc2,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Non-HDL Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="") +
+  scale_fill_grey() +
+  scale_color_grey(end=0.7) +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.2,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  nonhdlc2.calcium.plot
+
+nonhdlc2.calcium.plot
+
+ lm(nonhdlc2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
+         digits=c(0,3,3,2,99))
+```
+  
+### Both Apolipopotein Fraction Plots  
+ 
+```{r apolipoprotein-plots}
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize_at(.vars=vars(chol2,hdld2,nonhdlc2)
+               ,.funs=list(mean=~mean(.,na.rm=T))) %>%
+  mutate(fold=hdld2_mean/nonhdlc2_mean)
+
+library(gridExtra)
+grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
+```
+
+# Serum Triglycerides
 
 ```{r TG}
 ggplot(data=cholesterol.data,
@@ -472,9 +555,9 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Triglycerides (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -522,7 +605,29 @@ library(effectsize)
 omega_squared(aov.calcium, partial = TRUE) %>%
   kable(caption="Partial effect size estimates for predictors of continuous cholesterol levels")
 
-dplyr::filter(cholesterol.data, sex == "M")
+
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize(Estimate = cor.test(chol2,tg2, method="spearman")$estimate,
+            P.value = cor.test(chol2,tg2, method="spearman")$p.value) %>%
+  kable(caption="Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex",
+        digits=c(0,0,3,99))
+
+cholesterol.data %>% 
+  group_by(Diet,sex) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'p.value']))) %>%
+  kable(caption="Sensitivity analyses of diet/sex groups and the relationships between triglycerides and cholesterol")
+
+lm(chol2~tg2*sex*diet, data=cholesterol.data) %>%
+  tidy %>%
+  kable(caption="Three way interaction model for triglycerides and cholesterol",
+        digits=c(0,3,3,2,99))
+
+omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
+  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels",
+        digits = c(0,5,2,5,5))
 ```
 
 # Mediating Effect of Body Weight
@@ -537,9 +642,9 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm) +
     labs(y="Cholesterol (mg/dL)",
        x="Body Weight (g)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -601,12 +706,12 @@ ggplot(data=cholesterol.data,
            col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm) +
+  geom_smooth(method=lm,se=F) +
     labs(y="Cholesterol (mg/dL)",
        x="Percent Fat Mass",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -745,6 +850,75 @@ forest <- randomForest(chol2~Diet+sex+calcium2+tg2,
 varImpPlot(forest)
 
 predict_model<-predict(forest, chol.pred.data.cont)
+
+```
+
+# Cholesterol Associations with All Parameters
+
+First estimated Spearman correlation coefficients for each parameter relative to chol2
+
+```{r chol-associations-spearman}
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  cor(use="pairwise.complete.obs", method="spearman") %>%
+  as.data.frame -> all.correlations
+
+chol.correlations <- dplyr::select(all.correlations, chol2) %>%
+  rownames_to_column('Parameter') %>%
+  arrange(-abs(chol2)) 
+
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  pivot_longer(cols=everything(),names_to="Parameter", values_to="Values") %>%
+  group_by(Parameter) %>%
+  summarize(n=length(Values[!(is.na(Values))])) ->
+  chol.n
+
+spearmentt <- function(r,n){r * sqrt((n-2)/((1-r)*(1+r)))} #from https://stats.stackexchange.com/questions/22816/calculating-p-value-for-spearmans-rank-correlation-coefficient-example-on-wikip
+
+chol.cor.data <-
+  left_join(chol.correlations,chol.n,by="Parameter") %>%
+  mutate(cor.p.value = 2*pt(-abs(spearmentt(chol2,n)),n-2)) %>%
+  mutate(cor.p.adj = p.adjust(cor.p.value,method="BH")) %>%
+  rename(estimate=chol2)
+```
+
+Next constructed diet and sex adjusted linear models for each parameter
+
+```{r chol-associations-lm}
+cholesterol.data %>% 
+  dplyr::select(-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  dplyr::select(b.area1:percfat2,nonhdlc1,nonhdlc2,sex,Diet) %>%
+  pivot_longer(cols=-one_of('sex','Diet','chol2')) %>% 
+  group_by(name) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'p.value']))) %>%
+  mutate(lm.p.adj = p.adjust(lm.p.value,method="BH")) %>%
+  mutate_if(is.list, as.numeric) -> chol.cor.lm
+
+annotation.dictionary <- 'Svenson-183_Svenson_DO-dictionary.csv'
+annotation.data <- read_csv(annotation.dictionary) %>%
+  add_row(data_name="nonhdlc2", description="Non-HDL Cholesterol at 19 weeks") %>%
+  add_row(data_name="nonhdlc1", description="Non-HDL Cholesterol at 8 weeks")
+
+left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
+  left_join(dplyr::select(annotation.data, data_name, description), by=c('Parameter'='data_name')) %>%
+  dplyr::select(-Parameter) %>% 
+  relocate(description, .before='estimate') %>%
+  relocate(n, .before="estimate") %>%
+  rename(Parameter = description) %>%
+  filter(!is.na(Parameter)) %>%
+  arrange(-abs(estimate)) -> cor.data.combined
+
+cor.data.combined %>%
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
+        digits=c(0,3,0,99,99,3,3,99,99))
+
+write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")
+
 
 ```
 

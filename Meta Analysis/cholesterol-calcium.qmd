@@ -54,7 +54,7 @@ forest.meta(analysis,
 
 # Analysis
 
-There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies
+There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies.  The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
 
 # Session Information
 

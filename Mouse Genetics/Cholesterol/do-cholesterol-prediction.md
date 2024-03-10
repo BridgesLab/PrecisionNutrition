@@ -171,7 +171,7 @@ summary.data.complete %>%
     labs(y="Cholesterol (mg/dL)",
        x="") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
@@ -254,7 +254,7 @@ cholesterol.data %>%
   labs(y="Cholesterol (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.15,0.8))
@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.005| 0.059|
+| 0.247|      0|     1.000|  1.002| 0.059|
 | 0.064|      1|     0.753|  0.756| 0.045|
-| 0.060|      2|     0.689|  0.713| 0.044|
-| 0.036|      3|     0.629|  0.665| 0.045|
-| 0.023|      4|     0.593|  0.657| 0.045|
-| 0.022|      5|     0.569|  0.656| 0.045|
-| 0.015|      6|     0.547|  0.665| 0.046|
-| 0.015|      7|     0.532|  0.669| 0.047|
-| 0.014|      8|     0.516|  0.663| 0.046|
-| 0.011|      9|     0.502|  0.665| 0.047|
-| 0.011|     10|     0.491|  0.667| 0.047|
-| 0.010|     11|     0.481|  0.667| 0.047|
-| 0.010|     12|     0.470|  0.664| 0.047|
+| 0.060|      2|     0.689|  0.719| 0.044|
+| 0.036|      3|     0.629|  0.651| 0.044|
+| 0.023|      4|     0.593|  0.653| 0.044|
+| 0.022|      5|     0.569|  0.660| 0.044|
+| 0.015|      6|     0.547|  0.636| 0.044|
+| 0.015|      7|     0.532|  0.652| 0.044|
+| 0.014|      8|     0.516|  0.650| 0.044|
+| 0.011|      9|     0.502|  0.655| 0.046|
+| 0.011|     10|     0.491|  0.668| 0.045|
+| 0.010|     11|     0.481|  0.668| 0.045|
+| 0.010|     12|     0.470|  0.668| 0.045|
 
 ```r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -463,9 +463,9 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Calcium (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -951,7 +951,7 @@ cholesterol.data %>%
   labs(y="Calcium (mg/dL)",
        x="Sex") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
   theme(text=element_text(size=16),
         legend.position = c(0.85,0.15))
@@ -973,7 +973,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Density (g/cm2)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1014,7 +1014,7 @@ ggplot(data=cholesterol.data,
   labs(y="Cholesterol (mg/dL)",
        x="Bone Mineral Content (g)") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1043,6 +1043,137 @@ Table: Diet adjusted association of cholesterol with bone mineral content
 |sexM        |    16.86|      2.22|      7.60| 8.02e-14|
 |bmc2        |    -1.04|     11.19|     -0.09| 9.26e-01|
 
+## Lipoprotein Subpopulations
+
+Looked at the associations between HDL-C and non-HDL-C on calcium levels.
+
+### HDL-C
+
+
+```r
+ggplot(data=cholesterol.data,
+       aes(y=hdld2,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="HDL-C (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="") +
+  scale_fill_grey() +
+  scale_color_grey(end=0.7) +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.2,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  hdlc.calcium.plot
+hdlc.calcium.plot
+```
+
+![](figures/hdl-1.png)<!-- -->
+
+```r
+ lm(hdld2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>% 
+   kable(caption="Diet adjusted association of HDL-C with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of HDL-C with calcium
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -30.1|     6.207|     -4.85| 1.52e-06|
+|DietHFHS    |     29.9|     1.403|     21.29| 3.46e-79|
+|sexM        |     10.8|     1.386|      7.80| 2.01e-14|
+|calcium2    |     10.4|     0.674|     15.49| 3.13e-47|
+
+### Non-HDL Cholesterol
+
+
+```r
+cholesterol.data <-
+  cholesterol.data %>%
+  mutate(nonhdlc2 = chol2-hdld2,
+         nonhdlc1 = chol1-hdld1)
+
+ggplot(data=cholesterol.data,
+       aes(y=nonhdlc2,
+           x=calcium2,
+           col=Diet)) +
+  geom_point(alpha=0.5) +
+  facet_grid(.~sex) +
+  geom_smooth(method=lm, se=F) +
+  labs(y="Non-HDL Cholesterol (mg/dL)",
+       x="Calcium (mg/dL)",
+       title="") +
+  scale_fill_grey() +
+  scale_color_grey(end=0.7) +
+  theme_classic() +
+    guides(color=guide_legend(override.aes=list(fill=NA))) +
+  theme(text=element_text(size=16),
+        legend.position = c(0.2,0.80),
+        legend.key=element_blank(),
+        legend.background=element_blank()) ->
+  nonhdlc2.calcium.plot
+
+nonhdlc2.calcium.plot
+```
+
+![](figures/non-hdl-1.png)<!-- -->
+
+```r
+ lm(nonhdlc2~Diet+sex+calcium2, data=cholesterol.data) %>% 
+   tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
+         digits=c(0,3,3,2,99))
+```
+
+
+
+Table: Diet adjusted association of non-HDL cholesterol with calcium
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -3.29|      3.41|     -0.96| 3.35e-01|
+|DietHFHS    |    -1.44|      0.77|     -1.87| 6.16e-02|
+|sexM        |     6.95|      0.76|      9.13| 6.01e-19|
+|calcium2    |     2.04|      0.37|      5.52| 4.54e-08|
+  
+### Both Apolipopotein Fraction Plots  
+ 
+
+```r
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize_at(.vars=vars(chol2,hdld2,nonhdlc2)
+               ,.funs=list(mean=~mean(.,na.rm=T))) %>%
+  mutate(fold=hdld2_mean/nonhdlc2_mean)
+```
+
+```
+## # A tibble: 4 × 6
+## # Groups:   Diet [2]
+##   Diet  sex   chol2_mean hdld2_mean nonhdlc2_mean  fold
+##   <fct> <fct>      <dbl>      <dbl>         <dbl> <dbl>
+## 1 NCD   F           78.7       64.2          14.5  4.43
+## 2 NCD   M           96.5       74.6          22.0  3.40
+## 3 HFHS  F          113.        99.2          14.0  7.08
+## 4 HFHS  M          129.       108.           21.3  5.07
+```
+
+```r
+library(gridExtra)
+grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
+```
+
+![](figures/apolipoprotein-plots-1.png)<!-- -->
+
+# Serum Triglycerides
 
 
 ```r
@@ -1055,9 +1186,9 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm, se=F) +
   labs(y="Cholesterol (mg/dL)",
        x="Triglycerides (mg/dL)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1292,31 +1423,86 @@ Table: Partial effect size estimates for predictors of continuous cholesterol le
 |calcium2  |          0.215| 0.95|  0.174|       1|
 
 ```r
-dplyr::filter(cholesterol.data, sex == "M")
+cholesterol.data %>%
+  group_by(Diet,sex) %>%
+  summarize(Estimate = cor.test(chol2,tg2, method="spearman")$estimate,
+            P.value = cor.test(chol2,tg2, method="spearman")$p.value) %>%
+  kable(caption="Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex",
+        digits=c(0,0,3,99))
 ```
 
+
+
+Table: Spearman's rho estimates for cholesterol and calcium for each subgroup of diet and sex
+
+|Diet |sex | Estimate|  P.value|
+|:----|:---|--------:|--------:|
+|NCD  |F   |    0.453| 1.11e-12|
+|NCD  |M   |    0.491| 1.72e-14|
+|HFHS |F   |    0.276| 9.26e-05|
+|HFHS |M   |    0.190| 1.00e-02|
+
+```r
+cholesterol.data %>% 
+  group_by(Diet,sex) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'p.value']))) %>%
+  kable(caption="Sensitivity analyses of diet/sex groups and the relationships between triglycerides and cholesterol")
 ```
-## # A tibble: 417 × 173
-##    mouse.id sex     gen litter diet  coat.color  acr1  acr2 adiponectin b.area1
-##    <chr>    <fct> <dbl>  <dbl> <fct> <chr>      <dbl> <dbl>       <dbl>   <dbl>
-##  1 F142     M         7      2 hf    agouti        NA    NA          NA    8.31
-##  2 M01      M         4      2 hf    agouti        NA    NA          NA    9.97
-##  3 M02      M         4      2 hf    agouti        NA    NA          NA    9.02
-##  4 M03      M         4      2 hf    agouti        NA    NA          NA    9.05
-##  5 M04      M         4      2 hf    black         NA    NA          NA    9.55
-##  6 M05      M         4      2 hf    agouti        NA    NA          NA    8.78
-##  7 M06      M         4      2 hf    agouti        NA    NA          NA   11.4 
-##  8 M07      M         4      2 hf    agouti        NA    NA          NA    9.24
-##  9 M08      M         4      2 hf    black         NA    NA          NA   10.7 
-## 10 M09      M         4      2 hf    agouti        NA    NA          NA   NA   
-## # ℹ 407 more rows
-## # ℹ 163 more variables: b.area2 <dbl>, bmc1 <dbl>, bmc2 <dbl>, bmd1 <dbl>,
-## #   bmd2 <dbl>, bun1 <dbl>, bun2 <dbl>, bw.10 <dbl>, bw.11 <dbl>, bw.12 <dbl>,
-## #   bw.13 <dbl>, bw.14 <dbl>, bw.15 <dbl>, bw.16 <dbl>, bw.17 <dbl>,
-## #   bw.18 <dbl>, bw.19 <dbl>, bw.20 <dbl>, bw.21 <dbl>, bw.22 <dbl>,
-## #   bw.23 <dbl>, bw.24 <dbl>, bw.25 <dbl>, bw.26 <dbl>, bw.27 <dbl>,
-## #   bw.28 <dbl>, bw.29 <dbl>, bw.3 <dbl>, bw.30 <dbl>, bw.4 <dbl>, …
+
+
+
+Table: Sensitivity analyses of diet/sex groups and the relationships between triglycerides and cholesterol
+
+|Diet |sex |beta   |se     |lm.p.value |
+|:----|:---|:------|:------|:----------|
+|NCD  |F   |0.202  |0.0256 |1.67e-13   |
+|NCD  |M   |0.194  |0.0224 |1.08e-15   |
+|HFHS |F   |0.354  |0.0626 |5.59e-08   |
+|HFHS |M   |0.0835 |0.0364 |0.0229     |
+
+```r
+lm(chol2~tg2*sex*diet, data=cholesterol.data) %>%
+  tidy %>%
+  kable(caption="Three way interaction model for triglycerides and cholesterol",
+        digits=c(0,3,3,2,99))
 ```
+
+
+
+Table: Three way interaction model for triglycerides and cholesterol
+
+|term            | estimate| std.error| statistic|  p.value|
+|:---------------|--------:|---------:|---------:|--------:|
+|(Intercept)     |   54.282|     4.460|     12.17| 2.04e-31|
+|tg2             |    0.202|     0.034|      5.94| 4.19e-09|
+|sexM            |   13.337|     6.422|      2.08| 3.81e-02|
+|diethf          |   27.199|     6.729|      4.04| 5.80e-05|
+|tg2:sexM        |   -0.007|     0.044|     -0.16| 8.70e-01|
+|tg2:diethf      |    0.152|     0.062|      2.45| 1.45e-02|
+|sexM:diethf     |   23.907|     9.181|      2.60| 9.38e-03|
+|tg2:sexM:diethf |   -0.263|     0.075|     -3.53| 4.47e-04|
+
+```r
+omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
+  kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels",
+        digits = c(0,5,2,5,5))
+```
+
+
+
+Table: Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels
+
+|Parameter    | Omega2_partial|   CI|  CI_low| CI_high|
+|:------------|--------------:|----:|-------:|-------:|
+|tg2          |        0.07400| 0.95| 0.04764|       1|
+|sex          |        0.05836| 0.95| 0.03491|       1|
+|diet         |        0.33829| 0.95| 0.29704|       1|
+|tg2:sex      |        0.00753| 0.95| 0.00084|       1|
+|tg2:diet     |        0.00109| 0.95| 0.00000|       1|
+|sex:diet     |        0.00086| 0.95| 0.00000|       1|
+|tg2:sex:diet |        0.01378| 0.95| 0.00361|       1|
 
 # Mediating Effect of Body Weight
 
@@ -1331,9 +1517,9 @@ ggplot(data=cholesterol.data,
   geom_smooth(method=lm) +
     labs(y="Cholesterol (mg/dL)",
        x="Body Weight (g)",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1432,10 +1618,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0397         2.46  <2e-16 ***
-## ADE             12.9034      11.3292        14.74  <2e-16 ***
-## Total Effect    14.5516      13.0087        16.36  <2e-16 ***
-## Prop. Mediated   0.1133       0.0714         0.17  <2e-16 ***
+## ACME              1.648        1.022         2.35  <2e-16 ***
+## ADE              12.903       11.222        14.67  <2e-16 ***
+## Total Effect     14.552       12.784        16.32  <2e-16 ***
+## Prop. Mediated    0.113        0.070         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1457,12 +1643,12 @@ ggplot(data=cholesterol.data,
            col=Diet)) +
   geom_point() +
   facet_grid(.~sex) +
-  geom_smooth(method=lm) +
+  geom_smooth(method=lm,se=F) +
     labs(y="Cholesterol (mg/dL)",
        x="Percent Fat Mass",
-       title="DO Strains") +
+       title="DO Mice") +
   scale_fill_grey() +
-  scale_color_grey() +
+  scale_color_grey(end=0.7) +
   theme_classic() +
     guides(color=guide_legend(override.aes=list(fill=NA))) +
   theme(text=element_text(size=16),
@@ -1556,10 +1742,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.558        10.71  <2e-16 ***
-## ADE              24.010       19.487        28.84  <2e-16 ***
-## Total Effect     32.119       28.276        36.31  <2e-16 ***
-## Prop. Mediated    0.252        0.171         0.34  <2e-16 ***
+## ACME              8.110        5.469        10.85  <2e-16 ***
+## ADE              24.010       19.023        28.79  <2e-16 ***
+## Total Effect     32.119       27.759        36.03  <2e-16 ***
+## Prop. Mediated    0.252        0.168         0.35  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1623,10 +1809,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2478         3.01  <2e-16 ***
-## ADE             12.5614      10.9438        14.40  <2e-16 ***
-## Total Effect    14.6397      13.1130        16.45  <2e-16 ***
-## Prop. Mediated   0.1420       0.0872         0.20  <2e-16 ***
+## ACME             2.0783       1.2645         2.97  <2e-16 ***
+## ADE             12.5614      10.9327        14.24  <2e-16 ***
+## Total Effect    14.6397      13.0163        16.27  <2e-16 ***
+## Prop. Mediated   0.1420       0.0871         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1706,6 +1892,166 @@ varImpPlot(forest)
 predict_model<-predict(forest, chol.pred.data.cont)
 ```
 
+# Cholesterol Associations with All Parameters
+
+First estimated Spearman correlation coefficients for each parameter relative to chol2
+
+
+```r
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  cor(use="pairwise.complete.obs", method="spearman") %>%
+  as.data.frame -> all.correlations
+
+chol.correlations <- dplyr::select(all.correlations, chol2) %>%
+  rownames_to_column('Parameter') %>%
+  arrange(-abs(chol2)) 
+
+cholesterol.data %>% 
+  dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  mutate_all(.funs=as.numeric) %>% 
+  pivot_longer(cols=everything(),names_to="Parameter", values_to="Values") %>%
+  group_by(Parameter) %>%
+  summarize(n=length(Values[!(is.na(Values))])) ->
+  chol.n
+
+spearmentt <- function(r,n){r * sqrt((n-2)/((1-r)*(1+r)))} #from https://stats.stackexchange.com/questions/22816/calculating-p-value-for-spearmans-rank-correlation-coefficient-example-on-wikip
+
+chol.cor.data <-
+  left_join(chol.correlations,chol.n,by="Parameter") %>%
+  mutate(cor.p.value = 2*pt(-abs(spearmentt(chol2,n)),n-2)) %>%
+  mutate(cor.p.adj = p.adjust(cor.p.value,method="BH")) %>%
+  rename(estimate=chol2)
+```
+
+Next constructed diet and sex adjusted linear models for each parameter
+
+
+```r
+cholesterol.data %>% 
+  dplyr::select(-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
+  dplyr::select(b.area1:percfat2,nonhdlc1,nonhdlc2,sex,Diet) %>%
+  pivot_longer(cols=-one_of('sex','Diet','chol2')) %>% 
+  group_by(name) %>%
+  do(beta=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'estimate'])),
+     se=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'std.error'])),
+     lm.p.value=as.numeric(unlist(tidy(lm(chol2~value+Diet+sex,data=.))[2,'p.value']))) %>%
+  mutate(lm.p.adj = p.adjust(lm.p.value,method="BH")) %>%
+  mutate_if(is.list, as.numeric) -> chol.cor.lm
+
+annotation.dictionary <- 'Svenson-183_Svenson_DO-dictionary.csv'
+annotation.data <- read_csv(annotation.dictionary) %>%
+  add_row(data_name="nonhdlc2", description="Non-HDL Cholesterol at 19 weeks") %>%
+  add_row(data_name="nonhdlc1", description="Non-HDL Cholesterol at 8 weeks")
+
+left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
+  left_join(dplyr::select(annotation.data, data_name, description), by=c('Parameter'='data_name')) %>%
+  dplyr::select(-Parameter) %>% 
+  relocate(description, .before='estimate') %>%
+  relocate(n, .before="estimate") %>%
+  rename(Parameter = description) %>%
+  filter(!is.na(Parameter)) %>%
+  arrange(-abs(estimate)) -> cor.data.combined
+
+cor.data.combined %>%
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
+        digits=c(0,3,0,99,99,3,3,99,99))
+```
+
+
+
+Table: Correlation coefficients and diet/sex adjusted estimates for each clinical parameter
+
+|Parameter                                                       |   n| estimate| cor.p.value| cor.p.adj|    beta|      se| lm.p.value| lm.p.adj|
+|:---------------------------------------------------------------|---:|--------:|-----------:|---------:|-------:|-------:|----------:|--------:|
+|Cholesterol at 19 weeks                                         | 818|        1|    0.00e+00|  0.00e+00|      NA|      NA|         NA|       NA|
+|High density lipoprotein at 19 weeks                            | 814|        1|    0.00e+00|  0.00e+00|   1.188|   0.016|   0.00e+00| 0.00e+00|
+|Cholesterol at 8 weeks                                          | 789|        1|    0.00e+00|  0.00e+00|   0.673|   0.036|   9.88e-64| 9.88e-64|
+|High density lipoprotein at 8 weeks                             | 787|        1|    0.00e+00|  0.00e+00|   0.785|   0.047|   1.09e-53| 1.09e-53|
+|Non-HDL Cholesterol at 19 weeks                                 | 812|        1|    2.05e-72|  6.87e-71|   1.808|   0.067|   0.00e+00| 0.00e+00|
+|Albumin to creatinine ratio at 20 weeks                         | 192|        0|    8.81e-12|  2.79e-11|      NA|      NA|         NA|       NA|
+|Fat tissue mass at 21 weeks                                     | 818|        0|    9.23e-42|  2.15e-40|   1.275|   0.223|   1.47e-08| 1.47e-08|
+|Total tissue mass at 21 weeks                                   | 818|        0|    1.02e-41|  2.15e-40|   0.779|   0.144|   8.89e-08| 8.89e-08|
+|Weight at 21 weeks                                              | 818|        0|    8.87e-39|  1.24e-37|   0.743|   0.148|   6.13e-07| 6.13e-07|
+|Glucose at 19 weeks                                             | 815|        0|    3.46e-38|  4.14e-37|   0.116|   0.020|   9.40e-09| 9.40e-09|
+|Calcium, time 2 at 19 weeks                                     | 768|        0|    1.08e-33|  8.28e-33|  12.579|   0.866|   2.31e-42| 2.31e-42|
+|Fat tissue mass at 12 weeks                                     | 832|        0|    5.41e-34|  4.32e-33|   1.034|   0.329|   1.75e-03| 1.75e-03|
+|Non-HDL Cholesterol at 8 weeks                                  | 787|        0|    1.29e-31|  8.65e-31|   1.254|   0.108|   7.35e-29| 7.35e-29|
+|Total tissue mass at 12 weeks                                   | 832|        0|    4.53e-30|  2.72e-29|   0.611|   0.195|   1.81e-03| 1.81e-03|
+|Leptin at 8 weeks                                               | 826|        0|    8.96e-30|  5.19e-29|   0.153|   0.046|   9.99e-04| 9.99e-04|
+|Albumin to creatinine ratio at 11 weeks                         | 197|        0|    7.18e-08|  1.85e-07|      NA|      NA|         NA|       NA|
+|Weight at 12 weeks                                              | 832|        0|    3.92e-28|  1.83e-27|   0.645|   0.198|   1.20e-03| 1.20e-03|
+|Glutamate dehydrogenase at 19 weeks                             | 766|        0|    5.63e-22|  2.20e-21|   0.577|   0.077|   2.12e-13| 2.12e-13|
+|Insulin at 8 weeks                                              | 821|        0|    4.22e-22|  1.73e-21|  -0.053|   0.019|   5.66e-03| 5.66e-03|
+|Lean tissue mass at 21 weeks                                    | 818|        0|    4.67e-18|  1.74e-17|   0.966|   0.289|   8.81e-04| 8.81e-04|
+|Glucose at 8 weeks                                              | 741|        0|    7.06e-14|  2.32e-13|   0.028|   0.027|   2.93e-01| 2.93e-01|
+|Adiponectin at 8 weeks                                          | 195|        0|    2.00e-04|  4.25e-04|      NA|      NA|         NA|       NA|
+|Lean tissue mass at 12 weeks                                    | 832|        0|    1.76e-14|  5.92e-14|   0.731|   0.336|   2.98e-02| 2.98e-02|
+|Total bilirubin at 19 weeks                                     | 145|        0|    2.16e-03|  4.17e-03|   9.741|   9.893|   3.26e-01| 3.26e-01|
+|Mouse length at 21 weeks                                        | 819|        0|    9.60e-13|  3.10e-12|   5.842|   2.592|   2.45e-02| 2.45e-02|
+|Non-esterified fatty acids at 19 weeks                          | 677|        0|    3.42e-09|  9.74e-09|  16.300|   1.674|   4.81e-21| 4.81e-21|
+|Triglycericdes at 19 weeks                                      | 819|        0|    2.38e-09|  6.90e-09|   0.177|   0.017|   3.77e-24| 3.77e-24|
+|Phophorous at 19 weeks                                          | 769|        0|    1.30e-07|  3.25e-07|   3.631|   0.850|   2.17e-05| 2.17e-05|
+|Mouse length at 12 weeks                                        | 832|        0|    4.72e-08|  1.24e-07|   3.804|   2.637|   1.50e-01| 1.50e-01|
+|Mean corpuscular volume at 22 weeks                             | 601|        0|    4.89e-04|  1.01e-03|   0.501|   0.395|   2.06e-01| 2.06e-01|
+|Glutamate dehydrogenase at 8 weeks                              | 690|        0|    2.97e-04|  6.23e-04|   0.202|   0.137|   1.40e-01| 1.40e-01|
+|Calcium, time 1 at 8 weeks                                      | 644|        0|    5.39e-04|  1.10e-03|   4.385|   1.276|   6.28e-04| 6.28e-04|
+|Hear rate at 13 weeks                                           | 781|        0|    1.12e-03|  2.26e-03|   0.001|   0.022|   9.76e-01| 9.76e-01|
+|Lipase at 19 weeks                                              |  97|        0|    2.60e-01|  3.44e-01|   1.104|   0.467|   2.03e-02| 2.03e-02|
+|Total bilirubin at 8 weeks                                      | 187|        0|    1.19e-01|  1.84e-01|  -7.290|  14.121|   6.06e-01| 6.06e-01|
+|Corpuscular hemoglobin concentration, mean at 22 weeks          | 601|        0|    5.00e-03|  9.55e-03|  -0.871|   0.778|   2.63e-01| 2.63e-01|
+|ECG: R to R wave time at 13 weeks                               | 781|        0|    1.99e-03|  3.90e-03|   0.021|   0.210|   9.19e-01| 9.19e-01|
+|Ghrelin at 8 weeks                                              | 195|        0|    1.37e-01|  2.04e-01| 503.636| 140.525|   4.30e-04| 4.30e-04|
+|Mean corpuscular hemoglobin concentration at 22 weeks           | 586|        0|    9.77e-03|  1.80e-02|  -1.086|   0.765|   1.56e-01| 1.56e-01|
+|Non-esterified fatty acids at 8 weeks                           | 691|        0|    2.38e-02|  4.29e-02|   8.196|   1.783|   5.14e-06| 5.14e-06|
+|Reticulocyte counts at 22 weeks                                 | 601|        0|    6.16e-02|  1.06e-01|  -0.104|   0.654|   8.74e-01| 8.74e-01|
+|Mean corpuscular hemoglobin concentration at 10 weeks           | 627|        0|    6.61e-02|  1.09e-01|  -1.195|   0.795|   1.33e-01| 1.33e-01|
+|ECG: S ot T wave time at 13 weeks                               | 781|        0|    6.52e-02|  1.09e-01|   0.123|   0.342|   7.19e-01| 7.19e-01|
+|Blood urea nitrogen at 19 weeks                                 | 818|        0|    6.33e-02|  1.07e-01|   1.505|   0.234|   2.06e-10| 2.06e-10|
+|Bone mineal content at 21 weeks                                 | 818|        0|    6.61e-02|  1.09e-01|  -1.039|  11.192|   9.26e-01| 9.26e-01|
+|Mean corpuscular hemoglobin at 22 weeks                         | 586|        0|    1.26e-01|  1.94e-01|  -0.035|   1.309|   9.78e-01| 9.78e-01|
+|Hemoglobin distribution width at 10 weeks                       | 628|        0|    1.14e-01|  1.79e-01|  -9.422|   6.394|   1.41e-01| 1.41e-01|
+|Blood urea nitrogen at 8 weeks                                  | 787|        0|    7.88e-02|  1.29e-01|   0.508|   0.262|   5.32e-02| 5.32e-02|
+|Corpuscular hemoglobin concentration, mean at 10 weeks          | 628|        0|    1.29e-01|  1.96e-01|  -0.066|   0.911|   9.42e-01| 9.42e-01|
+|Reticulocyte counts at 10 weeks                                 | 628|        0|    1.36e-01|  2.04e-01|   0.126|   0.603|   8.35e-01| 8.35e-01|
+|Hear rate variation at 13 weeks                                 | 781|        0|    1.00e-01|  1.61e-01|   0.061|   0.045|   1.80e-01| 1.80e-01|
+|Red blood cell counts at 22 weeks                               | 601|        0|    1.59e-01|  2.30e-01|   0.564|   1.198|   6.38e-01| 6.38e-01|
+|Bone mineal density at 21 weeks                                 | 818|        0|    1.03e-01|  1.63e-01|  -1.194|   9.795|   9.03e-01| 9.03e-01|
+|Hematocrit at 22 weeks                                          | 601|        0|    1.85e-01|  2.61e-01|   0.322|   0.244|   1.87e-01| 1.87e-01|
+|Hematocrit at 10 weeks                                          | 628|        0|    1.88e-01|  2.63e-01|   0.050|   0.272|   8.53e-01| 8.53e-01|
+|ECG: root mean squared std. dev. (not sure of what) at 13 weeks | 781|        0|    1.60e-01|  2.30e-01|   0.373|   0.244|   1.27e-01| 1.27e-01|
+|ECG: corrected QT interval at 13 weeks                          | 781|        0|    1.84e-01|  2.61e-01|  -0.015|   0.369|   9.67e-01| 9.67e-01|
+|Mean corpuscular volume at 10 weeks                             | 628|        0|    2.36e-01|  3.15e-01|   0.113|   0.393|   7.75e-01| 7.75e-01|
+|White blood cell counts at 22 weeks                             | 604|        0|    2.63e-01|  3.45e-01|   0.786|   0.377|   3.75e-02| 3.75e-02|
+|Triglycericdes at 8 weeks                                       | 788|        0|    2.09e-01|  2.86e-01|   0.071|   0.017|   5.10e-05| 5.10e-05|
+|Mean platelet volume at 10 weeks                                | 628|        0|    2.92e-01|  3.77e-01|  -2.651|   1.352|   5.04e-02| 5.04e-02|
+|Calculated hemoglobin at 10 weeks                               | 628|        0|    2.98e-01|  3.79e-01|   0.145|   0.952|   8.79e-01| 8.79e-01|
+|ECG: P to R wave time at 13 weeks                               | 781|        0|    2.74e-01|  3.57e-01|  -0.387|   0.279|   1.65e-01| 1.65e-01|
+|Hemoglobin distribution width at 22 weeks                       | 601|        0|    4.50e-01|  5.53e-01| -15.301|   5.854|   9.18e-03| 9.18e-03|
+|ECG: QRS wave time at 13 weeks                                  | 781|        0|    4.51e-01|  5.53e-01|  -1.041|   0.923|   2.60e-01| 2.60e-01|
+|ECG: P to Q wave time at 13 weeks                               | 781|        0|    4.62e-01|  5.55e-01|  -0.332|   0.311|   2.87e-01| 2.87e-01|
+|White blood cell counts at 10 weeks                             | 628|        0|    5.23e-01|  6.19e-01|   0.101|   0.393|   7.98e-01| 7.98e-01|
+|Platelets at 22 weeks                                           | 601|        0|    5.47e-01|  6.38e-01|   0.002|   0.003|   6.22e-01| 6.22e-01|
+|DO outbreeding generation and litter                            | 840|        0|    4.97e-01|  5.92e-01|      NA|      NA|         NA|       NA|
+|Platelets at 10 weeks                                           | 628|        0|    6.55e-01|  7.53e-01|  -0.001|   0.004|   8.04e-01| 8.04e-01|
+|Mean platelet volume at 22 weeks                                | 601|        0|    6.97e-01|  7.81e-01|  -0.143|   1.176|   9.03e-01| 9.03e-01|
+|Red blood cell distribution width at 10 weeks                   | 628|        0|    7.12e-01|  7.87e-01|  -0.603|   0.829|   4.67e-01| 4.67e-01|
+|Bone mineal density at 12 weeks                                 | 832|        0|    6.97e-01|  7.81e-01|  -0.968|  10.125|   9.24e-01| 9.24e-01|
+|Fructoseamine at 8 weeks                                        |  93|        0|    9.01e-01|  9.46e-01|  -0.281|   0.233|   2.32e-01| 2.32e-01|
+|Calculated hemoglobin at 22 weeks                               | 601|        0|    8.33e-01|  9.01e-01|   0.457|   0.877|   6.03e-01| 6.03e-01|
+|measured hemoglobin at 22 weeks                                 | 586|        0|    8.98e-01|  9.46e-01|   0.247|   0.866|   7.76e-01| 7.76e-01|
+|Mean corpuscular hemoglobin at 10 weeks                         | 627|        0|    9.42e-01|  9.76e-01|  -1.026|   1.274|   4.21e-01| 4.21e-01|
+|Red blood cell distribution width at 22 weeks                   | 601|        0|    9.53e-01|  9.76e-01|  -1.345|   0.794|   9.08e-02| 9.08e-02|
+|Red blood cell counts at 10 weeks                               | 628|        0|    9.70e-01|  9.87e-01|  -0.058|   1.222|   9.62e-01| 9.62e-01|
+|Bone mineal content at 12 weeks                                 | 832|        0|    9.82e-01|  9.87e-01|   0.141|  11.830|   9.90e-01| 9.90e-01|
+|measured hemoglobin at 10 weeks                                 | 627|        0|    9.86e-01|  9.87e-01|  -0.653|   0.969|   5.00e-01| 5.00e-01|
+|Phophorous at 8 weeks                                           | 644|        0|    9.87e-01|  9.87e-01|   0.380|   0.967|   6.94e-01| 6.94e-01|
+
+```r
+write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")
+```
+
 # Session Information
 
 
@@ -1729,52 +2075,49 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] randomForest_4.7-1.1 ipred_0.9-13         caret_6.0-93        
-##  [4] lattice_0.20-45      mediation_4.5.0      sandwich_3.0-2      
-##  [7] mvtnorm_1.1-3        Matrix_1.5-3         MASS_7.3-58.1       
-## [10] effectsize_0.8.2     rattle_5.5.1         bitops_1.0-7        
-## [13] tibble_3.2.1         rpart_4.1.19         tree_1.0-42         
-## [16] broom_1.0.2          ggplot2_3.4.2        forcats_0.5.2       
-## [19] readr_2.1.3          dplyr_1.1.2          tidyr_1.3.0         
-## [22] knitr_1.41          
+##  [1] randomForest_4.7-1.1 ipred_0.9-14         caret_6.0-94        
+##  [4] lattice_0.21-9       mediation_4.5.0      sandwich_3.0-2      
+##  [7] mvtnorm_1.2-3        Matrix_1.5-4.1       MASS_7.3-60         
+## [10] gridExtra_2.3        effectsize_0.8.6     rattle_5.5.1        
+## [13] bitops_1.0-7         tibble_3.2.1         rpart_4.1.21        
+## [16] tree_1.0-43          broom_1.0.5          ggplot2_3.4.4       
+## [19] forcats_1.0.0        readr_2.1.4          dplyr_1.1.3         
+## [22] tidyr_1.3.0          knitr_1.44          
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] TH.data_1.1-1        minqa_1.2.5          colorspace_2.1-0    
-##   [4] deldir_1.0-6         class_7.3-20         ellipsis_0.3.2      
-##   [7] estimability_1.4.1   htmlTable_2.4.1      parameters_0.20.1   
-##  [10] base64enc_0.1-3      rstudioapi_0.14      listenv_0.9.0       
-##  [13] farver_2.1.1         bit64_4.0.5          lubridate_1.9.0     
-##  [16] prodlim_2019.11.13   fansi_1.0.4          codetools_0.2-18    
-##  [19] splines_4.2.2        cachem_1.0.8         Formula_1.2-4       
-##  [22] jsonlite_1.8.4       nloptr_2.0.3         pROC_1.18.0         
-##  [25] cluster_2.1.4        png_0.1-8            compiler_4.2.2      
-##  [28] emmeans_1.8.3        backports_1.4.1      fastmap_1.1.1       
-##  [31] cli_3.6.1            htmltools_0.5.4      tools_4.2.2         
-##  [34] coda_0.19-4          gtable_0.3.3         glue_1.6.2          
-##  [37] reshape2_1.4.4       Rcpp_1.0.10          jquerylib_0.1.4     
-##  [40] vctrs_0.6.2          nlme_3.1-161         iterators_1.0.14    
-##  [43] insight_0.18.8       timeDate_4022.108    gower_1.0.1         
-##  [46] xfun_0.36            stringr_1.5.0        globals_0.16.2      
-##  [49] lme4_1.1-31          timechange_0.1.1     lpSolve_5.6.17      
-##  [52] lifecycle_1.0.3      future_1.30.0        zoo_1.8-11          
-##  [55] scales_1.2.1         vroom_1.6.0          hms_1.1.2           
-##  [58] parallel_4.2.2       RColorBrewer_1.1-3   rpart.plot_3.1.1    
-##  [61] yaml_2.3.6           gridExtra_2.3        sass_0.4.4          
-##  [64] latticeExtra_0.6-30  stringi_1.7.12       highr_0.10          
-##  [67] bayestestR_0.13.0    foreach_1.5.2        checkmate_2.1.0     
-##  [70] hardhat_1.2.0        boot_1.3-28.1        lava_1.7.1          
-##  [73] rlang_1.1.1          pkgconfig_2.0.3      evaluate_0.19       
-##  [76] purrr_1.0.1          recipes_1.0.4        htmlwidgets_1.6.1   
-##  [79] labeling_0.4.2       bit_4.0.5            tidyselect_1.2.0    
-##  [82] parallelly_1.33.0    plyr_1.8.8           magrittr_2.0.3      
-##  [85] R6_2.5.1             generics_0.1.3       Hmisc_4.7-2         
-##  [88] multcomp_1.4-20      pillar_1.9.0         foreign_0.8-84      
-##  [91] withr_2.5.0          mgcv_1.8-41          survival_3.5-0      
-##  [94] datawizard_0.6.5     nnet_7.3-18          future.apply_1.10.0 
-##  [97] crayon_1.5.2         interp_1.1-3         utf8_1.2.3          
-## [100] tzdb_0.3.0           rmarkdown_2.19       jpeg_0.1-10         
-## [103] grid_4.2.2           data.table_1.14.8    ModelMetrics_1.2.2.2
-## [106] digest_0.6.31        xtable_1.8-4         stats4_4.2.2        
-## [109] munsell_0.5.0        bslib_0.4.2
+##   [1] TH.data_1.1-2        minqa_1.2.6          colorspace_2.1-0    
+##   [4] class_7.3-22         estimability_1.4.1   htmlTable_2.4.1     
+##   [7] parameters_0.21.2    base64enc_0.1-3      rstudioapi_0.15.0   
+##  [10] listenv_0.9.0        farver_2.1.1         bit64_4.0.5         
+##  [13] lubridate_1.9.3      prodlim_2023.08.28   fansi_1.0.5         
+##  [16] codetools_0.2-19     splines_4.2.2        cachem_1.0.8        
+##  [19] Formula_1.2-5        jsonlite_1.8.7       nloptr_2.0.3        
+##  [22] pROC_1.18.4          cluster_2.1.4        compiler_4.2.2      
+##  [25] emmeans_1.8.8        backports_1.4.1      fastmap_1.1.1       
+##  [28] cli_3.6.1            htmltools_0.5.6.1    tools_4.2.2         
+##  [31] coda_0.19-4          gtable_0.3.4         glue_1.6.2          
+##  [34] reshape2_1.4.4       Rcpp_1.0.11          jquerylib_0.1.4     
+##  [37] vctrs_0.6.4          nlme_3.1-163         iterators_1.0.14    
+##  [40] insight_0.19.6       timeDate_4022.108    xfun_0.40           
+##  [43] gower_1.0.1          stringr_1.5.0        globals_0.16.2      
+##  [46] lme4_1.1-34          timechange_0.2.0     lpSolve_5.6.19      
+##  [49] lifecycle_1.0.3      future_1.33.0        zoo_1.8-12          
+##  [52] scales_1.2.1         vroom_1.6.4          hms_1.1.3           
+##  [55] parallel_4.2.2       RColorBrewer_1.1-3   rpart.plot_3.1.1    
+##  [58] yaml_2.3.7           sass_0.4.7           stringi_1.7.12      
+##  [61] bayestestR_0.13.1    foreach_1.5.2        checkmate_2.2.0     
+##  [64] hardhat_1.3.0        boot_1.3-28.1        lava_1.7.2.1        
+##  [67] rlang_1.1.1          pkgconfig_2.0.3      evaluate_0.22       
+##  [70] purrr_1.0.2          recipes_1.0.8        htmlwidgets_1.6.2   
+##  [73] labeling_0.4.3       bit_4.0.5            tidyselect_1.2.0    
+##  [76] parallelly_1.36.0    plyr_1.8.9           magrittr_2.0.3      
+##  [79] R6_2.5.1             generics_0.1.3       Hmisc_5.1-1         
+##  [82] multcomp_1.4-25      pillar_1.9.0         foreign_0.8-85      
+##  [85] withr_2.5.2          mgcv_1.9-0           survival_3.5-7      
+##  [88] datawizard_0.9.0     nnet_7.3-19          future.apply_1.11.0 
+##  [91] crayon_1.5.2         utf8_1.2.4           tzdb_0.4.0          
+##  [94] rmarkdown_2.25       grid_4.2.2           data.table_1.14.8   
+##  [97] ModelMetrics_1.2.2.2 digest_0.6.33        xtable_1.8-4        
+## [100] stats4_4.2.2         munsell_0.5.0        bslib_0.5.1
 ```
 

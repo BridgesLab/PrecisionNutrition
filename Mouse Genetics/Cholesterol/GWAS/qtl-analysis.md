@@ -607,6 +607,47 @@ hfd.manhattan
 
 ![](figures/chol-snp-analysis-hfd-2.png)<!-- -->
 
+#### Chromosome 13 QTL Associated with Cholesterol on HFHS Diets
+
+
+
+
+```r
+snp.pos <- 29976363
+library(forcats)
+peak13 <- filter(lmm.hfd.results,
+                  chromosome==13,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak13,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.8,0.2),
+        legend.text=element_text(size=8))
+```
+
+![](figures/peak-13-hfd-1.png)<!-- -->
+
 ### Comparason of NCD and HFHS GWAS
 
 

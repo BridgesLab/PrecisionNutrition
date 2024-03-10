@@ -1,0 +1,136 @@
+---
+title: "Creating Phenotype Files from HFD-DO Viewer Dataset"
+author: "Dave Bridges"
+format: html
+---
+
+# Load Dataset
+
+```{r load}
+library(readr)
+library(dplyr)
+phenotype.datatfile <- 'dataset.phenotype.Svenson_DO_HFD.v12.Rds'
+phenotype.data <- readRDS(phenotype.datatfile)
+
+genotype.file <- 'DO_HFD_Genome_All.csv'
+genotype.data <- read_csv(genotype.file)
+```
+
+# Phenotype Annotation file format
+
+looks like this (from https://www.xzlab.org/software/GEMMAmanual.pdf)
+
+This is a single column of phenotypes, in the order of the genotypes
+
+
+
+```{r snp-annotation}
+library(tidyr)
+
+chol.phenotypes <- 
+  phenotype.data$data$raw %>% 
+  as.data.frame %>%
+  select(chol2)
+
+strains.in.order <- 
+  genotype.data %>%
+  dplyr::select(-Locus.Combined) %>%
+  colnames
+
+chol.phenotypes[strains.in.order,] %>% write_lines(file="Cholesterol_all.txt")
+```
+
+This file should be usable for all GEMMA runs that contain all the mice
+
+# Covariate Annotation File
+
+Needed covariates for sex and diet
+
+```{r covariates}
+library(tibble)
+library(forcats)
+phenotype.data$annot.samples %>%
+  select(mouse.id,sex,diet) %>% 
+  column_to_rownames('mouse.id') %>% 
+  mutate_all(as.factor) %>%
+  mutate(intercept=1,
+         cov.sex=case_when(sex=='F'~1,
+                       sex=='M'~0),
+         cov.diet=case_when(diet=='chow'~0,
+                       diet=='hf'~1)) %>% 
+  select(-sex,-diet) -> covariates.data 
+
+covariates.data[strains.in.order,] %>% #mandates covariates are in same order, adds na's if necessary
+  write_delim(delim=" ",
+              col_names = F,
+              file="Covariates.tab") %>%
+  select(-cov.diet) %>%
+  write_delim(delim=" ",
+              col_names=F,
+              file="Covariates.sex.tab")
+           
+```
+
+For the covariates file 0 is the chow diet and male sex
+
+# Diet Specific Phenotype Files
+
+Marked phenotypes as NA when not needed so that the same genotype files can be used.  Need to make new covariates file
+
+## For Chow Only
+
+```{r phenotypes-ncd}
+ncd.mice <- rownames(filter(covariates.data,cov.diet=='0'))
+
+ncd.cholesterol <-
+  chol.phenotypes %>%
+  mutate(chol=ifelse(rownames(.) %in% ncd.mice,chol2,NA)) %>%
+  select(chol)
+         
+ncd.cholesterol[strains.in.order,] %>% write_lines(file="Cholesterol_ncd.txt")
+```
+
+## For HFD Only
+
+```{r phenotypes-hfd}
+hfd.mice <- rownames(filter(covariates.data,cov.diet=='1'))
+
+hfd.cholesterol <-
+  chol.phenotypes %>%
+  mutate(chol=ifelse(rownames(.) %in% hfd.mice,chol2,NA)) %>%
+  select(chol)
+         
+hfd.cholesterol[strains.in.order,] %>% write_lines(file="Cholesterol_hfd.txt")
+```
+
+# Diet and Sex Adjusted Cholesterol
+
+This is needed for BSLMM which does not use a covariates file
+
+```{r phenotypes-adjusted}
+merged.data <- merge(covariates.data,chol.phenotypes,by='row.names')
+
+additive.model <- lm(chol2~cov.sex + cov.diet,data=merged.data)
+library(broom)
+library(knitr)
+summary(additive.model) %>% tidy %>% kable(caption="Summary of additive model")
+
+chol.adj.data <-
+  merged.data %>%
+  mutate(chol.adj = case_when(
+    cov.sex==0&cov.diet==0~chol2,
+    cov.sex==1&cov.diet==0~chol2+coefficients(additive.model)['cov.sex'],
+    cov.sex==0&cov.diet==1~chol2+coefficients(additive.model)['cov.diet'],
+    cov.sex==1&cov.diet==1~chol2+coefficients(additive.model)['cov.sex']+coefficients(additive.model)['cov.diet'])) %>%
+  column_to_rownames('Row.names') %>%
+  select(chol.adj)
+
+chol.adj.data[strains.in.order,] %>% write_lines(file="Cholesterol_adj.txt")
+```
+
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

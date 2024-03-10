@@ -1,0 +1,71 @@
+---
+title: "Creating SNP Annotation file from HFD-DO Viewer Dataset"
+author: "Dave Bridges"
+format: html
+---
+
+# Load Dataset
+
+```{r load}
+library(readr)
+library(dplyr)
+
+genotype.file <- 'DO_HFD_Genome_All.csv'
+genotype.data <- read_csv(genotype.file)
+```
+
+This file loads the base genotype file `r genotype.file` and reformats it to create both the bimbam genotype file and the SNP annotation file for input into GEMMA.
+
+# SNP Annotation file format
+
+looks like this (from https://www.xzlab.org/software/GEMMAmanual.pdf)
+
+The first column is SNPid, the second column is its base-pair position, and the third column is its chromosome number.  An example.  The file has no header
+
+```
+rs1,1200,1 
+rs2,1000,1 
+rs3,3320,1 
+rs4,5430,1
+```
+
+
+
+```{r snp-annotation}
+library(tidyr)
+snp.data <-
+  genotype.data %>%
+  dplyr::select(Locus.Combined) %>%
+  separate_wider_delim(Locus.Combined,
+                       delim="_",
+                       names=c("Chromosome","Locus","Major","Minor"),
+                       too_few = "align_start",
+                       cols_remove=FALSE) %>%
+  select(Locus.Combined, Locus, Chromosome)
+
+write_csv(snp.data, 
+          file="Annotation.csv",
+          col_names = FALSE)
+
+genotype.data %>%
+    separate_wider_delim(Locus.Combined,
+                       delim="_",
+                       names=c("Chromosome","Locus","Major","Minor"),
+                       too_few = "align_start",
+                       cols_remove=FALSE) %>%
+  select(-Chromosome,-Locus) %>%
+  relocate(Minor, .before=Major) %>%
+  relocate(Locus.Combined,.before=Minor) %>%
+  write_csv(file="Genotypes_all.bimbam",
+          col_names = FALSE)
+```
+
+This file should be usable for all GEMMA runs that contain all these SNPs.  They are matched based on the SNP id.
+
+Also wrote out the genotype file that has all the genotypes in the bimbam format.
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

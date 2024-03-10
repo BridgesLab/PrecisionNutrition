@@ -361,11 +361,11 @@ sig.twas.data.ncd$symbol %in% sig.twas.data.hf$symbol %>% table
 
 sig.twas.data.ncd$genes %in% sig.twas.data.hf$genes %>% table
 
-library(venneuler)
-vd.all <- venneuler(c("NCD"=dim(sig.twas.data.ncd)[1],
-                      "HFHS"=dim(sig.twas.data.hf)[1],
-                      "NCD&HFHS"=intersect(sig.twas.data.hf$symbol,sig.twas.data.ncd$symbol) %>% length()))
-plot(vd.all, main="Transcripts Associating with Cholesterol")
+# library(venneuler)
+# vd.all <- venneuler(c("NCD"=dim(sig.twas.data.ncd)[1],
+#                       "HFHS"=dim(sig.twas.data.hf)[1],
+#                       "NCD&HFHS"=intersect(sig.twas.data.hf$symbol,sig.twas.data.ncd$symbol) %>% length()))
+# plot(vd.all, main="Transcripts Associating with Cholesterol")
 ```
 
 Our analysis identified **`r dim(twas.data.ncd %>% filter(p.value<0.05))[1]`** nominally significant associations between expression of genes and adjusted cholesterol levels on a normal chow diet.  Among those, `r dim(twas.data.ncd %>% filter(p.value<0.05&estimate>0))[1]` were positively correlated and `r dim(twas.data.ncd %>% filter(p.value<0.05&estimate>0))[1]` were negatively correlated with cholesterol levels.
@@ -379,7 +379,7 @@ By modeling the interactions between sex and expression on cholesterol levels, w
 ```{r mouse-gwas-twas}
 
 chr11.genes <- c('Znrf3', 'Xbp1', 'Ccdc117', 'Ankrd36', 'Mrps24', 'Urgcp', 'Dbnl', 'Pgam2', 'Polm', 'Aebp1','Pold2', 'Myl7', 'Gck', 'Ykt6', 'Camk2b', 'Nudcd3', 'A730071L15Rik', 'Npc1l1', 'Ddx56','Tmed4')
-genes.of.interest <- c('Cyp7a1','Fasn','Ldlr','Hmgcr')
+genes.of.interest <- c('Cyp7a1','Fasn','Ldlr','Hmgcr','E2f3')
 twas.data.ncd %>%
   filter(symbol %in% c(chr11.genes,genes.of.interest)) %>%
   kable(caption="Genes in the chromosome 11 interval with liver expression")

@@ -615,7 +615,7 @@ hfd.manhattan
 ```r
 snp.pos <- 29976363
 library(forcats)
-peak13 <- filter(lmm.hfd.results,
+peak13 <- dplyr::filter(lmm.hfd.results,
                   chromosome==13,
                   position>snp.pos-10000000,
                   position<snp.pos+10000000) %>%
@@ -627,8 +627,10 @@ peak13 <- filter(lmm.hfd.results,
                         "A/J"="E",
                         "NOD"="F",
                         "CAST"="G",
-                        "WSB"="H"))
-
+                        "WSB"="H")) %>%
+  mutate(LOD=-log10(p_wald)) %>%
+  mutate(LOD.drop = LOD-max(LOD))
+library(ggplot2)
 ggplot(data=peak13,
        aes(x=position,
        y=beta,
@@ -647,6 +649,14 @@ ggplot(data=peak13,
 ```
 
 ![](figures/peak-13-hfd-1.png)<!-- -->
+
+```r
+#credible region 1.5 LOD less than peak 28011631-32375634
+#From GenomMUSTer 3755 variants differ btween 129 and bl6
+#upstream variants in Sox4 and 
+#missense variant in rs29850511	chr13:29326051	T	Cdkal1	ENSMUST00000006353.13	Transcript	missense_variant	1879	1723	575	L/M	Ttg/Atg	rs29850511	EXON=16/16
+#GWAS associated Cdkal1 with HDL and TC, seems to be a negative regulator of bile acid production, is atheroprotective in Apoe null mice
+```
 
 ### Comparason of NCD and HFHS GWAS
 

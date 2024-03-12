@@ -136,7 +136,9 @@ lmm.additive.data %>%
   mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
   kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
 ```
 
@@ -363,7 +365,7 @@ top001 %>%
   summarize_all(.funs=first) %>%
   select(-position.start,-chr,-ps) -> top001.filtered
 
-top001.filtered %>%  
+top001.filtered %>%
 kable(caption="Lead SNP for top 99.99 quartile variants")
 ```
 
@@ -457,7 +459,9 @@ lmm.ncd.results %>%
   mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
+  select(-position.start,-chr,-ps) -> ncd.snp.summary
+
+ncd.snp.summary %>%
   kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 ```
 
@@ -528,7 +532,10 @@ lmm.hfd.results %>%
    mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
+  select(-position.start,-chr,-ps) ->
+  hfhs.snp.summary
+
+hfhs.snp.summary %>%
   kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 ```
 
@@ -608,8 +615,6 @@ hfd.manhattan
 ![](figures/chol-snp-analysis-hfd-2.png)<!-- -->
 
 #### Chromosome 13 QTL Associated with Cholesterol on HFHS Diets
-
-
 
 
 ```r
@@ -1010,6 +1015,16 @@ Table: Genes near second SNP interval +/- 500000
 
 |gene_biotype |  n|genes |
 |:------------|--:|:-----|
+
+# Summary of Interesting SNPs
+
+
+```r
+snps.of.interest <- bind_rows(top001.filtered,additive.snp.summary,hfhs.snp.summary,ncd.snp.summary)
+
+write_csv(snps.of.interest, file="SNPs_of_interest.csv")
+snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest.txt") #just the rsids
+```
 
 # Session Information
 

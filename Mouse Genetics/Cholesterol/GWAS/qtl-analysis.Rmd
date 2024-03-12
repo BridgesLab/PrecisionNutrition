@@ -135,7 +135,9 @@ lmm.additive.data %>%
   mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
   kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
 
 library(ggmanh)
@@ -230,7 +232,7 @@ top001 %>%
   summarize_all(.funs=first) %>%
   select(-position.start,-chr,-ps) -> top001.filtered
 
-top001.filtered %>%  
+top001.filtered %>%
 kable(caption="Lead SNP for top 99.99 quartile variants")
 
 top001.filtered %>% arrange(-gamma) %>% kable(caption="Variants with the largest posterior probability as defined by gamma.  Gamma indicates the percent of times the variant was found in a MCMC simulation")
@@ -255,7 +257,9 @@ lmm.ncd.results %>%
   mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
+  select(-position.start,-chr,-ps) -> ncd.snp.summary
+
+ncd.snp.summary %>%
   kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 
 
@@ -289,7 +293,10 @@ lmm.hfd.results %>%
    mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
+  select(-position.start,-chr,-ps) ->
+  hfhs.snp.summary
+
+hfhs.snp.summary %>%
   kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 
 manhattan_plot(x = lmm.hfd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a HFHS Diet", y.label = "LOD Score") -> hfd.manhattan
@@ -298,8 +305,6 @@ hfd.manhattan
 ```
 
 #### Chromosome 13 QTL Associated with Cholesterol on HFHS Diets
-
-
 
 ```{r peak-13-hfd}
 snp.pos <- 29976363
@@ -551,6 +556,16 @@ getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filt
   arrange(-n) -> top.snp.genes
   
 top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", range.gap))
+```
+
+# Summary of Interesting SNPs
+
+```{r snp-summary}
+snps.of.interest <- bind_rows(top001.filtered,additive.snp.summary,hfhs.snp.summary,ncd.snp.summary)
+
+write_csv(snps.of.interest, file="SNPs_of_interest.csv")
+snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest.txt") #just the rsids
+
 ```
 
 # Session Information

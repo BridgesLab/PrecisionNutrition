@@ -1,5 +1,5 @@
 ---
-title: "Analysis of Diversity Outbred Strain Cholesterol Levels"
+title: "Analysis of Diversity Outbred Strain SNPS of Interest Levels"
 author: "Dave Bridges"
 date: "July 7, 2020"
 output:
@@ -40,6 +40,7 @@ se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
 library(tidyr)
 library(dplyr)
 library(broom)
+library(ggplot2)
 
 # sets maize and blue color scheme
 color.scheme <- c('#00274c', '#ffcb05')
@@ -47,525 +48,211 @@ color.scheme <- c('#00274c', '#ffcb05')
 
 # Purpose
 
+Used QTLs identified in **qtl_analysis.Rmd**, and create plots of their associations with cholesterol
+
 # Experimental Details
 
-This analyses the data analysed via GEMMA and provided in the various output folders.
+This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where **SNPs_of_interest.txt** was generated as a nonredundant list of interesting SNPs
+
+```{snps-code}
+grep -Ff SNPs_of_interest.txt Genotypes_all.bimbam > Genotypes_of_interest.bimbam
+```
 
 # Data Entry
 
 ```{r data-entry}
-# additive lmm data
-lmm.additive.filename <- 'output/cholesterol_all.assoc.txt'
-lmm.additive.data <- read_tsv(lmm.additive.filename) %>%
-  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
-  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
-  mutate(position=as.integer(position))
+genotype.file <- 'Genotypes_of_interest.bimbam'
+cholesterol.file <- 'Cholesterol_all.txt'
+covariates.file <- 'Covariates.tab'
 
-lmm.ncd.filename <- 'output/cholesterol_ncd.assoc.txt'
-lmm.ncd.results <- read_tsv(lmm.ncd.filename) %>%
-  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
-  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
-  mutate(position=as.integer(position))
+genotype.data <- read_csv(genotype.file, col_names = F) 
+snps <- genotype.data %>% select(X1,X2,X3)
 
-lmm.hfd.filename <- 'output/cholesterol_hfd.assoc.txt'
-lmm.hfd.results <- read_tsv(lmm.hfd.filename) %>%
-  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
-  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
-  mutate(position=as.integer(position))
+genotype.data.clean <-
+  genotype.data %>%
+  select(-X1,-X2,-X3) %>%
+  mutate_all(round)
 
+genotype.data.clean.r <-as.data.frame(t(genotype.data.clean))
 
-# additive BSLMM data
-bslmm.hyp.additive.file <- 'output/cholesterol_bslmm.hyp.txt'
-bslmm.additive.results.file <- 'output/cholesterol_bslmm.param.txt'
-bslmm.hyp <- read_tsv(bslmm.hyp.additive.file,
-         col_types=cols(
-           h = col_double(),
-           pve = col_double(),
-           rho = col_double(),
-           pge = col_double(),
-           pi = col_double(),
-           n_gamma = col_integer()
-)) 
+cholesterol.data <- read_table(cholesterol.file, col_names = F)
+covariates.data <- read_delim(covariates.file, col_names = F)
 
-bslmm.additive.results <- read_tsv(bslmm.additive.results.file, 
-                               col_types = cols(chr=col_factor(levels=NULL))) %>%
-  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
-  mutate(eff.size = beta*gamma) %>%
-  #filter(eff.size >0) %>%
-  arrange(-abs(eff.size)) %>%
-  mutate(position=as.integer(position)) %>%
-  mutate(chromosome=factor(chromosome, c(1:19,"X"))) 
+combined.data <- data.frame(Cholesterol=cholesterol.data$X1,
+                            Sex=covariates.data$X2,
+                            Diet=covariates.data$X3) %>%
+  mutate(sex = case_when(Sex==0~"M",
+                         Sex==1~"F")) %>%
+  mutate(diet = case_when(Diet==1~"HFHS",
+                         Diet==0~"NCD")) %>%
+  select(-Sex,-Diet) %>%
+  bind_cols(genotype.data.clean.r) %>%
+  mutate(diet = relevel(as.factor(diet),ref="NCD"))
+
+colnames(combined.data) <- c(colnames(combined.data)[1:3],snps$X1)
+
 
 ```
 
 
-# Additive Models
 
-Ran the additive models using GEMMA, first using intercepts and additiv ecovariates for diet and sex
+```{r summarize}
+combined.data.long <-
+  combined.data %>%
+  group_by(diet,sex) %>%
+  pivot_longer(cols=4:89,
+               names_to="SNP",
+               values_to = "Count") 
 
-$SNP = beta_1 SNP + \beta_2 Diet + \beta_3 Sex + \mu +\epsilon$
+summary.data <- combined.data.long %>%
+  group_by(SNP,sex,diet,Count) %>%
+  filter(!is.na(sex)) %>%
+  summarize(Cholesterol.mean = mean(Cholesterol,na.rm=T),
+            Cholesterol.se= se(Cholesterol),
+            n=length(Cholesterol)) 
 
-Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of the strains as defined by
+lm(Cholesterol ~ diet + sex, data=combined.data.long) %>% tidy %>% kable(caption="Summary statistics among all selected QTLs")
 
-## LMM Analysis for Additive Models
+```
+# Chromosome 13 QTL 
 
-```{r lmm-additive}
-library(qqman)
-qq(lmm.additive.data$p_wald)
-suggestive.pval <- 1E-5
-genome.pval <- 5E-8
+This was the QTL that was HFHS-specifically associated, we think this is *Cdkal1*.
 
-lmm.additive.data %>%
-  arrange(p_wald) %>% 
-  filter(p_wald<genome.pval) %>%
-  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol in additive model") 
-
-lmm.additive.data %>%
-  arrange(p_wald) %>% 
-  filter(p_wald<suggestive.pval) %>%
-  mutate(position.start = substr(as.character(position), 1,2)) %>%
-  group_by(chromosome,position.start) %>%
-  summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
-  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
-
-lmm.additive.data %>%
-  arrange(p_wald) %>% 
-  filter(p_wald<1E-4) %>%
-  mutate(position.start = substr(as.character(position), 1,2)) %>%
-  group_by(chromosome,position.start) %>%
-  summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) -> additive.snp.summary
-
-additive.snp.summary %>%
-  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
-
-library(ggmanh)
-manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet (Additive Model)", y.label = "LOD Score")
-
-library(GWASTools)
-with(lmm.additive.data,manhattanPlot(p=p_wald,
-                               chromosome=chromosome,
-                               signif=suggestive.pval))
-
-snp.pos <- 171425406
+```{r pk13.qtl}
 library(forcats)
-peak1.b <- filter(lmm.additive.data,
-                  chromosome==1,
-                  position>snp.pos-20000000,
-                  position<snp.pos+20000000) %>%
-  mutate(alt=fct_recode(as.factor(alt),
-                        "C57BL/6J"="A",
-                        "NZO"="B",
-                        "Sv129"="C",
-                        "PWK"="D",
-                        "A/J"="E",
-                        "NOD"="F",
-                        "CAST"="G",
-                        "WSB"="H"))
-
-ggplot(data=peak1.b,
-       aes(x=position,
-       y=beta,
-       col=alt,
-       group=alt)) +
-  geom_line() +
-  geom_hline(yintercept=0,lty=2) +
-  labs(title="Strain Specific Effects",
-       y="Cholesterol Effect Size (mg/dL)",
-       x="Position on Chromosome 1") +
-  scale_color_discrete(name="") +
-  guides(col=guide_legend(ncol=2)) +
-  theme_classic(base_size=12) +
-  theme(legend.position=c(0.18,0.9),
-        legend.text=element_text(size=8))
-```
-
-```{r additive-bslmm}
-## BSLMM Analysis
-
-# pve -> proportion of phenotypic variance explained by the genotypes
-pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
-
-# pge -> proportion of genetic variance explained by major effect loci
-pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
-
-#rho -> relatiave proportion of BVSR vs LMM
-rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
-
-# pi -> proportion of variants with non-zero effects
-pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
-
-# n.gamma -> number of variants with major effect
-n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
-
-hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
-colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
-# show table
-hyp.params.table %>% 
-  tibble() %>% 
-  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
-            .funs=as.numeric) %>%
-  kable(caption="Hyperparameters summary", digits=3)
-```
-
-
-## BSLMM SNP Nomination for Additive Models
-
-```{r bslmm-snps-additive}
-bslmm.additive.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes")
-
-# variants with the highest sparse effects
-# ------------------------------------------------------------------------------
-# top 1% variants (above 99% quantile)
-top1<-bslmm.additive.results[bslmm.additive.results$eff.size>quantile(bslmm.additive.results$eff.size,0.99),]
-# top 0.1% variants (above 99.9% quantile)
-top01<-bslmm.additive.results[bslmm.additive.results$eff.size>quantile(bslmm.additive.results$eff.size,0.999),]
-# top 0.01% variants (above 99.99% quantile)
-top001<-bslmm.additive.results[bslmm.additive.results$eff.size>quantile(bslmm.additive.results$eff.size,0.9999),]
-
-top001 %>% kable(caption="Top 99.99 quantile variants with the highest sparse effects")
-
-top001 %>%
-  mutate(position.start = substr(as.character(position), 1,2)) %>%
-  group_by(chromosome,position.start) %>%
-  summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) -> top001.filtered
-
-top001.filtered %>%
-kable(caption="Lead SNP for top 99.99 quartile variants")
-
-top001.filtered %>% arrange(-gamma) %>% kable(caption="Variants with the largest posterior probability as defined by gamma.  Gamma indicates the percent of times the variant was found in a MCMC simulation")
-```
-
-There were `r filter(bslmm.additive.results, eff.size>0) %>% nrow` variants with detectable effect sizes.
-
-## SNP Analysis
-
-### Linear Mixed Model SNP Analysis for Chow
-
-```{r chol-snp-analysis-chow}
-qq(lmm.ncd.results$p_wald)
-lmm.ncd.results %>%
-  arrange(p_wald) %>% 
-  filter(p_wald<genome.pval) %>%
-  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on NCD") 
-
-lmm.ncd.results %>%
-   arrange(p_wald) %>% 
-   filter(p_wald<suggestive.pval) %>%
-  mutate(position.start = substr(as.character(position), 1,2)) %>%
-  group_by(chromosome,position.start) %>%
-  summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) -> ncd.snp.summary
-
-ncd.snp.summary %>%
-  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
-
-
-manhattan_plot(x = lmm.ncd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a NCD Diet", y.label = "LOD Score") -> ncd.manhattan
-
-ncd.manhattan
-```
-
-### Linear Mixed Model SNP Analysis for HFD
-
-```{r chol-snp-analysis-hfd}
-qq(lmm.hfd.results$p_wald)
-
-lmm.hfd.results %>%
-  arrange(p_wald) %>% 
-  filter(p_wald<genome.pval) %>%
-  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on HFD") 
-
-lmm.hfd.results %>%
-   arrange(p_wald) %>% 
-   filter(p_wald<suggestive.pval) %>%
-   mutate(position.start = substr(as.character(position), 1,2)) %>%
-  group_by(chromosome,position.start) %>%
-  summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) %>%
-  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
-
-lmm.hfd.results %>%
-   arrange(p_wald) %>% 
-   filter(p_wald<1E-3) %>%
-   mutate(position.start = substr(as.character(position), 1,2)) %>%
-  group_by(chromosome,position.start) %>%
-  summarize_all(.funs=first) %>%
-  select(-position.start,-chr,-ps) ->
-  hfhs.snp.summary
-
-hfhs.snp.summary %>%
-  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
-
-manhattan_plot(x = lmm.hfd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a HFHS Diet", y.label = "LOD Score") -> hfd.manhattan
-
-hfd.manhattan
-```
-
-#### Chromosome 13 QTL Associated with Cholesterol on HFHS Diets
-
-```{r peak-13-hfd}
-snp.pos <- 29976363
-library(forcats)
-peak13 <- dplyr::filter(lmm.hfd.results,
-                  chromosome==13,
-                  position>snp.pos-10000000,
-                  position<snp.pos+10000000) %>%
-  mutate(alt=fct_recode(as.factor(alt),
-                        "C57BL/6J"="A",
-                        "NZO"="B",
-                        "Sv129"="C",
-                        "PWK"="D",
-                        "A/J"="E",
-                        "NOD"="F",
-                        "CAST"="G",
-                        "WSB"="H")) %>%
-  mutate(LOD=-log10(p_wald)) %>%
-  mutate(LOD.drop = LOD-max(LOD))
-library(ggplot2)
-ggplot(data=peak13,
-       aes(x=position,
-       y=beta,
-       col=alt,
-       group=alt)) +
-  geom_line() +
-  geom_hline(yintercept=0,lty=2) +
-  labs(title="Strain Specific Effects",
-       y="Cholesterol Effect Size (mg/dL)",
-       x="Position on Chromosome 1") +
-  scale_color_discrete(name="") +
-  guides(col=guide_legend(ncol=2)) +
-  theme_classic(base_size=12) +
-  theme(legend.position=c(0.8,0.2),
-        legend.text=element_text(size=8))
-
-#credible region 1.5 LOD less than peak 28011631-32375634
-#From GenomMUSTer 3755 variants differ btween 129 and bl6
-#upstream variants in Sox4 and 
-#missense variant in rs29850511	chr13:29326051	T	Cdkal1	ENSMUST00000006353.13	Transcript	missense_variant	1879	1723	575	L/M	Ttg/Atg	rs29850511	EXON=16/16
-#GWAS associated Cdkal1 with HDL and TC, seems to be a negative regulator of bile acid production, is atheroprotective in Apoe null mice
-```
-
-### Comparason of NCD and HFHS GWAS
-
-```{r ncd-hfd-comparason}
-library(cowplot)
-
-# plots are drawn without alignment
-plot_grid(ncd.manhattan, hfd.manhattan, labels = "AUTO", align="v",ncol=1)
-
-```
-
-## BSLMM Analysis
-
-### For Normal Chow Diet 
-
-```{r bslmm-analysis-ncd}
-
-bslmm.hyp.file <- 'output/ncd.cholesterol.hyp.txt'
-bslmm.hyp <- read_tsv(bslmm.hyp.file,
-         col_types=cols(
-           h = col_double(),
-           pve = col_double(),
-           rho = col_double(),
-           pge = col_double(),
-           pi = col_double(),
-           n_gamma = col_integer()
-)) 
-
-
-# pve -> proportion of phenotypic variance explained by the genotypes
-pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
-
-# pge -> proportion of genetic variance explained by major effect loci
-pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
-
-#rho -> relatiave proportion of BVSR vs LMM
-rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
-
-# pi -> proportion of variants with non-zero effects
-pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
-
-# n.gamma -> number of variants with major effect
-n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
-
-hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
-colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
-# show table
-hyp.params.table %>% 
-  tibble() %>% 
-  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
-            .funs=as.numeric) %>%
-  kable(caption="Hyperparameters summary", digits=3)
-
-```
-
-### For High Fat Diet 
-
-```{r bslmm-analysis-hfd}
-
-bslmm.hyp.file <- 'output/hfd.cholesterol.hyp.txt'
-bslmm.hyp <- read_tsv(bslmm.hyp.file,
-         col_types=cols(
-           h = col_double(),
-           pve = col_double(),
-           rho = col_double(),
-           pge = col_double(),
-           pi = col_double(),
-           n_gamma = col_integer()
-)) 
-
-
-# pve -> proportion of phenotypic variance explained by the genotypes
-pve<-c("PVE", mean(bslmm.hyp$pve),quantile(bslmm.hyp$pve, probs=c(0.5,0.025,0.975)))
-
-# pge -> proportion of genetic variance explained by major effect loci
-pge<-c("PGE",mean(bslmm.hyp$pge),quantile(bslmm.hyp$pge, probs=c(0.5,0.025,0.975)))
-
-#rho -> relatiave proportion of BVSR vs LMM
-rho<-c("Rho",mean(bslmm.hyp$rho),quantile(bslmm.hyp$rho, probs=c(0.5,0.025,0.975)))
-
-# pi -> proportion of variants with non-zero effects
-pi<-c("pi",mean(bslmm.hyp$pi),quantile(bslmm.hyp$pi, probs=c(0.5,0.025,0.975)))
-
-# n.gamma -> number of variants with major effect
-n.gamma<-c("n.gamma",mean(bslmm.hyp$n_gamma),quantile(bslmm.hyp$n_gamma, probs=c(0.5,0.025,0.975)))
-
-hyp.params.table<-as.data.frame(rbind(pve,pge,pi,n.gamma,rho),row.names=F)
-colnames(hyp.params.table)<-c("hyperparam", "mean","median","2.5%", "97.5%")
-# show table
-hyp.params.table %>% 
-  tibble() %>% 
-  mutate_at(vars(mean,median,`2.5%`,`97.5%`),
-            .funs=as.numeric) %>%
-  kable(caption="Hyperparameters summary", digits=3)
-
-```
-
-### BSLMM SNP Nomination for NCD
-
-```{r bslmm-snps-ncd}
-bslmm.results.file <- 'output/ncd.cholesterol.param.txt'
-bslmm.results <- read_tsv(bslmm.results.file, 
-                               col_types = cols(chr=col_factor(levels=NULL))) %>%
-  mutate(eff.size = beta*gamma) %>%
-  filter(eff.size >0) %>%
-  arrange(-abs(eff.size))
+qtl <- '13_29976363_E_C'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
+
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "Homozygous"='0',
+         "Heterozygous"='1',
+         "CC"='2')) %>% 
+    filter(Genotype!="CC") %>%
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = "Chromosome 13 QTL",
+       fill="Genotype") +
+  theme_classic(base_size = 16) +
+  scale_fill_manual(values=color.scheme) +
+  theme(legend.position=c(0.15,0.8),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=12))
   
-bslmm.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes")
-
-bslmm.results  %>% 
-  arrange(-gamma) %>%
-  head(10) %>% kable(caption="Variants with the largest posterior probability")
-top.snps <- bslmm.results
 ```
+## Chromosome 1 QTL - Apoa2
 
-### BSLMM SNP Nomination for HFD
-
-```{r bslmm-snps-hfd}
-bslmm.results.file <- 'output/hfd.cholesterol.param.txt'
-bslmm.results <- read_tsv(bslmm.results.file, 
-                               col_types = cols(chr=col_factor(levels=NULL))) %>%
-  mutate(eff.size = beta*gamma) %>%
-  filter(eff.size >0) %>%
-  arrange(-abs(eff.size))
+```{r pk1.qtl}
+qtl <- '1_171425406_H_C'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count), #not right
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
   
-bslmm.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes for HFD")
-
-bslmm.results  %>% 
-  arrange(-gamma) %>%
-  head(10) %>% kable(caption="Variants with the largest posterior probability for HFD")
-top.snps <- bslmm.results
 ```
+# Chromosome 5 QTL - Scarb1
 
-
-
-### Comparason of BSLMM and LMM Nominated SNPs
-
-```{r bslmm-lmm}
-combined.analysis <-
-  full_join(bslmm.additive.results, lmm.ncd.results %>% mutate(chr=as.factor(chr)), by=c('chromosome','rs','position'),
-            suffix=c('_bslmm','_lmm'))
-
-library(ggrepel)
-ggplot(combined.analysis,
-       aes(y=-log10(p_wald),
-           x=eff.size,
-           col=p_wald<suggestive.pval)) +
-  geom_point() +
-  labs(y="Log10 p-value from LMM",
-       x="Effect size from BSLMM") +
-  theme(legend.position='none')
+```{r pk5.qtl}
+qtl <- '5_123629774_B_E'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count), #not right
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
+  
 ```
+# Chromosome 1a QTL - Unknown\
 
-## Genomic Intervals
+This was the top BSLMM hit
 
-```{r top-snp-analysis}
-lmm.additive.data %>%
-  arrange(p_wald) %>%
-  head(25) -> top.snps #defines top snp as in lowest p_wald
-
-top.snps %>% 
-  group_by(chr) %>% #group by linkage region
-  summarize(lead.snp = first(rs),
-            chr = first(chr),
-            ps = first(ps),
-            sug.snps = length(rs),
-            p.val.log10 = log10(min(p_wald)),
-            ps.min = min(ps),
-            ps.max = max(ps),
-            effect = max(beta)) -> top.snps.summary
-
-kable(top.snps.summary %>% arrange(p.val.log10), caption="Summary of genomic regions with SNPs in the top 25 by p-value")
-
-range.gap=500000
-region<- paste(top.snps$chr[1],paste(top.snps$ps[1]-range.gap,top.snps$ps[1]+range.gap, sep=":"),sep=":")
-
-library(biomaRt)
-mart.mm <- useMart("ensembl", "mmusculus_gene_ensembl")
-getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filters = "chromosomal_region", values = region, mart = mart.mm) %>%
-  group_by(gene_biotype) %>%
-  summarize(n=length(external_gene_name),
-            genes=paste0(external_gene_name, collapse = ", ")) %>%
-  arrange(-n) -> top.snp.genes
+```{r pk1b.qtl}
+qtl <- '1_138062762_D_H'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count), #not right
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
   
-top.snp.genes %>% kable(caption=paste("Genes near top SNP interval +/-", range.gap))
-
-# second snp
-region<- paste(top.snps$chr[2],paste(top.snps$ps[2]-range.gap,top.snps$ps[2]+range.gap, sep=":"),sep=":")
-
-mart.mm <- useMart("ensembl", "mmusculus_gene_ensembl")
-getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filters = "chromosomal_region", values = region, mart = mart.mm) %>%
-  group_by(gene_biotype) %>%
-  summarize(n=length(external_gene_name),
-            genes=paste0(external_gene_name, collapse = ", ")) %>%
-  arrange(-n) -> top.snp.genes
-  
-top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", range.gap))
-
-# third snp
-region<- paste(top.snps$chr[2],paste(top.snps$ps[3]-range.gap,top.snps$ps[3]+range.gap, sep=":"),sep=":")
-
-mart.mm <- useMart("ensembl", "mmusculus_gene_ensembl")
-getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filters = "chromosomal_region", values = region, mart = mart.mm) %>%
-  group_by(gene_biotype) %>%
-  summarize(n=length(external_gene_name),
-            genes=paste0(external_gene_name, collapse = ", ")) %>%
-  arrange(-n) -> top.snp.genes
-  
-top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", range.gap))
-```
-
-# Summary of Interesting SNPs
-
-```{r snp-summary}
-snps.of.interest <- bind_rows(top001.filtered,additive.snp.summary,hfhs.snp.summary,ncd.snp.summary)
-
-write_csv(snps.of.interest, file="SNPs_of_interest.csv")
-snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest.txt") #just the rsids
-
 ```
 
 # Session Information

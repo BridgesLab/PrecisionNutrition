@@ -258,6 +258,15 @@ lmm.ncd.results %>%
   group_by(chromosome,position.start) %>%
   summarize_all(.funs=first) %>%
   select(-position.start,-chr,-ps) -> ncd.snp.summary
+  
+lmm.ncd.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<1E-3) %>%
+   mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps)  %>% 
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 
 ncd.snp.summary %>%
   kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
@@ -334,10 +343,10 @@ ggplot(data=peak13,
   geom_hline(yintercept=0,lty=2) +
   labs(title="Strain Specific Effects",
        y="Cholesterol Effect Size (mg/dL)",
-       x="Position on Chromosome 1") +
+       x="Position on Chromosome 13") +
   scale_color_discrete(name="") +
   guides(col=guide_legend(ncol=2)) +
-  theme_classic(base_size=12) +
+  theme_classic(base_size=16) +
   theme(legend.position=c(0.8,0.2),
         legend.text=element_text(size=8))
 
@@ -354,7 +363,7 @@ ggplot(data=peak13,
 library(cowplot)
 
 # plots are drawn without alignment
-plot_grid(ncd.manhattan, hfd.manhattan, labels = "AUTO", align="v",ncol=1)
+plot_grid(ncd.manhattan, hfd.manhattan, align="v",ncol=1)
 
 ```
 

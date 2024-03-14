@@ -157,6 +157,7 @@ summary.data %>%
 ```
 
 ![](figures/pk13.qtl-2.png)<!-- -->
+
 ## Chromosome 1 QTL - Apoa2
 
 
@@ -176,7 +177,7 @@ summary.data %>%
              label=n)) +
   geom_bar(stat='identity',position="dodge", width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5) + 
   facet_grid(.~sex) +
   labs(y="Cholesterol (mg/dL)",
        x="",
@@ -205,7 +206,7 @@ summary.data %>%
              label=n)) +
   geom_bar(stat='identity',position="dodge", width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5) +
   facet_grid(.~sex) +
   labs(y="Cholesterol (mg/dL)",
        x="",
@@ -236,7 +237,7 @@ summary.data %>%
              label=n)) +
   geom_bar(stat='identity',position="dodge", width=0.75) +
   geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5) + 
   facet_grid(.~sex) +
   labs(y="Cholesterol (mg/dL)",
        x="",

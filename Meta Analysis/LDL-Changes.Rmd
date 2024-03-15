@@ -447,6 +447,12 @@ lm(formula=`Change in LDL-C`~`Baseline Weight`,
 
 
 
+lm(formula=`Change in LDL-C`~`Baseline HOMA-IR`,
+   data=eval.data)%>%
+  summary %>%
+  tidy %>%
+  kable
+
 
 ```
 

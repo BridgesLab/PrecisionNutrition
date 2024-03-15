@@ -23,7 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Mar 15 15:12:41 2024.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Mar 15 15:16:58 2024.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -53,7 +53,7 @@ eval.data <-
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **C:/Users/USER/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Mar 15 15:12:43 2024**.
+These data can be found in **C:/Users/USER/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Mar 15 15:17:01 2024**.
 
 # Meta-Analysis 
 
@@ -956,6 +956,21 @@ lm(formula=`Change in LDL-C`~`Baseline Weight`,
 |:-----------------|--------:|---------:|---------:|-------:|
 |(Intercept)       |   41.803|    12.825|      3.26|   0.004|
 |`Baseline Weight` |   -0.378|     0.142|     -2.67|   0.016|
+
+```r
+lm(formula=`Change in LDL-C`~`Baseline HOMA-IR`,
+   data=eval.data)%>%
+  summary %>%
+  tidy %>%
+  kable
+```
+
+
+
+|term               | estimate| std.error| statistic| p.value|
+|:------------------|--------:|---------:|---------:|-------:|
+|(Intercept)        |    5.881|      6.30|     0.934|   0.449|
+|`Baseline HOMA-IR` |   -0.816|      1.57|    -0.520|   0.655|
 
 
 

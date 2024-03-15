@@ -1,6 +1,6 @@
 ---
 title: "Systematic Review of LDL Changes on a Ketogenic Diet"
-author: "Cody Cousineau and Dave Bridges"
+author: "Cody Cousineau, Kai-Lin Jen, and Dave Bridges"
 date: "June 18, 2021"
 output:
   html_document:
@@ -35,6 +35,8 @@ se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
 #load these packages, nearly always needed
 library(tidyr)
 library(dplyr)
+library(ggplot2)
+library(readr)
 
 # sets maize and blue color scheme
 color.scheme <- c('#00274c', '#ffcb05')
@@ -60,15 +62,19 @@ Correlations in this meta-analysis before and after the administration of the ke
 For all outcomes, we tested sex as a modifier and as a covariate. For outcomes where sex was found to be a significant modifier, these results are reported. 
 
 ```{r data-input}
-library(readxl) #loads the readr package
-filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
+filename <- 'VLCF Meta-Analysis.csv'
+#filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
+google.sheet.link <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRkVL0hHHPMJ_fI8EVc_RiFJvcnTHmBySUd3bvikUJjancG8DCsaG5k0eIFUBfov4drTr8MMNV8GLnv/pub?gid=0&single=true&output=csv'
+download.file(google.sheet.link,destfile=filename) #can commnt this out if you dont want to udpat the file
 
 #this loads whatever the file is into a dataframe called exp.data if it exists
 #make a new variable called break.groups, make it so c is the break.groups so that is the code
 
-exp.data <- read_excel(filename)
-eval.data <- exp.data %>% 
+exp.data <- read_csv(filename)
+eval.data <- 
+  exp.data %>% 
   filter(Use=='x') %>%
+  mutate(across(`Baseline Weight`:n,.fns=as.numeric)) %>% #force all fields to be numeric
   mutate(Pct.Wt.Change = `Weight Change`/`Baseline Weight`*100)%>%
   mutate(PCT.BMI.Change = `BMI Change` / `Baseline BMI`*100)%>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
@@ -76,41 +82,13 @@ eval.data <- exp.data %>%
 
 These data can be found in **`r getwd()`** in a file named **`r ifelse(filename %in% dir(), filename, "no file found")`**.  This script was most recently updated on **`r date()`**.
 
-# Analysis
-
-# Variance in LDL-C
-
-```{r ldlc-endpoint}
-library(ggplot2)
-
-eval.data <-
-  eval.data %>%
-  mutate(LDL.endpoint = `Baseline LDL`+`Change in LDL-C`)
-
-eval.data %>%
-  filter(!(is.na(`Endpoint SD`))) %>%
-  ggplot(aes(y=LDL.endpoint,
-             ymin=LDL.endpoint-`Endpoint SD`,
-             ymax=LDL.endpoint+`Endpoint SD`,
-             x=reorder(Study,-`LDL.endpoint` ))) +
-  geom_point() +
-  geom_errorbar()+
-  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
-
-eval.data %>% 
-  summarize_at(.vars=vars(Pct.Wt.Change,`Weight Change`,`Change in LDL-C`,`BMI Change`),
-               .funs=funs(mean(.,na.rm=TRUE))) 
-
-#Above is non-weighted average
-```
-
 # Meta-Analysis 
 
 ```{r meta-analysis}
 meta.data <-
   eval.data %>%
-  filter(!is.na(`Endpoint SD`)) %>%
-  mutate(Pooled.SD=sqrt(`Baseline SD`^2+`Endpoint SD`^2)) %>%
+  filter(!is.na(`LDL Endpoint SD`)) %>%
+  mutate(Pooled.SD=sqrt(`Baseline SD`^2+`LDL Endpoint SD`^2)) %>%
   mutate(SMD=`Change in LDL-C`) %>%
   mutate(SMD.Wt = `Weight Change`) %>%
   mutate(BMD=`BMI Change`)
@@ -128,22 +106,6 @@ ldl.c.meta <- metagen(TE = SMD,
                  #method.tau = "REML",
                  hakn = TRUE,
                  title = "LDL-C Changes in Ketogenic Diet Studies")
-
-ldl.c.meta <- metacont(mean.e = `Change in LDL-C`,
-                       mean.c=rep(0,19),
-                 sd.e = Pooled.SD,
-                 sd.c= Pooled.SD,
-                 n.e=n,
-                 n.c=n,
-                 studlab = Study,
-                 data = meta.data,
-                 sm = "MD",
-                 comb.fixed = TRUE,
-                 comb.random = FALSE,
-                 #method.tau = "REML",
-                 hakn = TRUE,
-                 title = "LDL-C Changes in Ketogenic Diet Studies")
-
 
 
 forest(ldl.c.meta, 

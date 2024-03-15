@@ -23,7 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Mar 15 11:25:56 2024.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Mar 15 15:12:41 2024.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -53,7 +53,7 @@ eval.data <-
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Mar 15 11:25:57 2024**.
+These data can be found in **C:/Users/USER/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Mar 15 15:12:43 2024**.
 
 # Meta-Analysis 
 
@@ -419,12 +419,12 @@ ldl.bmi.baseline.sex.aov %>% tidy %>% kable
 
 
 
-|term                           | df| sumsq| meansq| statistic| p.value|
-|:------------------------------|--:|-----:|------:|---------:|-------:|
-|`Baseline BMI`                 |  1| 920.2|  920.2|     9.877|   0.020|
-|`Normal weight`                |  4| 214.4|   53.6|     0.575|   0.692|
-|`Baseline BMI`:`Normal weight` |  1|  88.2|   88.2|     0.947|   0.368|
-|Residuals                      |  6| 559.0|   93.2|        NA|      NA|
+|term                           | df|  sumsq| meansq| statistic| p.value|
+|:------------------------------|--:|------:|------:|---------:|-------:|
+|`Baseline BMI`                 |  1|  380.7|  380.7|     1.771|   0.225|
+|`Normal weight`                |  4|  259.9|   65.0|     0.302|   0.868|
+|`Baseline BMI`:`Normal weight` |  1|   31.1|   31.1|     0.145|   0.715|
+|Residuals                      |  7| 1504.7|  215.0|        NA|      NA|
 
 ```r
 ldl.bmi.baseline.female.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, `Normal weight` == "Yes"))
@@ -437,8 +437,8 @@ Table: Correlation betwteen baseline BMI and delta-LDL of Normal weight studies
 
 |term           | estimate| std.error| statistic| p.value|
 |:--------------|--------:|---------:|---------:|-------:|
-|(Intercept)    |    109.1|    137.49|     0.793|   0.511|
-|`Baseline BMI` |     -3.6|      5.75|    -0.626|   0.595|
+|(Intercept)    |   -44.44|    162.63|    -0.273|   0.802|
+|`Baseline BMI` |     2.58|      6.91|     0.374|   0.733|
 
 ```r
 ldl.bmi.baseline.male.lm <- lm(`Change in LDL-C` ~ `Baseline BMI`, filter(eval.data, `Normal weight` == "No"))
@@ -939,6 +939,26 @@ ldl.baseline.aov %>% tidy %>% kable
 
 Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = 0.004, p-value = 0.793). 
 
+
+
+```r
+library(broom)
+lm(formula=`Change in LDL-C`~`Baseline Weight`,
+   data=eval.data)%>%
+  summary %>%
+  tidy %>%
+  kable
+```
+
+
+
+|term              | estimate| std.error| statistic| p.value|
+|:-----------------|--------:|---------:|---------:|-------:|
+|(Intercept)       |   41.803|    12.825|      3.26|   0.004|
+|`Baseline Weight` |   -0.378|     0.142|     -2.67|   0.016|
+
+
+
 # Session Information
 
 
@@ -947,16 +967,22 @@ sessionInfo()
 ```
 
 ```
-## R version 4.2.2 (2022-10-31)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur ... 10.16
+## R version 4.3.1 (2023-06-16 ucrt)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 11 x64 (build 22631)
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
+## 
 ## 
 ## locale:
-## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+## [1] LC_COLLATE=English_United States.utf8 
+## [2] LC_CTYPE=English_United States.utf8   
+## [3] LC_MONETARY=English_United States.utf8
+## [4] LC_NUMERIC=C                          
+## [5] LC_TIME=English_United States.utf8    
+## 
+## time zone: America/New_York
+## tzcode source: internal
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
@@ -966,26 +992,26 @@ sessionInfo()
 ## [6] ggplot2_3.5.0 dplyr_1.1.4   tidyr_1.3.1   knitr_1.45   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rcpp_1.0.12         lattice_0.22-5      digest_0.6.35      
-##  [4] utf8_1.2.4          R6_2.5.1            backports_1.4.1    
-##  [7] evaluate_0.23       highr_0.10          pillar_1.9.0       
-## [10] rlang_1.1.3         rstudioapi_0.15.0   minqa_1.2.6        
-## [13] jquerylib_0.1.4     nloptr_2.0.3        Matrix_1.5-4.1     
-## [16] rmarkdown_2.26      mathjaxr_1.6-0      labeling_0.4.3     
-## [19] splines_4.2.2       lme4_1.1-35.1       stringr_1.5.1      
-## [22] bit_4.0.5           munsell_0.5.0       compiler_4.2.2     
-## [25] numDeriv_2016.8-1.1 xfun_0.42           pkgconfig_2.0.3    
-## [28] mgcv_1.9-1          htmltools_0.5.7     tidyselect_1.2.1   
-## [31] tibble_3.2.1        fansi_1.0.6         crayon_1.5.2       
-## [34] tzdb_0.4.0          withr_3.0.0         MASS_7.3-60.0.1    
-## [37] grid_4.2.2          nlme_3.1-164        jsonlite_1.8.8     
-## [40] gtable_0.3.4        lifecycle_1.0.4     magrittr_2.0.3     
-## [43] metafor_4.4-0       scales_1.3.0        cli_3.6.2          
-## [46] stringi_1.8.3       vroom_1.6.5         cachem_1.0.8       
-## [49] farver_2.1.1        xml2_1.3.6          bslib_0.6.1        
-## [52] generics_0.1.3      vctrs_0.6.5         boot_1.3-30        
-## [55] tools_4.2.2         bit64_4.0.5         CompQuadForm_1.4.3 
-## [58] glue_1.7.0          purrr_1.0.2         hms_1.1.3          
-## [61] parallel_4.2.2      fastmap_1.1.1       yaml_2.3.8         
-## [64] colorspace_2.1-0    sass_0.4.8
+##  [1] gtable_0.3.4        xfun_0.40           bslib_0.6.1        
+##  [4] CompQuadForm_1.4.3  lattice_0.21-8      mathjaxr_1.6-0     
+##  [7] tzdb_0.4.0          numDeriv_2016.8-1.1 vctrs_0.6.5        
+## [10] tools_4.3.1         generics_0.1.3      parallel_4.3.1     
+## [13] tibble_3.2.1        fansi_1.0.6         highr_0.10         
+## [16] pkgconfig_2.0.3     Matrix_1.5-4.1      lifecycle_1.0.4    
+## [19] compiler_4.3.1      farver_2.1.1        stringr_1.5.1      
+## [22] munsell_0.5.0       htmltools_0.5.7     sass_0.4.8         
+## [25] yaml_2.3.8          pillar_1.9.0        nloptr_2.0.3       
+## [28] crayon_1.5.2        jquerylib_0.1.4     MASS_7.3-60        
+## [31] cachem_1.0.8        boot_1.3-28.1       nlme_3.1-162       
+## [34] tidyselect_1.2.1    digest_0.6.33       stringi_1.8.3      
+## [37] purrr_1.0.2         labeling_0.4.3      splines_4.3.1      
+## [40] fastmap_1.1.1       grid_4.3.1          colorspace_2.1-0   
+## [43] cli_3.6.1           metafor_4.4-0       magrittr_2.0.3     
+## [46] utf8_1.2.4          withr_3.0.0         scales_1.3.0       
+## [49] backports_1.4.1     bit64_4.0.5         rmarkdown_2.26     
+## [52] bit_4.0.5           lme4_1.1-35.1       hms_1.1.3          
+## [55] evaluate_0.23       mgcv_1.8-42         rlang_1.1.1        
+## [58] Rcpp_1.0.12         glue_1.7.0          xml2_1.3.6         
+## [61] rstudioapi_0.15.0   vroom_1.6.5         minqa_1.2.6        
+## [64] jsonlite_1.8.8      R6_2.5.1
 ```

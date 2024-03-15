@@ -436,6 +436,22 @@ ldl.baseline.aov %>% tidy %>% kable
 
 Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = `r ldl.baseline.lm %>% glance %>% pull(r.squared)`, p-value = `r ldl.baseline.lm %>% tidy %>% pull(p.value) %>% last`). 
 
+
+```{r test}
+library(broom)
+lm(formula=`Change in LDL-C`~`Baseline Weight`,
+   data=eval.data)%>%
+  summary %>%
+  tidy %>%
+  kable
+
+
+
+
+```
+
+
+
 # Session Information
 
 ```{r session-information, echo=T}

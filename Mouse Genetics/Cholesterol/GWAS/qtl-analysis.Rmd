@@ -156,7 +156,7 @@ peak1.b <- filter(lmm.additive.data,
                   position<snp.pos+20000000) %>%
   mutate(alt=fct_recode(as.factor(alt),
                         "C57BL/6J"="A",
-                        "NZO"="B",
+                        "NZO"="B", #is probably mixed up
                         "Sv129"="C",
                         "PWK"="D",
                         "A/J"="E",

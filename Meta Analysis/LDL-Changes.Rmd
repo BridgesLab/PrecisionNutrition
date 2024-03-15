@@ -88,14 +88,14 @@ These data can be found in **`r getwd()`** in a file named **`r ifelse(filename 
 meta.data <-
   eval.data %>%
   filter(!is.na(`LDL Endpoint SD`)) %>%
-  mutate(Pooled.SD=sqrt(`Baseline SD`^2+`LDL Endpoint SD`^2)) %>%
+  mutate(Pooled.LDL.SD=sqrt(`Baseline LDL SD`^2+`LDL Endpoint SD`^2)) %>%
   mutate(SMD=`Change in LDL-C`) %>%
   mutate(SMD.Wt = `Weight Change`) %>%
-  mutate(BMD=`BMI Change`)
+  mutate(Pooled.Wt.SD=sqrt(`Baseline Weight SD`)) 
 
 library(meta)
 ldl.c.meta <- metagen(TE = SMD,
-                 seTE = Pooled.SD,
+                 seTE = Pooled.LDL.SD,
                  n.e=n,
                  n.c=n,
                  studlab = Study,
@@ -106,50 +106,6 @@ ldl.c.meta <- metagen(TE = SMD,
                  #method.tau = "REML",
                  hakn = TRUE,
                  title = "LDL-C Changes in Ketogenic Diet Studies")
-
-
-forest(ldl.c.meta, 
-            sortvar = SMD,
-            #predict = F, 
-            print.tau2 = TRUE,
-            print.I2 = TRUE,
-            #leftcols=c('Study'),
-            #rightlabs=c('Change','95% CI','Weight'),
-           layout = "RevMan5",
-          fontsize=8,
-          leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
-          leftlabs = c("Study","Change","SE","95% CI","Weight"),
-          range = F,
-          digits=1,
-          digits.se=1)
-
-bmi.meta <- metagen(TE = BMD,
-                 seTE = Pooled.SD,
-                 n.e=n,
-                 n.c=n,
-                 studlab = Study,
-                 data = meta.data,
-                 sm = "BMD",
-                 comb.fixed = TRUE,
-                 comb.random = FALSE,
-                 #method.tau = "REML",
-                 hakn = TRUE,
-                 title = "Weight Changes in Ketogenic Diet Studies")
-
-forest(bmi.meta, 
-            sortvar = BMD,
-            #predict = F, 
-            print.tau2 = TRUE,
-            print.I2 = TRUE,
-            #leftcols=c('Study'),
-            #rightlabs=c('Change','95% CI','Weight'),
-           layout = "RevMan5",
-          fontsize=8,
-          leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
-          leftlabs = c("Study","Change","SE","95% CI","Weight"),
-          range = F,
-          digits=1,
-          digits.se=1)
 ```
 
 We evaluated `r ldl.c.meta$k` studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased `r ldl.c.meta$TE.fixed` mg/dL (95% CI: `r ldl.c.meta$lower.fixed` to `r ldl.c.meta$upper.fixed`) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of `r ldl.c.meta$pval.fixed`. Across these studies, the I<sup>2</sup> is `r ldl.c.meta$I2`, the p-value for Q is `r ldl.c.meta$pval.Q`. This is a highly consistent I^2. 

@@ -1,0 +1,170 @@
+---
+title: "Analysis of Diversity Outbred Strain SNPS of Interest Levels"
+author: "Dave Bridges"
+date: "July 7, 2020"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(readr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+library(broom)
+library(ggplot2)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+Used QTLs identified in **qtl_analysis.Rmd**, and create plots of their associations with cholesterol
+
+# Experimental Details
+
+This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where **SNPs_of_interest.txt** was generated as a nonredundant list of interesting SNPs
+
+
+# Data Entry
+
+```{r data-entry}
+genotype.file <- 'Genotypes_of_interest.bimbam'
+cholesterol.file <- 'Cholesterol_all.txt'
+covariates.file <- 'Covariates.tab'
+
+genotype.data <- read_csv(genotype.file, col_names = F) 
+snps <- genotype.data %>% select(X1,X2,X3)
+
+genotype.data.clean <-
+  genotype.data %>%
+  select(-X1,-X2,-X3) %>%
+  mutate_all(round)
+
+genotype.data.clean.r <-as.data.frame(t(genotype.data.clean))
+
+cholesterol.data <- read_table(cholesterol.file, col_names = F)
+covariates.data <- read_delim(covariates.file, col_names = F)
+
+combined.data <- data.frame(Cholesterol=cholesterol.data$X1,
+                            Sex=covariates.data$X2,
+                            Diet=covariates.data$X3) %>%
+  mutate(sex = case_when(Sex==0~"M",
+                         Sex==1~"F")) %>%
+  mutate(diet = case_when(Diet==1~"HFHS",
+                         Diet==0~"NCD")) %>%
+  select(-Sex,-Diet) %>%
+  bind_cols(genotype.data.clean.r) %>%
+  mutate(diet = relevel(as.factor(diet),ref="NCD"))
+
+colnames(combined.data) <- c(colnames(combined.data)[1:3],snps$X1)
+
+
+```
+
+
+
+```{r summarize}
+combined.data.long <-
+  combined.data %>%
+  group_by(diet,sex) %>%
+  pivot_longer(cols=4:89,
+               names_to="SNP",
+               values_to = "Count") 
+
+summary.data <- combined.data.long %>%
+  group_by(SNP,sex,diet,Count) %>%
+  filter(!is.na(sex)) %>%
+  summarize(Cholesterol.mean = mean(Cholesterol,na.rm=T),
+            Cholesterol.se= se(Cholesterol),
+            n=length(Cholesterol)) 
+
+lm(Cholesterol ~ diet + sex, data=combined.data.long) %>% tidy %>% kable(caption="Summary statistics among all selected QTLs")
+
+```
+# PRS Analysis
+
+```{r prs-analysis}
+#simple model
+
+null.lm <- lm(Cholesterol ~ diet + sex, data=combined.data)
+
+null.lm %>% glance() %>% kable(caption="Null PRS, only diet and sex")
+add.model <- lm(Cholesterol ~ diet + sex + `1_171425406_H_C` +
+                   `5_123629774_B_E` +
+                  `3_148547289_A_H` +
+                  `13_29976363_E_C`, data=combined.data)
+
+add.model %>% glance() %>% kable(caption="Four allele PRS, from additive model")
+anova(add.model,null.lm) %>% tidy %>% kable(caption="Chi squared test of f our allele additive model from null model", digits=c(1,1,1,1,1,1,99))
+
+ggplot(data=combined.data[names(predict(add.model)),],
+       aes(x=predict(add.model),
+           y=Cholesterol,
+           col=sex)) +
+  geom_point() +
+  geom_smooth(method="lm") +
+  facet_grid(.~diet) +
+  labs(x="Predicted Cholesterol (mg/dL)",
+       y="Actual Cholesterol (mg/dL)",
+       title="Additive PRS")
+```
+
+# Regression Tree Classification
+
+```{r prediction-tree}
+library(rpart)
+library(rattle)
+rpart.tree <- rpart(Cholesterol ~ .,combined.data)
+rpart.plot::prp(rpart.tree, extra=1, 
+                main="",
+                cex=0.5) 
+
+rpart.tree$cptable %>% kable(caption="Complexity parameter table, used to idenfiy minumum crossvalidated error rate (xerror)")
+
+prune(rpart.tree, cp=0.026) -> rpart.tree.pruned
+
+fancyRpartPlot(rpart.tree.pruned, uniform=TRUE, main="Pruned tree predicting continuous cholesterol levels")
+
+rpart.plot::prp(rpart.tree.pruned, extra=1, 
+                main="",
+                cex=1.2) 
+```
+
+The regression tree approach did not identify any genetic classifiers after pruning.
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```
+

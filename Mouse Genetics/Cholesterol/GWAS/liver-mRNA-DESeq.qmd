@@ -1,0 +1,158 @@
+---
+title: "Liver mRNA Setup"
+author: "Dave Bridges"
+format: html
+editor: visual
+---
+
+```{r load}
+library(readr)
+library(dplyr)
+library(tidyr)
+rna.datatfile <- 'dataset.mrna.Svenson_DO_HFD.v12.Rds'
+all.data <- readRDS(rna.datatfile)
+```
+
+# Extracting Raw RNAseq Data
+
+Pulled out raw RNAseq data from the RDS object
+
+```{r extract}
+rna.data.raw <- all.data$data$raw %>% as.data.frame()
+
+library(janitor)
+rna.data.raw %>% t %>% as.data.frame -> rna.data
+```
+
+Pulled out phenotype data and group data per sample
+
+```{r collecting-phenotype-data}
+phenotype.datatfile <- 'dataset.phenotype.Svenson_DO_HFD.v12.Rds'
+phenotype.data <- readRDS(phenotype.datatfile)
+
+library(tibble)
+chol.phenotypes <- 
+  phenotype.data$data$raw %>% 
+  as.data.frame %>%
+  select(chol2) %>%
+  rownames_to_column("ID")
+
+library(forcats)
+group.data <- 
+  phenotype.data$annot.samples %>%
+  select(mouse.id,sex,diet) %>% 
+  column_to_rownames('mouse.id') %>% 
+  mutate_all(as.factor) %>%
+  rownames_to_column('ID')
+
+pheno.data.all <- full_join(chol.phenotypes,group.data,by="ID")
+```
+
+# DESeq Analysis
+
+See https://www.bioconductor.org/packages/release/bioc/vignettes/DESeq2/inst/doc/DESeq2.html
+
+## Building Counts Table
+
+Counts tables must be in same order as the phenotype data
+
+```{r counts-table}
+library(DESeq2)
+
+pheno.data.seq <- 
+  pheno.data.all %>% 
+  filter(ID %in% colnames(rna.data)) %>% #only phenotype data with seq data (475 mice)
+  filter(!is.na(chol2)) %>% # cannot have undetermined cholesterol
+  column_to_rownames("ID")
+  
+counts.table <- rna.data %>%
+  select(all_of(rownames(pheno.data.seq))) %>% #only counts tables with phenotype data
+  mutate_all(as.integer) # made them all integers
+
+#confirming they are present and in the right order
+all(rownames(pheno.data.seq) %in% colnames(counts.table))
+all(rownames(pheno.data.seq) == colnames(counts.table))
+```
+
+## Creating DESeq Objects
+
+```{r simple-models}
+dds.simple <- DESeqDataSetFromMatrix(countData = counts.table,
+                              colData = pheno.data.seq,
+                              design = ~ chol2)
+
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds.simple) >= 10) >= smallestGroupSize
+dds.simple <- dds.simple[keep,]
+dds.simple <- DESeq(dds.simple)
+vsd.simple <- vst(dds.simple, blind=FALSE)
+#rld.simple <- rlog(dds.simple, blind=FALSE)
+results.simple <- results(dds.simple, alpha=0.05)
+results.simple %>% summary
+plotMA(results.simple)
+plotPCA(vsd.simple, intgroup=c('sex','diet'))
+results.simple %>% as.data.frame %>% arrange(log2FoldChange) %>% head
+write_csv(as.data.frame(results.simple), "Cholesterol TWAS - Crude.csv")
+```
+
+## Adjusting for Diet and Cholesterol
+
+```{r additive-models}
+dds.additive <- DESeqDataSetFromMatrix(countData = counts.table,
+                              colData = pheno.data.seq,
+                              design = ~ sex + diet + chol2)
+
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds.additive) >= 10) >= smallestGroupSize
+dds.additive <- dds.additive[keep,]
+dds.additive <- DESeq(dds.additive)
+vsd.additive <- vst(dds.additive, blind=FALSE)
+#rld.addiitve <- rlog(dds.additive, blind=FALSE)
+results.additive <- results(dds.additive, alpha=0.05)
+results.additive %>% summary
+plotMA(results.additive)
+plotPCA(vsd.additive, intgroup=c('sex','diet'))
+results.additive %>% as.data.frame %>% arrange(log2FoldChange) %>% head
+
+results.additive <- results(dds.additive)
+write_csv(as.data.frame(results.additive), "Cholesterol TWAS - Sex and Diet Adjusted.csv")
+```
+
+## Adjusting for Sex
+
+```{r sex-models}
+dds.sex <- DESeqDataSetFromMatrix(countData = counts.table,
+                              colData = pheno.data.seq,
+                              design = ~ sex + chol2)
+
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds.sex) >= 10) >= smallestGroupSize
+dds.sex <- dds.sex[keep,]
+dds.sex <- DESeq(dds.sex)
+vsd.sex <- vst(dds.sex, blind=FALSE)
+#rld.sex <- rlog(dds.sex, blind=FALSE)
+results.sex <- results(dds.sex, alpha=0.05)
+results.sex %>% summary
+plotMA(results.sex)
+plotPCA(vsd.sex, intgroup=c('sex','diet'))
+results.sex %>% as.data.frame %>% arrange(log2FoldChange) %>% head
+
+results.sex <- results(dds.sex)
+write_csv(as.data.frame(results.sex), "Cholesterol TWAS - Sex Adjusted.csv")
+```
+
+# Stratifying the Analyses by Diet
+
+## NCD Only TWAS
+
+Still adjusting for sex
+
+## HFD Only TWAS
+
+Still adjusting for sex
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

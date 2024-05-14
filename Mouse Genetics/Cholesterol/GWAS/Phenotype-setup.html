@@ -126,7 +126,7 @@ Attaching package: 'dplyr'</code></pre>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>genotype.file <span class="ot">&lt;-</span> <span class="st">'DO_HFD_Genome_All.csv'</span></span>
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>genotype.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(genotype.file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stderr">
-<pre><code>Rows: 561101 Columns: 836</code></pre>
+<pre><code>Rows: 561100 Columns: 836</code></pre>
 </div>
 <div class="cell-output cell-output-stderr">
 <pre><code>── Column specification ────────────────────────────────────────────────────────
@@ -159,34 +159,83 @@ dbl (835): F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F100, F101, F10...
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>chol.phenotypes[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_all.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>This file should be usable for all GEMMA runs that contain all the mice</p>
+<section id="plink-ped-and-fam-files" class="level2">
+<h2 class="anchored" data-anchor-id="plink-ped-and-fam-files">Plink PED and FAM Files</h2>
+<p>See https://zzz.bwh.harvard.edu/plink/data.shtml#ped</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>chol.phenotypes.pl <span class="ot">&lt;-</span> </span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  phenotype.data<span class="sc">$</span>data<span class="sc">$</span>raw <span class="sc">%&gt;%</span> </span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  as.data.frame <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol2) <span class="sc">%&gt;%</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  tibble<span class="sc">::</span><span class="fu">rownames_to_column</span>(<span class="st">"ID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(ID, <span class="at">sep=</span><span class="dv">1</span>, <span class="at">into=</span><span class="fu">c</span>(<span class="st">"SexName"</span>,<span class="st">"Number"</span>), <span class="at">remove=</span>F) <span class="sc">%&gt;%</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Family=</span><span class="fu">paste0</span>(<span class="st">"Family"</span>,<span class="fu">row_number</span>()),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">Paternal=</span><span class="dv">0</span>,</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">Maternal=</span><span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Sex=</span><span class="fu">case_when</span>(SexName<span class="sc">==</span><span class="st">"F"</span><span class="sc">~</span><span class="st">'2'</span>,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                       SexName<span class="sc">==</span><span class="st">"M"</span><span class="sc">~</span><span class="st">'1'</span>,</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>                       <span class="at">.default=</span><span class="st">"other"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Chol=</span><span class="fu">ifelse</span>(<span class="fu">is.na</span>(chol2), <span class="sc">-</span><span class="dv">9</span>, chol2)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID2 =</span> ID) <span class="sc">%&gt;%</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  tibble<span class="sc">::</span><span class="fu">column_to_rownames</span>(<span class="st">"ID2"</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>chol.phenotypes.pl[strains.in.order,<span class="fu">c</span>(<span class="st">"Family"</span>,<span class="st">"ID"</span>,<span class="st">"Paternal"</span>,<span class="st">"Maternal"</span>,<span class="st">"Sex"</span>,<span class="st">"chol2"</span>)] <span class="sc">%&gt;%</span> </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_tsv</span>(<span class="at">file=</span><span class="st">"Genotypes_all.ped"</span>, <span class="at">col_names =</span> F)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co">#same format for fam files</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>chol.phenotypes.pl[strains.in.order,<span class="fu">c</span>(<span class="st">"Family"</span>,<span class="st">"ID"</span>,<span class="st">"Paternal"</span>,<span class="st">"Maternal"</span>,<span class="st">"Sex"</span>,<span class="st">"chol2"</span>)] <span class="sc">%&gt;%</span> </span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_tsv</span>(<span class="at">file=</span><span class="st">"Genotypes_all.fam"</span>, <span class="at">col_names =</span> F)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
 </section>
 <section id="covariate-annotation-file" class="level1">
 <h1>Covariate Annotation File</h1>
 <p>Needed covariates for sex and diet</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>phenotype.data<span class="sc">$</span>annot.samples <span class="sc">%&gt;%</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(mouse.id,sex,diet) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'mouse.id'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_all</span>(as.factor) <span class="sc">%&gt;%</span></span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">intercept=</span><span class="dv">1</span>,</span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">cov.sex=</span><span class="fu">case_when</span>(sex<span class="sc">==</span><span class="st">'F'</span><span class="sc">~</span><span class="dv">1</span>,</span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>                       sex<span class="sc">==</span><span class="st">'M'</span><span class="sc">~</span><span class="dv">0</span>),</span>
-<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">cov.diet=</span><span class="fu">case_when</span>(diet<span class="sc">==</span><span class="st">'chow'</span><span class="sc">~</span><span class="dv">0</span>,</span>
-<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                       diet<span class="sc">==</span><span class="st">'hf'</span><span class="sc">~</span><span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
-<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sex,<span class="sc">-</span>diet) <span class="ot">-&gt;</span> covariates.data </span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>covariates.data[strains.in.order,] <span class="sc">%&gt;%</span> <span class="co">#mandates covariates are in same order, adds na's if necessary</span></span>
-<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_delim</span>(<span class="at">delim=</span><span class="st">" "</span>,</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>              <span class="at">col_names =</span> F,</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>              <span class="at">file=</span><span class="st">"Covariates.tab"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>cov.diet) <span class="sc">%&gt;%</span></span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_delim</span>(<span class="at">delim=</span><span class="st">" "</span>,</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">col_names=</span>F,</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>              <span class="at">file=</span><span class="st">"Covariates.sex.tab"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>phenotype.data<span class="sc">$</span>annot.samples <span class="sc">%&gt;%</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(mouse.id,sex,diet) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'mouse.id'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_all</span>(as.factor) <span class="sc">%&gt;%</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">intercept=</span><span class="dv">1</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">cov.sex=</span><span class="fu">case_when</span>(sex<span class="sc">==</span><span class="st">'F'</span><span class="sc">~</span><span class="dv">1</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>                       sex<span class="sc">==</span><span class="st">'M'</span><span class="sc">~</span><span class="dv">0</span>),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">cov.diet=</span><span class="fu">case_when</span>(diet<span class="sc">==</span><span class="st">'chow'</span><span class="sc">~</span><span class="dv">0</span>,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>                       diet<span class="sc">==</span><span class="st">'hf'</span><span class="sc">~</span><span class="dv">1</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>sex,<span class="sc">-</span>diet) <span class="ot">-&gt;</span> covariates.data </span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>covariates.data[strains.in.order,] <span class="sc">%&gt;%</span> <span class="co">#mandates covariates are in same order, adds na's if necessary</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_delim</span>(<span class="at">delim=</span><span class="st">" "</span>,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>              <span class="at">col_names =</span> F,</span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>              <span class="at">file=</span><span class="st">"Covariates.tab"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>cov.diet) <span class="sc">%&gt;%</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_delim</span>(<span class="at">delim=</span><span class="st">" "</span>,</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>              <span class="at">col_names=</span>F,</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>              <span class="at">file=</span><span class="st">"Covariates.sex.tab"</span>)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a><span class="co">#wrote out covariates file with diet as a covariate (ie removed sex covariate)</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>covariates.data[strains.in.order,] <span class="sc">%&gt;%</span>  </span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>cov.sex) <span class="sc">%&gt;%</span></span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>    <span class="fu">write_delim</span>(<span class="at">delim=</span><span class="st">" "</span>,</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>                <span class="at">col_names=</span>F,</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>                <span class="at">file=</span><span class="st">"Covariates.diet.tab"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="covariates-and-environment-file-for-gxe-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="covariates-and-environment-file-for-gxe-analysis">Covariates and Environment File for GxE Analysis</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>covariates.data[strains.in.order,<span class="fu">c</span>(<span class="st">'intercept'</span>,<span class="st">'cov.sex'</span>)] <span class="sc">%&gt;%</span> <span class="co">#mandates covariates are in same order, adds na's if necessary</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_delim</span>(<span class="at">delim=</span><span class="st">" "</span>,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>              <span class="at">col_names =</span> F,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>              <span class="at">file=</span><span class="st">"Covariate.gxe.tab"</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>covariates.data[strains.in.order,] <span class="sc">%&gt;%</span> <span class="co">#mandates covariates are in same order, adds na's if necessary</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(cov.diet) <span class="sc">%&gt;%</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write</span>(<span class="at">file=</span><span class="st">"Diet.gxe.tab"</span>,<span class="at">ncolumns=</span><span class="dv">1</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>For the covariates file 0 is the chow diet and male sex</p>
+</section>
 </section>
 <section id="diet-specific-phenotype-files" class="level1">
 <h1>Diet Specific Phenotype Files</h1>
@@ -194,27 +243,57 @@ dbl (835): F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F100, F101, F10...
 <section id="for-chow-only" class="level2">
 <h2 class="anchored" data-anchor-id="for-chow-only">For Chow Only</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>ncd.mice <span class="ot">&lt;-</span> <span class="fu">rownames</span>(<span class="fu">filter</span>(covariates.data,cov.diet<span class="sc">==</span><span class="st">'0'</span>))</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>ncd.cholesterol <span class="ot">&lt;-</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  chol.phenotypes <span class="sc">%&gt;%</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol=</span><span class="fu">ifelse</span>(<span class="fu">rownames</span>(.) <span class="sc">%in%</span> ncd.mice,chol2,<span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol)</span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>         </span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>ncd.cholesterol[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_ncd.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ncd.mice <span class="ot">&lt;-</span> <span class="fu">rownames</span>(<span class="fu">filter</span>(covariates.data,cov.diet<span class="sc">==</span><span class="st">'0'</span>))</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>ncd.cholesterol <span class="ot">&lt;-</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>  chol.phenotypes <span class="sc">%&gt;%</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol=</span><span class="fu">ifelse</span>(<span class="fu">rownames</span>(.) <span class="sc">%in%</span> ncd.mice,chol2,<span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol)</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>ncd.cholesterol[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_ncd.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="for-hfd-only" class="level2">
 <h2 class="anchored" data-anchor-id="for-hfd-only">For HFD Only</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>hfd.mice <span class="ot">&lt;-</span> <span class="fu">rownames</span>(<span class="fu">filter</span>(covariates.data,cov.diet<span class="sc">==</span><span class="st">'1'</span>))</span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>hfd.cholesterol <span class="ot">&lt;-</span></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  chol.phenotypes <span class="sc">%&gt;%</span></span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol=</span><span class="fu">ifelse</span>(<span class="fu">rownames</span>(.) <span class="sc">%in%</span> hfd.mice,chol2,<span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol)</span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>         </span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>hfd.cholesterol[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_hfd.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>hfd.mice <span class="ot">&lt;-</span> <span class="fu">rownames</span>(<span class="fu">filter</span>(covariates.data,cov.diet<span class="sc">==</span><span class="st">'1'</span>))</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>hfd.cholesterol <span class="ot">&lt;-</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  chol.phenotypes <span class="sc">%&gt;%</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol=</span><span class="fu">ifelse</span>(<span class="fu">rownames</span>(.) <span class="sc">%in%</span> hfd.mice,chol2,<span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol)</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>hfd.cholesterol[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_hfd.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="sex-specific-phenotype-files" class="level1">
+<h1>Sex Specific Phenotype Files</h1>
+<p>Marked phenotypes as NA when not needed so that the same genotype files can be used. Need to make new covariates file</p>
+<section id="for-males-only" class="level2">
+<h2 class="anchored" data-anchor-id="for-males-only">For Males Only</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>male.mice <span class="ot">&lt;-</span> <span class="fu">rownames</span>(<span class="fu">filter</span>(covariates.data,cov.sex<span class="sc">==</span><span class="st">'0'</span>))</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>male.cholesterol <span class="ot">&lt;-</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  chol.phenotypes <span class="sc">%&gt;%</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol=</span><span class="fu">ifelse</span>(<span class="fu">rownames</span>(.) <span class="sc">%in%</span> ncd.mice,chol2,<span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol)</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>male.cholesterol[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_male.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="for-female-only" class="level2">
+<h2 class="anchored" data-anchor-id="for-female-only">For Female Only</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>female.mice <span class="ot">&lt;-</span> <span class="fu">rownames</span>(<span class="fu">filter</span>(covariates.data,cov.sex<span class="sc">==</span><span class="st">'1'</span>))</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>female.cholesterol <span class="ot">&lt;-</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  chol.phenotypes <span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol=</span><span class="fu">ifelse</span>(<span class="fu">rownames</span>(.) <span class="sc">%in%</span> hfd.mice,chol2,<span class="cn">NA</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol)</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>         </span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>female.cholesterol[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_female.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 </section>
@@ -222,12 +301,12 @@ dbl (835): F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F100, F101, F10...
 <h1>Diet and Sex Adjusted Cholesterol</h1>
 <p>This is needed for BSLMM which does not use a covariates file</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>merged.data <span class="ot">&lt;-</span> <span class="fu">merge</span>(covariates.data,chol.phenotypes,<span class="at">by=</span><span class="st">'row.names'</span>)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>additive.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(chol2<span class="sc">~</span>cov.sex <span class="sc">+</span> cov.diet,<span class="at">data=</span>merged.data)</span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(additive.model) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Summary of additive model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>merged.data <span class="ot">&lt;-</span> <span class="fu">merge</span>(covariates.data,chol.phenotypes,<span class="at">by=</span><span class="st">'row.names'</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>additive.model <span class="ot">&lt;-</span> <span class="fu">lm</span>(chol2<span class="sc">~</span>cov.sex <span class="sc">+</span> cov.diet,<span class="at">data=</span>merged.data)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(additive.model) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Summary of additive model"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <table class="table table-sm table-striped small">
 <caption>Summary of additive model</caption>
@@ -265,23 +344,23 @@ dbl (835): F01, F02, F03, F04, F05, F06, F07, F08, F09, F10, F100, F101, F10...
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>chol.adj.data <span class="ot">&lt;-</span></span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  merged.data <span class="sc">%&gt;%</span></span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol.adj =</span> <span class="fu">case_when</span>(</span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">0</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">0</span><span class="sc">~</span>chol2,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">0</span><span class="sc">~</span>chol2<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.sex'</span>],</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">0</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">1</span><span class="sc">~</span>chol2<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.diet'</span>],</span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">1</span><span class="sc">~</span>chol2<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.sex'</span>]<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.diet'</span>])) <span class="sc">%&gt;%</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'Row.names'</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol.adj)</span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>chol.adj.data[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_adj.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>chol.adj.data <span class="ot">&lt;-</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  merged.data <span class="sc">%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol.adj =</span> <span class="fu">case_when</span>(</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">0</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">0</span><span class="sc">~</span>chol2,</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">0</span><span class="sc">~</span>chol2<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.sex'</span>],</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">0</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">1</span><span class="sc">~</span>chol2<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.diet'</span>],</span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>    cov.sex<span class="sc">==</span><span class="dv">1</span><span class="sc">&amp;</span>cov.diet<span class="sc">==</span><span class="dv">1</span><span class="sc">~</span>chol2<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.sex'</span>]<span class="sc">+</span><span class="fu">coefficients</span>(additive.model)[<span class="st">'cov.diet'</span>])) <span class="sc">%&gt;%</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'Row.names'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol.adj)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>chol.adj.data[strains.in.order,] <span class="sc">%&gt;%</span> <span class="fu">write_lines</span>(<span class="at">file=</span><span class="st">"Cholesterol_adj.txt"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 </section>
 <section id="session-information" class="level1">
 <h1>Session Information</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.3.1 (2023-06-16)
 Platform: x86_64-pc-linux-gnu (64-bit)
@@ -306,18 +385,18 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] knitr_1.45    broom_1.0.5   forcats_1.0.0 tibble_3.2.1  tidyr_1.3.0  
-[6] dplyr_1.1.3   readr_2.1.4  
+[1] knitr_1.46    broom_1.0.5   forcats_1.0.0 tibble_3.2.1  tidyr_1.3.1  
+[6] dplyr_1.1.4   readr_2.1.5  
 
 loaded via a namespace (and not attached):
- [1] crayon_1.5.2      vctrs_0.6.4       cli_3.6.1         rlang_1.1.1      
- [5] xfun_0.41         purrr_1.0.2       generics_0.1.3    jsonlite_1.8.7   
- [9] bit_4.0.5         glue_1.6.2        backports_1.4.1   htmltools_0.5.7  
-[13] hms_1.1.3         fansi_1.0.5       rmarkdown_2.25    evaluate_0.23    
-[17] tzdb_0.4.0        fastmap_1.1.1     yaml_2.3.7        lifecycle_1.0.3  
-[21] compiler_4.3.1    pkgconfig_2.0.3   rstudioapi_0.15.0 digest_0.6.33    
-[25] R6_2.5.1          tidyselect_1.2.0  utf8_1.2.4        parallel_4.3.1   
-[29] vroom_1.6.4       pillar_1.9.0      magrittr_2.0.3    withr_2.5.2      
+ [1] crayon_1.5.2      vctrs_0.6.5       cli_3.6.2         rlang_1.1.3      
+ [5] xfun_0.43         purrr_1.0.2       generics_0.1.3    jsonlite_1.8.8   
+ [9] bit_4.0.5         glue_1.7.0        backports_1.4.1   htmltools_0.5.8.1
+[13] hms_1.1.3         fansi_1.0.6       rmarkdown_2.26    evaluate_0.23    
+[17] tzdb_0.4.0        fastmap_1.1.1     yaml_2.3.8        lifecycle_1.0.4  
+[21] compiler_4.3.1    pkgconfig_2.0.3   rstudioapi_0.16.0 digest_0.6.35    
+[25] R6_2.5.1          tidyselect_1.2.1  utf8_1.2.4        parallel_4.3.1   
+[29] vroom_1.6.5       pillar_1.9.0      magrittr_2.0.3    withr_3.0.0      
 [33] bit64_4.0.5       tools_4.3.1      </code></pre>
 </div>
 </div>

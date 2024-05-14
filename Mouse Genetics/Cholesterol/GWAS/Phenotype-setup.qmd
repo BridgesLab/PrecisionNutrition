@@ -42,6 +42,36 @@ chol.phenotypes[strains.in.order,] %>% write_lines(file="Cholesterol_all.txt")
 
 This file should be usable for all GEMMA runs that contain all the mice
 
+## Plink PED and FAM Files
+
+See https://zzz.bwh.harvard.edu/plink/data.shtml#ped
+
+```{r plink-files}
+chol.phenotypes.pl <- 
+  phenotype.data$data$raw %>% 
+  as.data.frame %>%
+  select(chol2) %>%
+  tibble::rownames_to_column("ID") %>%
+  separate(ID, sep=1, into=c("SexName","Number"), remove=F) %>%
+  mutate(Family=paste0("Family",row_number()),
+         Paternal=0,
+         Maternal=0) %>%
+  mutate(Sex=case_when(SexName=="F"~'2',
+                       SexName=="M"~'1',
+                       .default="other")) %>%
+  mutate(Chol=ifelse(is.na(chol2), -9, chol2)) %>%
+  mutate(ID2 = ID) %>%
+  tibble::column_to_rownames("ID2")
+
+chol.phenotypes.pl[strains.in.order,c("Family","ID","Paternal","Maternal","Sex","chol2")] %>% 
+  write_tsv(file="Genotypes_all.ped", col_names = F)
+
+#same format for fam files
+chol.phenotypes.pl[strains.in.order,c("Family","ID","Paternal","Maternal","Sex","chol2")] %>% 
+  write_tsv(file="Genotypes_all.fam", col_names = F)
+
+```
+
 # Covariate Annotation File
 
 Needed covariates for sex and diet
@@ -68,7 +98,29 @@ covariates.data[strains.in.order,] %>% #mandates covariates are in same order, a
   write_delim(delim=" ",
               col_names=F,
               file="Covariates.sex.tab")
+
+    
+#wrote out covariates file with diet as a covariate (ie removed sex covariate)
+covariates.data[strains.in.order,] %>%  
+  select(-cov.sex) %>%
+    write_delim(delim=" ",
+                col_names=F,
+                file="Covariates.diet.tab")
            
+```
+
+## Covariates and Environment File for GxE Analysis
+
+```{r gxe-files}
+
+covariates.data[strains.in.order,c('intercept','cov.sex')] %>% #mandates covariates are in same order, adds na's if necessary
+  write_delim(delim=" ",
+              col_names = F,
+              file="Covariate.gxe.tab")
+
+covariates.data[strains.in.order,] %>% #mandates covariates are in same order, adds na's if necessary
+  pull(cov.diet) %>%
+  write(file="Diet.gxe.tab",ncolumns=1)
 ```
 
 For the covariates file 0 is the chow diet and male sex
@@ -101,6 +153,36 @@ hfd.cholesterol <-
   select(chol)
          
 hfd.cholesterol[strains.in.order,] %>% write_lines(file="Cholesterol_hfd.txt")
+```
+
+# Sex Specific Phenotype Files
+
+Marked phenotypes as NA when not needed so that the same genotype files can be used.  Need to make new covariates file
+
+## For Males Only
+
+```{r phenotypes-male}
+male.mice <- rownames(filter(covariates.data,cov.sex=='0'))
+
+male.cholesterol <-
+  chol.phenotypes %>%
+  mutate(chol=ifelse(rownames(.) %in% ncd.mice,chol2,NA)) %>%
+  select(chol)
+         
+male.cholesterol[strains.in.order,] %>% write_lines(file="Cholesterol_male.txt")
+```
+
+## For Female Only
+
+```{r phenotypes-female}
+female.mice <- rownames(filter(covariates.data,cov.sex=='1'))
+
+female.cholesterol <-
+  chol.phenotypes %>%
+  mutate(chol=ifelse(rownames(.) %in% hfd.mice,chol2,NA)) %>%
+  select(chol)
+         
+female.cholesterol[strains.in.order,] %>% write_lines(file="Cholesterol_female.txt")
 ```
 
 # Diet and Sex Adjusted Cholesterol

@@ -1,0 +1,37 @@
+##
+## GEMMA Version    = 0.98.5 (2021-08-25)
+## Build profile    = /gnu/store/8rvid272yb53bgascf5c468z0jhsyflj-profile
+## GCC version      = 7.5.0
+## GSL Version      = 2.6
+## OpenBlas         = OpenBLAS 0.3.9  - OpenBLAS 0.3.9 DYNAMIC_ARCH NO_AFFINITY SkylakeX MAX_THREADS=128
+##   arch           = SkylakeX
+##   threads        = 1
+##   parallel type  = threaded
+##
+## Command Line Input = gemma -g ../Genotypes_all.bimbam -p output/ENSMUSG00000005681.txt -c ../Covariates.tab -d output/ENSMUSG00000005681.eigenD.txt -u output/ENSMUSG00000005681.eigenU.txt -lmm 1 -o ENSMUSG00000005681 
+##
+## Date = Mon May 20 09:55:19 2024
+##
+## Summary Statistics:
+## number of total individuals = 835
+## number of analyzed individuals = 471
+## number of covariates = 3
+## number of phenotypes = 1
+## number of total SNPs/var = 561100
+## number of analyzed SNPs/var = 561100
+## REMLE log-likelihood in the null model = -5542.86
+## MLE log-likelihood in the null model = -5576.68
+## pve estimate in the null model = 0.379058
+## se(pve) in the null model = 0.0986034
+## vg estimate in the null model = 2.12988e+09
+## ve estimate in the null model = 7.35164e+08
+## beta estimate in the null model =   102362  21546.3  16446.9
+## se(beta) =   2533.64  3036.19  3228.25
+##
+## Computation Time:
+## total computation time = 6.6924 min 
+## computation time break down: 
+##      time on eigen-decomposition = 0 min 
+##      time on calculating UtX = 0.0679301 min 
+##      time on optimization = 4.92402 min 
+##

@@ -1,0 +1,71 @@
+GENES = ['ENSMUSG00000000804',]
+gene = expand(GENES)
+
+rule all:
+    input:
+        'output/eQTL_test.assoc.txt',
+        expand('{gene}.txt',gene=GENES)
+
+rule extract_gene:
+    input:
+        '../mRNA_Expression_all.txt',
+    output:
+        expand('{gene}.txt',gene=GENES)
+    log: "logs/gene.log"
+    shell:
+        "./select_gene.sh {input} {gene} {output}"
+
+rule relatedness:
+    input:
+        mrna=expand('{gene}.txt',gene=GENES),
+        genotypes='../Genotypes_all.bimbam',
+        cov='../Covariates.tab',
+    output:
+        'output/eQTL_test.cXX.txt'
+    resources:
+        mem_mb=70000,
+        mem_mb_per_cpu=70000,
+        disk_mb=20000,
+        runtime='20m'
+    log: 
+        "logs/relatedness.log"
+    shell:
+        "gemma -g {input.genotypes} -p {input.mrna} -c {input.cov} -gk 1 -o eQTL_test"
+
+rule eigen:
+    input:
+        mrna=expand('{gene}.txt',gene=GENES),
+        genotypes='../Genotypes_all.bimbam',
+        cov='../Covariates.tab',
+        rel='output/eQTL_test.cXX.txt'
+    output:
+        'output/eQTL_test.eigenD.txt',
+        'output/eQTL_test.eigenU.txt',
+    resources:
+        mem_mb=70000,
+        mem_mb_per_cpu=70000, 
+        disk_mb=20000,
+        runtime='20m'  
+    log: 
+        "logs/relatedness.log"
+    shell:
+        "gemma -g {input.genotypes} -p {input.mrna} -c {input.cov} -k {input.rel} -eigen -o eQTL_test"
+
+rule assoc:
+    input:
+        mrna=expand('{gene}.txt',gene=GENES),
+        genotypes='../Genotypes_all.bimbam',
+        cov='../Covariates.tab',
+        eigen_d='output/eQTL_test.eigenD.txt',
+        eigen_u='output/eQTL_test.eigenU.txt',
+    output:
+        'output/eQTL_test.assoc.txt'
+    resources:
+        mem_mb=70000,
+        mem_mb_per_cpu=70000,
+        disk_mb=20000,
+        runtime='40m'
+    log: 
+        "logs/assoc.log"
+    shell:
+        "gemma -g {input.genotypes} -p {input.mrna} -c {input.cov} -d {input.eigen_d} -u {input.eigen_u} -lmm 1 -o eQTL_test"

@@ -60,8 +60,21 @@ scarb1.additive.data <- read_tsv(scarb1.filename) %>%
   separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
   mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
   mutate(position=as.integer(position))
-```
 
+#ENSMUSG00000005681 is apoa2
+apoa2.filename <- 'output/ENSMUSG00000005681.assoc.txt'
+apoa2.additive.data <- read_tsv(apoa2.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000032083 is apoa1 on chromosome 9
+apoa1.filename <- 'output/ENSMUSG00000032083.assoc.txt'
+apoa1.additive.data <- read_tsv(apoa1.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+```
 
 # Additive Models
 
@@ -133,6 +146,140 @@ ggplot(data=peak5,
   labs(title="Strain Specific Effects",
        y="Scarb1 Effect Size (Arbitrary)",
        x="Position on Chromosome 5") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+## Apoa2
+
+```{r apoa2-additive}
+qq(apoa2.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+apoa2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Apoa2 in additive model") 
+
+apoa2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position") 
+
+apoa2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = apoa2.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Apoa2 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 177024867
+peak1b <- filter(apoa2.additive.data,
+                  chromosome==1,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak1b,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Apoa2 Effect Size (Arbitrary)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+This does not line up with the GWAS pattern, so is probably not the same hit.
+
+## Apoa1
+
+```{r apoa1-additive}
+qq(apoa1.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+apoa1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Apoa2 in additive model") 
+
+apoa1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position") 
+
+apoa1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for apoa1 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = apoa1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for apoa1 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 45695998
+peak9 <- filter(apoa1.additive.data,
+                  chromosome==9,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak9,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Apoa1 Effect Size (Arbitrary)",
+       x="Position on Chromosome 9") +
   scale_color_discrete(name="") +
   guides(col=guide_legend(ncol=2)) +
   theme_classic(base_size=12) +

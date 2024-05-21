@@ -33,8 +33,21 @@ scarb1.additive.data <- read_tsv(scarb1.filename) %>%
   separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
   mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
   mutate(position=as.integer(position))
-```
 
+#ENSMUSG00000005681 is apoa2
+apoa2.filename <- 'output/ENSMUSG00000005681.assoc.txt'
+apoa2.additive.data <- read_tsv(apoa2.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000032083 is apoa1 on chromosome 9
+apoa1.filename <- 'output/ENSMUSG00000032083.assoc.txt'
+apoa1.additive.data <- read_tsv(apoa1.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+```
 
 # Additive Models
 
@@ -453,6 +466,345 @@ ggplot(data=peak5,
 ```
 
 ![](figures/scarb1-additive-3.png)<!-- -->
+
+## Apoa2
+
+
+```r
+qq(apoa2.additive.data$p_wald)
+```
+
+![](figures/apoa2-additive-1.png)<!-- -->
+
+```r
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+apoa2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Apoa2 in additive model") 
+```
+
+
+
+Table: Genome-wide significant associations from mixed linear models for Apoa2 in additive model
+
+| chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+
+```r
+apoa2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position
+
+|chromosome |rs              |  position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|---------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|1          |1_177024867_H_H | 177024867|H      |H   |      0|H       |H       | 0.204| 14040| 3030|   -5521|     2.1|      0|
+
+```r
+apoa2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Relaxed suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position
+
+|chromosome |rs               |  position|allele |alt | n_miss|allele1 |allele0 |    af|   beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:----------------|---------:|:------|:---|------:|:-------|:-------|-----:|------:|----:|-------:|-------:|------:|
+|1          |1_177024867_H_H  | 177024867|H      |H   |      0|H       |H       | 0.204|  14040| 3030|   -5521|    2.10|      0|
+|1          |1_180523641_H_H  | 180523641|H      |H   |      0|H       |H       | 0.212|  12914| 2948|   -5522|    2.06|      0|
+|10         |10_109521792_H_E | 109521792|H      |E   |      0|E       |H       | 0.098|  17311| 3987|   -5522|    2.83|      0|
+|10         |10_110766961_F_E | 110766961|F      |E   |      0|E       |F       | 0.098|  16739| 3992|   -5523|    2.85|      0|
+|15         |15_93728085_E_D  |  93728085|E      |D   |      0|D       |E       | 0.146| -14873| 3598|   -5523|    2.27|      0|
+|16         |16_24324833_F_H  |  24324833|F      |H   |      0|H       |F       | 0.101|  16585| 4108|   -5523|    2.80|      0|
+|16         |16_25271645_F_H  |  25271645|F      |H   |      0|H       |F       | 0.101|  16262| 4089|   -5524|    2.73|      0|
+
+```r
+manhattan_plot(x = apoa2.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Apoa2 (Additive Model)", y.label = "LOD Score")
+```
+
+![](figures/apoa2-additive-2.png)<!-- -->
+
+```r
+snp.pos <- 177024867
+peak1b <- filter(apoa2.additive.data,
+                  chromosome==1,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak1b,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Apoa2 Effect Size (Arbitrary)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+![](figures/apoa2-additive-3.png)<!-- -->
+
+This does not line up with the GWAS pattern, so is probably not the same hit.
+
+## Apoa1
+
+
+```r
+qq(apoa1.additive.data$p_wald)
+```
+
+![](figures/apoa1-additive-1.png)<!-- -->
+
+```r
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+apoa1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Apoa2 in additive model") 
+```
+
+
+
+Table: Genome-wide significant associations from mixed linear models for Apoa2 in additive model
+
+| chr|rs             |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|---:|:--------------|:----------|--------:|:------|:---|--:|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|  -9|9_45695998_B_F |9          | 45695998|B      |F   | -9|      0|F       |B       | 0.123| 20075| 3056|   -5456|    2.21|      0|
+|  -9|9_45699502_B_F |9          | 45699502|B      |F   | -9|      0|F       |B       | 0.123| 20073| 3056|   -5456|    2.21|      0|
+|  -9|9_45703005_B_F |9          | 45703005|B      |F   | -9|      0|F       |B       | 0.123| 20070| 3056|   -5456|    2.21|      0|
+|  -9|9_45716470_B_F |9          | 45716470|B      |F   | -9|      0|F       |B       | 0.123| 20061| 3056|   -5456|    2.21|      0|
+|  -9|9_45243524_B_F |9          | 45243524|B      |F   | -9|      0|F       |B       | 0.121| 20549| 3133|   -5456|    2.16|      0|
+|  -9|9_45226398_B_F |9          | 45226398|B      |F   | -9|      0|F       |B       | 0.121| 20553| 3136|   -5457|    2.16|      0|
+|  -9|9_45231116_B_F |9          | 45231116|B      |F   | -9|      0|F       |B       | 0.121| 20539| 3134|   -5457|    2.15|      0|
+|  -9|9_45224039_B_F |9          | 45224039|B      |F   | -9|      0|F       |B       | 0.121| 20551| 3136|   -5457|    2.16|      0|
+|  -9|9_45228757_B_F |9          | 45228757|B      |F   | -9|      0|F       |B       | 0.121| 20536| 3134|   -5457|    2.15|      0|
+|  -9|9_45220445_B_F |9          | 45220445|B      |F   | -9|      0|F       |B       | 0.121| 20548| 3136|   -5457|    2.16|      0|
+|  -9|9_45210468_B_F |9          | 45210468|B      |F   | -9|      0|F       |B       | 0.121| 20539| 3137|   -5457|    2.16|      0|
+|  -9|9_45730723_B_F |9          | 45730723|B      |F   | -9|      0|F       |B       | 0.124| 20009| 3057|   -5457|    2.20|      0|
+|  -9|9_45647108_B_F |9          | 45647108|B      |F   | -9|      0|F       |B       | 0.124| 19952| 3058|   -5457|    2.18|      0|
+|  -9|9_45653010_B_F |9          | 45653010|B      |F   | -9|      0|F       |B       | 0.124| 19943| 3058|   -5457|    2.18|      0|
+|  -9|9_45658912_B_F |9          | 45658912|B      |F   | -9|      0|F       |B       | 0.124| 19933| 3057|   -5457|    2.18|      0|
+|  -9|9_45664815_B_F |9          | 45664815|B      |F   | -9|      0|F       |B       | 0.124| 19923| 3057|   -5457|    2.18|      0|
+|  -9|9_45669254_B_F |9          | 45669254|B      |F   | -9|      0|F       |B       | 0.124| 19916| 3057|   -5457|    2.18|      0|
+|  -9|9_45672132_B_F |9          | 45672132|B      |F   | -9|      0|F       |B       | 0.124| 19911| 3057|   -5457|    2.18|      0|
+|  -9|9_45675009_B_F |9          | 45675009|B      |F   | -9|      0|F       |B       | 0.124| 19906| 3057|   -5457|    2.18|      0|
+|  -9|9_45677887_B_F |9          | 45677887|B      |F   | -9|      0|F       |B       | 0.124| 19901| 3057|   -5457|    2.18|      0|
+|  -9|9_45680764_B_F |9          | 45680764|B      |F   | -9|      0|F       |B       | 0.124| 19897| 3057|   -5457|    2.17|      0|
+|  -9|9_45683642_B_F |9          | 45683642|B      |F   | -9|      0|F       |B       | 0.124| 19892| 3057|   -5457|    2.17|      0|
+|  -9|9_45686597_B_F |9          | 45686597|B      |F   | -9|      0|F       |B       | 0.124| 19886| 3057|   -5457|    2.17|      0|
+|  -9|9_45689604_B_F |9          | 45689604|B      |F   | -9|      0|F       |B       | 0.124| 19881| 3057|   -5457|    2.17|      0|
+|  -9|9_45692612_B_F |9          | 45692612|B      |F   | -9|      0|F       |B       | 0.124| 19876| 3057|   -5457|    2.17|      0|
+|  -9|9_46397418_B_F |9          | 46397418|B      |F   | -9|      0|F       |B       | 0.124| 19731| 3054|   -5457|    2.16|      0|
+|  -9|9_46385725_B_F |9          | 46385725|B      |F   | -9|      0|F       |B       | 0.125| 19640| 3056|   -5457|    2.15|      0|
+|  -9|9_45105852_F_F |9          | 45105852|F      |F   | -9|      0|F       |F       | 0.124| 20081| 3131|   -5457|    2.14|      0|
+|  -9|9_45932754_B_F |9          | 45932754|B      |F   | -9|      0|F       |B       | 0.126| 19449| 3048|   -5458|    2.14|      0|
+|  -9|9_45946473_B_F |9          | 45946473|B      |F   | -9|      0|F       |B       | 0.126| 19435| 3047|   -5458|    2.14|      0|
+|  -9|9_45112636_F_F |9          | 45112636|F      |F   | -9|      0|F       |F       | 0.125| 20032| 3142|   -5458|    2.16|      0|
+|  -9|9_45960192_B_F |9          | 45960192|B      |F   | -9|      0|F       |B       | 0.127| 19420| 3047|   -5458|    2.14|      0|
+|  -9|9_46409110_B_F |9          | 46409110|B      |F   | -9|      0|F       |B       | 0.127| 19274| 3039|   -5458|    2.14|      0|
+|  -9|9_46485002_B_F |9          | 46485002|B      |F   | -9|      0|F       |B       | 0.128| 19163| 3033|   -5458|    2.14|      0|
+|  -9|9_46530566_B_F |9          | 46530566|B      |F   | -9|      0|F       |B       | 0.128| 19154| 3034|   -5458|    2.14|      0|
+|  -9|9_46515378_B_F |9          | 46515378|B      |F   | -9|      0|F       |B       | 0.128| 19107| 3032|   -5458|    2.14|      0|
+|  -9|9_46500190_B_F |9          | 46500190|B      |F   | -9|      0|F       |B       | 0.128| 19079| 3031|   -5458|    2.15|      0|
+|  -9|9_45128094_F_F |9          | 45128094|F      |F   | -9|      0|F       |F       | 0.125| 19862| 3155|   -5458|    2.17|      0|
+|  -9|9_46852003_B_F |9          | 46852003|B      |F   | -9|      0|F       |B       | 0.130| 19109| 3042|   -5458|    2.12|      0|
+|  -9|9_46848673_B_F |9          | 46848673|B      |F   | -9|      0|F       |B       | 0.130| 19109| 3042|   -5458|    2.12|      0|
+|  -9|9_46972944_B_F |9          | 46972944|B      |F   | -9|      0|F       |B       | 0.129| 19109| 3042|   -5458|    2.12|      0|
+|  -9|9_46949904_B_F |9          | 46949904|B      |F   | -9|      0|F       |B       | 0.129| 19101| 3043|   -5458|    2.12|      0|
+|  -9|9_46869034_B_F |9          | 46869034|B      |F   | -9|      0|F       |B       | 0.130| 19069| 3045|   -5458|    2.12|      0|
+|  -9|9_46855333_B_F |9          | 46855333|B      |F   | -9|      0|F       |B       | 0.130| 19060| 3045|   -5458|    2.12|      0|
+|  -9|9_46858096_B_F |9          | 46858096|B      |F   | -9|      0|F       |B       | 0.130| 19060| 3045|   -5458|    2.12|      0|
+|  -9|9_46858963_B_F |9          | 46858963|B      |F   | -9|      0|F       |B       | 0.130| 19059| 3045|   -5458|    2.12|      0|
+|  -9|9_46859830_B_F |9          | 46859830|B      |F   | -9|      0|F       |B       | 0.130| 19059| 3045|   -5458|    2.12|      0|
+|  -9|9_46860697_B_F |9          | 46860697|B      |F   | -9|      0|F       |B       | 0.130| 19059| 3045|   -5458|    2.12|      0|
+|  -9|9_46810882_B_F |9          | 46810882|B      |F   | -9|      0|F       |B       | 0.132| 18942| 3032|   -5458|    2.13|      0|
+|  -9|9_46819834_B_F |9          | 46819834|B      |F   | -9|      0|F       |B       | 0.132| 18922| 3031|   -5458|    2.13|      0|
+|  -9|9_46828785_B_F |9          | 46828785|B      |F   | -9|      0|F       |B       | 0.132| 18900| 3029|   -5458|    2.13|      0|
+|  -9|9_46835354_B_F |9          | 46835354|B      |F   | -9|      0|F       |B       | 0.132| 18883| 3027|   -5458|    2.13|      0|
+|  -9|9_46838684_B_F |9          | 46838684|B      |F   | -9|      0|F       |B       | 0.132| 18874| 3027|   -5458|    2.13|      0|
+|  -9|9_46842014_B_F |9          | 46842014|B      |F   | -9|      0|F       |B       | 0.132| 18865| 3026|   -5458|    2.13|      0|
+|  -9|9_46845344_B_F |9          | 46845344|B      |F   | -9|      0|F       |B       | 0.133| 18856| 3025|   -5458|    2.13|      0|
+|  -9|9_46998310_B_F |9          | 46998310|B      |F   | -9|      0|F       |B       | 0.134| 18749| 3039|   -5459|    2.12|      0|
+|  -9|9_46995088_B_F |9          | 46995088|B      |F   | -9|      0|F       |B       | 0.135| 18688| 3036|   -5459|    2.12|      0|
+|  -9|9_46991867_B_F |9          | 46991867|B      |F   | -9|      0|F       |B       | 0.135| 18623| 3032|   -5459|    2.12|      0|
+|  -9|9_46988645_B_F |9          | 46988645|B      |F   | -9|      0|F       |B       | 0.136| 18557| 3031|   -5459|    2.12|      0|
+|  -9|9_47169522_B_F |9          | 47169522|B      |F   | -9|      0|F       |B       | 0.136| 18428| 3026|   -5459|    2.12|      0|
+|  -9|9_47145900_B_F |9          | 47145900|B      |F   | -9|      0|F       |B       | 0.136| 18422| 3026|   -5459|    2.12|      0|
+|  -9|9_45099068_F_F |9          | 45099068|F      |F   | -9|      0|F       |F       | 0.125| 19158| 3147|   -5459|    2.19|      0|
+|  -9|9_47144267_B_F |9          | 47144267|B      |F   | -9|      0|F       |B       | 0.136| 18421| 3026|   -5459|    2.12|      0|
+|  -9|9_47142633_B_F |9          | 47142633|B      |F   | -9|      0|F       |B       | 0.136| 18420| 3026|   -5459|    2.12|      0|
+|  -9|9_45092284_F_F |9          | 45092284|F      |F   | -9|      0|F       |F       | 0.125| 19148| 3147|   -5459|    2.19|      0|
+|  -9|9_47216498_B_F |9          | 47216498|B      |F   | -9|      0|F       |B       | 0.137| 18440| 3033|   -5459|    2.14|      0|
+|  -9|9_45085005_F_F |9          | 45085005|F      |F   | -9|      0|F       |F       | 0.125| 19137| 3147|   -5459|    2.20|      0|
+|  -9|9_47206969_B_F |9          | 47206969|B      |F   | -9|      0|F       |B       | 0.137| 18389| 3031|   -5459|    2.15|      0|
+|  -9|9_47201287_B_F |9          | 47201287|B      |F   | -9|      0|F       |B       | 0.137| 18352| 3029|   -5459|    2.15|      0|
+|  -9|9_47195604_B_F |9          | 47195604|B      |F   | -9|      0|F       |B       | 0.137| 18309| 3027|   -5459|    2.15|      0|
+|  -9|9_47189922_B_F |9          | 47189922|B      |F   | -9|      0|F       |B       | 0.138| 18260| 3025|   -5460|    2.15|      0|
+|  -9|9_44907739_F_F |9          | 44907739|F      |F   | -9|      0|F       |F       | 0.126| 18877| 3141|   -5460|    2.13|      0|
+|  -9|9_44908509_F_F |9          | 44908509|F      |F   | -9|      0|F       |F       | 0.126| 18875| 3141|   -5460|    2.13|      0|
+|  -9|9_44909279_F_F |9          | 44909279|F      |F   | -9|      0|F       |F       | 0.126| 18872| 3141|   -5460|    2.13|      0|
+|  -9|9_44910049_F_F |9          | 44910049|F      |F   | -9|      0|F       |F       | 0.126| 18869| 3141|   -5460|    2.13|      0|
+|  -9|9_44910819_F_F |9          | 44910819|F      |F   | -9|      0|F       |F       | 0.126| 18867| 3140|   -5460|    2.13|      0|
+|  -9|9_44911590_F_F |9          | 44911590|F      |F   | -9|      0|F       |F       | 0.126| 18864| 3140|   -5460|    2.13|      0|
+|  -9|9_47274098_B_F |9          | 47274098|B      |F   | -9|      0|F       |B       | 0.137| 18108| 3016|   -5460|    2.16|      0|
+|  -9|9_47286614_B_F |9          | 47286614|B      |F   | -9|      0|F       |B       | 0.137| 18110| 3017|   -5460|    2.16|      0|
+|  -9|9_47299130_B_F |9          | 47299130|B      |F   | -9|      0|F       |B       | 0.138| 18110| 3017|   -5460|    2.16|      0|
+|  -9|9_44620318_F_F |9          | 44620318|F      |F   | -9|      0|F       |F       | 0.124| 18000| 3162|   -5461|    2.26|      0|
+|  -9|9_44615769_F_F |9          | 44615769|F      |F   | -9|      0|F       |F       | 0.124| 17998| 3162|   -5461|    2.26|      0|
+|  -9|9_44611744_F_F |9          | 44611744|F      |F   | -9|      0|F       |F       | 0.124| 17995| 3162|   -5461|    2.26|      0|
+|  -9|9_44609085_F_F |9          | 44609085|F      |F   | -9|      0|F       |F       | 0.124| 17994| 3162|   -5461|    2.26|      0|
+|  -9|9_44606425_F_F |9          | 44606425|F      |F   | -9|      0|F       |F       | 0.124| 17992| 3162|   -5461|    2.26|      0|
+|  -9|9_44603765_F_F |9          | 44603765|F      |F   | -9|      0|F       |F       | 0.124| 17991| 3162|   -5461|    2.26|      0|
+|  -9|9_44601105_F_F |9          | 44601105|F      |F   | -9|      0|F       |F       | 0.124| 17989| 3162|   -5461|    2.26|      0|
+|  -9|9_44598445_F_F |9          | 44598445|F      |F   | -9|      0|F       |F       | 0.124| 17987| 3162|   -5461|    2.26|      0|
+|  -9|9_44624867_F_F |9          | 44624867|F      |F   | -9|      0|F       |F       | 0.124| 17922| 3160|   -5461|    2.26|      0|
+|  -9|9_47471001_B_F |9          | 47471001|B      |F   | -9|      0|F       |B       | 0.141| 17071| 3037|   -5462|    2.17|      0|
+|  -9|9_44362716_F_F |9          | 44362716|F      |F   | -9|      0|F       |F       | 0.124| 17618| 3154|   -5462|    2.31|      0|
+|  -9|9_47650835_B_F |9          | 47650835|B      |F   | -9|      0|F       |B       | 0.142| 16849| 3019|   -5462|    2.21|      0|
+|  -9|9_47468600_B_F |9          | 47468600|B      |F   | -9|      0|F       |B       | 0.142| 16913| 3035|   -5462|    2.17|      0|
+
+```r
+apoa1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Suggestive genome-wide significant associations from mixed linear models for Apoa2 in additive model, clumped by first two digits of the position
+
+|chromosome |rs             | position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:--------------|--------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|9          |9_42948280_F_F | 42948280|F      |F   |      0|F       |F       | 0.137| 15105| 3081|   -5465|    2.47|      0|
+|9          |9_43953969_F_F | 43953969|F      |F   |      0|F       |F       | 0.127| 16647| 3136|   -5463|    2.37|      0|
+|9          |9_44907739_F_F | 44907739|F      |F   |      0|F       |F       | 0.126| 18877| 3141|   -5460|    2.13|      0|
+|9          |9_45695998_B_F | 45695998|B      |F   |      0|F       |B       | 0.123| 20075| 3056|   -5456|    2.21|      0|
+|9          |9_46397418_B_F | 46397418|B      |F   |      0|F       |B       | 0.124| 19731| 3054|   -5457|    2.16|      0|
+|9          |9_47169522_B_F | 47169522|B      |F   |      0|F       |B       | 0.136| 18428| 3026|   -5459|    2.12|      0|
+|9          |9_48026815_B_F | 48026815|B      |F   |      0|F       |B       | 0.144| 14623| 3008|   -5465|    2.22|      0|
+
+```r
+apoa1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for apoa1 in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Relaxed suggestive genome-wide significant associations from mixed linear models for apoa1 in additive model, clumped by first two digits of the position
+
+|chromosome |rs              |  position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|---------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|2          |2_125745341_H_F | 125745341|H      |F   |      0|F       |H       | 0.058| 19795| 4507|   -5467|    2.37|      0|
+|7          |7_95100364_C_B  |  95100364|C      |B   |      0|B       |C       | 0.096| 14560| 3608|   -5469|    2.96|      0|
+|8          |8_16876294_H_F  |  16876294|H      |F   |      0|F       |H       | 0.101| 14047| 3571|   -5469|    2.63|      0|
+|8          |8_17032775_H_F  |  17032775|H      |F   |      0|F       |H       | 0.106| 14083| 3582|   -5469|    2.71|      0|
+|9          |9_42948280_F_F  |  42948280|F      |F   |      0|F       |F       | 0.137| 15105| 3081|   -5465|    2.47|      0|
+|9          |9_43953969_F_F  |  43953969|F      |F   |      0|F       |F       | 0.127| 16647| 3136|   -5463|    2.37|      0|
+|9          |9_44907739_F_F  |  44907739|F      |F   |      0|F       |F       | 0.126| 18877| 3141|   -5460|    2.13|      0|
+|9          |9_45695998_B_F  |  45695998|B      |F   |      0|F       |B       | 0.123| 20075| 3056|   -5456|    2.21|      0|
+|9          |9_46397418_B_F  |  46397418|B      |F   |      0|F       |B       | 0.124| 19731| 3054|   -5457|    2.16|      0|
+|9          |9_47169522_B_F  |  47169522|B      |F   |      0|F       |B       | 0.136| 18428| 3026|   -5459|    2.12|      0|
+|9          |9_48026815_B_F  |  48026815|B      |F   |      0|F       |B       | 0.144| 14623| 3008|   -5465|    2.22|      0|
+|9          |9_49167103_A_F  |  49167103|A      |F   |      0|F       |A       | 0.145| 12766| 2977|   -5468|    2.44|      0|
+|9          |9_50357891_B_F  |  50357891|B      |F   |      0|F       |B       | 0.139| 12387| 3074|   -5469|    2.51|      0|
+|9          |9_51798503_E_F  |  51798503|E      |F   |      0|F       |E       | 0.129| 12345| 3108|   -5469|    2.47|      0|
+|9          |9_52906652_C_F  |  52906652|C      |F   |      0|F       |C       | 0.119| 13531| 3261|   -5468|    2.37|      0|
+|9          |9_53010136_F_F  |  53010136|F      |F   |      0|F       |F       | 0.114| 13450| 3278|   -5469|    2.33|      0|
+|9          |9_54049009_B_F  |  54049009|B      |F   |      0|F       |B       | 0.111| 13639| 3313|   -5469|    2.37|      0|
+|9          |9_55028281_B_F  |  55028281|B      |F   |      0|F       |B       | 0.106| 13701| 3417|   -5469|    2.55|      0|
+|9          |9_58287426_G_F  |  58287426|G      |F   |      0|F       |G       | 0.123| 12784| 3257|   -5469|    2.48|      0|
+
+```r
+manhattan_plot(x = apoa1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for apoa1 (Additive Model)", y.label = "LOD Score")
+```
+
+![](figures/apoa1-additive-2.png)<!-- -->
+
+```r
+snp.pos <- 45695998
+peak9 <- filter(apoa1.additive.data,
+                  chromosome==9,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak9,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Apoa1 Effect Size (Arbitrary)",
+       x="Position on Chromosome 9") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+![](figures/apoa1-additive-3.png)<!-- -->
 
 # Session Information
 

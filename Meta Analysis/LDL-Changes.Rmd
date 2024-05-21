@@ -345,8 +345,8 @@ ldl.bmi.change.lm %>% tidy %>% kable
 ldl.bmi.change.mixed.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mixed"))
 ldl.bmi.change.mixed.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mixed groups")
 
-ldl.bmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
-ldl.bmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
+#ldl.bmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
+#ldl.bmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
 
 ldl.bmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
 ldl.bmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
@@ -366,8 +366,8 @@ ldl.pctbmi.change.lm %>% tidy %>% kable
 ldl.pctbmi.change.mixed.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mixed"))
 ldl.pctbmi.change.mixed.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mixed groups")
 
-ldl.pctbmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
-ldl.pctbmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
+#ldl.pctbmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
+#ldl.pctbmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
 
 ldl.pctbmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
 ldl.pctbmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
@@ -454,6 +454,25 @@ lm(formula=`Change in LDL-C`~`Baseline HOMA-IR`,
   kable
 
 
+```
+
+# Decision Tree
+
+```{r decision-tree}
+eval.data %>% select(where(is.numeric)) %>%
+  select(-ends_with('SD'),-ends_with('CI')) -> combined.data.numeric
+
+correlation.matrix <- cor(combined.data.numeric, use="pairwise.complete.obs")
+library(corrplot)
+corrplot(correlation.matrix, method="color", diag=FALSE, order="alphabet")
+corrplot(correlation.matrix, method="color", diag=FALSE, tl.cex = .7)
+
+library(rpart)
+combined.data.numeric -> tree.data
+rpart(`Change in LDL-C`~., data=tree.data) ->tree
+library(rattle)
+library(rpart.plot)
+rpart.plot(tree)
 ```
 
 

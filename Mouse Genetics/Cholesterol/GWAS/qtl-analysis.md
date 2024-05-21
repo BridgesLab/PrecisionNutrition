@@ -179,6 +179,9 @@ with(lmm.additive.data,manhattanPlot(p=p_wald,
 
 ![](figures/lmm-additive-3.png)<!-- -->
 
+### Chromosome 1 Peak
+
+
 ```r
 snp.pos <- 171425406
 library(forcats)
@@ -213,7 +216,46 @@ ggplot(data=peak1.b,
         legend.text=element_text(size=8))
 ```
 
-![](figures/lmm-additive-4.png)<!-- -->
+![](figures/chr1-peak-1.png)<!-- -->
+
+### Chromosome 5 Peak
+
+
+```r
+snp.pos <- 123629774
+peak5 <- filter(lmm.additive.data,
+                  chromosome==5,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak5,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 5") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+![](figures/chr5-peak-1.png)<!-- -->
+
 
 
 ```r
@@ -1101,7 +1143,7 @@ sessionInfo()
 ```
 ## R version 4.3.3 (2024-02-29)
 ## Platform: x86_64-apple-darwin20 (64-bit)
-## Running under: macOS Sonoma 14.3.1
+## Running under: macOS Sonoma 14.5
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
@@ -1119,48 +1161,50 @@ sessionInfo()
 ## other attached packages:
 ##  [1] biomaRt_2.58.2      ggrepel_0.9.5       cowplot_1.1.3      
 ##  [4] forcats_1.0.0       GWASTools_1.48.0    Biobase_2.62.0     
-##  [7] BiocGenerics_0.48.1 ggmanh_1.6.0        ggplot2_3.5.0      
-## [10] qqman_0.1.9         broom_1.0.5         dplyr_1.1.4        
+##  [7] BiocGenerics_0.48.1 ggmanh_1.6.0        ggplot2_3.5.1      
+## [10] qqman_0.1.9         broom_1.0.6         dplyr_1.1.4        
 ## [13] tidyr_1.3.1         readr_2.1.5         knitr_1.45         
 ## 
 ## loaded via a namespace (and not attached):
 ##   [1] DBI_1.2.2               gdsfmt_1.38.0           sandwich_3.1-0         
-##   [4] rlang_1.1.3             magrittr_2.0.3          compiler_4.3.3         
-##   [7] RSQLite_2.3.5           mgcv_1.9-1              png_0.1-8              
-##  [10] vctrs_0.6.5             stringr_1.5.1           quantreg_5.97          
-##  [13] pkgconfig_2.0.3         shape_1.4.6.1           crayon_1.5.2           
-##  [16] fastmap_1.1.1           dbplyr_2.4.0            backports_1.4.1        
-##  [19] XVector_0.42.0          labeling_0.4.3          utf8_1.2.4             
-##  [22] rmarkdown_2.26          tzdb_0.4.0              nloptr_2.0.3           
-##  [25] MatrixModels_0.5-3      purrr_1.0.2             bit_4.0.5              
-##  [28] xfun_0.42               glmnet_4.1-8            jomo_2.7-6             
-##  [31] logistf_1.26.0          zlibbioc_1.48.0         cachem_1.0.8           
-##  [34] GenomeInfoDb_1.38.7     jsonlite_1.8.8          progress_1.2.3         
-##  [37] blob_1.2.4              highr_0.10              pan_1.9                
-##  [40] prettyunits_1.2.0       parallel_4.3.3          R6_2.5.1               
-##  [43] stringi_1.8.3           bslib_0.6.1             RColorBrewer_1.1-3     
-##  [46] boot_1.3-30             DNAcopy_1.76.0          rpart_4.1.23           
-##  [49] lmtest_0.9-40           jquerylib_0.1.4         Rcpp_1.0.12            
-##  [52] iterators_1.0.14        zoo_1.8-12              IRanges_2.36.0         
-##  [55] Matrix_1.6-5            splines_4.3.3           nnet_7.3-19            
-##  [58] tidyselect_1.2.0        yaml_2.3.8              codetools_0.2-19       
-##  [61] curl_5.2.1              lattice_0.22-5          tibble_3.2.1           
-##  [64] quantsmooth_1.68.0      withr_3.0.0             KEGGREST_1.42.0        
-##  [67] evaluate_0.23           survival_3.5-8          BiocFileCache_2.10.1   
-##  [70] xml2_1.3.6              Biostrings_2.70.2       filelock_1.0.3         
-##  [73] pillar_1.9.0            mice_3.16.0             foreach_1.5.2          
-##  [76] stats4_4.3.3            generics_0.1.3          vroom_1.6.5            
-##  [79] hms_1.1.3               S4Vectors_0.40.2        munsell_0.5.0          
-##  [82] scales_1.3.0            minqa_1.2.6             calibrate_1.7.7        
-##  [85] GWASExactHW_1.01        glue_1.7.0              tools_4.3.3            
-##  [88] data.table_1.15.2       lme4_1.1-35.1           SparseM_1.81           
-##  [91] XML_3.99-0.16.1         grid_4.3.3              AnnotationDbi_1.64.1   
-##  [94] colorspace_2.1-0        GenomeInfoDbData_1.2.11 nlme_3.1-164           
-##  [97] formula.tools_1.7.1     cli_3.6.2               rappdirs_0.3.3         
-## [100] fansi_1.0.6             gtable_0.3.4            sass_0.4.8             
-## [103] digest_0.6.34           operator.tools_1.6.3    farver_2.1.1           
-## [106] memoise_2.0.1           htmltools_0.5.7         lifecycle_1.0.4        
-## [109] httr_1.4.7              mitml_0.4-5             bit64_4.0.5            
-## [112] MASS_7.3-60.0.1
+##   [4] rlang_1.1.3             magrittr_2.0.3          multcomp_1.4-25        
+##   [7] compiler_4.3.3          RSQLite_2.3.6           mgcv_1.9-1             
+##  [10] png_0.1-8               vctrs_0.6.5             stringr_1.5.1          
+##  [13] quantreg_5.97           pkgconfig_2.0.3         shape_1.4.6.1          
+##  [16] crayon_1.5.2            fastmap_1.2.0           dbplyr_2.5.0           
+##  [19] XVector_0.42.0          backports_1.4.1         labeling_0.4.3         
+##  [22] utf8_1.2.4              rmarkdown_2.27          tzdb_0.4.0             
+##  [25] nloptr_2.0.3            MatrixModels_0.5-3      purrr_1.0.2            
+##  [28] bit_4.0.5               xfun_0.44               glmnet_4.1-8           
+##  [31] jomo_2.7-6              zlibbioc_1.48.0         logistf_1.26.0         
+##  [34] cachem_1.1.0            GenomeInfoDb_1.38.7     jsonlite_1.8.8         
+##  [37] progress_1.2.3          blob_1.2.4              highr_0.10             
+##  [40] pan_1.9                 prettyunits_1.2.0       parallel_4.3.3         
+##  [43] R6_2.5.1                stringi_1.8.4           bslib_0.7.0            
+##  [46] RColorBrewer_1.1-3      boot_1.3-30             DNAcopy_1.76.0         
+##  [49] rpart_4.1.23            lmtest_0.9-40           jquerylib_0.1.4        
+##  [52] estimability_1.5.1      Rcpp_1.0.12             iterators_1.0.14       
+##  [55] zoo_1.8-12              IRanges_2.36.0          Matrix_1.6-5           
+##  [58] splines_4.3.3           nnet_7.3-19             tidyselect_1.2.1       
+##  [61] rstudioapi_0.16.0       yaml_2.3.8              codetools_0.2-20       
+##  [64] curl_5.2.1              lattice_0.22-6          tibble_3.2.1           
+##  [67] KEGGREST_1.42.0         quantsmooth_1.68.0      withr_3.0.0            
+##  [70] evaluate_0.23           survival_3.6-4          BiocFileCache_2.10.1   
+##  [73] xml2_1.3.6              Biostrings_2.70.2       filelock_1.0.3         
+##  [76] pillar_1.9.0            mice_3.16.0             foreach_1.5.2          
+##  [79] stats4_4.3.3            generics_0.1.3          vroom_1.6.5            
+##  [82] hms_1.1.3               S4Vectors_0.40.2        munsell_0.5.1          
+##  [85] scales_1.3.0            minqa_1.2.6             calibrate_1.7.7        
+##  [88] xtable_1.8-4            GWASExactHW_1.2         glue_1.7.0             
+##  [91] emmeans_1.10.1          tools_4.3.3             data.table_1.15.4      
+##  [94] lme4_1.1-35.3           SparseM_1.81            mvtnorm_1.2-4          
+##  [97] XML_3.99-0.16.1         grid_4.3.3              AnnotationDbi_1.64.1   
+## [100] colorspace_2.1-0        GenomeInfoDbData_1.2.11 nlme_3.1-164           
+## [103] formula.tools_1.7.1     cli_3.6.2               rappdirs_0.3.3         
+## [106] fansi_1.0.6             gtable_0.3.5            sass_0.4.9             
+## [109] digest_0.6.35           operator.tools_1.6.3    TH.data_1.1-2          
+## [112] farver_2.1.2            memoise_2.0.1           htmltools_0.5.8.1      
+## [115] lifecycle_1.0.4         httr_1.4.7              mitml_0.4-5            
+## [118] bit64_4.0.5             MASS_7.3-60.0.1
 ```
 

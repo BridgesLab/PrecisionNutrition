@@ -82,6 +82,10 @@ eval.data <-
 
 These data can be found in **`r getwd()`** in a file named **`r ifelse(filename %in% dir(), filename, "no file found")`**.  This script was most recently updated on **`r date()`**.
 
+This analysis includes `r nrow(eval.data)` studies with `r sum(eval.data$n, na.rm=T)` total participants.
+
+
+
 # Meta-Analysis 
 
 ```{r meta-analysis}

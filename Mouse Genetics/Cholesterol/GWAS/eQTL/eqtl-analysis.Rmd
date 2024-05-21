@@ -74,6 +74,13 @@ apoa1.additive.data <- read_tsv(apoa1.filename) %>%
   separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
   mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
   mutate(position=as.integer(position))
+
+#ENSMUSG00000006191 is Cdkal1 on chromosome 13
+cdkal1.filename <- 'output/ENSMUSG00000006191.assoc.txt'
+cdkal1.additive.data <- read_tsv(cdkal1.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
 ```
 
 # Additive Models
@@ -253,7 +260,7 @@ apoa1.additive.data %>%
 additive.snp.summary %>%
   kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for apoa1 in additive model, clumped by first two digits of the position") 
 
-manhattan_plot(x = apoa1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for apoa1 (Additive Model)", y.label = "LOD Score")
+manhattan_plot(x = apoa1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Apoa1 (Additive Model)", y.label = "LOD Score")
 
 snp.pos <- 45695998
 peak9 <- filter(apoa1.additive.data,
@@ -280,6 +287,74 @@ ggplot(data=peak9,
   labs(title="Strain Specific Effects",
        y="Apoa1 Effect Size (Arbitrary)",
        x="Position on Chromosome 9") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+This does not match a significant GWAS hit
+
+## Cdkal1
+
+```{r cdkal1-additive}
+qq(cdkal1.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+cdkal1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Cdkal1 in additive model") 
+
+cdkal1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Cdkal1 in additive model, clumped by first two digits of the position") 
+
+cdkal1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Cdkal1 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = cdkal1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Cdkal1 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 23998153
+peak9 <- filter(cdkal1.additive.data,
+                  chromosome==13,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak9,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cdkal1 Effect Size (Arbitrary)",
+       x="Position on Chromosome 13") +
   scale_color_discrete(name="") +
   guides(col=guide_legend(ncol=2)) +
   theme_classic(base_size=12) +

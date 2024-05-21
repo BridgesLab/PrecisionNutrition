@@ -47,6 +47,13 @@ apoa1.additive.data <- read_tsv(apoa1.filename) %>%
   separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
   mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
   mutate(position=as.integer(position))
+
+#ENSMUSG00000006191 is Cdkal1 on chromosome 13
+cdkal1.filename <- 'output/ENSMUSG00000006191.assoc.txt'
+cdkal1.additive.data <- read_tsv(cdkal1.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
 ```
 
 # Additive Models
@@ -766,7 +773,7 @@ Table: Relaxed suggestive genome-wide significant associations from mixed linear
 |9          |9_58287426_G_F  |  58287426|G      |F   |      0|F       |G       | 0.123| 12784| 3257|   -5469|    2.48|      0|
 
 ```r
-manhattan_plot(x = apoa1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for apoa1 (Additive Model)", y.label = "LOD Score")
+manhattan_plot(x = apoa1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Apoa1 (Additive Model)", y.label = "LOD Score")
 ```
 
 ![](figures/apoa1-additive-2.png)<!-- -->
@@ -805,6 +812,141 @@ ggplot(data=peak9,
 ```
 
 ![](figures/apoa1-additive-3.png)<!-- -->
+
+This does not match a significant GWAS hit
+
+## Cdkal1
+
+
+```r
+qq(cdkal1.additive.data$p_wald)
+```
+
+![](figures/cdkal1-additive-1.png)<!-- -->
+
+```r
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+cdkal1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Cdkal1 in additive model") 
+```
+
+
+
+Table: Genome-wide significant associations from mixed linear models for Cdkal1 in additive model
+
+| chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+
+```r
+cdkal1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Cdkal1 in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Suggestive genome-wide significant associations from mixed linear models for Cdkal1 in additive model, clumped by first two digits of the position
+
+|chromosome |rs              | position|allele |alt | n_miss|allele1 |allele0 |    af| beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|--------:|:------|:---|------:|:-------|:-------|-----:|----:|----:|-------:|-------:|------:|
+|13         |13_23998153_G_G | 23998153|G      |G   |      0|G       |G       | 0.103| 11.4| 2.40|   -2072|    1.82|      0|
+|13         |13_24295416_G_G | 24295416|G      |G   |      0|G       |G       | 0.102| 11.2| 2.40|   -2073|    1.80|      0|
+|13         |13_25609782_G_G | 25609782|G      |G   |      0|G       |G       | 0.103| 10.9| 2.40|   -2073|    1.84|      0|
+|13         |13_26978317_G_G | 26978317|G      |G   |      0|G       |G       | 0.098| 11.6| 2.44|   -2072|    1.77|      0|
+|13         |13_27106337_G_G | 27106337|G      |G   |      0|G       |G       | 0.098| 11.6| 2.44|   -2072|    1.75|      0|
+|13         |13_28960280_G_G | 28960280|G      |G   |      0|G       |G       | 0.117| 11.8| 2.25|   -2070|    1.68|      0|
+|13         |13_29623642_E_G | 29623642|E      |G   |      0|G       |E       | 0.118| 12.1| 2.21|   -2069|    1.67|      0|
+|13         |13_30180778_E_G | 30180778|E      |G   |      0|G       |E       | 0.116| 11.8| 2.24|   -2070|    1.71|      0|
+|13         |13_31716878_F_G | 31716878|F      |G   |      0|G       |F       | 0.106| 12.3| 2.42|   -2071|    1.77|      0|
+|13         |13_32366309_A_G | 32366309|A      |G   |      0|G       |A       | 0.105| 12.3| 2.45|   -2071|    1.81|      0|
+|13         |13_34369048_A_G | 34369048|A      |G   |      0|G       |A       | 0.092| 11.6| 2.51|   -2073|    1.97|      0|
+
+```r
+cdkal1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Cdkal1 in additive model, clumped by first two digits of the position") 
+```
+
+
+
+Table: Relaxed suggestive genome-wide significant associations from mixed linear models for Cdkal1 in additive model, clumped by first two digits of the position
+
+|chromosome |rs              |  position|allele |alt | n_miss|allele1 |allele0 |    af|  beta|   se| logl_H1| l_remle| p_wald|
+|:----------|:---------------|---------:|:------|:---|------:|:-------|:-------|-----:|-----:|----:|-------:|-------:|------:|
+|4          |4_156176287_F_C | 156176287|F      |C   |      0|C       |F       | 0.130| 10.13| 2.30|   -2074|    1.97|      0|
+|6          |6_33158665_B_G  |  33158665|B      |G   |      0|G       |B       | 0.142| -8.42| 2.11|   -2075|    1.96|      0|
+|9          |9_26889718_F_E  |  26889718|F      |E   |      0|E       |F       | 0.134| -9.09| 2.16|   -2074|    2.18|      0|
+|13         |13_21814015_F_G |  21814015|F      |G   |      0|G       |F       | 0.097|  9.93| 2.51|   -2075|    1.91|      0|
+|13         |13_22319733_E_G |  22319733|E      |G   |      0|G       |E       | 0.109|  9.28| 2.33|   -2075|    1.95|      0|
+|13         |13_23998153_G_G |  23998153|G      |G   |      0|G       |G       | 0.103| 11.43| 2.40|   -2072|    1.82|      0|
+|13         |13_24295416_G_G |  24295416|G      |G   |      0|G       |G       | 0.102| 11.17| 2.40|   -2073|    1.80|      0|
+|13         |13_25609782_G_G |  25609782|G      |G   |      0|G       |G       | 0.103| 10.88| 2.40|   -2073|    1.84|      0|
+|13         |13_26978317_G_G |  26978317|G      |G   |      0|G       |G       | 0.098| 11.59| 2.44|   -2072|    1.77|      0|
+|13         |13_27106337_G_G |  27106337|G      |G   |      0|G       |G       | 0.098| 11.60| 2.44|   -2072|    1.75|      0|
+|13         |13_28960280_G_G |  28960280|G      |G   |      0|G       |G       | 0.117| 11.83| 2.25|   -2070|    1.68|      0|
+|13         |13_29623642_E_G |  29623642|E      |G   |      0|G       |E       | 0.118| 12.15| 2.21|   -2069|    1.67|      0|
+|13         |13_30180778_E_G |  30180778|E      |G   |      0|G       |E       | 0.116| 11.84| 2.24|   -2070|    1.71|      0|
+|13         |13_31716878_F_G |  31716878|F      |G   |      0|G       |F       | 0.106| 12.32| 2.42|   -2071|    1.77|      0|
+|13         |13_32366309_A_G |  32366309|A      |G   |      0|G       |A       | 0.105| 12.33| 2.45|   -2071|    1.81|      0|
+|13         |13_33883617_A_G |  33883617|A      |G   |      0|G       |A       | 0.085| 10.70| 2.66|   -2075|    1.94|      0|
+|13         |13_34369048_A_G |  34369048|A      |G   |      0|G       |A       | 0.092| 11.58| 2.51|   -2073|    1.97|      0|
+
+```r
+manhattan_plot(x = cdkal1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Cdkal1 (Additive Model)", y.label = "LOD Score")
+```
+
+![](figures/cdkal1-additive-2.png)<!-- -->
+
+```r
+snp.pos <- 23998153
+peak9 <- filter(cdkal1.additive.data,
+                  chromosome==13,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak9,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cdkal1 Effect Size (Arbitrary)",
+       x="Position on Chromosome 13") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+![](figures/cdkal1-additive-3.png)<!-- -->
 
 # Session Information
 

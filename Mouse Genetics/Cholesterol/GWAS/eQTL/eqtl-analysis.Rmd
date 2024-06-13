@@ -40,9 +40,15 @@ se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
 library(tidyr)
 library(dplyr)
 library(broom)
+library(forcats)
+library(qqman)
+library(ggmanh)
+      
 
 # sets maize and blue color scheme
 color.scheme <- c('#00274c', '#ffcb05')
+
+
 ```
 
 # Purpose
@@ -81,6 +87,76 @@ cdkal1.additive.data <- read_tsv(cdkal1.filename) %>%
   separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
   mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
   mutate(position=as.integer(position))
+
+#ENSMUSG00000063450 is Syne2 on chromosome 12
+syne2.filename <- 'output/ENSMUSG00000063450.assoc.txt'
+syne2.additive.data <- read_tsv(syne2.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000039202 is Abhd2 on chromosome 7
+Abhd2.filename <- 'output/ENSMUSG00000039202.assoc.txt'
+Abhd2.additive.data <- read_tsv(Abhd2.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000020593 is Lpin1 on chromosome 12 at 16,585,000
+Lpin1.filename <- 'output/ENSMUSG00000020593.assoc.txt'
+Lpin1.additive.data <- read_tsv(Lpin1.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000052632 is Asap2 on chromosome 12 at 21,040,000
+Asap2.filename <- 'output/ENSMUSG00000052632.assoc.txt'
+Asap2.additive.data <- read_tsv(Asap2.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000094793 is Mup12 on chromosome 4 60,700,000
+Mup12.filename <- 'output/ENSMUSG00000094793.assoc.txt'
+Mup12.additive.data <- read_tsv(Mup12.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000092008 is Cyp2c69 on chromosome 19 39,800,000
+Cyp2c69.filename <- 'output/ENSMUSG00000092008.assoc.txt'
+Cyp2c69.additive.data <- read_tsv(Cyp2c69.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000021051 is Ppp2r5e on chromosome 12 75,500,000
+Ppp2r5e.filename <- 'output/ENSMUSG00000021051.assoc.txt'
+Ppp2r5e.additive.data <- read_tsv(Ppp2r5e.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000047454 is Gphn on chromosome 12 78,400,000
+Gphn.filename <- 'output/ENSMUSG00000047454.assoc.txt'
+Gphn.additive.data <- read_tsv(Gphn.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000069255 is Dusp22 on chromosome 13 30,844,000
+Dusp22.filename <- 'output/ENSMUSG00000069255.assoc.txt'
+Dusp22.additive.data <- read_tsv(Dusp22.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+#ENSMUSG00000038415 is Foxq1 on chromosome 13 31,740,000
+Foxq1.filename <- 'output/ENSMUSG00000038415.assoc.txt'
+Foxq1.additive.data <- read_tsv(Foxq1.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
 ```
 
 # Additive Models
@@ -99,10 +175,13 @@ qq(scarb1.additive.data$p_wald)
 suggestive.pval <- 1E-5
 genome.pval <- 5E-8
 
+
 scarb1.additive.data %>%
   arrange(p_wald) %>% 
   filter(p_wald<genome.pval) %>%
   kable(caption="Genome-wide significant associations from mixed linear models for Scarb1 in additive model") 
+
+
 
 scarb1.additive.data %>%
   arrange(p_wald) %>% 
@@ -362,6 +441,668 @@ ggplot(data=peak9,
         legend.text=element_text(size=8))
 ```
 
+## Syne2
+
+```{r syne2-additive}
+library(qqman)
+qq(syne2.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+syne2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for syne2 in additive model") 
+
+syne2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for syne2 in additive model, clumped by first two digits of the position") 
+
+syne2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for syne2 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = syne2.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Syne2 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 77557286
+library(forcats)
+peak12 <- filter(syne2.additive.data,
+                  chromosome==12,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak12,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="syne2 Effect Size (Arbitrary)",
+       x="Position on Chromosome 12") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+## Abhd2
+```{r Abhd2-additive}
+library(qqman)
+qq(Abhd2.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Abhd2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Abhd2 in additive model") 
+
+Abhd2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Abhd2 in additive model, clumped by first two digits of the position") 
+
+Abhd2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Abhd2 in additive model, clumped by first two digits of the position") 
+library(ggmanh)
+manhattan_plot(x = Abhd2.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Abhd2 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 78900000
+library(forcats)
+peak7 <- filter(Abhd2.additive.data,
+                  chromosome==7,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak7,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Abhd2 Effect Size (Arbitrary)",
+       x="Position on Chromosome 7") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+## Lpin1
+```{r Lpin1-additive}
+qq(Lpin1.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Lpin1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Lpin1 in additive model") 
+
+Lpin1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Lpin1 in additive model, clumped by first two digits of the position") 
+
+Lpin1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Lpin1 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Lpin1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Lpin1 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 16525000
+peak12 <- filter(Lpin1.additive.data,
+                  chromosome==12,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak12,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Lpin1 Effect Size (Arbitrary)",
+       x="Position on Chromosome 12") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+## Asap2 
+
+```{r Asap2-additive}
+library(qqman)
+qq(Asap2.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Asap2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Asap2 in additive model") 
+
+Asap2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Asap2 in additive model, clumped by first two digits of the position") 
+
+Asap2.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Asap2 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Asap2.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Asap2 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 21040000
+library(forcats)
+peak12 <- filter(Asap2.additive.data,
+                  chromosome==12,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak12,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Asap2 Effect Size (Arbitrary)",
+       x="Position on Chromosome 12") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+## Mup12 
+
+```{r Mup12-additive}
+library(qqman)
+qq(Mup12.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Mup12.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Mup12 in additive model") 
+
+Mup12.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Mup12 in additive model, clumped by first two digits of the position") 
+
+Mup12.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Mup12 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Mup12.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Mup12 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 124485642
+library(forcats)
+peak4 <- filter(Mup12.additive.data,
+                  chromosome==4,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak4,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Mup12 Effect Size (Arbitrary)",
+       x="Position on Chromosome 4") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+
+## Cyp2c69 
+
+```{r Cyp2c69-additive}
+library(qqman)
+qq(Cyp2c69.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Cyp2c69.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Cyp2c69 in additive model") 
+
+Cyp2c69.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Cyp2c69 in additive model, clumped by first two digits of the position") 
+
+Cyp2c69.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Cyp2c69 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Cyp2c69.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Cyp2c69 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 39800000
+library(forcats)
+peak19 <- filter(Cyp2c69.additive.data,
+                  chromosome==19,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak19,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cyp2c69 Effect Size (Arbitrary)",
+       x="Position on Chromosome 19") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+##Ppp2r5e
+```{r Ppp2r5e-additive}
+qq(Ppp2r5e.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Ppp2r5e.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Ppp2r5e in additive model") 
+
+Ppp2r5e.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Ppp2r5e in additive model, clumped by first two digits of the position") 
+
+Ppp2r5e.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Ppp2r5e in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Ppp2r5e.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Ppp2r5e (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 75500000
+peak12p <- filter(Ppp2r5e.additive.data,
+                  chromosome==12,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak12p,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Ppp2r5e Effect Size (Arbitrary)",
+       x="Position on Chromosome 12") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+##Gphn
+```{r Gphn-additive}
+qq(Gphn.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Gphn.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Gphn in additive model") 
+
+Gphn.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Gphn in additive model, clumped by first two digits of the position") 
+
+Gphn.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Gphn in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Gphn.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Gphn (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 78067000
+peak12g <- filter(Gphn.additive.data,
+                  chromosome==12,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak12g,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Gphn Effect Size (Arbitrary)",
+       x="Position on Chromosome 12") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+##Dusp22
+```{r Dusp22-additive}
+qq(Dusp22.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Dusp22.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Dusp22 in additive model") 
+
+Dusp22.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Dusp22 in additive model, clumped by first two digits of the position") 
+
+Dusp22.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Dusp22 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Dusp22.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Dusp22 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 30844000
+peak13d <- filter(Dusp22.additive.data,
+                  chromosome==13,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak13d,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Dusp22 Effect Size (Arbitrary)",
+       x="Position on Chromosome 13") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+##Foxq1
+```{r Foxq1-additive}
+qq(Foxq1.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+Foxq1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for Foxq1 in additive model") 
+
+Foxq1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for Foxq1 in additive model, clumped by first two digits of the position") 
+
+Foxq1.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for Foxq1 in additive model, clumped by first two digits of the position") 
+
+manhattan_plot(x = Foxq1.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "eQTLs for Foxq1 (Additive Model)", y.label = "LOD Score")
+
+snp.pos <- 31740000
+peak13f <- filter(Foxq1.additive.data,
+                  chromosome==13,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak13f,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Foxq1 Effect Size (Arbitrary)",
+       x="Position on Chromosome 13") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
 # Session Information
 
 ```{r session-information, echo=T}

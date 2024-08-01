@@ -132,12 +132,15 @@ $$\tau \sim HC(0,0.5)$$
 #phcauchy(0.3, sigma = 0.3)
 library(brms)
 priors <- c(prior(normal(0,1), class = Intercept),
-            prior(cauchy(0,0.5), class = sd))
+            prior(cauchy(0,0.5), class = sd)) 
 
 meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
              data = meta.data,
              prior = priors,
-             iter = 4000)
+             iter = 4000,
+             control=list(adapt_delta=0.9)) #to fix warning There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+
+plot(meta.ldl.brm, ask=F)
 
 summary(meta.ldl.brm)
 pp_check(meta.ldl.brm)
@@ -168,7 +171,7 @@ ggplot(aes(x = tau), data = post.samples) +
 
 #calculating exact
 smd.ecdf <- ecdf(post.samples$smd)
-smd.ecdf(0.3) #probability that effect is smaller than 0.3
+smd.ecdf(0) #probability that effect is greater than zero
 
 library(tidybayes)
 library(dplyr)
@@ -221,8 +224,8 @@ ggplot(aes(b_Intercept,
         x = Inf), hjust = "inward") +
   labs(x = "Standardized Mean Difference", # summary measure
        y = element_blank()) +
+  lims(x=c(-5,5)) +
   theme_minimal()
-
 ```
 
 # Average Change in LDL-C

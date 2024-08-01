@@ -23,7 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Thu Aug  1 19:08:02 2024.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Thu Aug  1 19:34:18 2024.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -53,7 +53,7 @@ eval.data <-
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Thu Aug  1 19:08:05 2024**.
+These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Thu Aug  1 19:34:20 2024**.
 
 This analysis includes 22 studies with 463 total participants.
 
@@ -109,12 +109,13 @@ $$\tau \sim HC(0,0.5)$$
 #phcauchy(0.3, sigma = 0.3)
 library(brms)
 priors <- c(prior(normal(0,1), class = Intercept),
-            prior(cauchy(0,0.5), class = sd))
+            prior(cauchy(0,0.5), class = sd)) 
 
 meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
              data = meta.data,
              prior = priors,
-             iter = 4000)
+             iter = 4000,
+             control=list(adapt_delta=0.9)) #to fix warning There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
 ```
 
 ```
@@ -134,8 +135,8 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).
 ## Chain 1: 
-## Chain 1: Gradient evaluation took 3.9e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.39 seconds.
+## Chain 1: Gradient evaluation took 4.2e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.42 seconds.
 ## Chain 1: Adjust your expectations accordingly!
 ## Chain 1: 
 ## Chain 1: 
@@ -152,15 +153,15 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 1: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.09 seconds (Warm-up)
-## Chain 1:                0.095 seconds (Sampling)
-## Chain 1:                0.185 seconds (Total)
+## Chain 1:  Elapsed Time: 0.109 seconds (Warm-up)
+## Chain 1:                0.097 seconds (Sampling)
+## Chain 1:                0.206 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 9e-06 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
+## Chain 2: Gradient evaluation took 1e-05 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -177,15 +178,15 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 2: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.094 seconds (Warm-up)
-## Chain 2:                0.099 seconds (Sampling)
-## Chain 2:                0.193 seconds (Total)
+## Chain 2:  Elapsed Time: 0.103 seconds (Warm-up)
+## Chain 2:                0.098 seconds (Sampling)
+## Chain 2:                0.201 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 9e-06 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
+## Chain 3: Gradient evaluation took 2.4e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.24 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -202,9 +203,9 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 3: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.094 seconds (Warm-up)
-## Chain 3:                0.095 seconds (Sampling)
-## Chain 3:                0.189 seconds (Total)
+## Chain 3:  Elapsed Time: 0.106 seconds (Warm-up)
+## Chain 3:                0.098 seconds (Sampling)
+## Chain 3:                0.204 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 4).
@@ -227,11 +228,17 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 4: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.091 seconds (Warm-up)
-## Chain 4:                0.096 seconds (Sampling)
-## Chain 4:                0.187 seconds (Total)
+## Chain 4:  Elapsed Time: 0.106 seconds (Warm-up)
+## Chain 4:                0.099 seconds (Sampling)
+## Chain 4:                0.205 seconds (Total)
 ## Chain 4:
 ```
+
+``` r
+plot(meta.ldl.brm, ask=F)
+```
+
+![](figures/ldlc-bayesian-meta-1.png)<!-- -->
 
 ``` r
 summary(meta.ldl.brm)
@@ -248,11 +255,11 @@ summary(meta.ldl.brm)
 ## Multilevel Hyperparameters:
 ## ~Study (Number of levels: 11) 
 ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     1.09      1.97     0.02     6.50 1.00    13938     5110
+## sd(Intercept)     1.12      2.23     0.02     6.48 1.00    11696     4537
 ## 
 ## Regression Coefficients:
 ##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept     0.03      1.01    -1.94     1.99 1.00    16871     5589
+## Intercept     0.01      0.98    -1.93     1.98 1.00    13670     5364
 ## 
 ## Further Distributional Parameters:
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
@@ -267,7 +274,7 @@ summary(meta.ldl.brm)
 pp_check(meta.ldl.brm)
 ```
 
-![](figures/ldlc-bayesian-meta-1.png)<!-- -->
+![](figures/ldlc-bayesian-meta-2.png)<!-- -->
 
 ``` r
 ranef(meta.ldl.brm)
@@ -278,17 +285,17 @@ ranef(meta.ldl.brm)
 ## , , Intercept
 ## 
 ##               Estimate Est.Error  Q2.5 Q97.5
-## Al-Sarraj2010  0.02024      2.21 -3.55  3.77
-## Goday2016     -0.03155      2.14 -3.69  3.31
-## Hyde2019       0.00823      2.14 -3.42  3.46
-## Saslow2014    -0.01735      2.08 -3.37  3.24
-## Sharman2002   -0.01334      2.21 -3.55  3.57
-## Sharman2004    0.03563      2.19 -3.47  3.97
-## Sun2019        0.02328      2.27 -3.41  3.58
-## Urbain2017     0.02866      2.04 -3.32  3.39
-## Volek2003-4w   0.05027      2.11 -3.36  3.71
-## Volek2009      0.02633      2.15 -3.36  3.72
-## Volek2013      0.02403      2.14 -3.42  3.57
+## Al-Sarraj2010 -0.02391      2.15 -3.42  3.15
+## Goday2016     -0.01459      2.28 -3.65  3.62
+## Hyde2019      -0.00945      2.29 -3.53  3.53
+## Saslow2014     0.00347      2.31 -3.59  3.56
+## Sharman2002    0.03857      2.42 -3.33  3.58
+## Sharman2004   -0.01958      2.28 -3.47  3.51
+## Sun2019        0.03184      2.47 -3.27  3.82
+## Urbain2017     0.01916      2.36 -3.31  3.61
+## Volek2003-4w   0.09501      2.43 -3.33  3.97
+## Volek2009      0.04437      2.46 -3.41  3.72
+## Volek2013      0.03989      2.44 -3.66  3.68
 ```
 
 ``` r
@@ -308,7 +315,7 @@ ggplot(aes(x = smd), data = post.samples) +
   theme_minimal()
 ```
 
-![](figures/ldlc-bayesian-meta-2.png)<!-- -->
+![](figures/ldlc-bayesian-meta-3.png)<!-- -->
 
 ``` r
 ggplot(aes(x = tau), data = post.samples) +
@@ -321,16 +328,16 @@ ggplot(aes(x = tau), data = post.samples) +
   theme_minimal()
 ```
 
-![](figures/ldlc-bayesian-meta-3.png)<!-- -->
+![](figures/ldlc-bayesian-meta-4.png)<!-- -->
 
 ``` r
 #calculating exact
 smd.ecdf <- ecdf(post.samples$smd)
-smd.ecdf(0.3) #probability that effect is smaller than 0.3
+smd.ecdf(0) #probability that effect is greater than zero
 ```
 
 ```
-## [1] 0.604
+## [1] 0.496
 ```
 
 ``` r
@@ -385,10 +392,11 @@ ggplot(aes(b_Intercept,
         x = Inf), hjust = "inward") +
   labs(x = "Standardized Mean Difference", # summary measure
        y = element_blank()) +
+  lims(x=c(-5,5)) +
   theme_minimal()
 ```
 
-![](figures/ldlc-bayesian-meta-4.png)<!-- -->
+![](figures/ldlc-bayesian-meta-5.png)<!-- -->
 
 # Average Change in LDL-C
 

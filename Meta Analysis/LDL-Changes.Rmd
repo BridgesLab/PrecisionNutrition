@@ -124,14 +124,17 @@ The prior probabilities were set using these assumptions
 
 $$\hat\theta_k \sim N(\theta_k, \sigma^2_k)$$
 $$\theta_k \sim N(\mu, \tau^2) $$
-$$\mu \sim N(0,1) $$
+Presuming a normal distribution with a SD of 44 (the pooled SD but a mean of zero)
+
+$$\mu \sim N(0,44) $$
 $$\tau \sim HC(0,0.5)$$
 
 ```{r ldlc-bayesian-meta}
 #library(extraDistr)
 #phcauchy(0.3, sigma = 0.3)
 library(brms)
-priors <- c(prior(normal(0,1), class = Intercept),
+mean.sd <- mean(meta.data$Pooled.LDL.SD,na.rm=T)
+priors <- c(prior(normal(20,5), class = Intercept), #20 mg incresae seems clinically meaningful
             prior(cauchy(0,0.5), class = sd)) 
 
 meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),

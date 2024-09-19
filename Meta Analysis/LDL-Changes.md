@@ -23,7 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Thu Aug  1 19:34:18 2024.
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Aug  2 15:48:31 2024.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -53,7 +53,7 @@ eval.data <-
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Thu Aug  1 19:34:20 2024**.
+These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Aug  2 15:48:34 2024**.
 
 This analysis includes 22 studies with 463 total participants.
 
@@ -100,7 +100,9 @@ The prior probabilities were set using these assumptions
 
 $$\hat\theta_k \sim N(\theta_k, \sigma^2_k)$$
 $$\theta_k \sim N(\mu, \tau^2) $$
-$$\mu \sim N(0,1) $$
+Presuming a normal distribution with a SD of 44 (the pooled SD but a mean of zero)
+
+$$\mu \sim N(0,44) $$
 $$\tau \sim HC(0,0.5)$$
 
 
@@ -108,7 +110,8 @@ $$\tau \sim HC(0,0.5)$$
 #library(extraDistr)
 #phcauchy(0.3, sigma = 0.3)
 library(brms)
-priors <- c(prior(normal(0,1), class = Intercept),
+mean.sd <- mean(meta.data$Pooled.LDL.SD,na.rm=T)
+priors <- c(prior(normal(20,5), class = Intercept), #20 mg incresae seems clinically meaningful
             prior(cauchy(0,0.5), class = sd)) 
 
 meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
@@ -119,19 +122,6 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ```
 
 ```
-## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
-## using C compiler: ‘Apple clang version 11.0.0 (clang-1100.0.33.17)’
-## using SDK: ‘MacOSX10.15.sdk’
-## clang -arch x86_64 -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/RcppEigen/include/unsupported"  -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/StanHeaders/include/"  -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/RcppParallel/include/"  -I"/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DUSE_STANC3 -DSTRICT_R_HEADERS  -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION  -D_HAS_AUTO_PTR_ETC=0  -include '/Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/R/x86_64/include    -fPIC  -falign-functions=64 -Wall -g -O2  -c foo.c -o foo.o
-## In file included from <built-in>:1:
-## In file included from /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp:22:
-## In file included from /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/RcppEigen/include/Eigen/Dense:1:
-## In file included from /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/RcppEigen/include/Eigen/Core:19:
-## /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:679:10: fatal error: 'cmath' file not found
-## #include <cmath>
-##          ^~~~~~~
-## 1 error generated.
-## make: *** [foo.o] Error 1
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).
 ## Chain 1: 
@@ -153,15 +143,15 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 1: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 1: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 1: 
-## Chain 1:  Elapsed Time: 0.109 seconds (Warm-up)
-## Chain 1:                0.097 seconds (Sampling)
-## Chain 1:                0.206 seconds (Total)
+## Chain 1:  Elapsed Time: 0.118 seconds (Warm-up)
+## Chain 1:                0.1 seconds (Sampling)
+## Chain 1:                0.218 seconds (Total)
 ## Chain 1: 
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 2).
 ## Chain 2: 
-## Chain 2: Gradient evaluation took 1e-05 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
+## Chain 2: Gradient evaluation took 9e-06 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
 ## Chain 2: Adjust your expectations accordingly!
 ## Chain 2: 
 ## Chain 2: 
@@ -178,15 +168,15 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 2: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 2: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 2: 
-## Chain 2:  Elapsed Time: 0.103 seconds (Warm-up)
-## Chain 2:                0.098 seconds (Sampling)
-## Chain 2:                0.201 seconds (Total)
+## Chain 2:  Elapsed Time: 0.126 seconds (Warm-up)
+## Chain 2:                0.143 seconds (Sampling)
+## Chain 2:                0.269 seconds (Total)
 ## Chain 2: 
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 3).
 ## Chain 3: 
-## Chain 3: Gradient evaluation took 2.4e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.24 seconds.
+## Chain 3: Gradient evaluation took 1e-05 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
 ## Chain 3: Adjust your expectations accordingly!
 ## Chain 3: 
 ## Chain 3: 
@@ -203,9 +193,9 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 3: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 3: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 3: 
-## Chain 3:  Elapsed Time: 0.106 seconds (Warm-up)
-## Chain 3:                0.098 seconds (Sampling)
-## Chain 3:                0.204 seconds (Total)
+## Chain 3:  Elapsed Time: 0.12 seconds (Warm-up)
+## Chain 3:                0.109 seconds (Sampling)
+## Chain 3:                0.229 seconds (Total)
 ## Chain 3: 
 ## 
 ## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 4).
@@ -228,9 +218,9 @@ meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
 ## Chain 4: Iteration: 3600 / 4000 [ 90%]  (Sampling)
 ## Chain 4: Iteration: 4000 / 4000 [100%]  (Sampling)
 ## Chain 4: 
-## Chain 4:  Elapsed Time: 0.106 seconds (Warm-up)
-## Chain 4:                0.099 seconds (Sampling)
-## Chain 4:                0.205 seconds (Total)
+## Chain 4:  Elapsed Time: 0.122 seconds (Warm-up)
+## Chain 4:                0.111 seconds (Sampling)
+## Chain 4:                0.233 seconds (Total)
 ## Chain 4:
 ```
 
@@ -255,11 +245,11 @@ summary(meta.ldl.brm)
 ## Multilevel Hyperparameters:
 ## ~Study (Number of levels: 11) 
 ##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     1.12      2.23     0.02     6.48 1.00    11696     4537
+## sd(Intercept)     1.15      2.16     0.02     7.18 1.00    12545     4464
 ## 
 ## Regression Coefficients:
 ##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept     0.01      0.98    -1.93     1.98 1.00    13670     5364
+## Intercept    18.05      4.59     8.89    27.10 1.00    13910     5788
 ## 
 ## Further Distributional Parameters:
 ##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
@@ -285,17 +275,17 @@ ranef(meta.ldl.brm)
 ## , , Intercept
 ## 
 ##               Estimate Est.Error  Q2.5 Q97.5
-## Al-Sarraj2010 -0.02391      2.15 -3.42  3.15
-## Goday2016     -0.01459      2.28 -3.65  3.62
-## Hyde2019      -0.00945      2.29 -3.53  3.53
-## Saslow2014     0.00347      2.31 -3.59  3.56
-## Sharman2002    0.03857      2.42 -3.33  3.58
-## Sharman2004   -0.01958      2.28 -3.47  3.51
-## Sun2019        0.03184      2.47 -3.27  3.82
-## Urbain2017     0.01916      2.36 -3.31  3.61
-## Volek2003-4w   0.09501      2.43 -3.33  3.97
-## Volek2009      0.04437      2.46 -3.41  3.72
-## Volek2013      0.03989      2.44 -3.66  3.68
+## Al-Sarraj2010  -0.0341      2.31 -3.44  3.47
+## Goday2016      -0.0581      2.39 -4.17  3.46
+## Hyde2019       -0.0759      2.34 -3.91  3.39
+## Saslow2014     -0.0984      2.59 -4.23  3.44
+## Sharman2002    -0.0150      2.35 -3.79  3.49
+## Sharman2004    -0.0460      2.50 -3.93  3.50
+## Sun2019        -0.0138      2.43 -3.78  3.80
+## Urbain2017      0.0204      2.45 -3.78  3.66
+## Volek2003-4w   -0.0185      2.26 -3.51  3.66
+## Volek2009      -0.0167      2.33 -3.90  3.60
+## Volek2013      -0.0377      2.40 -3.71  3.30
 ```
 
 ``` r
@@ -337,7 +327,7 @@ smd.ecdf(0) #probability that effect is greater than zero
 ```
 
 ```
-## [1] 0.496
+## [1] 0.00025
 ```
 
 ``` r

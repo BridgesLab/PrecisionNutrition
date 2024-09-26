@@ -1,0 +1,71 @@
+---
+title: "HFD and NCD Overlap Probabilities"
+author: "Dave Bridges"
+date: "September 26, 2024"
+format: html
+---
+
+## Approach
+
+I wanted to use a Bayesian approach to estimate the probabilities that two QTLs ovrlap a lot or a litte.  Used perplexity.ai to help with this
+
+## Initial Conditions
+
+```{r initial-hypothses}
+#defining low and high overlap in terms of the number of transcipts/QTLs that would overlap
+low.overlap <- 0.2
+high.overlap <- 0.8
+
+#80% prior probablity of high overlap
+prior.low.overlap <- 0.5
+prior.high.overlap <- 1-prior.low.overlap
+```
+
+## QTLs
+
+The observed data for QTLs
+
+```{r qtl-data}
+qtls <- 23
+overlapping.qtls <- 3
+colocalized.qtls <- 1
+```
+
+### Calculating Likelihoods
+
+Calculated this from a binomial distribution.
+
+```{r qtl-probabilities}
+high.overlap.likelihood.qtl <- dbinom(colocalized.qtls,
+                                      size = qtls,
+                                      prob = high.overlap)
+low.overlap.likelihood.qtl <- dbinom(colocalized.qtls,
+                                     size = qtls,
+                                     prob = low.overlap)
+```
+
+### Calculating Bayes Factors
+
+$$BF = \frac{P(Data|H_{low-overlap})}{P(Data|H_{high-overlap})}$$
+```{r qtl-bayes-factor}
+bf.qtl <- low.overlap.likelihood.qtl/high.overlap.likelihood.qtl
+```
+
+The Bayes factor for the QTLs favoring the low overlap hypothesis over the high overlap hypothesis is `r bf.qtl`.
+
+### Posterior Probabilities
+
+Calculated using $$P(H_{low-overlap}|Data) = \frac{BF * P(H_{low-overlap})}{BF * P(H_{low-overlap}) + P(H_{high-overlap})}$$
+
+```{r qtl-pp}
+qtl.pp <- bf.qtl*prior.low.overlap/(bf.qtl*prior.low.overlap+prior.high.overlap)
+```
+
+The posterior probabilty is then `r qtl.pp` favoriting the low overlap hypothesis.
+
+## Session Information
+
+```{r session-info}
+sessionInfo()
+```
+

@@ -103,10 +103,32 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 </head>
 
-<body class="fullcontent">
+<body>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#approach" id="toc-approach" class="nav-link active" data-scroll-target="#approach">Approach</a></li>
+  <li><a href="#initial-conditions" id="toc-initial-conditions" class="nav-link" data-scroll-target="#initial-conditions">Initial Conditions</a></li>
+  <li><a href="#qtls" id="toc-qtls" class="nav-link" data-scroll-target="#qtls">QTLs</a>
+  <ul class="collapse">
+  <li><a href="#calculating-likelihoods" id="toc-calculating-likelihoods" class="nav-link" data-scroll-target="#calculating-likelihoods">Calculating Likelihoods</a></li>
+  <li><a href="#calculating-bayes-factors" id="toc-calculating-bayes-factors" class="nav-link" data-scroll-target="#calculating-bayes-factors">Calculating Bayes Factors</a></li>
+  <li><a href="#posterior-probabilities" id="toc-posterior-probabilities" class="nav-link" data-scroll-target="#posterior-probabilities">Posterior Probabilities</a></li>
+  </ul></li>
+  <li><a href="#transcript---cholesterol-associations" id="toc-transcript---cholesterol-associations" class="nav-link" data-scroll-target="#transcript---cholesterol-associations">Transcript - Cholesterol Associations</a>
+  <ul class="collapse">
+  <li><a href="#calculating-likelihoods-1" id="toc-calculating-likelihoods-1" class="nav-link" data-scroll-target="#calculating-likelihoods-1">Calculating Likelihoods</a></li>
+  <li><a href="#calculating-bayes-factors-1" id="toc-calculating-bayes-factors-1" class="nav-link" data-scroll-target="#calculating-bayes-factors-1">Calculating Bayes Factors</a></li>
+  <li><a href="#posterior-probabilities-1" id="toc-posterior-probabilities-1" class="nav-link" data-scroll-target="#posterior-probabilities-1">Posterior Probabilities</a></li>
+  </ul></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -140,16 +162,16 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <section id="approach" class="level2">
 <h2 class="anchored" data-anchor-id="approach">Approach</h2>
-<p>I wanted to use a Bayesian approach to estimate the probabilities that two QTLs ovrlap a lot or a litte. Used perplexity.ai to help with this</p>
+<p>I wanted to use a Bayesian approach to estimate the probabilities that two QTLs overlap a lot or a litte. Used [perplexity.ai] to help with this. This script was last run on Sun Oct 6 18:27:22 2024, and can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Cholesterol.</p>
 </section>
 <section id="initial-conditions" class="level2">
 <h2 class="anchored" data-anchor-id="initial-conditions">Initial Conditions</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co">#defining low and high overlap in terms of the number of transcipts/QTLs that would overlap</span></span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>low.overlap <span class="ot">&lt;-</span> <span class="fl">0.2</span></span>
-<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>high.overlap <span class="ot">&lt;-</span> <span class="fl">0.8</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>low.overlap <span class="ot">&lt;-</span> <span class="fl">0.20</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>high.overlap <span class="ot">&lt;-</span> <span class="fl">0.80</span></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#80% prior probablity of high overlap</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co">#50% prior probablity of high overlap, considering both hypotheses equally likely</span></span>
 <span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>prior.low.overlap <span class="ot">&lt;-</span> <span class="fl">0.5</span></span>
 <span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>prior.high.overlap <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">-</span>prior.low.overlap</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
@@ -180,7 +202,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell">
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>bf.qtl <span class="ot">&lt;-</span> low.overlap.likelihood.qtl<span class="sc">/</span>high.overlap.likelihood.qtl</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The Bayes factor for the QTLs favoring the low overlap hypothesis over the high overlap hypothesis is 4.3980465^{12}.</p>
+<p>The Bayes factor for the QTLs favoring the low overlap hypothesis over the high overlap hypothesis is 4.3980465^{12}. This is based on likelihoods of 0.033942 for the low overlap hypothesis and 7.7175194^{-15} for the high overlap hypothesis.</p>
 </section>
 <section id="posterior-probabilities" class="level3">
 <h3 class="anchored" data-anchor-id="posterior-probabilities">Posterior Probabilities</h3>
@@ -191,10 +213,46 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <p>The posterior probabilty is then 1 favoriting the low overlap hypothesis.</p>
 </section>
 </section>
+<section id="transcript---cholesterol-associations" class="level2">
+<h2 class="anchored" data-anchor-id="transcript---cholesterol-associations">Transcript - Cholesterol Associations</h2>
+<p>The observed data for mRNA transcript associations with cholesterol.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>genes.ncd <span class="ot">&lt;-</span> <span class="dv">1677</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>overlapping.genes <span class="ot">&lt;-</span> <span class="dv">115</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="calculating-likelihoods-1" class="level3">
+<h3 class="anchored" data-anchor-id="calculating-likelihoods-1">Calculating Likelihoods</h3>
+<p>Calculated this from a binomial distribution.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>high.overlap.likelihood.genes <span class="ot">&lt;-</span> <span class="fu">dbinom</span>(overlapping.genes,</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">size =</span> genes.ncd,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>                                      <span class="at">prob =</span> high.overlap)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>low.overlap.likelihood.genes <span class="ot">&lt;-</span> <span class="fu">dbinom</span>(overlapping.genes,</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">size =</span> genes.ncd,</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">prob =</span> low.overlap)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="calculating-bayes-factors-1" class="level3">
+<h3 class="anchored" data-anchor-id="calculating-bayes-factors-1">Calculating Bayes Factors</h3>
+<p><span class="math display">\[BF = \frac{P(Data|H_{low-overlap})}{P(Data|H_{high-overlap})}\]</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>bf.genes <span class="ot">&lt;-</span> low.overlap.likelihood.genes<span class="sc">/</span>high.overlap.likelihood.genes</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The Bayes factor for the QTLs favoring the low overlap hypothesis over the high overlap hypothesis is (calculated as infinity by R). This is based on likelihoods of 7.2879646^{-52} for the low overlap hypothesis and 0 for the high overlap hypothesis.</p>
+</section>
+<section id="posterior-probabilities-1" class="level3">
+<h3 class="anchored" data-anchor-id="posterior-probabilities-1">Posterior Probabilities</h3>
+<p>Calculated using <span class="math display">\[P(H_{low-overlap}|Data) = \frac{BF * P(H_{low-overlap})}{BF * P(H_{low-overlap}) + P(H_{high-overlap})}\]</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>genes.pp <span class="ot">&lt;-</span> bf.genes<span class="sc">*</span>prior.low.overlap<span class="sc">/</span>(bf.genes<span class="sc">*</span>prior.low.overlap<span class="sc">+</span>prior.high.overlap)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>The posterior probabilty is then NaN favoriting the low overlap hypothesis (This is calculated by R as indistinguishable from 1).</p>
+</section>
+</section>
 <section id="session-information" class="level2">
 <h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.4.1 (2024-06-14)
 Platform: x86_64-apple-darwin20

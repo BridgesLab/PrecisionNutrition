@@ -118,6 +118,71 @@ ncd.clumps %>%
 
 ```
 
+
+## Extracting Genes for Each Clumped Region
+
+```{r gene-extraction}
+library(biomaRt)
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+#function to get genes for a region
+get_genes_for_region <- function(chr, start, end) {
+  getBM(
+    attributes = c("ensembl_gene_id", "external_gene_name", "gene_biotype", "start_position", "end_position", "strand"),
+    filters = c("chromosome_name", "start", "end"),
+    values = list(chr, start, end),
+    mart = ensembl
+  ) %>%
+    as_tibble() %>%
+    mutate(
+      chromosome = chr,
+      region_start = start,
+      region_end = end
+    )
+}
+
+# Apply the function to each row of the hfd dataframe
+hfd.clumps.genes <- 
+  hfd.clumps %>%
+  filter(Min_Position != Inf) %>%
+  rowwise() %>%
+  mutate(genes = list(get_genes_for_region(CHR, Min_Position, Max_Position))) %>%
+  unnest(genes)
+
+# Process the results
+hfd.clumps.genes <- hfd.clumps.genes %>%
+  mutate(
+    strand = ifelse(strand == 1, "+", "-"),
+    gene_length = end_position - start_position
+  ) %>%
+  arrange(chromosome, start_position)
+
+output.hfd.clumps <- "HFD Regions - Annotated.csv"
+write_csv(hfd.clumps.genes,output.hfd.clumps)
+
+# Apply the function to each row of the hfd dataframe
+ncd.clumps.genes <- 
+  ncd.clumps %>%
+  filter(Min_Position != Inf) %>%
+  rowwise() %>%
+  mutate(genes = list(get_genes_for_region(CHR, Min_Position, Max_Position))) %>%
+  unnest(genes)
+
+# Process the results
+ncd.clumps.genes <-
+  ncd.clumps.genes %>%
+  mutate(
+    strand = ifelse(strand == 1, "+", "-"),
+    gene_length = end_position - start_position
+  ) %>%
+  arrange(chromosome, start_position)
+
+output.ncd.clumps <- "NCD Regions - Annotated.csv"
+write_csv(ncd.clumps.genes,output.ncd.clumps)
+```
+
+Wrote out annotated files with regions and ovrlapping genes into `r output.ncd.clumps` and `r output.hfd.clumps`.
+
 ## Generating SNP Lists
 
 For Coloc analyses we needed QTL regions for each SNP.  These will be fed into `Coloc-diet-analysis.qmd` for further analysis.  These regions are pasted into ld-calculations/diet-specific-regions

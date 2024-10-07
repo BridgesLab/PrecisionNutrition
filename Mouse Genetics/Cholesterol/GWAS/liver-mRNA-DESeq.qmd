@@ -1,14 +1,15 @@
 ---
-title: "Liver mRNA Setup"
+title: "Liver mRNA TWAS Analysis"
 author: "Dave Bridges"
 format: html
-editor: visual
+editor: source
 ---
 
 ```{r load}
 library(readr)
 library(dplyr)
 library(tidyr)
+library(broom)
 rna.datatfile <- 'dataset.mrna.Svenson_DO_HFD.v12.Rds'
 all.data <- readRDS(rna.datatfile)
 ```
@@ -75,6 +76,16 @@ counts.table <-  t(rna.data.raw) %>% #get normalized counts table %>%
   select(all_of(rownames(pheno.data.seq))) %>% #only counts tables with phenotype data
   mutate_all(as.integer) # made them all integers
 
+counts.table.ncd <- t(rna.data.raw) %>% #get normalized counts table %>%
+  as.data.frame %>%
+  select(all_of(rownames(pheno.data.seq %>% filter(diet=='chow')))) %>% #only counts tables with phenotype data and on chow
+  mutate_all(as.integer) # made them all integers
+
+counts.table.hf <- t(rna.data.raw) %>% #get normalized counts table %>%
+  as.data.frame %>%
+  select(all_of(rownames(pheno.data.seq %>% filter(diet=='hf')))) %>% #only counts tables with phenotype data and on hf
+  mutate_all(as.integer) # made them all integers
+
 #confirming they are present and in the right order
 all(rownames(pheno.data.seq) %in% colnames(counts.table))
 all(rownames(pheno.data.seq) == colnames(counts.table))
@@ -113,6 +124,17 @@ normalized.counts <-  counts(dds.simple, normalized=TRUE)%>%  #get normalized co
   as.data.frame %>%
   select(all_of(rownames(pheno.data.seq))) %>% #only counts tables with phenotype data
   mutate_all(as.integer) # made them all integers
+
+write_tsv(as.data.frame(t(normalized.counts)),'Normalized_counts.tsv') # this is all the counts f or the sequenced data, what we want is a 835 long by 11770 wide table with a lot of NAs (for the samples 835-478 samples that were not sequenced)
+genotype.file <- 'DO_HFD_Genome_All.csv'
+genotype.data <- read_csv(genotype.file)
+
+strains.in.order <- 
+  genotype.data %>%
+  dplyr::select(-Locus.Combined) %>%
+  colnames
+
+as.data.frame(t(normalized.counts))[strains.in.order,] %>% write_tsv(file="mRNA_Expression_all.txt")
 ```
 
 ## Adjusting for Diet and Cholesterol
@@ -182,13 +204,13 @@ write_csv(as.data.frame(results.sex.annotated), "Cholesterol TWAS - Sex Adjusted
 
 ```{r }
 library(knitr)
-Genes.of.interest <- c("Apoa2", "Nrp4", "Acmsd", "Efcab2","Cdkal1","Apoa1","Scarb1")
+Genes.of.interest <- c("Apoa2","Cdkal1","Apoa1","Scarb1","Mup12","Cyp2c69","Ly6d","Pnpla3","Sult2a7","Lpin1", "Asap2", "Ppp2r5e", "Syne2", "Gphn", "Dusp22", "Foxq1", "Gadd45g", "Ctla2a", "Ntrk2", "Naip2", "Mrps27", "Marveld2", "Cd180", "Pde4d")
 results.sex.annotated %>% 
   filter(symbol %in% Genes.of.interest) %>% 
   kable
 ```
 
-# QTL position nominated associated mRNA 
+# QTL position nominated associated mRNA
 
 ```{r}
 #Peak 12a
@@ -232,11 +254,288 @@ results.sex.annotated %>%
 
 Still adjusting for sex
 
+```{r twas-ncd}
+dds.ncd <- DESeqDataSetFromMatrix(countData = counts.table.ncd,
+                              colData = pheno.data.seq %>% filter(diet=='chow'),
+                              design = ~ sex + chol2.scale)
+
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds.ncd) >= 10) >= smallestGroupSize
+dds.ncd <- dds.ncd[keep,]
+dds.ncd <- DESeq(dds.ncd)
+vsd.ncd <- vst(dds.ncd, blind=FALSE)
+#rld.ncd <- rlog(dds.ncd, blind=FALSE)
+results.ncd <- results(dds.ncd, alpha=0.05)
+results.ncd %>% summary
+plotMA(results.ncd)
+plotPCA(vsd.ncd, intgroup=c('sex'))
+
+results.ncd <- results(dds.ncd)
+results.ncd %>% 
+  as.data.frame %>%
+  rownames_to_column('gene.id') %>%
+  left_join(gene.annotation,by=c('gene.id'))%>% 
+  arrange(-abs(log2FoldChange)) -> results.ncd.annotated
+
+results.ncd.annotated %>%
+  filter(padj<0.05) %>%
+  knitr::kable(caption="Significant genes by fold change on NCD, adjusting for sex")
+write_csv(as.data.frame(results.ncd.annotated), "Cholesterol TWAS - NCD Only - Sex Adjusted.csv")
+```
+
 ## HFD Only TWAS
 
 Still adjusting for sex
 
+```{r twas-hfd}
+dds.hfd <- DESeqDataSetFromMatrix(countData = counts.table.hf,
+                              colData = pheno.data.seq %>% filter(diet=='hf'),
+                              design = ~ sex + chol2.scale)
+
+smallestGroupSize <- 3
+keep <- rowSums(counts(dds.hfd) >= 10) >= smallestGroupSize
+dds.hfd <- dds.hfd[keep,]
+dds.hfd <- DESeq(dds.hfd)
+vsd.hfd <- vst(dds.hfd, blind=FALSE)
+#rld.hfd <- rlog(dds.hfd, blind=FALSE)
+results.hfd <- results(dds.hfd, alpha=0.05)
+results.hfd %>% summary
+plotMA(results.hfd)
+plotPCA(vsd.hfd, intgroup=c('sex'))
+
+results.hfd <- results(dds.hfd)
+results.hfd %>% 
+  as.data.frame %>%
+  rownames_to_column('gene.id') %>%
+  left_join(gene.annotation,by=c('gene.id'))%>% 
+  arrange(-abs(log2FoldChange)) -> results.hfd.annotated
+
+results.hfd.annotated %>%
+  filter(padj<0.05) %>%
+  knitr::kable(caption="Significant genes by fold change on HFD, adjusting for sex")
+write_csv(as.data.frame(results.hfd.annotated), "Cholesterol TWAS - HFD Only - Sex Adjusted.csv")
+```
+
+
+# Comparason of NCD and HFD TWAS
+
+```{r twas-ncd-hfd}
+library(ggplot2)
+merged.results.data <- full_join(results.ncd.annotated,results.hfd.annotated, 
+                         by=c('symbol','gene.id','chr','start','end','strand','middle','nearest.marker.id','start.true','end.true'),
+                         suffix=c('_ncd','_hfd'))
+
+library(ggrepel)
+ggplot(merged.results.data,
+       aes(y=log2FoldChange_hfd,
+           x=log2FoldChange_ncd,
+           label=symbol)) +
+  geom_point() +
+  geom_hline(yintercept=0,lty=2) +
+  geom_vline(xintercept=0,lty=2) +
+  #ylim=c(-4,4) +
+  #xlim=c(-4,4) +
+  geom_label_repel() +
+  theme_classic()
+
+ggplot(merged.results.data %>% filter(padj_ncd<0.05|padj_hfd<0.05),
+       aes(y=log2FoldChange_hfd,
+           x=log2FoldChange_ncd,
+           label=symbol)) +
+  geom_point() +
+  geom_hline(yintercept=0,lty=2) +
+  geom_vline(xintercept=0,lty=2) +
+  #ylim=c(-4,4) +
+  #xlim=c(-4,4) +
+  geom_label_repel() +
+  theme_classic() +
+  labs(title="Significant for NCD or HFD only")
+
+ggplot(merged.results.data %>% filter(baseMean_ncd>mean(baseMean_ncd,na.rm=T)),
+       aes(y=log2FoldChange_hfd,
+           x=log2FoldChange_ncd,
+           label=symbol)) +
+  geom_point() +
+  geom_hline(yintercept=0,lty=2) +
+  geom_vline(xintercept=0,lty=2) +
+  #ylim=c(-4,4) +
+  #xlim=c(-4,4) +
+  geom_label_repel() +
+  theme_classic() +
+  labs(title="Only above mean expression")
+
+ggplot(merged.results.data, 
+       aes(y=log2FoldChange_hfd, x=log2FoldChange_ncd,
+           xmin=log2FoldChange_ncd-lfcSE_ncd,
+            xmax=log2FoldChange_ncd+lfcSE_ncd,
+           ymin=log2FoldChange_hfd-lfcSE_hfd, 
+           ymax=log2FoldChange_hfd+lfcSE_hfd )) +
+  geom_point() +
+  #geom_errorbar() +
+  #geom_errorbarh() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  geom_label_repel(aes(label=symbol),
+                   data = subset(merged.results.data, abs(log2FoldChange_hfd) > 1|abs(log2FoldChange_ncd) > 1))
+
+sig.genes <- filter(merged.results.data, padj_ncd<0.05&padj_hfd<0.05) %>% pull(symbol)
+ggplot(merged.results.data %>% filter(symbol %in% sig.genes), 
+       aes(y=log2FoldChange_hfd, x=log2FoldChange_ncd,
+           xmin=log2FoldChange_ncd-lfcSE_ncd,
+            xmax=log2FoldChange_ncd+lfcSE_ncd,
+           ymin=log2FoldChange_hfd-lfcSE_hfd, 
+           ymax=log2FoldChange_hfd+lfcSE_hfd )) +
+  geom_point() +
+  geom_errorbar() +
+  geom_errorbarh() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  geom_text_repel(aes(label=symbol))
+ggplot(merged.results.data %>% filter(symbol %in% sig.genes), 
+       aes(y=log2FoldChange_hfd, x=log2FoldChange_ncd,
+           xmin=log2FoldChange_ncd-lfcSE_ncd,
+            xmax=log2FoldChange_ncd+lfcSE_ncd,
+           ymin=log2FoldChange_hfd-lfcSE_hfd, 
+           ymax=log2FoldChange_hfd+lfcSE_hfd )) +
+  geom_point() +
+  geom_errorbar() +
+  geom_errorbarh() +
+  geom_smooth() +
+  geom_hline(yintercept = 0, lty=2) +
+  geom_vline(xintercept = 0, lty=2) +
+  xlim(-0.03,0.03) +
+  ylim(-0.03,0.03) +
+  geom_text_repel(aes(label=symbol)) +
+  labs(y="On HFHS Diet (beta)",
+       x="On NCD Diet (beta)",
+       title="Associations of Liver Transcripts with Cholesterol",
+       subtitle="Significant for at least one diet")
+
+
+cutoff <- -log10(0.05)
+ggplot(merged.results.data, 
+       aes(y=-log10(padj_hfd), x=-log10(padj_ncd) )) +
+  geom_point() +
+  #geom_errorbar() +
+  #geom_errorbarh() +
+  geom_hline(yintercept = -log10(0.05), lty=2) +
+  geom_vline(xintercept = -log10(0.05), lty=2) +
+  geom_text_repel(aes(label=symbol),
+                   data = subset(merged.results.data, -log10(padj_hfd) > cutoff|-log10(padj_ncd) > cutoff)) +
+  labs(y="On HFHS Diet (log10 q-value)",
+       x="On NCD Diet (log10 q-value)",
+       title="Associations of Liver Transcripts with Cholesterol") +
+  theme_classic() +
+  theme(text=element_text(size=16))
+```
+
+
+# Overlap betwee NCD and HFD Results
+
+```{r venn-diagrams-overlap}
+sig.ncd.up <- filter(results.ncd.annotated, padj<0.05&log2FoldChange>0) %>% pull(symbol)
+sig.ncd.down <- filter(results.ncd.annotated, padj<0.05&log2FoldChange<0) %>% pull(symbol)
+sig.hfd.up <- filter(results.hfd.annotated, padj<0.05&log2FoldChange>0) %>% pull(symbol)
+sig.hfd.down <- filter(results.hfd.annotated, padj<0.05&log2FoldChange<0) %>% pull(symbol)
+
+sig.hfd.up %in% sig.ncd.up %>% table %>% kable(caption="HFD TWAS in NCD TWAS, upregulated genes only") 
+sig.hfd.down %in% sig.ncd.down %>% table %>% kable(caption="HFD TWAS in NCD TWAS, downregulated genes only") 
+
+
+library(venneuler)
+vd.up <- venneuler(c("NCD"=length(sig.ncd.up),
+                      "HFHS"=length(sig.hfd.up),
+                       "NCD&HFHS"=intersect(sig.hfd.up,sig.ncd.up) %>% length()))
+plot(vd.up, main="Genes Positively Associated with Cholesterol Levels")
+
+vd.down <- venneuler(c("NCD"=length(sig.ncd.down),
+                      "HFHS"=length(sig.hfd.down),
+                       "NCD&HFHS"=intersect(sig.hfd.down,sig.ncd.down) %>% length()))
+plot(vd.down, main="Genes Inversely Associated with Cholesterol Levels")
+
+#now with nominal p-values
+sig.ncd.up <- filter(results.ncd.annotated, pvalue<0.05&log2FoldChange>0) %>% pull(symbol)
+sig.ncd.down <- filter(results.ncd.annotated, pvalue<0.05&log2FoldChange<0) %>% pull(symbol)
+sig.hfd.up <- filter(results.hfd.annotated, pvalue<0.05&log2FoldChange>0) %>% pull(symbol)
+sig.hfd.down <- filter(results.hfd.annotated, pvalue<0.05&log2FoldChange<0) %>% pull(symbol)
+
+with(merged.results.data, table(
+      "NCD"=padj_ncd<0.05,
+      "HFD"=padj_hfd<0.05)) -> overlap.table
+rownames(overlap.table) <- c("NCD-ns","NCD-sig")
+
+kable(overlap.table, 
+      caption="Genes with significant associations with cholesterol in each group",
+      col.names = c("HFD-ns","HFD-sig"))
+
+fisher.test(overlap.table) %>% tidy %>%
+  kable(caption="Fisher test for enrichment of adjusted significant genes")
+
+sig.hfd.up %in% sig.ncd.up %>% table %>% kable(caption="HFD TWAS in NCD TWAS, upregulated genes only") 
+sig.hfd.down %in% sig.ncd.down %>% table %>% kable(caption="HFD TWAS in NCD TWAS, downregulated genes only") 
+
+
+vd.up <- venneuler(c("NCD"=length(sig.ncd.up),
+                      "HFHS"=length(sig.hfd.up),
+                       "NCD&HFHS"=intersect(sig.hfd.up,sig.ncd.up) %>% length()))
+plot(vd.up, main="Genes Positively Associated with Cholesterol Levels",
+     sub="Nominal Significance")
+
+vd.down <- venneuler(c("NCD"=length(sig.ncd.down),
+                      "HFHS"=length(sig.hfd.down),
+                       "NCD&HFHS"=intersect(sig.hfd.down,sig.ncd.down) %>% length()))
+plot(vd.down, main="Genes Inversely Associated with Cholesterol Levels",
+     sub="Nominal Significance")
+
+with(merged.results.data, table(
+      "NCD"=pvalue_ncd<0.05,
+      "HFD"=pvalue_hfd<0.05)) -> overlap.table
+rownames(overlap.table) <- c("NCD-ns","NCD-sig")
+
+kable(overlap.table, 
+      caption="Genes with nominally significant associations with cholesterol in each group",
+      col.names = c("HFD-ns","HFD-sig"))
+
+fisher.test(overlap.table) %>% tidy %>%
+  kable(caption="Fisher test for enrichment of nominally significant genes")
+```
+
+
+There were a total of **`r length(sig.ncd.up)+length(sig.ncd.down)`** significantly different genes on normal chow diet and **`r length(sig.hfd.up)+length(sig.hfd.down)`** on high fat, high sucrose diet.  
+
 # Plots of Gene-Cholesterol Relationships
+
+Genes that were identified by both DO HFD viewer and by the TWAS analysis per peak.
+
+12a: high impact variants via Svenson lab, Lpin1 (Intron, downstream, noncoding trans exon) (Asap2 position nom, interesting from TWAS but not DOHFD viewer) 
+
+12b: high impact variants via Svenson lab, Ppp2r5e (missense F/L) Syne2 (missense), (just TWAS, Gphn)
+-has missense filter for GWAS 
+
+13a: only cdkl1 (NMD transcript, downstream, intron, missense for C57->L/M), TWAS ONLY: (Dusp22 (NMD transcript, intron), Foxq1(3and 5 prime UTR, downstream  
+-Dusp22 and foxq1 were not top hits for Svenson data but removing the filter reveals the type of variant
+
+13b: Gadd45g (missense A/S) (Ctla2a, Ntrk2, TWAS only) 
+
+13c: Naip2 (missense, H/L, G/R, D/N) Mrps27 (missense P/S) Marveld2 (missense S/L) (Cd180 Pde4d, TWAS only) 
+-Has missense filter on GWAS
+
+##Difference in mRNA expression and cholesterol plots between diets 
+-Criteria: low expression in liver tissue
+-mrps27 (plot 13)
+-marveld2 (plot 7)
+-Cd180 (plot 6)
+-Lpin1 (plot 3)
+-Naip2 (plot 21)
+-Dusp22 (plot 20)
+-Cdkal1 (plot 2)
+-Syne2 (plot 19)
+-Ntrk2 (plot 18)
+-Asap2 (plot 17)
+-Ctl2a (plot 15)
+-Pnpla3 (plot 14)
+-Ly6d (plot 10)
+
 
 ```{r mRNA-cholesterol-plots}
 gene.ids <- 
@@ -253,8 +552,8 @@ for (row in rownames(gene.ids)) {
   gene.counts.chol <- merge(gene.counts,pheno.data.seq,by='row.names') %>%
     dplyr::rename('Expression'=2)
   print(ggplot(gene.counts.chol,
-         aes(y=Expression,
-             x=chol2,
+         aes(y=chol2,
+             x=Expression,
              col=sex)) +
     geom_point(size=0.5) +
     facet_grid(.~diet) +

@@ -29,9 +29,11 @@ hfd.clump.data <- read_csv(hfd.clump.filename)
 ```{r twas-data-entry}
 twas.ncd.filename <- 'Cholesterol TWAS - NCD Only - Sex Adjusted.csv' 
 twas.hfd.filename <- 'Cholesterol TWAS - HFD Only - Sex Adjusted.csv' 
+twas.all.filename <- 'Cholesterol TWAS - Sex Adjusted.csv'
 
 twas.ncd.data <- read_csv(twas.ncd.filename)
 twas.hfd.data <- read_csv(twas.hfd.filename)
+twas.all.data <- read_csv(twas.all.filename) 
 ```
 
 ## High Fat Diet TWAS and QTL Hits
@@ -62,6 +64,25 @@ twas.ncd.data %>%
   kable(caption="Nominally significant TWAS hits inside QTL regions on NCD")
 ```
 
+## Diet-Independent TWAS and QTL Hits
+
+First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under HFD conditions
+
+```{r twas-all-overlap}
+twas.all.data %>%
+  filter(symbol %in% ncd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true) %>%
+  arrange(chr,start.true) %>% 
+  kable(caption="Significant TWAS hits inside NCD QTL regions where TWAS is sex-adjusted but not diet specific")
+
+twas.all.data %>%
+  filter(symbol %in% hfd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true) %>%
+  arrange(chr,start.true) %>% 
+  kable(caption="Significant TWAS hits inside HFD QTL regions where TWAS is sex-adjusted but not diet specific")
+```
 
 # Session Information
 

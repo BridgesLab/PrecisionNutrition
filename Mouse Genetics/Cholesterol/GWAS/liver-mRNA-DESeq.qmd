@@ -204,7 +204,7 @@ write_csv(as.data.frame(results.sex.annotated), "Cholesterol TWAS - Sex Adjusted
 
 ```{r }
 library(knitr)
-Genes.of.interest <- c("Apoa2","Cdkal1","Apoa1","Scarb1","Mup12","Cyp2c69","Ly6d","Pnpla3","Sult2a7","Lpin1", "Asap2", "Ppp2r5e", "Syne2", "Gphn", "Dusp22", "Foxq1", "Gadd45g", "Ctla2a", "Ntrk2", "Naip2", "Mrps27", "Marveld2", "Cd180", "Pde4d")
+Genes.of.interest <- c("Apoa2","Cdkal1","Apoa1","Scarb1","Mup12","Cyp2c69","Ly6d","Pnpla3","Sult2a7","Lpin1", "Asap2", "Ppp2r5e", "Syne2", "Gphn", "Dusp22", "Foxq1", "Gadd45g", "Ctla2a", "Ntrk2", "Naip2", "Mrps27", "Marveld2", "Cd180", "Pde4d","Serpinb6b","Crybg3","Rian","Meg3","Slc34a2","Itih5","Acacb","Oas1a")
 results.sex.annotated %>% 
   filter(symbol %in% Genes.of.interest) %>% 
   kable
@@ -559,8 +559,8 @@ for (row in rownames(gene.ids)) {
     facet_grid(.~diet) +
     geom_smooth(method="lm") +
     theme_classic(base_size=18) +
-    labs(y="mRNA Expression",
-         x="Cholesterol (mg/dL)",
+    labs(x="mRNA Expression",
+         y="Cholesterol (mg/dL)",
          title=gene.symbol))
 }
 ```

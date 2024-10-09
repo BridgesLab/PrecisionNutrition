@@ -393,6 +393,14 @@ cholesterol.data %>%
   kable(caption="Total calcium values for complete DO dataset")
 
 cholesterol.data %>%
+  group_by(sex,diet) %>%
+  filter(!is.na(calcium2)) %>%
+  summarize(mean = mean(calcium2),
+            sd = sd(calcium2),
+            se = se(calcium2)) %>%
+  kable(caption="Summary statistics for calcium levels from complete DO dataset")
+
+cholesterol.data %>%
   ggplot(aes(y=calcium2,x=sex,
              fill=Diet)) +
   geom_violin() +

@@ -62,6 +62,11 @@ Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of t
 ``` r
 library(qqman)
 qq(lmm.additive.data$p_wald)
+```
+
+![](figures-sex/lmm-additive-1.png)<!-- -->
+
+``` r
 suggestive.pval <- 1E-5
 genome.pval <- 5E-8
 
@@ -137,11 +142,6 @@ Table: Relaxed suggestive genome-wide significant associations from mixed linear
 
 ``` r
 library(ggmanh)
-```
-
-![](figures-sex/lmm-additive-1.png)<!-- -->
-
-``` r
 manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice (females, Additive Model)", y.label = "LOD Score")
 ```
 
@@ -1163,21 +1163,20 @@ sessionInfo()
 ## 
 ## other attached packages:
 ##  [1] cowplot_1.1.3 forcats_1.0.0 ggmanh_1.8.0  ggplot2_3.5.1 qqman_0.1.9  
-##  [6] broom_1.0.6   dplyr_1.1.4   tidyr_1.3.1   readr_2.1.5   knitr_1.48   
+##  [6] broom_1.0.7   dplyr_1.1.4   tidyr_1.3.1   readr_2.1.5   knitr_1.49   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] sass_0.4.9         utf8_1.2.4         generics_0.1.3     hms_1.1.3         
-##  [5] digest_0.6.36      magrittr_2.0.3     evaluate_0.24.0    grid_4.4.0        
-##  [9] RColorBrewer_1.1-3 calibrate_1.7.7    fastmap_1.2.0      jsonlite_1.8.8    
-## [13] backports_1.5.0    purrr_1.0.2        fansi_1.0.6        scales_1.3.0      
-## [17] jquerylib_0.1.4    cli_3.6.3          rlang_1.1.4        crayon_1.5.3      
-## [21] bit64_4.0.5        munsell_0.5.1      withr_3.0.0        cachem_1.1.0      
-## [25] yaml_2.3.9         tools_4.4.0        parallel_4.4.0     tzdb_0.4.0        
-## [29] colorspace_2.1-0   vctrs_0.6.5        R6_2.5.1           lifecycle_1.0.4   
-## [33] bit_4.0.5          vroom_1.6.5        MASS_7.3-60.2      pkgconfig_2.0.3   
-## [37] pillar_1.9.0       bslib_0.7.0        gtable_0.3.5       glue_1.7.0        
-## [41] highr_0.11         xfun_0.45          tibble_3.2.1       tidyselect_1.2.1  
-## [45] rstudioapi_0.16.0  farver_2.1.2       htmltools_0.5.8.1  rmarkdown_2.27    
-## [49] labeling_0.4.3     compiler_4.4.0
+##  [1] sass_0.4.9         generics_0.1.3     hms_1.1.3          digest_0.6.37     
+##  [5] magrittr_2.0.3     evaluate_1.0.1     grid_4.4.0         RColorBrewer_1.1-3
+##  [9] calibrate_1.7.7    fastmap_1.2.0      jsonlite_1.8.9     backports_1.5.0   
+## [13] purrr_1.0.2        scales_1.3.0       jquerylib_0.1.4    cli_3.6.3         
+## [17] rlang_1.1.4        crayon_1.5.3       bit64_4.5.2        munsell_0.5.1     
+## [21] withr_3.0.2        cachem_1.1.0       yaml_2.3.9         tools_4.4.0       
+## [25] parallel_4.4.0     tzdb_0.4.0         colorspace_2.1-1   vctrs_0.6.5       
+## [29] R6_2.5.1           lifecycle_1.0.4    bit_4.5.0.1        vroom_1.6.5       
+## [33] MASS_7.3-60.2      pkgconfig_2.0.3    pillar_1.10.1      bslib_0.8.0       
+## [37] gtable_0.3.6       glue_1.8.0         xfun_0.50          tibble_3.2.1      
+## [41] tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2       htmltools_0.5.8.1 
+## [45] rmarkdown_2.29     labeling_0.4.3     compiler_4.4.0
 ```
 

@@ -1,0 +1,230 @@
+---
+title: "Analysis of clumped QTLs for cholesterol from HFD-DO dataset"
+author: "Dave Bridges"
+format: html
+---
+
+This file is for comparing clumped SNP associations for cholesterol between the NCD and HFD datasets.  This script was last run on `r date()` and can be found in `r getwd()`.
+
+## Load Clumping Data
+
+
+```{r load}
+library(readr)
+library(knitr)
+library(dplyr)
+ncd.filename <- 'clumping_ncd.clumped'
+hfd.filename <- 'clumping_hfd.clumped'
+all.filename <- 'clumping_all.clumped'
+
+ncd.clumps <- read_table(ncd.filename)
+hfd.clumps <- read_table(hfd.filename)
+all.clumps <- read_table(all.filename)
+```
+
+We found `r nrow(all.clumps)` clumped SNPs with $p<1 x 10^{-3}$ within 5MB and $R^2>0.5$.
+
+## Clumps for NCD and HFD
+
+There were `r nrow(ncd.clumps)` clumped SNPs with $p<1 x 10^{-3}$ within 5MB and $R^2>0.5$ on chow and `r nrow(hfd.clumps)` on HFD.
+
+```{r comparason}
+library(dplyr)
+library(stringr)
+library(knitr)
+library(tidyr)
+
+# Function to extract min and max positions, from perplexity.ai
+extract_min_max_positions <- function(sp2_list) {
+  # Extract positions using regex
+  positions <- str_extract(sp2_list, "(?<=_)[0-9]+(?=_)")
+  # Convert to numeric
+  positions_numeric <- as.numeric(positions)
+  # Calculate min and max
+  min_pos <- min(positions_numeric, na.rm = TRUE)
+  max_pos <- max(positions_numeric, na.rm = TRUE)
+  return(c(min_pos, max_pos))
+}
+
+all.clumps <-
+  all.clumps %>%
+  mutate(SP2.split = str_split(SP2,pattern=",")) %>%
+  mutate(
+    Min_Position = sapply(SP2.split, function(x) extract_min_max_positions(x)[1]),
+    Max_Position = sapply(SP2.split, function(x) extract_min_max_positions(x)[2])
+  ) %>%
+  mutate(QTL.size = Max_Position-Min_Position)
+
+ncd.clumps <-
+  ncd.clumps %>%
+  mutate(SP2.split = str_split(SP2,pattern=",")) %>%
+  mutate(
+    Min_Position = sapply(SP2.split, function(x) extract_min_max_positions(x)[1]),
+    Max_Position = sapply(SP2.split, function(x) extract_min_max_positions(x)[2])
+  ) %>%
+  mutate(QTL.size = Max_Position-Min_Position)
+
+hfd.clumps <-
+  hfd.clumps %>%
+  mutate(SP2.split = str_split(SP2,pattern=",")) %>%
+  mutate(
+    Min_Position = sapply(SP2.split, function(x) extract_min_max_positions(x)[1]),
+    Max_Position = sapply(SP2.split, function(x) extract_min_max_positions(x)[2])
+  ) %>%
+  mutate(QTL.size = Max_Position-Min_Position)
+
+kable(all.clumps %>% select(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) %>% arrange(CHR,BP),
+      caption="Clumped QTLs (Additive Model)")
+
+kable(ncd.clumps %>% select(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) %>% arrange(CHR,BP),
+      caption="Clumped QTLs on Normal Chow Diet")
+
+kable(hfd.clumps %>% select(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) %>% arrange(CHR,BP),
+      caption="Clumped QTLs on High Fat High Sucrose Diet")
+```
+
+## NCD to HFD Overlap
+
+```{r overlap-of-clumps}
+
+hfd.clumps$SNP %in% ncd.clumps$SNP %>% table %>% kable(caption="Overlap of lead QTLs between chow and HFHS diets")
+
+# Flatten the lists of lists
+hfd.snps.all <- unlist(hfd.clumps$SP2.split) #%>%
+  #str_sub(end = -4) #remove trailing edge counts
+ncd.snps.all <- unlist(ncd.clumps$SP2.split) #%>%
+    #str_sub(end = -4)
+
+
+# Find the intersection
+common_elements <- intersect(hfd.snps.all, ncd.snps.all)
+
+# Function to check if any item in a list matches the intersecting items
+has_intersecting_item <- function(lst) {
+  any(lst %in% common_elements)
+}
+
+
+ncd.clumps %>%
+  mutate(has_match= sapply(ncd.clumps$SP2.split,has_intersecting_item)) %>%
+  count(has_match) %>%
+  kable(caption="Count of whether NCD QTLs are also HFD Associated QTLs")
+
+ncd.clumps %>%
+  mutate(has_match= sapply(ncd.clumps$SP2.split,has_intersecting_item)) %>%
+  filter(has_match==TRUE) %>%
+  select(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) %>%
+  kable(caption="QTLs with associations in both chow and HFHS diets")
+
+```
+
+
+## Extracting Genes for Each Clumped Region
+
+```{r gene-extraction}
+library(biomaRt)
+ensembl <- useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+
+#function to get genes for a region
+get_genes_for_region <- function(chr, start, end) {
+  getBM(
+    attributes = c("ensembl_gene_id", "external_gene_name", "gene_biotype", "start_position", "end_position", "strand"),
+    filters = c("chromosome_name", "start", "end"),
+    values = list(chr, start, end),
+    mart = ensembl
+  ) %>%
+    as_tibble() %>%
+    mutate(
+      chromosome = chr,
+      region_start = start,
+      region_end = end
+    )
+}
+
+# Apply the function to each row of the hfd dataframe
+hfd.clumps.genes <- 
+  hfd.clumps %>%
+  filter(Min_Position != Inf) %>%
+  rowwise() %>%
+  mutate(genes = list(get_genes_for_region(CHR, Min_Position, Max_Position))) %>%
+  unnest(genes)
+
+# Process the results
+hfd.clumps.genes <- hfd.clumps.genes %>%
+  mutate(
+    strand = ifelse(strand == 1, "+", "-"),
+    gene_length = end_position - start_position
+  ) %>%
+  arrange(chromosome, start_position)
+
+output.hfd.clumps <- "HFD Regions - Annotated.csv"
+write_csv(hfd.clumps.genes,output.hfd.clumps)
+
+# Apply the function to each row of the hfd dataframe
+ncd.clumps.genes <- 
+  ncd.clumps %>%
+  filter(Min_Position != Inf) %>%
+  rowwise() %>%
+  mutate(genes = list(get_genes_for_region(CHR, Min_Position, Max_Position))) %>%
+  unnest(genes)
+
+# Process the results
+ncd.clumps.genes <-
+  ncd.clumps.genes %>%
+  mutate(
+    strand = ifelse(strand == 1, "+", "-"),
+    gene_length = end_position - start_position
+  ) %>%
+  arrange(chromosome, start_position)
+
+output.ncd.clumps <- "NCD Regions - Annotated.csv"
+write_csv(ncd.clumps.genes,output.ncd.clumps)
+```
+
+Wrote out annotated files with regions and ovrlapping genes into `r output.ncd.clumps` and `r output.hfd.clumps`.
+
+## Generating SNP Lists
+
+For Coloc analyses we needed QTL regions for each SNP.  These will be fed into `Coloc-diet-analysis.qmd` for further analysis.  These regions are pasted into ld-calculations/diet-specific-regions
+
+```{r snp-regions}
+cholesterol.file <- "../output/cholesterol_all.assoc.txt"  #cholesterol and LD file all the same
+cholesterol.data <- read_table(cholesterol.file)
+
+for (i in 1:nrow(ncd.clumps)) {
+  print(i)
+  snps=cholesterol.data %>% 
+    filter(chr==as.integer(ncd.clumps[i,'CHR'])&
+             ps<as.integer(ncd.clumps[i,'Max_Position'])&
+             ps>as.integer(ncd.clumps[i,'Min_Position'])) %>% pull(rs)
+  write(snps, 
+        file=paste0("../ld-calculations/diet-specific-regions/snp-list-",
+                    as.character(ncd.clumps[i,"SNP"]),
+                    ".txt"))
+}
+
+#for hfd
+
+for (i in 1:nrow(hfd.clumps)) {
+  print(i)
+  snps=cholesterol.data %>% 
+    filter(chr==as.integer(hfd.clumps[i,'CHR'])&
+             ps<as.integer(hfd.clumps[i,'Max_Position'])&
+             ps>as.integer(hfd.clumps[i,'Min_Position'])) %>% pull(rs)
+  write(snps, 
+        file=paste0("../ld-calculations/diet-specific-regions/",
+                    as.character(hfd.clumps[i,"SNP"]),
+                    "-snp-list.txt"))
+}
+
+```
+
+
+
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```
+

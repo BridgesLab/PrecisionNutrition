@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.2.269">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges">
+
+<title>Analysis of clumped QTLs for cholesterol from HFD-DO dataset</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1.6em;
+  vertical-align: middle;
+}
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    color: #aaaaaa;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+code span.at { color: #7d9029; } /* Attribute */
+code span.bn { color: #40a070; } /* BaseN */
+code span.bu { color: #008000; } /* BuiltIn */
+code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #4070a0; } /* Char */
+code span.cn { color: #880000; } /* Constant */
+code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+code span.dt { color: #902000; } /* DataType */
+code span.dv { color: #40a070; } /* DecVal */
+code span.er { color: #ff0000; font-weight: bold; } /* Error */
+code span.ex { } /* Extension */
+code span.fl { color: #40a070; } /* Float */
+code span.fu { color: #06287e; } /* Function */
+code span.im { color: #008000; font-weight: bold; } /* Import */
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+code span.op { color: #666666; } /* Operator */
+code span.ot { color: #007020; } /* Other */
+code span.pp { color: #bc7a00; } /* Preprocessor */
+code span.sc { color: #4070a0; } /* SpecialChar */
+code span.ss { color: #bb6688; } /* SpecialString */
+code span.st { color: #4070a0; } /* String */
+code span.va { color: #19177c; } /* Variable */
+code span.vs { color: #4070a0; } /* VerbatimString */
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+</style>
+
+
+<script src="clumping-summary_files/libs/clipboard/clipboard.min.js"></script>
+<script src="clumping-summary_files/libs/quarto-html/quarto.js"></script>
+<script src="clumping-summary_files/libs/quarto-html/popper.min.js"></script>
+<script src="clumping-summary_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="clumping-summary_files/libs/quarto-html/anchor.min.js"></script>
+<link href="clumping-summary_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="clumping-summary_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="clumping-summary_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="clumping-summary_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="clumping-summary_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Analysis of clumped QTLs for cholesterol from HFD-DO dataset</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>This file is for comparing clumped SNP associations for cholesterol between the NCD and HFD datasets. This script was last run on Mon Oct 7 18:50:38 2024 and can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Cholesterol/GWAS/ld-calculations.</p>
+<section id="load-clumping-data" class="level2">
+<h2 class="anchored" data-anchor-id="load-clumping-data">Load Clumping Data</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+Attaching package: 'dplyr'</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:stats':
+
+    filter, lag</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>The following objects are masked from 'package:base':
+
+    intersect, setdiff, setequal, union</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ncd.filename <span class="ot">&lt;-</span> <span class="st">'clumping_ncd.clumped'</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>hfd.filename <span class="ot">&lt;-</span> <span class="st">'clumping_hfd.clumped'</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>all.filename <span class="ot">&lt;-</span> <span class="st">'clumping_all.clumped'</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>ncd.clumps <span class="ot">&lt;-</span> <span class="fu">read_table</span>(ncd.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+── Column specification ────────────────────────────────────────────────────────
+cols(
+  CHR = col_double(),
+  F = col_double(),
+  SNP = col_character(),
+  BP = col_double(),
+  P = col_double(),
+  TOTAL = col_double(),
+  NSIG = col_double(),
+  S05 = col_double(),
+  S01 = col_double(),
+  S001 = col_double(),
+  S0001 = col_double(),
+  SP2 = col_character()
+)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>hfd.clumps <span class="ot">&lt;-</span> <span class="fu">read_table</span>(hfd.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+── Column specification ────────────────────────────────────────────────────────
+cols(
+  CHR = col_double(),
+  F = col_double(),
+  SNP = col_character(),
+  BP = col_double(),
+  P = col_double(),
+  TOTAL = col_double(),
+  NSIG = col_double(),
+  S05 = col_double(),
+  S01 = col_double(),
+  S001 = col_double(),
+  S0001 = col_double(),
+  SP2 = col_character()
+)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>all.clumps <span class="ot">&lt;-</span> <span class="fu">read_table</span>(all.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+── Column specification ────────────────────────────────────────────────────────
+cols(
+  CHR = col_double(),
+  F = col_double(),
+  SNP = col_character(),
+  BP = col_double(),
+  P = col_double(),
+  TOTAL = col_double(),
+  NSIG = col_double(),
+  S05 = col_double(),
+  S01 = col_double(),
+  S001 = col_double(),
+  S0001 = col_double(),
+  SP2 = col_character()
+)</code></pre>
+</div>
+</div>
+<p>We found 30 clumped SNPs with <span class="math inline">\(p&lt;1 x 10^{-3}\)</span> within 5MB and <span class="math inline">\(R^2&gt;0.5\)</span>.</p>
+</section>
+<section id="clumps-for-ncd-and-hfd" class="level2">
+<h2 class="anchored" data-anchor-id="clumps-for-ncd-and-hfd">Clumps for NCD and HFD</h2>
+<p>There were 23 clumped SNPs with <span class="math inline">\(p&lt;1 x 10^{-3}\)</span> within 5MB and <span class="math inline">\(R^2&gt;0.5\)</span> on chow and 23 on HFD.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to extract min and max positions, from perplexity.ai</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>extract_min_max_positions <span class="ot">&lt;-</span> <span class="cf">function</span>(sp2_list) {</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Extract positions using regex</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  positions <span class="ot">&lt;-</span> <span class="fu">str_extract</span>(sp2_list, <span class="st">"(?&lt;=_)[0-9]+(?=_)"</span>)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Convert to numeric</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  positions_numeric <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(positions)</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Calculate min and max</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  min_pos <span class="ot">&lt;-</span> <span class="fu">min</span>(positions_numeric, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  max_pos <span class="ot">&lt;-</span> <span class="fu">max</span>(positions_numeric, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(<span class="fu">c</span>(min_pos, max_pos))</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>all.clumps <span class="ot">&lt;-</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>  all.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SP2.split =</span> <span class="fu">str_split</span>(SP2,<span class="at">pattern=</span><span class="st">","</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">Min_Position =</span> <span class="fu">sapply</span>(SP2.split, <span class="cf">function</span>(x) <span class="fu">extract_min_max_positions</span>(x)[<span class="dv">1</span>]),</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">Max_Position =</span> <span class="fu">sapply</span>(SP2.split, <span class="cf">function</span>(x) <span class="fu">extract_min_max_positions</span>(x)[<span class="dv">2</span>])</span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">QTL.size =</span> Max_Position<span class="sc">-</span>Min_Position)</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>ncd.clumps <span class="ot">&lt;-</span></span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>  ncd.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SP2.split =</span> <span class="fu">str_split</span>(SP2,<span class="at">pattern=</span><span class="st">","</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">Min_Position =</span> <span class="fu">sapply</span>(SP2.split, <span class="cf">function</span>(x) <span class="fu">extract_min_max_positions</span>(x)[<span class="dv">1</span>]),</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">Max_Position =</span> <span class="fu">sapply</span>(SP2.split, <span class="cf">function</span>(x) <span class="fu">extract_min_max_positions</span>(x)[<span class="dv">2</span>])</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">QTL.size =</span> Max_Position<span class="sc">-</span>Min_Position)</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>hfd.clumps <span class="ot">&lt;-</span></span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>  hfd.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">SP2.split =</span> <span class="fu">str_split</span>(SP2,<span class="at">pattern=</span><span class="st">","</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">Min_Position =</span> <span class="fu">sapply</span>(SP2.split, <span class="cf">function</span>(x) <span class="fu">extract_min_max_positions</span>(x)[<span class="dv">1</span>]),</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">Max_Position =</span> <span class="fu">sapply</span>(SP2.split, <span class="cf">function</span>(x) <span class="fu">extract_min_max_positions</span>(x)[<span class="dv">2</span>])</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">QTL.size =</span> Max_Position<span class="sc">-</span>Min_Position)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There were 4 warnings in `mutate()`.
+The first warning was:
+ℹ In argument: `Min_Position = sapply(SP2.split, function(x)
+  extract_min_max_positions(x)[1])`.
+Caused by warning in `min()`:
+! no non-missing arguments to min; returning Inf
+ℹ Run `dplyr::last_dplyr_warnings()` to see the 3 remaining warnings.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(all.clumps <span class="sc">%&gt;%</span> <span class="fu">select</span>(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(CHR,BP),</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption=</span><span class="st">"Clumped QTLs (Additive Model)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>Clumped QTLs (Additive Model)</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 18%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 7%">
+<col style="width: 5%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">CHR</th>
+<th style="text-align: left;">SNP</th>
+<th style="text-align: right;">BP</th>
+<th style="text-align: right;">P</th>
+<th style="text-align: right;">TOTAL</th>
+<th style="text-align: right;">NSIG</th>
+<th style="text-align: right;">Min_Position</th>
+<th style="text-align: right;">Max_Position</th>
+<th style="text-align: right;">QTL.size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_80237174_E_B</td>
+<td style="text-align: right;">80237174</td>
+<td style="text-align: right;">2.11e-04</td>
+<td style="text-align: right;">197</td>
+<td style="text-align: right;">18</td>
+<td style="text-align: right;">75857971</td>
+<td style="text-align: right;">85192397</td>
+<td style="text-align: right;">9334426</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_136417677_C_A</td>
+<td style="text-align: right;">136417677</td>
+<td style="text-align: right;">5.16e-04</td>
+<td style="text-align: right;">244</td>
+<td style="text-align: right;">39</td>
+<td style="text-align: right;">132379394</td>
+<td style="text-align: right;">141102165</td>
+<td style="text-align: right;">8722771</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_138064771_D_H</td>
+<td style="text-align: right;">138064771</td>
+<td style="text-align: right;">1.30e-06</td>
+<td style="text-align: right;">177</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">134935115</td>
+<td style="text-align: right;">142809769</td>
+<td style="text-align: right;">7874654</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_143704476_D_H</td>
+<td style="text-align: right;">143704476</td>
+<td style="text-align: right;">4.60e-06</td>
+<td style="text-align: right;">47</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">143162385</td>
+<td style="text-align: right;">148455652</td>
+<td style="text-align: right;">5293267</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_149612690_D_H</td>
+<td style="text-align: right;">149612690</td>
+<td style="text-align: right;">3.54e-05</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">148716911</td>
+<td style="text-align: right;">150017032</td>
+<td style="text-align: right;">1300121</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_155052094_H_B</td>
+<td style="text-align: right;">155052094</td>
+<td style="text-align: right;">9.09e-04</td>
+<td style="text-align: right;">300</td>
+<td style="text-align: right;">140</td>
+<td style="text-align: right;">152758878</td>
+<td style="text-align: right;">156760432</td>
+<td style="text-align: right;">4001554</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_155276305_H_H</td>
+<td style="text-align: right;">155276305</td>
+<td style="text-align: right;">8.00e-07</td>
+<td style="text-align: right;">286</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">150421375</td>
+<td style="text-align: right;">158979726</td>
+<td style="text-align: right;">8558351</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_159090132_H_H</td>
+<td style="text-align: right;">159090132</td>
+<td style="text-align: right;">6.50e-04</td>
+<td style="text-align: right;">155</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">159124704</td>
+<td style="text-align: right;">163519288</td>
+<td style="text-align: right;">4394584</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_168070484_H_C</td>
+<td style="text-align: right;">168070484</td>
+<td style="text-align: right;">1.00e-06</td>
+<td style="text-align: right;">78</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">165950835</td>
+<td style="text-align: right;">168531789</td>
+<td style="text-align: right;">2580954</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_168522985_H_H</td>
+<td style="text-align: right;">168522985</td>
+<td style="text-align: right;">2.91e-04</td>
+<td style="text-align: right;">289</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">163532224</td>
+<td style="text-align: right;">171972259</td>
+<td style="text-align: right;">8440035</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_171425406_H_C</td>
+<td style="text-align: right;">171425406</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">226</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">168190931</td>
+<td style="text-align: right;">176090110</td>
+<td style="text-align: right;">7899179</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_178774931_H_C</td>
+<td style="text-align: right;">178774931</td>
+<td style="text-align: right;">1.87e-04</td>
+<td style="text-align: right;">219</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">175920658</td>
+<td style="text-align: right;">183559068</td>
+<td style="text-align: right;">7638410</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_183576795_H_C</td>
+<td style="text-align: right;">183576795</td>
+<td style="text-align: right;">4.96e-04</td>
+<td style="text-align: right;">150</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">183048516</td>
+<td style="text-align: right;">186577708</td>
+<td style="text-align: right;">3529192</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2_16902424_H_G</td>
+<td style="text-align: right;">16902424</td>
+<td style="text-align: right;">5.55e-04</td>
+<td style="text-align: right;">268</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">12097403</td>
+<td style="text-align: right;">20734081</td>
+<td style="text-align: right;">8636678</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">3_53166255_H_F</td>
+<td style="text-align: right;">53166255</td>
+<td style="text-align: right;">9.05e-04</td>
+<td style="text-align: right;">144</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">52236669</td>
+<td style="text-align: right;">54924932</td>
+<td style="text-align: right;">2688263</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">3_148547289_A_H</td>
+<td style="text-align: right;">148547289</td>
+<td style="text-align: right;">6.01e-05</td>
+<td style="text-align: right;">254</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">145247326</td>
+<td style="text-align: right;">151142437</td>
+<td style="text-align: right;">5895111</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_55298460_E_A</td>
+<td style="text-align: right;">55298460</td>
+<td style="text-align: right;">4.23e-04</td>
+<td style="text-align: right;">226</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">52058334</td>
+<td style="text-align: right;">59558536</td>
+<td style="text-align: right;">7500202</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_117508066_B_E</td>
+<td style="text-align: right;">117508066</td>
+<td style="text-align: right;">1.66e-04</td>
+<td style="text-align: right;">199</td>
+<td style="text-align: right;">53</td>
+<td style="text-align: right;">114641292</td>
+<td style="text-align: right;">119022595</td>
+<td style="text-align: right;">4381303</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_123629774_B_E</td>
+<td style="text-align: right;">123629774</td>
+<td style="text-align: right;">2.40e-06</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">119883003</td>
+<td style="text-align: right;">127672079</td>
+<td style="text-align: right;">7789076</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_127672079_D_H</td>
+<td style="text-align: right;">127672079</td>
+<td style="text-align: right;">1.20e-04</td>
+<td style="text-align: right;">257</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">122944168</td>
+<td style="text-align: right;">130705585</td>
+<td style="text-align: right;">7761417</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">6_106615024_D_A</td>
+<td style="text-align: right;">106615024</td>
+<td style="text-align: right;">1.22e-04</td>
+<td style="text-align: right;">194</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: right;">105206628</td>
+<td style="text-align: right;">111576811</td>
+<td style="text-align: right;">6370183</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">6_148665075_H_H</td>
+<td style="text-align: right;">148665075</td>
+<td style="text-align: right;">7.27e-04</td>
+<td style="text-align: right;">163</td>
+<td style="text-align: right;">87</td>
+<td style="text-align: right;">146561770</td>
+<td style="text-align: right;">149721874</td>
+<td style="text-align: right;">3160104</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">10_54344829_H_B</td>
+<td style="text-align: right;">54344829</td>
+<td style="text-align: right;">2.67e-04</td>
+<td style="text-align: right;">164</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">49909241</td>
+<td style="text-align: right;">59104672</td>
+<td style="text-align: right;">9195431</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">10_95382136_F_E</td>
+<td style="text-align: right;">95382136</td>
+<td style="text-align: right;">7.88e-04</td>
+<td style="text-align: right;">253</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">93235020</td>
+<td style="text-align: right;">100261674</td>
+<td style="text-align: right;">7026654</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">11_91658214_F_B</td>
+<td style="text-align: right;">91658214</td>
+<td style="text-align: right;">3.19e-04</td>
+<td style="text-align: right;">229</td>
+<td style="text-align: right;">95</td>
+<td style="text-align: right;">89909934</td>
+<td style="text-align: right;">95489858</td>
+<td style="text-align: right;">5579924</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">13</td>
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: right;">30180778</td>
+<td style="text-align: right;">2.44e-05</td>
+<td style="text-align: right;">183</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">25205488</td>
+<td style="text-align: right;">34583679</td>
+<td style="text-align: right;">9378191</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">14_19934709_H_H</td>
+<td style="text-align: right;">19934709</td>
+<td style="text-align: right;">3.43e-04</td>
+<td style="text-align: right;">80</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">15047108</td>
+<td style="text-align: right;">21228637</td>
+<td style="text-align: right;">6181529</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">17</td>
+<td style="text-align: left;">17_80080939_F_E</td>
+<td style="text-align: right;">80080939</td>
+<td style="text-align: right;">3.81e-04</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">77171583</td>
+<td style="text-align: right;">83283126</td>
+<td style="text-align: right;">6111543</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: left;">18_46410922_G_A</td>
+<td style="text-align: right;">46410922</td>
+<td style="text-align: right;">9.86e-04</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">46</td>
+<td style="text-align: right;">43713698</td>
+<td style="text-align: right;">50142617</td>
+<td style="text-align: right;">6428919</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">19</td>
+<td style="text-align: left;">19_25103820_G_G</td>
+<td style="text-align: right;">25103820</td>
+<td style="text-align: right;">7.52e-04</td>
+<td style="text-align: right;">199</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">22896884</td>
+<td style="text-align: right;">27670273</td>
+<td style="text-align: right;">4773389</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(ncd.clumps <span class="sc">%&gt;%</span> <span class="fu">select</span>(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(CHR,BP),</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption=</span><span class="st">"Clumped QTLs on Normal Chow Diet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>Clumped QTLs on Normal Chow Diet</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 19%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">CHR</th>
+<th style="text-align: left;">SNP</th>
+<th style="text-align: right;">BP</th>
+<th style="text-align: right;">P</th>
+<th style="text-align: right;">TOTAL</th>
+<th style="text-align: right;">NSIG</th>
+<th style="text-align: right;">Min_Position</th>
+<th style="text-align: right;">Max_Position</th>
+<th style="text-align: right;">QTL.size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_117784609_B_C</td>
+<td style="text-align: right;">117784609</td>
+<td style="text-align: right;">4.69e-04</td>
+<td style="text-align: right;">160</td>
+<td style="text-align: right;">48</td>
+<td style="text-align: right;">113058952</td>
+<td style="text-align: right;">122623222</td>
+<td style="text-align: right;">9564270</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_135664277_D_C</td>
+<td style="text-align: right;">135664277</td>
+<td style="text-align: right;">5.64e-04</td>
+<td style="text-align: right;">214</td>
+<td style="text-align: right;">19</td>
+<td style="text-align: right;">130695079</td>
+<td style="text-align: right;">138385584</td>
+<td style="text-align: right;">7690505</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_136644599_C_A</td>
+<td style="text-align: right;">136644599</td>
+<td style="text-align: right;">1.64e-04</td>
+<td style="text-align: right;">242</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">131822595</td>
+<td style="text-align: right;">141551203</td>
+<td style="text-align: right;">9728608</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_152428168_H_A</td>
+<td style="text-align: right;">152428168</td>
+<td style="text-align: right;">2.67e-04</td>
+<td style="text-align: right;">218</td>
+<td style="text-align: right;">71</td>
+<td style="text-align: right;">147480083</td>
+<td style="text-align: right;">154503323</td>
+<td style="text-align: right;">7023240</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_170324641_H_C</td>
+<td style="text-align: right;">170324641</td>
+<td style="text-align: right;">1.00e-06</td>
+<td style="text-align: right;">216</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">167215470</td>
+<td style="text-align: right;">172486072</td>
+<td style="text-align: right;">5270602</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_183576795_H_C</td>
+<td style="text-align: right;">183576795</td>
+<td style="text-align: right;">7.63e-04</td>
+<td style="text-align: right;">196</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">182346730</td>
+<td style="text-align: right;">187038228</td>
+<td style="text-align: right;">4691498</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2_16663582_H_G</td>
+<td style="text-align: right;">16663582</td>
+<td style="text-align: right;">9.08e-05</td>
+<td style="text-align: right;">267</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">12097403</td>
+<td style="text-align: right;">20734081</td>
+<td style="text-align: right;">8636678</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2_43690499_H_G</td>
+<td style="text-align: right;">43690499</td>
+<td style="text-align: right;">2.26e-04</td>
+<td style="text-align: right;">137</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38704660</td>
+<td style="text-align: right;">44633161</td>
+<td style="text-align: right;">5928501</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2_49650224_G_G</td>
+<td style="text-align: right;">49650224</td>
+<td style="text-align: right;">1.24e-04</td>
+<td style="text-align: right;">141</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">44937781</td>
+<td style="text-align: right;">52401501</td>
+<td style="text-align: right;">7463720</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">3_156886929_F_B</td>
+<td style="text-align: right;">156886929</td>
+<td style="text-align: right;">9.20e-04</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">95</td>
+<td style="text-align: right;">154413784</td>
+<td style="text-align: right;">160017104</td>
+<td style="text-align: right;">5603320</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">4</td>
+<td style="text-align: left;">4_54753377_C_G</td>
+<td style="text-align: right;">54753377</td>
+<td style="text-align: right;">6.73e-04</td>
+<td style="text-align: right;">163</td>
+<td style="text-align: right;">44</td>
+<td style="text-align: right;">51273249</td>
+<td style="text-align: right;">56699880</td>
+<td style="text-align: right;">5426631</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_122944168_B_E</td>
+<td style="text-align: right;">122944168</td>
+<td style="text-align: right;">6.16e-04</td>
+<td style="text-align: right;">167</td>
+<td style="text-align: right;">83</td>
+<td style="text-align: right;">121297536</td>
+<td style="text-align: right;">125806472</td>
+<td style="text-align: right;">4508936</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_128399127_D_E</td>
+<td style="text-align: right;">128399127</td>
+<td style="text-align: right;">3.34e-04</td>
+<td style="text-align: right;">199</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">126061603</td>
+<td style="text-align: right;">130705585</td>
+<td style="text-align: right;">4643982</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_133357791_C_F</td>
+<td style="text-align: right;">133357791</td>
+<td style="text-align: right;">7.16e-04</td>
+<td style="text-align: right;">404</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">128483185</td>
+<td style="text-align: right;">138350432</td>
+<td style="text-align: right;">9867247</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">6_42232037_G_G</td>
+<td style="text-align: right;">42232037</td>
+<td style="text-align: right;">4.63e-04</td>
+<td style="text-align: right;">216</td>
+<td style="text-align: right;">67</td>
+<td style="text-align: right;">37342115</td>
+<td style="text-align: right;">47105983</td>
+<td style="text-align: right;">9763868</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">6_126771534_D_E</td>
+<td style="text-align: right;">126771534</td>
+<td style="text-align: right;">1.25e-04</td>
+<td style="text-align: right;">210</td>
+<td style="text-align: right;">24</td>
+<td style="text-align: right;">123627241</td>
+<td style="text-align: right;">129396718</td>
+<td style="text-align: right;">5769477</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">10_55538600_H_B</td>
+<td style="text-align: right;">55538600</td>
+<td style="text-align: right;">2.03e-04</td>
+<td style="text-align: right;">187</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">50658921</td>
+<td style="text-align: right;">60191422</td>
+<td style="text-align: right;">9532501</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">11</td>
+<td style="text-align: left;">11_121921138_G_G</td>
+<td style="text-align: right;">121921138</td>
+<td style="text-align: right;">9.43e-04</td>
+<td style="text-align: right;">216</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">117478789</td>
+<td style="text-align: right;">122078650</td>
+<td style="text-align: right;">4599861</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">12_84203316_H_C</td>
+<td style="text-align: right;">84203316</td>
+<td style="text-align: right;">7.30e-04</td>
+<td style="text-align: right;">277</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">80297878</td>
+<td style="text-align: right;">88466076</td>
+<td style="text-align: right;">8168198</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">14_58887010_F_F</td>
+<td style="text-align: right;">58887010</td>
+<td style="text-align: right;">7.46e-04</td>
+<td style="text-align: right;">123</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">56303532</td>
+<td style="text-align: right;">59582013</td>
+<td style="text-align: right;">3278481</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">14</td>
+<td style="text-align: left;">14_64610241_H_F</td>
+<td style="text-align: right;">64610241</td>
+<td style="text-align: right;">7.16e-05</td>
+<td style="text-align: right;">192</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">59636845</td>
+<td style="text-align: right;">67686290</td>
+<td style="text-align: right;">8049445</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">15</td>
+<td style="text-align: left;">15_94566593_F_G</td>
+<td style="text-align: right;">94566593</td>
+<td style="text-align: right;">4.00e-04</td>
+<td style="text-align: right;">241</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">92551106</td>
+<td style="text-align: right;">95650441</td>
+<td style="text-align: right;">3099335</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">18</td>
+<td style="text-align: left;">18_46410922_G_A</td>
+<td style="text-align: right;">46410922</td>
+<td style="text-align: right;">2.60e-06</td>
+<td style="text-align: right;">165</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">42521933</td>
+<td style="text-align: right;">50169675</td>
+<td style="text-align: right;">7647742</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(hfd.clumps <span class="sc">%&gt;%</span> <span class="fu">select</span>(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) <span class="sc">%&gt;%</span> <span class="fu">arrange</span>(CHR,BP),</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption=</span><span class="st">"Clumped QTLs on High Fat High Sucrose Diet"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>Clumped QTLs on High Fat High Sucrose Diet</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 19%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 6%">
+<col style="width: 5%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">CHR</th>
+<th style="text-align: left;">SNP</th>
+<th style="text-align: right;">BP</th>
+<th style="text-align: right;">P</th>
+<th style="text-align: right;">TOTAL</th>
+<th style="text-align: right;">NSIG</th>
+<th style="text-align: right;">Min_Position</th>
+<th style="text-align: right;">Max_Position</th>
+<th style="text-align: right;">QTL.size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_83629456_F_B</td>
+<td style="text-align: right;">83629456</td>
+<td style="text-align: right;">8.59e-04</td>
+<td style="text-align: right;">199</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: right;">78709719</td>
+<td style="text-align: right;">87553658</td>
+<td style="text-align: right;">8843939</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_137999848_D_H</td>
+<td style="text-align: right;">137999848</td>
+<td style="text-align: right;">1.53e-04</td>
+<td style="text-align: right;">149</td>
+<td style="text-align: right;">49</td>
+<td style="text-align: right;">135798134</td>
+<td style="text-align: right;">139994177</td>
+<td style="text-align: right;">4196043</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_145155626_A_H</td>
+<td style="text-align: right;">145155626</td>
+<td style="text-align: right;">6.09e-05</td>
+<td style="text-align: right;">83</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">140284312</td>
+<td style="text-align: right;">150017032</td>
+<td style="text-align: right;">9732720</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_150421375_D_H</td>
+<td style="text-align: right;">150421375</td>
+<td style="text-align: right;">5.51e-04</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">Inf</td>
+<td style="text-align: right;">-Inf</td>
+<td style="text-align: right;">-Inf</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_155454177_H_H</td>
+<td style="text-align: right;">155454177</td>
+<td style="text-align: right;">1.18e-05</td>
+<td style="text-align: right;">285</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">150825717</td>
+<td style="text-align: right;">158979726</td>
+<td style="text-align: right;">8154009</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_159426890_H_H</td>
+<td style="text-align: right;">159426890</td>
+<td style="text-align: right;">5.11e-04</td>
+<td style="text-align: right;">167</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">159090132</td>
+<td style="text-align: right;">164385642</td>
+<td style="text-align: right;">5295510</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_171425406_H_C</td>
+<td style="text-align: right;">171425406</td>
+<td style="text-align: right;">8.00e-04</td>
+<td style="text-align: right;">226</td>
+<td style="text-align: right;">37</td>
+<td style="text-align: right;">168190931</td>
+<td style="text-align: right;">176090110</td>
+<td style="text-align: right;">7899179</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2_7501966_H_E</td>
+<td style="text-align: right;">7501966</td>
+<td style="text-align: right;">1.28e-04</td>
+<td style="text-align: right;">203</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3000000</td>
+<td style="text-align: right;">10304166</td>
+<td style="text-align: right;">7304166</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">2</td>
+<td style="text-align: left;">2_46253198_H_E</td>
+<td style="text-align: right;">46253198</td>
+<td style="text-align: right;">6.47e-04</td>
+<td style="text-align: right;">208</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">41900863</td>
+<td style="text-align: right;">51180956</td>
+<td style="text-align: right;">9280093</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_40272493_E_A</td>
+<td style="text-align: right;">40272493</td>
+<td style="text-align: right;">3.30e-04</td>
+<td style="text-align: right;">190</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">38531293</td>
+<td style="text-align: right;">44474381</td>
+<td style="text-align: right;">5943088</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_55215630_E_A</td>
+<td style="text-align: right;">55215630</td>
+<td style="text-align: right;">6.11e-04</td>
+<td style="text-align: right;">211</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">52282881</td>
+<td style="text-align: right;">59784665</td>
+<td style="text-align: right;">7501784</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_117508066_B_E</td>
+<td style="text-align: right;">117508066</td>
+<td style="text-align: right;">2.51e-04</td>
+<td style="text-align: right;">199</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">113311247</td>
+<td style="text-align: right;">119022595</td>
+<td style="text-align: right;">5711348</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_123629774_B_E</td>
+<td style="text-align: right;">123629774</td>
+<td style="text-align: right;">1.92e-04</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">17</td>
+<td style="text-align: right;">119883003</td>
+<td style="text-align: right;">127672079</td>
+<td style="text-align: right;">7789076</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_126387851_E_H</td>
+<td style="text-align: right;">126387851</td>
+<td style="text-align: right;">3.35e-04</td>
+<td style="text-align: right;">259</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">121817037</td>
+<td style="text-align: right;">130641650</td>
+<td style="text-align: right;">8824613</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">6</td>
+<td style="text-align: left;">6_107008934_D_A</td>
+<td style="text-align: right;">107008934</td>
+<td style="text-align: right;">2.41e-04</td>
+<td style="text-align: right;">182</td>
+<td style="text-align: right;">13</td>
+<td style="text-align: right;">104622726</td>
+<td style="text-align: right;">111965367</td>
+<td style="text-align: right;">7342641</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">8</td>
+<td style="text-align: left;">8_3410751_H_C</td>
+<td style="text-align: right;">3410751</td>
+<td style="text-align: right;">5.22e-04</td>
+<td style="text-align: right;">32</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3000000</td>
+<td style="text-align: right;">8334860</td>
+<td style="text-align: right;">5334860</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">10_57753923_G_C</td>
+<td style="text-align: right;">57753923</td>
+<td style="text-align: right;">5.28e-04</td>
+<td style="text-align: right;">198</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">54747088</td>
+<td style="text-align: right;">62601214</td>
+<td style="text-align: right;">7854126</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">10_95418856_F_E</td>
+<td style="text-align: right;">95418856</td>
+<td style="text-align: right;">7.96e-04</td>
+<td style="text-align: right;">236</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">93384609</td>
+<td style="text-align: right;">100409173</td>
+<td style="text-align: right;">7024564</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">10</td>
+<td style="text-align: left;">10_99490238_H_D</td>
+<td style="text-align: right;">99490238</td>
+<td style="text-align: right;">1.28e-04</td>
+<td style="text-align: right;">174</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">96711431</td>
+<td style="text-align: right;">104419147</td>
+<td style="text-align: right;">7707716</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">12</td>
+<td style="text-align: left;">12_108748974_D_C</td>
+<td style="text-align: right;">108748974</td>
+<td style="text-align: right;">9.82e-05</td>
+<td style="text-align: right;">311</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">106992805</td>
+<td style="text-align: right;">112318906</td>
+<td style="text-align: right;">5326101</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">13</td>
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: right;">30180778</td>
+<td style="text-align: right;">1.19e-05</td>
+<td style="text-align: right;">183</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">25205488</td>
+<td style="text-align: right;">34583679</td>
+<td style="text-align: right;">9378191</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">16_63647011_B_B</td>
+<td style="text-align: right;">63647011</td>
+<td style="text-align: right;">7.59e-04</td>
+<td style="text-align: right;">182</td>
+<td style="text-align: right;">33</td>
+<td style="text-align: right;">58726096</td>
+<td style="text-align: right;">67999688</td>
+<td style="text-align: right;">9273592</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">19</td>
+<td style="text-align: left;">19_25487123_G_G</td>
+<td style="text-align: right;">25487123</td>
+<td style="text-align: right;">4.12e-04</td>
+<td style="text-align: right;">242</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">23342789</td>
+<td style="text-align: right;">28720171</td>
+<td style="text-align: right;">5377382</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="ncd-to-hfd-overlap" class="level2">
+<h2 class="anchored" data-anchor-id="ncd-to-hfd-overlap">NCD to HFD Overlap</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>hfd.clumps<span class="sc">$</span>SNP <span class="sc">%in%</span> ncd.clumps<span class="sc">$</span>SNP <span class="sc">%&gt;%</span> table <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Overlap of lead QTLs between chow and HFHS diets"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>Overlap of lead QTLs between chow and HFHS diets</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">.</th>
+<th style="text-align: right;">Freq</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">23</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Flatten the lists of lists</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>hfd.snps.all <span class="ot">&lt;-</span> <span class="fu">unlist</span>(hfd.clumps<span class="sc">$</span>SP2.split) <span class="co">#%&gt;%</span></span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#str_sub(end = -4) #remove trailing edge counts</span></span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>ncd.snps.all <span class="ot">&lt;-</span> <span class="fu">unlist</span>(ncd.clumps<span class="sc">$</span>SP2.split) <span class="co">#%&gt;%</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">#str_sub(end = -4)</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Find the intersection</span></span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>common_elements <span class="ot">&lt;-</span> <span class="fu">intersect</span>(hfd.snps.all, ncd.snps.all)</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to check if any item in a list matches the intersecting items</span></span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>has_intersecting_item <span class="ot">&lt;-</span> <span class="cf">function</span>(lst) {</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">any</span>(lst <span class="sc">%in%</span> common_elements)</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>ncd.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">has_match=</span> <span class="fu">sapply</span>(ncd.clumps<span class="sc">$</span>SP2.split,has_intersecting_item)) <span class="sc">%&gt;%</span></span>
+<span id="cb17-19"><a href="#cb17-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(has_match) <span class="sc">%&gt;%</span></span>
+<span id="cb17-20"><a href="#cb17-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Count of whether NCD QTLs are also HFD Associated QTLs"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>Count of whether NCD QTLs are also HFD Associated QTLs</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">has_match</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">3</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>ncd.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">has_match=</span> <span class="fu">sapply</span>(ncd.clumps<span class="sc">$</span>SP2.split,has_intersecting_item)) <span class="sc">%&gt;%</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(has_match<span class="sc">==</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(CHR,SNP,BP,P,TOTAL,NSIG,Min_Position,Max_Position,QTL.size) <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"QTLs with associations in both chow and HFHS diets"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>QTLs with associations in both chow and HFHS diets</caption>
+<colgroup>
+<col style="width: 4%">
+<col style="width: 18%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 7%">
+<col style="width: 5%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">CHR</th>
+<th style="text-align: left;">SNP</th>
+<th style="text-align: right;">BP</th>
+<th style="text-align: right;">P</th>
+<th style="text-align: right;">TOTAL</th>
+<th style="text-align: right;">NSIG</th>
+<th style="text-align: right;">Min_Position</th>
+<th style="text-align: right;">Max_Position</th>
+<th style="text-align: right;">QTL.size</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">1_170324641_H_C</td>
+<td style="text-align: right;">170324641</td>
+<td style="text-align: right;">0.000001</td>
+<td style="text-align: right;">216</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">167215470</td>
+<td style="text-align: right;">172486072</td>
+<td style="text-align: right;">5270602</td>
+</tr>
+<tr class="even">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_128399127_D_E</td>
+<td style="text-align: right;">128399127</td>
+<td style="text-align: right;">0.000334</td>
+<td style="text-align: right;">199</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">126061603</td>
+<td style="text-align: right;">130705585</td>
+<td style="text-align: right;">4643982</td>
+</tr>
+<tr class="odd">
+<td style="text-align: right;">5</td>
+<td style="text-align: left;">5_122944168_B_E</td>
+<td style="text-align: right;">122944168</td>
+<td style="text-align: right;">0.000616</td>
+<td style="text-align: right;">167</td>
+<td style="text-align: right;">83</td>
+<td style="text-align: right;">121297536</td>
+<td style="text-align: right;">125806472</td>
+<td style="text-align: right;">4508936</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="extracting-genes-for-each-clumped-region" class="level2">
+<h2 class="anchored" data-anchor-id="extracting-genes-for-each-clumped-region">Extracting Genes for Each Clumped Region</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(biomaRt)</span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>ensembl <span class="ot">&lt;-</span> <span class="fu">useMart</span>(<span class="st">"ensembl"</span>, <span class="at">dataset =</span> <span class="st">"mmusculus_gene_ensembl"</span>)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co">#function to get genes for a region</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>get_genes_for_region <span class="ot">&lt;-</span> <span class="cf">function</span>(chr, start, end) {</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">getBM</span>(</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">attributes =</span> <span class="fu">c</span>(<span class="st">"ensembl_gene_id"</span>, <span class="st">"external_gene_name"</span>, <span class="st">"gene_biotype"</span>, <span class="st">"start_position"</span>, <span class="st">"end_position"</span>, <span class="st">"strand"</span>),</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">filters =</span> <span class="fu">c</span>(<span class="st">"chromosome_name"</span>, <span class="st">"start"</span>, <span class="st">"end"</span>),</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">values =</span> <span class="fu">list</span>(chr, start, end),</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">mart =</span> ensembl</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as_tibble</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">chromosome =</span> chr,</span>
+<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">region_start =</span> start,</span>
+<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">region_end =</span> end</span>
+<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the function to each row of the hfd dataframe</span></span>
+<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a>hfd.clumps.genes <span class="ot">&lt;-</span> </span>
+<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>  hfd.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Min_Position <span class="sc">!=</span> <span class="cn">Inf</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">genes =</span> <span class="fu">list</span>(<span class="fu">get_genes_for_region</span>(CHR, Min_Position, Max_Position))) <span class="sc">%&gt;%</span></span>
+<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(genes)</span>
+<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Process the results</span></span>
+<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>hfd.clumps.genes <span class="ot">&lt;-</span> hfd.clumps.genes <span class="sc">%&gt;%</span></span>
+<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">strand =</span> <span class="fu">ifelse</span>(strand <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"+"</span>, <span class="st">"-"</span>),</span>
+<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">gene_length =</span> end_position <span class="sc">-</span> start_position</span>
+<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chromosome, start_position)</span>
+<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>output.hfd.clumps <span class="ot">&lt;-</span> <span class="st">"HFD Regions - Annotated.csv"</span></span>
+<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(hfd.clumps.genes,output.hfd.clumps)</span>
+<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Apply the function to each row of the hfd dataframe</span></span>
+<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>ncd.clumps.genes <span class="ot">&lt;-</span> </span>
+<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>  ncd.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(Min_Position <span class="sc">!=</span> <span class="cn">Inf</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rowwise</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">genes =</span> <span class="fu">list</span>(<span class="fu">get_genes_for_region</span>(CHR, Min_Position, Max_Position))) <span class="sc">%&gt;%</span></span>
+<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unnest</span>(genes)</span>
+<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a><span class="co"># Process the results</span></span>
+<span id="cb19-48"><a href="#cb19-48" aria-hidden="true" tabindex="-1"></a>ncd.clumps.genes <span class="ot">&lt;-</span></span>
+<span id="cb19-49"><a href="#cb19-49" aria-hidden="true" tabindex="-1"></a>  ncd.clumps.genes <span class="sc">%&gt;%</span></span>
+<span id="cb19-50"><a href="#cb19-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb19-51"><a href="#cb19-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">strand =</span> <span class="fu">ifelse</span>(strand <span class="sc">==</span> <span class="dv">1</span>, <span class="st">"+"</span>, <span class="st">"-"</span>),</span>
+<span id="cb19-52"><a href="#cb19-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">gene_length =</span> end_position <span class="sc">-</span> start_position</span>
+<span id="cb19-53"><a href="#cb19-53" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb19-54"><a href="#cb19-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chromosome, start_position)</span>
+<span id="cb19-55"><a href="#cb19-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-56"><a href="#cb19-56" aria-hidden="true" tabindex="-1"></a>output.ncd.clumps <span class="ot">&lt;-</span> <span class="st">"NCD Regions - Annotated.csv"</span></span>
+<span id="cb19-57"><a href="#cb19-57" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(ncd.clumps.genes,output.ncd.clumps)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Wrote out annotated files with regions and ovrlapping genes into NCD Regions - Annotated.csv and HFD Regions - Annotated.csv.</p>
+</section>
+<section id="generating-snp-lists" class="level2">
+<h2 class="anchored" data-anchor-id="generating-snp-lists">Generating SNP Lists</h2>
+<p>For Coloc analyses we needed QTL regions for each SNP. These will be fed into <code>Coloc-diet-analysis.qmd</code> for further analysis. These regions are pasted into ld-calculations/diet-specific-regions</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>cholesterol.file <span class="ot">&lt;-</span> <span class="st">"../output/cholesterol_all.assoc.txt"</span>  <span class="co">#cholesterol and LD file all the same</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>cholesterol.data <span class="ot">&lt;-</span> <span class="fu">read_table</span>(cholesterol.file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>
+── Column specification ────────────────────────────────────────────────────────
+cols(
+  chr = col_double(),
+  rs = col_character(),
+  ps = col_double(),
+  n_miss = col_double(),
+  allele1 = col_character(),
+  allele0 = col_character(),
+  af = col_double(),
+  beta = col_double(),
+  se = col_double(),
+  logl_H1 = col_double(),
+  l_remle = col_double(),
+  p_wald = col_double()
+)</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(ncd.clumps)) {</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(i)</span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  snps<span class="ot">=</span>cholesterol.data <span class="sc">%&gt;%</span> </span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(chr<span class="sc">==</span><span class="fu">as.integer</span>(ncd.clumps[i,<span class="st">'CHR'</span>])<span class="sc">&amp;</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>             ps<span class="sc">&lt;</span><span class="fu">as.integer</span>(ncd.clumps[i,<span class="st">'Max_Position'</span>])<span class="sc">&amp;</span></span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>             ps<span class="sc">&gt;</span><span class="fu">as.integer</span>(ncd.clumps[i,<span class="st">'Min_Position'</span>])) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(rs)</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write</span>(snps, </span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>        <span class="at">file=</span><span class="fu">paste0</span>(<span class="st">"../ld-calculations/diet-specific-regions/snp-list-"</span>,</span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">as.character</span>(ncd.clumps[i,<span class="st">"SNP"</span>]),</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>                    <span class="st">".txt"</span>))</span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+[1] 7
+[1] 8
+[1] 9
+[1] 10
+[1] 11
+[1] 12
+[1] 13
+[1] 14
+[1] 15
+[1] 16
+[1] 17
+[1] 18
+[1] 19
+[1] 20
+[1] 21
+[1] 22
+[1] 23</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co">#for hfd</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(hfd.clumps)) {</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(i)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  snps<span class="ot">=</span>cholesterol.data <span class="sc">%&gt;%</span> </span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(chr<span class="sc">==</span><span class="fu">as.integer</span>(hfd.clumps[i,<span class="st">'CHR'</span>])<span class="sc">&amp;</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>             ps<span class="sc">&lt;</span><span class="fu">as.integer</span>(hfd.clumps[i,<span class="st">'Max_Position'</span>])<span class="sc">&amp;</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>             ps<span class="sc">&gt;</span><span class="fu">as.integer</span>(hfd.clumps[i,<span class="st">'Min_Position'</span>])) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(rs)</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write</span>(snps, </span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">file=</span><span class="fu">paste0</span>(<span class="st">"../ld-calculations/diet-specific-regions/"</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">as.character</span>(hfd.clumps[i,<span class="st">"SNP"</span>]),</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>                    <span class="st">"-snp-list.txt"</span>))</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 1
+[1] 2
+[1] 3
+[1] 4
+[1] 5
+[1] 6
+[1] 7
+[1] 8
+[1] 9
+[1] 10
+[1] 11
+[1] 12
+[1] 13
+[1] 14
+[1] 15
+[1] 16
+[1] 17</code></pre>
+</div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: There were 2 warnings in `filter()`.
+The first warning was:
+ℹ In argument: `&amp;...`.
+Caused by warning:
+! NAs introduced by coercion to integer range
+ℹ Run `dplyr::last_dplyr_warnings()` to see the 1 remaining warning.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] 18
+[1] 19
+[1] 20
+[1] 21
+[1] 22
+[1] 23</code></pre>
+</div>
+</div>
+</section>
+<section id="session-information" class="level1">
+<h1>Session Information</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.4.1 (2024-06-14)
+Platform: x86_64-apple-darwin20
+Running under: macOS Monterey 12.7.6
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Detroit
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] biomaRt_2.60.1 tidyr_1.3.1    stringr_1.5.1  dplyr_1.1.4    knitr_1.48    
+[6] readr_2.1.5   
+
+loaded via a namespace (and not attached):
+ [1] KEGGREST_1.44.1         xfun_0.46               httr2_1.0.5            
+ [4] htmlwidgets_1.6.4       Biobase_2.64.0          tzdb_0.4.0             
+ [7] vctrs_0.6.5             tools_4.4.1             generics_0.1.3         
+[10] parallel_4.4.1          stats4_4.4.1            curl_5.2.3             
+[13] tibble_3.2.1            fansi_1.0.6             AnnotationDbi_1.66.0   
+[16] RSQLite_2.3.7           blob_1.2.4              pkgconfig_2.0.3        
+[19] dbplyr_2.5.0            S4Vectors_0.42.1        lifecycle_1.0.4        
+[22] GenomeInfoDbData_1.2.12 compiler_4.4.1          Biostrings_2.72.1      
+[25] progress_1.2.3          GenomeInfoDb_1.40.1     htmltools_0.5.8.1      
+[28] yaml_2.3.10             pillar_1.9.0            crayon_1.5.3           
+[31] cachem_1.1.0            tidyselect_1.2.1        digest_0.6.36          
+[34] stringi_1.8.4           purrr_1.0.2             fastmap_1.2.0          
+[37] cli_3.6.3               magrittr_2.0.3          utf8_1.2.4             
+[40] withr_3.0.0             prettyunits_1.2.0       filelock_1.0.3         
+[43] UCSC.utils_1.0.0        rappdirs_0.3.3          bit64_4.0.5            
+[46] rmarkdown_2.27          XVector_0.44.0          httr_1.4.7             
+[49] bit_4.0.5               png_0.1-8               hms_1.1.3              
+[52] memoise_2.0.1           evaluate_0.24.0         IRanges_2.38.1         
+[55] BiocFileCache_2.12.0    rlang_1.1.4             glue_1.7.0             
+[58] DBI_1.2.3               xml2_1.3.6              BiocGenerics_0.50.0    
+[61] rstudioapi_0.16.0       vroom_1.6.5             jsonlite_1.8.8         
+[64] R6_2.5.1                zlibbioc_1.50.0        </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    target: function(trigger) {
+      return trigger.previousElementSibling;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>

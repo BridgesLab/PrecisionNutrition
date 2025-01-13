@@ -1,0 +1,832 @@
+---
+title: "Analysis of Diversity Outbred Strain Cholesterol Levels Separating by Sex"
+author: "Dave Bridges"
+date: "January 7, 2025"
+output:
+  html_document:
+    highlight: tango
+    keep_md: yes
+    number_sections: yes
+    toc: yes
+  pdf_document:
+    highlight: tango
+    keep_tex: yes
+    number_sections: yes
+    toc: yes
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(readr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures-sex/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+library(broom)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+# Purpose
+
+# Experimental Details
+
+This analyses the data analysed via GEMMA and provided in the various output folders.
+
+# Data Entry
+
+```{r data-entry}
+# additive lmm data
+lmm.additive.filename <- 'output/cholesterol_all.assoc.txt'
+lmm.additive.data <- read_tsv(lmm.additive.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+lmm.males.filename <- 'output/cholesterol_males.assoc.txt'
+lmm.males.results <- read_tsv(lmm.males.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+lmm.females.filename <- 'output/cholesterol_females.assoc.txt'
+lmm.females.results <- read_tsv(lmm.females.filename) %>%
+  separate(rs, sep="_", into=c("chromosome","position","allele","alt"),remove=FALSE) %>%
+  mutate(chromosome=factor(chromosome, c(1:19,"X"))) %>%
+  mutate(position=as.integer(position))
+
+
+```
+
+
+# Additive Models
+
+Ran the additive models using GEMMA, first using intercepts and additive covariates for diet and sex
+
+$SNP = beta_1 SNP + \beta_2 Diet + \beta_3 Sex + \mu +\epsilon$
+
+Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of the strains as defined by
+
+## LMM Analysis for Additive Models
+
+```{r lmm-additive}
+library(qqman)
+qq(lmm.additive.data$p_wald)
+suggestive.pval <- 1E-5
+genome.pval <- 5E-8
+
+lmm.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol in additive model") 
+
+lmm.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
+
+lmm.additive.data %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<1E-4) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> additive.snp.summary
+
+additive.snp.summary %>%
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
+
+library(ggmanh)
+manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice (females, Additive Model)", y.label = "LOD Score")
+
+#library(GWASTools)
+#with(lmm.additive.data,manhattanPlot(p=p_wald,
+                               #chromosome=chromosome,
+                               #signif=suggestive.pval))
+```
+
+### Chromosome 1 Peak
+
+```{r cholesterol-chr1-160000000-185000000-all}
+snp.pos <- 171425406
+library(forcats)
+peak1.b <- filter(lmm.additive.data,
+                  chromosome==1,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak1.b,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+```{r cholesterol-chr1-60000000-100000000-all}
+snp.pos <- 80237174
+library(forcats)
+peak1 <- filter(lmm.additive.data,
+                  chromosome==1,
+                  position>snp.pos-35000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak1,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=4))
+```
+```{r cholesterol-chr1-130000000-160000000-all}
+snp.pos <- 143704476
+library(forcats)
+peak1 <- filter(lmm.additive.data,
+                  chromosome==1,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak1,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 1") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=4))
+```
+
+
+```{r cholesterol-chr3-130000000-160000000-all}
+snp.pos <- 148547289 
+library(forcats)
+peak3 <- filter(lmm.additive.data,
+                  chromosome==3,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak3,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 3") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=4))
+```
+
+
+
+```{r cholesterol-chr2--all}
+snp.pos <- 16902424
+library(forcats)
+peak2 <- filter(lmm.additive.data,
+                  chromosome==2,
+                  position>snp.pos-20000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak2,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 2") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=5))
+```
+
+```{r cholesterol-chr5-60000000-100000000-all}
+snp.pos <-55298460
+
+library(forcats)
+peak5 <- filter(lmm.additive.data,
+                  chromosome==5,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak5,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 5") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=4))
+```
+
+
+
+### Chromosome 5 Peak
+
+```{r chr5-120000000-130000000}
+snp.pos <- 123629774
+peak5 <- filter(lmm.additive.data,
+                  chromosome==5,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak5,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 5") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+##Chromosome 10
+```{r chr10-50000000-80000000}
+snp.pos <- 54344829
+peak10 <- filter(lmm.additive.data,
+                  chromosome==10,
+                  position>snp.pos-20000000,
+                  position<snp.pos+30000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak10,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 10") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+##Chromosome 10
+```{r cholesterol-chr10-85000000-110000000-all}
+snp.pos <- 95382136
+library(forcats)
+peak10.b <- filter(lmm.additive.data,
+                  chromosome==10,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak10.b,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 10") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r chr11-80000000-110000000}
+snp.pos <- 91658214
+peak11 <- filter(lmm.additive.data,
+                  chromosome==11,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak11,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 11") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=8))
+```
+
+
+
+```{r chr14-10000000-25000000}
+snp.pos <-19934709
+peak14 <- filter(lmm.additive.data,
+                  chromosome==14,
+                  position>snp.pos-40000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                       "WSB"="H"))
+# 
+# ggplot(data=peak14,
+#        aes(x=position,
+#        y=beta,
+#        col=alt,
+#        group=alt)) +
+#   geom_line() +
+#   geom_hline(yintercept=0,lty=2) +
+#   labs(title="Strain Specific Effects",
+#        y="Cholesterol Effect Size (mg/dL)",
+#        x="Position on Chromosome 14") +
+#   scale_color_discrete(name="") +
+#   guides(col=guide_legend(ncol=2)) +
+#   theme_classic(base_size=12) +
+#   theme(legend.position=c(0.18,0.9),
+#         legend.text=element_text(size=5))
+```
+```{r cholesterol-chr9--all}
+library(readr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+snp.pos <- 4.5e07
+library(forcats)
+peak9 <- filter(lmm.additive.data,
+                  chromosome==9,
+                  position>snp.pos-20000000,
+                  position<snp.pos+20000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak9,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 9") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=5))
+```
+
+
+##Chromosome 17
+```{r chr17-75000000-90000000}
+snp.pos <- 80080939
+peak17 <- filter(lmm.additive.data,
+                  chromosome==17,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ ggplot(data=peak17,
+        aes(x=position,        
+        y=beta,
+        col=alt,
+        group=alt)) +
+   geom_line() +
+   geom_hline(yintercept=0,lty=2) +
+   labs(title="Strain Specific Effects",
+        y="Cholesterol Effect Size (mg/dL)",
+        x="Position on Chromosome 17") +
+   scale_color_discrete(name="") +
+   guides(col=guide_legend(ncol=2)) +
+   theme_classic(base_size=12) +
+   theme(legend.position=c(0.18,0.9),
+         legend.text=element_text(size=5))
+```
+
+
+
+
+```{r cholesterol-chr12--all}
+library(readr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+snp.pos <- 2e07
+library(forcats)
+peak12 <- filter(lmm.additive.data,
+                  chromosome==12,
+                  position>snp.pos-1e07,
+                  position<snp.pos+1e07) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ggplot(data=peak12,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size (mg/dL)",
+       x="Position on Chromosome 12") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=12) +
+  theme(legend.position=c(0.18,0.9),
+        legend.text=element_text(size=5))
+```
+
+## SNP Analysis
+
+### Linear Mixed Model SNP Analysis for Males
+
+```{r chol-snp-analysis-males}
+qq(lmm.males.results$p_wald)
+lmm.males.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on males") 
+
+lmm.males.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<suggestive.pval) %>%
+  mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) -> males.snp.summary
+  
+lmm.males.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<1E-3) %>%
+   mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps)  %>% 
+  kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol on females, clumped by first two digits of the position") 
+
+males.snp.summary %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on females, clumped by first two digits of the position") 
+
+
+manhattan_plot(x = lmm.males.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice (males)", y.label = "LOD Score") -> males.manhattan
+
+males.manhattan
+```
+
+### Linear Mixed Model SNP Analysis for females
+
+```{r chol-snp-analysis-females}
+qq(lmm.females.results$p_wald)
+
+lmm.females.results %>%
+  arrange(p_wald) %>% 
+  filter(p_wald<genome.pval) %>%
+  kable(caption="Genome-wide significant associations from mixed linear models for cholesterol on females") 
+
+lmm.females.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<suggestive.pval) %>%
+   mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on females, clumped by first two digits of the position") 
+
+lmm.females.results %>%
+   arrange(p_wald) %>% 
+   filter(p_wald<1E-3) %>%
+   mutate(position.start = substr(as.character(position), 1,2)) %>%
+  group_by(chromosome,position.start) %>%
+  summarize_all(.funs=first) %>%
+  select(-position.start,-chr,-ps) ->
+  females.snp.summary
+
+females.snp.summary %>%
+  kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on females, clumped by first two digits of the position") 
+
+manhattan_plot(x = lmm.females.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice (females)", y.label = "LOD Score") -> females.manhattan
+
+females.manhattan
+```
+
+#### Chromosome 13 QTL Associated with Cholesterol on females
+
+```{r peak-13-females}
+snp.pos <- 29976363
+library(forcats)
+peak13 <- dplyr::filter(lmm.females.results,
+                  chromosome==13,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H")) %>%
+  mutate(LOD=-log10(p_wald)) %>%
+  mutate(LOD.drop = LOD-max(LOD))
+library(ggplot2)
+ggplot(data=peak13,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size on females (mg/dL)",
+       x="Position on Chromosome 13") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=16) +
+  theme(legend.position=c(0.8,0.2),
+        legend.text=element_text(size=8))
+
+#credible region 1.5 LOD less than peak 28011631-32375634
+#From GenomMUSTer 3755 variants differ btween 129 and bl6
+#upstream variants in Sox4 and 
+#missense variant in rs29850511	chr13:29326051	T	Cdkal1	ENSMUST00000006353.13	Transcript	missense_variant	1879	1723	575	L/M	Ttg/Atg	rs29850511	EXON=16/16
+#GWAS associated Cdkal1 with HDL and TC, seems to be a negative regulator of bile acid production, is atheroprotective in Apoe null mice
+```
+
+#### Chromosome 18 QTL Associated with Cholesterol on males
+
+```{r peak-18-males}
+snp.pos <- 46410922
+library(forcats)
+peak13 <- dplyr::filter(lmm.males.results,
+                  chromosome==18,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H")) %>%
+  mutate(LOD=-log10(p_wald)) %>%
+  mutate(LOD.drop = LOD-max(LOD))
+library(ggplot2)
+ggplot(data=peak13,
+       aes(x=position,
+       y=beta,
+       col=alt,
+       group=alt)) +
+  geom_line() +
+  geom_hline(yintercept=0,lty=2) +
+  labs(title="Strain Specific Effects",
+       y="Cholesterol Effect Size on males (mg/dL)",
+       x="Position on Chromosome 18") +
+  scale_color_discrete(name="") +
+  guides(col=guide_legend(ncol=2)) +
+  theme_classic(base_size=16) +
+  theme(legend.position=c(0.8,0.2),
+        legend.text=element_text(size=8))
+
+#credible region 1.5 LOD less than peak 28011631-32375634
+#From GenomMUSTer 3755 variants differ btween 129 and bl6
+#upstream variants in Sox4 and 
+#missense variant in rs29850511	chr13:29326051	T	Cdkal1	ENSMUST00000006353.13	Transcript	missense_variant	1879	1723	575	L/M	Ttg/Atg	rs29850511	EXON=16/16
+#GWAS associated Cdkal1 with HDL and TC, seems to be a negative regulator of bile acid production, is atheroprotective in Apoe null mice
+```
+
+### Comparason of males and females GWAS
+
+```{r males-females-comparason}
+library(cowplot)
+
+# plots are drawn without alignment
+plot_grid(males.manhattan, females.manhattan, align="v",ncol=1)
+
+```
+
+# Summary of Interesting SNPs
+
+```{r snp-summary}
+snps.of.interest <- bind_rows(additive.snp.summary,females.snp.summary,males.snp.summary)
+
+write_csv(snps.of.interest, file="SNPs_of_interest_sex.csv")
+snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest_sex.txt") #just the rsids
+
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```
+

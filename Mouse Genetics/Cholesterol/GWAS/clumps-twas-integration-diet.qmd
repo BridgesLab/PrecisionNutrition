@@ -1,0 +1,253 @@
+---
+title: "Analysis of Clumped QTLs for TWAS Associations"
+author: "Dave Bridges"
+date: "2024-10-07"
+format: html
+---
+
+This file is for looking at genes within the clumped QTL regions for NCD and HFD, and cross-referencing these against TWAS results. This script was last run on `r date()` and can be found in `r getwd()`.
+
+## Data  Entry
+
+Loaded in clumping data and TWAS data
+
+## Load Clumping Data
+
+This is long-format annotated clump data for NCD or HFD GWAS
+
+```{r clump-data}
+ncd.clump.filename <- 'ld-calculations/Annotated Gene Clumps NCD QTLs.csv'
+hfd.clump.filename <- 'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'
+
+library(readr)
+ncd.clump.data <- read_csv(ncd.clump.filename)
+hfd.clump.data <- read_csv(hfd.clump.filename)
+```
+
+### TWAS Data
+
+```{r twas-data-entry}
+twas.all.filename <- 'Cholesterol - Expression Associations - Linear Model.csv'
+library(dplyr)
+twas.all.data <- read_csv(twas.all.filename) %>%
+  mutate(t.statistic=sqrt(abs(r2))*sqrt((478-2)/(1-r2)),
+         BF=sqrt(478/2)*exp((t.statistic^2)/2))
+
+#using twas data, dont have lm data yet
+twas.hfd.data <- read_csv('Cholesterol TWAS - HFD Only - Sex Adjusted.csv')
+twas.ncd.data <- read_csv('Cholesterol TWAS - NCD Only - Sex Adjusted.csv')
+```
+
+Calculated an approximate Bayes factor according to this formula from Bartos and Wagenmakers (https://doi.org/10.1002/sta4.600)
+
+$$t = r \sqrt{\frac{n-2}{1-r^2}}$$
+$$ BF \approx \sqrt{\frac{n}{2}} \cdot e^{t^2/2} \ $$
+ 
+
+## TWAS and QTL Hits
+
+First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under any conditions
+
+```{r twas-hfd-overlap}
+library(dplyr)
+library(knitr)
+twas.all.data %>%
+  filter(symbol %in% hfd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pval<0.05) %>%
+  dplyr::select(symbol,beta,se,BF,pval,chr,start.true,end.true) %>%
+  arrange(chr,start.true) -> twas.QTL.summary.hfd
+nrow(twas.QTL.summary.hfd)
+twas.QTL.summary.hfd %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on HFD")
+```
+
+
+
+## Normal Chow Diet TWAS and QTL Hits
+
+First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under all conditions
+
+```{r twas-ncd-overlap}
+twas.all.data %>%
+  filter(symbol %in% ncd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pval<0.05) %>%
+  dplyr::select(symbol,beta,se,BF,pval,chr,start.true,end.true) %>%
+  arrange(chr,start.true) -> twas.QTL.summary.ncd
+nrow(twas.QTL.summary.ncd)
+
+twas.QTL.summary.ncd %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on NCD")
+```
+
+### Overlap between NCD and HFD TWAS QTL hits 
+
+```{r Twas QTL overlap}
+intersect(twas.QTL.summary.hfd$symbol, twas.QTL.summary.ncd$symbol) %>%
+  length()
+
+twas.hfd.data %>%
+  filter(symbol %in% ncd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pvalue<0.05) %>%
+  dplyr::select(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true)%>%
+  arrange(chr,start.true) -> twas.QTL.summary.hfd.diet
+nrow(twas.QTL.summary.hfd.diet)
+
+twas.QTL.summary.hfd.diet %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on ")
+
+twas.ncd.data %>%
+  filter(symbol %in% ncd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pvalue<0.05) %>%
+  dplyr::select(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true) %>%
+  arrange(chr,start.true) -> twas.QTL.summary.ncd.diet
+nrow(twas.QTL.summary.ncd.diet)
+
+twas.QTL.summary.ncd.diet %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on NCD")
+```
+
+
+## Diet-Independent TWAS and QTL Hits
+
+First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under HFD conditions
+
+```{r twas-all-overlap}
+twas.all.data %>%
+  filter(symbol %in% ncd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,beta,se,pval,padj,BF,chr,start.true,end.true) %>%
+  arrange(chr,start.true) %>% 
+  kable(caption="Significant TWAS hits inside NCD QTL regions where TWAS is sex-adjusted but not diet specific")
+
+twas.all.data %>%
+  filter(symbol %in% hfd.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,beta,se,pval,padj,BF,chr,start.true,end.true)  %>%
+  arrange(chr,start.true) %>% 
+  kable(caption="Significant TWAS hits inside HFD QTL regions where TWAS is sex-adjusted but not diet specific")
+```
+# Plotting
+
+```{r pseudo-manhattan-plot-hfd}
+library(ggplot2)
+library(ggrepel)
+ggplot(twas.QTL.summary.hfd %>% filter(pval<1E-5),
+       aes(y=-log10(pval),
+           x=as.integer(chr),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol)) +
+  theme_classic(base_size=16) +
+  labs(y="Correlation (-log10 pvalue)",
+       x="",
+       title="HFD QTL Genes",
+       subtitle="Correlation with cholesterol")
+
+```
+
+```{r pseudo-manhattan-plot-ncd}
+
+ggplot(twas.QTL.summary.ncd %>% filter(pval<1E-5),
+       aes(y=-log10(pval),
+           x=as.integer(chr),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol)) +
+  theme_classic(base_size=16) +
+  labs(y="Correlation (-log10 pvalue)",
+       x="",
+       title="NCD QTL Genes",
+       subtitle="Correlation with cholesterol")
+
+```
+
+# Comparason with human GWAS
+
+```{r data-human-mouse}
+mgi_table <- "http://www.informatics.jax.org/downloads/reports/HOM_MouseHumanSequence.rpt"
+mgi_file <- 'HOM_MouseHumanSequence.rpt'
+#download.file(url=mgi_table,destfile=mgi_file)
+mouse_human_genes = read_tsv(mgi_file)
+
+library(tidyr)
+mouse.human.table <- mouse_human_genes %>%
+  select(`DB Class Key`, `Common Organism Name`,`Symbol`) %>%
+  group_by(`DB Class Key`) %>%
+  pivot_wider(names_from=`Common Organism Name`,
+              values_from=Symbol,
+              values_fn=first) %>%
+  rename(mouse=`mouse, laboratory`)
+```
+
+To convert human to mouse genes, I used the resource from MGI at `r mgi_table`.
+
+Downloaded gene- and SNP-level asssociations for total cholesterol from https://t2d.hugeamp.org/phenotype.html?phenotype=CHOL 
+
+```{r human-cholesterol}
+gene.associations.file <- 'gene_associations_total_cholesterol.csv'
+snp.associations.file <- 'associations_total_cholesterol.csv'
+cholesterol.data.human <- read_csv(gene.associations.file) 
+
+twas.QTL.summary.hfd.anno <- 
+  left_join(twas.QTL.summary.hfd,
+            mouse.human.table,
+            by=c('symbol'='mouse')) %>%
+  left_join(cholesterol.data.human,
+            by=c('human'='gene'))
+
+twas.QTL.summary.ncd.anno <- 
+  left_join(twas.QTL.summary.ncd,
+            mouse.human.table,
+            by=c('symbol'='mouse')) %>%
+  left_join(cholesterol.data.human,
+            by=c('human'='gene'))
+```
+
+
+```{r human-twas-qtl-hfd}
+ggplot(twas.QTL.summary.hfd.anno %>% filter(!(is.na(phenotype))),
+       aes(x=-log10(pval),
+           y=log10(huge),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol),
+                  max.overlaps=99) +
+  theme_classic(base_size=16) +
+  labs(y="Correlation with Cholesterol (-log10 pvalue)",
+       title="Nominating genes on HFD",
+       x="Human GWAS HuGE Score (log10)")
+
+twas.QTL.summary.hfd.anno %>% filter(!(is.na(phenotype))) %>%
+  select(symbol,beta,pval,chr,start.true,huge) %>%
+  arrange(-huge) %>%
+  filter(huge>=3) %>%
+  kable(caption="Nominated genes by HUGE score on HFD, showing all strong scores")
+```
+
+```{r human-twas-qtl-ncd}
+ggplot(twas.QTL.summary.ncd.anno %>% filter(!(is.na(phenotype))),
+       aes(x=-log10(pval),
+           y=log10(huge),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol),
+                  max.overlaps = 99) +
+  theme_classic(base_size=16) +
+  labs(title="Nominating genes on NCD",
+         y="Correlation with Cholesterol (-log10 pvalue)",
+       x="Human GWAS HuGE Score (log10)")
+
+twas.QTL.summary.ncd.anno %>% filter(!(is.na(phenotype))) %>%
+  select(symbol,beta,pval,chr,start.true,huge) %>%
+  arrange(-huge) %>%
+  filter(huge>=3) %>%
+  kable(caption="Nominated genes by HUGE score on NCD, showing all strong scores")
+```
+
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```
+

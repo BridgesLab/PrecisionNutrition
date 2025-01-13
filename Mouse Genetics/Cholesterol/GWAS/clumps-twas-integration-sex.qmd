@@ -1,0 +1,272 @@
+---
+title: "Analysis of Clumped QTLs for TWAS Associations for Sex Specific Associations"
+author: "Dave Bridges"
+date: "2024-10-07"
+format: html
+---
+
+This file is for looking at genes within the clumped QTL regions for male and female, and cross-referencing these against TWAS results. This script was last run on `r date()` and can be found in `r getwd()`.
+
+## Data  Entry
+
+Loaded in clumping data and TWAS data
+
+## Load Clumping Data
+
+This is long-format annotated clump data for male or female GWAS
+
+```{r clump-data}
+male.clump.filename <- 'ld-calculations/Annotated Gene Clumps Male QTLs.csv'
+female.clump.filename <- 'ld-calculations/Annotated Gene Clumps Female QTLs.csv'
+
+library(readr)
+male.clump.data <- read_csv(male.clump.filename)
+female.clump.data <- read_csv(female.clump.filename)
+```
+
+### TWAS Data
+
+```{r twas-data-entry}
+twas.all.filename <- 'Cholesterol - Expression Associations - Linear Model.csv'
+library(dplyr)
+twas.all.data <- read_csv(twas.all.filename) %>%
+  mutate(t.statistic=sqrt(abs(r2))*sqrt((478-2)/(1-r2)),
+         BF=sqrt(478/2)*exp((t.statistic^2)/2))
+
+#using twas data, dont have lm data yet
+twas.female.data <- read_csv('Cholesterol TWAS - Sex Adjusted.csv') #dont have sex specific ones so usign diet for now
+twas.male.data <- read_csv('Cholesterol TWAS - Sex Adjusted.csv')
+```
+
+Calculated an approximate Bayes factor according to this formula from Bartos and Wagenmakers (https://doi.org/10.1002/sta4.600)
+
+$$t = r \sqrt{\frac{n-2}{1-r^2}}$$
+$$ BF \approx \sqrt{\frac{n}{2}} \cdot e^{t^2/2} \ $$
+ 
+
+## TWAS and QTL Hits
+
+First looked for genes in female that were in QTL clumps, and also had TWAS associations under any conditions
+
+```{r twas-female-overlap}
+library(dplyr)
+library(knitr)
+twas.all.data %>%
+  filter(symbol %in% female.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pval<0.05) %>%
+  dplyr::select(symbol,beta,se,BF,pval,chr,start.true,end.true) %>%
+  arrange(chr,start.true) -> twas.QTL.summary.female
+nrow(twas.QTL.summary.female)
+twas.QTL.summary.female %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on female")
+```
+
+
+
+## Normal Chow Diet TWAS and QTL Hits
+
+First looked for genes in female that were in QTL clumps, and also had TWAS associations under all conditions
+
+```{r twas-male-overlap}
+twas.all.data %>%
+  filter(symbol %in% male.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pval<0.05) %>%
+  dplyr::select(symbol,beta,se,BF,pval,chr,start.true,end.true) %>%
+  arrange(chr,start.true) -> twas.QTL.summary.male
+nrow(twas.QTL.summary.male)
+
+twas.QTL.summary.male %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on male")
+```
+
+### Overlap between male and female TWAS QTL hits 
+
+```{r Twas QTL overlap}
+intersect(twas.QTL.summary.female$symbol, twas.QTL.summary.male$symbol) %>%
+  length()
+
+twas.female.data %>%
+  filter(symbol %in% male.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pvalue<0.05) %>%
+  dplyr::select(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true)%>%
+  arrange(chr,start.true) -> twas.QTL.summary.female.diet
+nrow(twas.QTL.summary.female.diet)
+
+twas.QTL.summary.female.diet %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on ")
+
+twas.male.data %>%
+  filter(symbol %in% male.clump.data$external_gene_name) %>% #is in a QTL
+  filter(pvalue<0.05) %>%
+  dplyr::select(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true) %>%
+  arrange(chr,start.true) -> twas.QTL.summary.male.diet
+nrow(twas.QTL.summary.male.diet)
+
+twas.QTL.summary.male.diet %>%
+  kable(caption="Nominally significant TWAS hits inside QTL regions on male")
+```
+
+
+## Diet-Independent TWAS and QTL Hits
+
+First looked for genes in female that were in QTL clumps, and also had TWAS associations under female conditions
+
+```{r twas-all-overlap}
+twas.all.data %>%
+  filter(symbol %in% male.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,beta,se,pval,padj,BF,chr,start.true,end.true) %>%
+  arrange(chr,start.true) %>% 
+  kable(caption="Significant TWAS hits inside male QTL regions where TWAS is sex-adjusted but not diet specific")
+
+twas.all.data %>%
+  filter(symbol %in% male.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,beta,se,pval,padj,BF,chr,start.true,end.true)  %>%
+  arrange(chr,start.true) %>% 
+  group_by(chr) %>%
+  slice_min(padj, n = 1) %>%
+  kable(caption="Significant TWAS hits inside male QTL regions where TWAS is sex-adjusted but not diet specific, showing most significant cholesterol association for each chromosome")
+
+twas.all.data %>%
+  filter(symbol %in% female.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,beta,se,pval,padj,BF,chr,start.true,end.true)  %>%
+  arrange(chr,start.true) %>% 
+  kable(caption="Significant TWAS hits inside female QTL regions where TWAS is sex-adjusted but not diet specific")
+
+twas.all.data %>%
+  filter(symbol %in% female.clump.data$external_gene_name) %>% #is in a QTL
+  filter(padj<0.05) %>%
+  dplyr::select(symbol,beta,se,pval,padj,BF,chr,start.true,end.true)  %>%
+  arrange(chr,start.true) %>% 
+  group_by(chr) %>%
+  slice_min(padj, n = 1) %>%
+  kable(caption="Significant TWAS hits inside female QTL regions where TWAS is sex-adjusted but not diet specific, showing most significant cholesterol association for each chromosome")
+```
+
+# Plotting
+
+```{r pseudo-manhattan-plot-female}
+library(ggplot2)
+library(ggrepel)
+ggplot(twas.QTL.summary.female %>% filter(pval<1E-5),
+       aes(y=-log10(pval),
+           x=as.integer(chr),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol)) +
+  theme_classic(base_size=16) +
+  labs(y="Correlation (-log10 pvalue)",
+       x="",
+       title="female QTL Genes",
+       subtitle="Correlation with cholesterol")
+
+```
+
+```{r pseudo-manhattan-plot-male}
+
+ggplot(twas.QTL.summary.male %>% filter(pval<1E-5),
+       aes(y=-log10(pval),
+           x=as.integer(chr),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol)) +
+  theme_classic(base_size=16) +
+  labs(y="Correlation (-log10 pvalue)",
+       x="",
+       title="male QTL Genes",
+       subtitle="Correlation with cholesterol")
+
+```
+
+# Comparason with human GWAS
+
+```{r data-human-mouse}
+mgi_table <- "http://www.informatics.jax.org/downloads/reports/HOM_MouseHumanSequence.rpt"
+mgi_file <- 'HOM_MouseHumanSequence.rpt'
+#download.file(url=mgi_table,destfile=mgi_file)
+mouse_human_genes = read_tsv(mgi_file)
+
+library(tidyr)
+mouse.human.table <- mouse_human_genes %>%
+  select(`DB Class Key`, `Common Organism Name`,`Symbol`) %>%
+  group_by(`DB Class Key`) %>%
+  pivot_wider(names_from=`Common Organism Name`,
+              values_from=Symbol,
+              values_fn=first) %>%
+  rename(mouse=`mouse, laboratory`)
+```
+
+To convert human to mouse genes, I used the resource from MGI at `r mgi_table`.
+
+Downloaded gene- and SNP-level asssociations for total cholesterol from https://t2d.hugeamp.org/phenotype.html?phenotype=CHOL 
+
+```{r human-cholesterol}
+gene.associations.file <- 'gene_associations_total_cholesterol.csv'
+snp.associations.file <- 'associations_total_cholesterol.csv'
+cholesterol.data.human <- read_csv(gene.associations.file) 
+
+twas.QTL.summary.female.anno <- 
+  left_join(twas.QTL.summary.female,
+            mouse.human.table,
+            by=c('symbol'='mouse')) %>%
+  left_join(cholesterol.data.human,
+            by=c('human'='gene'))
+
+twas.QTL.summary.male.anno <- 
+  left_join(twas.QTL.summary.male,
+            mouse.human.table,
+            by=c('symbol'='mouse')) %>%
+  left_join(cholesterol.data.human,
+            by=c('human'='gene'))
+```
+
+
+```{r human-twas-qtl-female}
+ggplot(twas.QTL.summary.female.anno %>% filter(!(is.na(phenotype))),
+       aes(x=-log10(pval),
+           y=log10(huge),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol),
+                  max.overlaps=99) +
+  theme_classic(base_size=16) +
+  labs(y="Correlation with Cholesterol (-log10 pvalue)",
+       title="Nominating genes on female",
+       x="Human GWAS HuGE Score (log10)")
+
+twas.QTL.summary.female.anno %>% filter(!(is.na(phenotype))) %>%
+  select(symbol,beta,pval,chr,start.true,huge) %>%
+  arrange(-huge) %>%
+  filter(huge>=3) %>%
+  kable(caption="Nominated genes by HUGE score on female, showing all strong scores")
+```
+
+```{r human-twas-qtl-male}
+ggplot(twas.QTL.summary.male.anno %>% filter(!(is.na(phenotype))),
+       aes(x=-log10(pval),
+           y=log10(huge),
+           col=beta>0)) +
+  geom_point() +
+  geom_text_repel(aes(label=symbol),
+                  max.overlaps = 99) +
+  theme_classic(base_size=16) +
+  labs(title="Nominating genes on male",
+         y="Correlation with Cholesterol (-log10 pvalue)",
+       x="Human GWAS HuGE Score (log10)")
+
+twas.QTL.summary.male.anno %>% filter(!(is.na(phenotype))) %>%
+  select(symbol,beta,pval,chr,start.true,huge) %>%
+  arrange(-huge) %>%
+  filter(huge>=3) %>%
+  kable(caption="Nominated genes by HUGE score on male, showing all strong scores")
+```
+
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```
+

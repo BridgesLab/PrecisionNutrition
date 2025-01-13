@@ -32,7 +32,7 @@ grep -Ff SNPs_of_interest.txt Genotypes_all.bimbam > Genotypes_of_interest.bimba
 # Data Entry
 
 
-```r
+``` r
 genotype.file <- 'Genotypes_of_interest.bimbam'
 cholesterol.file <- 'Cholesterol_all.txt'
 covariates.file <- 'Covariates.tab'
@@ -67,7 +67,7 @@ colnames(combined.data) <- c(colnames(combined.data)[1:3],snps$X1)
 
 
 
-```r
+``` r
 combined.data.long <-
   combined.data %>%
   group_by(diet,sex) %>%
@@ -99,7 +99,7 @@ Table: Summary statistics among all selected QTLs
 This was the QTL that was HFHS-specifically associated, we think this is *Cdkal1*.
 
 
-```r
+``` r
 library(forcats)
 qtl <- '13_29976363_E_C'
 summary.data %>%
@@ -127,7 +127,7 @@ summary.data %>%
 
 ![](figures/pk13.qtl-1.png)<!-- -->
 
-```r
+``` r
 summary.data %>%
   filter(SNP==qtl) %>%  
   mutate(Genotype=fct_recode(as.factor(Count),
@@ -157,11 +157,79 @@ summary.data %>%
 ```
 
 ![](figures/pk13.qtl-2.png)<!-- -->
+# Chromosome 18 QTL 
+
+This was the QTL that was NCD-specifically associated.
+
+
+``` r
+library(forcats)
+qtl <- '18_46410922_G_A'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
+```
+
+![](figures/pk18.qtl-1.png)<!-- -->
+
+``` r
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "Homozygous"='0',
+         "Heterozygous"='1',
+         "CC"='2')) %>% 
+    filter(Genotype!="CC") %>%
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = "Chromosome 18 QTL",
+       fill="Genotype") +
+  theme_classic(base_size = 16) +
+  scale_fill_manual(values=color.scheme) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))  +
+  theme(legend.position=c(0.15,0.85),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=12),
+            legend.box.background = element_blank(),
+    legend.key = element_rect(colour = NA, fill = NA),
+    legend.background = element_rect(fill = "transparent")) 
+```
+
+![](figures/pk18.qtl-2.png)<!-- -->
+
 
 ## Chromosome 1 QTL - Apoa2
 
 
-```r
+``` r
 qtl <- '1_171425406_H_C'
 summary.data %>%
   filter(SNP==qtl) %>%  
@@ -190,7 +258,7 @@ summary.data %>%
 # Chromosome 5 QTL - Scarb1
 
 
-```r
+``` r
 qtl <- '5_123629774_B_E'
 summary.data %>%
   filter(SNP==qtl) %>%  
@@ -221,7 +289,7 @@ summary.data %>%
 This was the top BSLMM hit
 
 
-```r
+``` r
 qtl <- '1_138062762_D_H'
 summary.data %>%
   filter(SNP==qtl) %>%  
@@ -251,18 +319,18 @@ summary.data %>%
 # Session Information
 
 
-```r
+``` r
 sessionInfo()
 ```
 
 ```
-## R version 4.3.3 (2024-02-29)
-## Platform: x86_64-apple-darwin20 (64-bit)
-## Running under: macOS Sonoma 14.3.1
+## R version 4.4.1 (2024-06-14)
+## Platform: x86_64-apple-darwin20
+## Running under: macOS Sonoma 14.7
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -274,21 +342,21 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] forcats_1.0.0 ggplot2_3.5.0 broom_1.0.5   dplyr_1.1.4   tidyr_1.3.1  
-## [6] readr_2.1.5   knitr_1.45   
+## [1] forcats_1.0.0 ggplot2_3.5.1 broom_1.0.6   dplyr_1.1.4   tidyr_1.3.1  
+## [6] readr_2.1.5   knitr_1.48   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] bit_4.0.5        gtable_0.3.4     jsonlite_1.8.8   highr_0.10      
-##  [5] crayon_1.5.2     compiler_4.3.3   tidyselect_1.2.0 parallel_4.3.3  
-##  [9] jquerylib_0.1.4  scales_1.3.0     yaml_2.3.8       fastmap_1.1.1   
-## [13] R6_2.5.1         labeling_0.4.3   generics_0.1.3   backports_1.4.1 
-## [17] tibble_3.2.1     munsell_0.5.0    bslib_0.6.1      pillar_1.9.0    
-## [21] tzdb_0.4.0       rlang_1.1.3      utf8_1.2.4       cachem_1.0.8    
-## [25] xfun_0.42        sass_0.4.8       bit64_4.0.5      cli_3.6.2       
-## [29] withr_3.0.0      magrittr_2.0.3   digest_0.6.34    grid_4.3.3      
-## [33] vroom_1.6.5      hms_1.1.3        lifecycle_1.0.4  vctrs_0.6.5     
-## [37] evaluate_0.23    glue_1.7.0       farver_2.1.1     fansi_1.0.6     
-## [41] colorspace_2.1-0 rmarkdown_2.26   purrr_1.0.2      tools_4.3.3     
-## [45] pkgconfig_2.0.3  htmltools_0.5.7
+##  [1] bit_4.0.5         gtable_0.3.5      jsonlite_1.8.8    highr_0.11       
+##  [5] crayon_1.5.3      compiler_4.4.1    tidyselect_1.2.1  parallel_4.4.1   
+##  [9] jquerylib_0.1.4   scales_1.3.0      yaml_2.3.10       fastmap_1.2.0    
+## [13] R6_2.5.1          labeling_0.4.3    generics_0.1.3    backports_1.5.0  
+## [17] tibble_3.2.1      munsell_0.5.1     bslib_0.8.0       pillar_1.9.0     
+## [21] tzdb_0.4.0        rlang_1.1.4       utf8_1.2.4        cachem_1.1.0     
+## [25] xfun_0.47         sass_0.4.9        bit64_4.0.5       cli_3.6.3        
+## [29] withr_3.0.1       magrittr_2.0.3    digest_0.6.37     grid_4.4.1       
+## [33] vroom_1.6.5       rstudioapi_0.16.0 hms_1.1.3         lifecycle_1.0.4  
+## [37] vctrs_0.6.5       evaluate_0.24.0   glue_1.7.0        farver_2.1.2     
+## [41] fansi_1.0.6       colorspace_2.1-1  rmarkdown_2.28    purrr_1.0.2      
+## [45] tools_4.4.1       pkgconfig_2.0.3   htmltools_0.5.8.1
 ```
 

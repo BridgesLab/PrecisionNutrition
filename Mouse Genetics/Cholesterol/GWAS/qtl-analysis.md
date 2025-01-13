@@ -26,7 +26,7 @@ This analyses the data analysed via GEMMA and provided in the various output fol
 # Data Entry
 
 
-```r
+``` r
 # additive lmm data
 lmm.additive.filename <- 'output/cholesterol_all.assoc.txt'
 lmm.additive.data <- read_tsv(lmm.additive.filename) %>%
@@ -82,7 +82,7 @@ Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of t
 ## LMM Analysis for Additive Models
 
 
-```r
+``` r
 library(qqman)
 qq(lmm.additive.data$p_wald)
 suggestive.pval <- 1E-5
@@ -105,7 +105,7 @@ Table: Genome-wide significant associations from mixed linear models for cholest
 |  -9|1_171295194_H_C |1          | 171295194|H      |C   | -9|      0|C       |H       | 0.095| 14.5| 2.61|   -3815|    2.21|      0|
 |  -9|1_171418895_H_C |1          | 171418895|H      |C   | -9|      0|C       |H       | 0.095| 14.5| 2.62|   -3815|    2.22|      0|
 
-```r
+``` r
 lmm.additive.data %>%
   arrange(p_wald) %>% 
   filter(p_wald<suggestive.pval) %>%
@@ -129,7 +129,7 @@ Table: Suggestive genome-wide significant associations from mixed linear models 
 |1          |1_171425406_H_C | 171425406|H      |C   |      0|C       |H       | 0.094| 14.59| 2.62|   -3815|    2.22|      0|
 |5          |5_123629774_B_E | 123629774|B      |E   |      0|E       |B       | 0.110| 11.66| 2.45|   -3819|    2.17|      0|
 
-```r
+``` r
 lmm.additive.data %>%
   arrange(p_wald) %>% 
   filter(p_wald<1E-4) %>%
@@ -158,19 +158,19 @@ Table: Relaxed suggestive genome-wide significant associations from mixed linear
 |13         |13_29976363_E_C |  29976363|E      |C   |      0|C       |E       | 0.156|  9.25| 2.19|   -3821|    2.10|      0|
 |13         |13_30180778_E_C |  30180778|E      |C   |      0|C       |E       | 0.156|  9.27| 2.19|   -3821|    2.10|      0|
 
-```r
+``` r
 library(ggmanh)
 ```
 
 ![](figures/lmm-additive-1.png)<!-- -->
 
-```r
+``` r
 manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet (Additive Model)", y.label = "LOD Score")
 ```
 
 ![](figures/lmm-additive-2.png)<!-- -->
 
-```r
+``` r
 library(GWASTools)
 with(lmm.additive.data,manhattanPlot(p=p_wald,
                                chromosome=chromosome,
@@ -182,7 +182,7 @@ with(lmm.additive.data,manhattanPlot(p=p_wald,
 ### Chromosome 1 Peak
 
 
-```r
+``` r
 snp.pos <- 171425406
 library(forcats)
 peak1.b <- filter(lmm.additive.data,
@@ -221,7 +221,7 @@ ggplot(data=peak1.b,
 ### Chromosome 5 Peak
 
 
-```r
+``` r
 snp.pos <- 123629774
 peak5 <- filter(lmm.additive.data,
                   chromosome==5,
@@ -258,7 +258,7 @@ ggplot(data=peak5,
 
 
 
-```r
+``` r
 ## BSLMM Analysis
 
 # pve -> proportion of phenotypic variance explained by the genotypes
@@ -302,7 +302,7 @@ Table: Hyperparameters summary
 ## BSLMM SNP Nomination for Additive Models
 
 
-```r
+``` r
 bslmm.additive.results  %>% head(10) %>% kable(caption="Variants with the largest effect sizes")
 ```
 
@@ -323,7 +323,7 @@ Table: Variants with the largest effect sizes
 |-9  |1_137634475_D_H |1          | 137634475|D      |H   | -9|      0| 0.002| 10.9| 0.015|    0.165|
 |-9  |1_138208411_D_H |1          | 138208411|D      |H   | -9|      0| 0.002| 12.7| 0.012|    0.148|
 
-```r
+``` r
 # variants with the highest sparse effects
 # ------------------------------------------------------------------------------
 # top 1% variants (above 99% quantile)
@@ -400,7 +400,7 @@ Table: Top 99.99 quantile variants with the highest sparse effects
 |-9  |X_58455484_G_G   |X          |  58455484|G      |G   | -9|      0| 0.002|  9.44| 0.004|    0.040|
 |-9  |6_92697172_H_C   |6          |  92697172|H      |C   | -9|      0| 0.001|  3.52| 0.011|    0.040|
 
-```r
+``` r
 top001 %>%
   mutate(position.start = substr(as.character(position), 1,2)) %>%
   group_by(chromosome,position.start) %>%
@@ -437,7 +437,7 @@ Table: Lead SNP for top 99.99 quartile variants
 |X          |X_58458107_C_G   |  58458107|C      |G   |      0| 0.002| 10.33| 0.004|    0.046|
 |X          |X_59063449_G_G   |  59063449|G      |G   |      0| 0.002|  9.63| 0.008|    0.073|
 
-```r
+``` r
 top001.filtered %>% arrange(-gamma) %>% kable(caption="Variants with the largest posterior probability as defined by gamma.  Gamma indicates the percent of times the variant was found in a MCMC simulation")
 ```
 
@@ -474,13 +474,13 @@ There were 33565 variants with detectable effect sizes.
 ### Linear Mixed Model SNP Analysis for Chow
 
 
-```r
+``` r
 qq(lmm.ncd.results$p_wald)
 ```
 
 ![](figures/chol-snp-analysis-chow-1.png)<!-- -->
 
-```r
+``` r
 lmm.ncd.results %>%
   arrange(p_wald) %>% 
   filter(p_wald<genome.pval) %>%
@@ -494,7 +494,7 @@ Table: Genome-wide significant associations from mixed linear models for cholest
 | chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
 |---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
-```r
+``` r
 lmm.ncd.results %>%
    arrange(p_wald) %>% 
    filter(p_wald<suggestive.pval) %>%
@@ -567,7 +567,7 @@ Table: Relaxed suggestive genome-wide significant associations from mixed linear
 |18         |18_49809849_C_A  |  49809849|C      |A   |      0|A       |C       | 0.146|   8.62| 2.37|   -1966|    3.32|  0.000|
 |18         |18_50045754_C_A  |  50045754|C      |A   |      0|A       |C       | 0.144|   8.41| 2.37|   -1966|    3.34|  0.000|
 
-```r
+``` r
 ncd.snp.summary %>%
   kable(caption="Suggestive genome-wide significant associations from mixed linear models for cholesterol on HFD, clumped by first two digits of the position") 
 ```
@@ -583,7 +583,7 @@ Table: Suggestive genome-wide significant associations from mixed linear models 
 |18         |18_46410922_G_A |  46410922|G      |A   |      0|A       |G       | 0.136| 11.6| 2.43|   -1961|    3.51|      0|
 |18         |18_47422415_G_A |  47422415|G      |A   |      0|A       |G       | 0.135| 10.9| 2.42|   -1962|    3.53|      0|
 
-```r
+``` r
 manhattan_plot(x = lmm.ncd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a NCD Diet", y.label = "LOD Score") -> ncd.manhattan
 
 ncd.manhattan
@@ -594,13 +594,13 @@ ncd.manhattan
 ### Linear Mixed Model SNP Analysis for HFD
 
 
-```r
+``` r
 qq(lmm.hfd.results$p_wald)
 ```
 
 ![](figures/chol-snp-analysis-hfd-1.png)<!-- -->
 
-```r
+``` r
 lmm.hfd.results %>%
   arrange(p_wald) %>% 
   filter(p_wald<genome.pval) %>%
@@ -614,7 +614,7 @@ Table: Genome-wide significant associations from mixed linear models for cholest
 | chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
 |---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
-```r
+``` r
 lmm.hfd.results %>%
    arrange(p_wald) %>% 
    filter(p_wald<suggestive.pval) %>%
@@ -632,7 +632,7 @@ Table: Suggestive genome-wide significant associations from mixed linear models 
 |chromosome |rs | position|allele |alt | n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
 |:----------|:--|--------:|:------|:---|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
-```r
+``` r
 lmm.hfd.results %>%
    arrange(p_wald) %>% 
    filter(p_wald<1E-3) %>%
@@ -713,7 +713,7 @@ Table: Suggestive genome-wide significant associations from mixed linear models 
 |16         |16_63647011_B_B  |  63647011|B      |B   |      0|B       |B       | 0.156| -12.2| 3.60|   -1814|    3.60|  0.001|
 |19         |19_25487123_G_G  |  25487123|G      |G   |      0|G       |G       | 0.129|  14.2| 3.98|   -1813|    3.05|  0.000|
 
-```r
+``` r
 manhattan_plot(x = lmm.hfd.results, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on a HFHS Diet", y.label = "LOD Score") -> hfd.manhattan
 
 hfd.manhattan
@@ -724,7 +724,7 @@ hfd.manhattan
 #### Chromosome 13 QTL Associated with Cholesterol on HFHS Diets
 
 
-```r
+``` r
 snp.pos <- 29976363
 library(forcats)
 peak13 <- dplyr::filter(lmm.hfd.results,
@@ -762,7 +762,7 @@ ggplot(data=peak13,
 
 ![](figures/peak-13-hfd-1.png)<!-- -->
 
-```r
+``` r
 #credible region 1.5 LOD less than peak 28011631-32375634
 #From GenomMUSTer 3755 variants differ btween 129 and bl6
 #upstream variants in Sox4 and 
@@ -773,7 +773,7 @@ ggplot(data=peak13,
 ### Comparason of NCD and HFHS GWAS
 
 
-```r
+``` r
 library(cowplot)
 
 # plots are drawn without alignment
@@ -787,7 +787,7 @@ plot_grid(ncd.manhattan, hfd.manhattan, align="v",ncol=1)
 ### For Normal Chow Diet 
 
 
-```r
+``` r
 bslmm.hyp.file <- 'output/ncd.cholesterol.hyp.txt'
 bslmm.hyp <- read_tsv(bslmm.hyp.file,
          col_types=cols(
@@ -840,7 +840,7 @@ Table: Hyperparameters summary
 ### For High Fat Diet 
 
 
-```r
+``` r
 bslmm.hyp.file <- 'output/hfd.cholesterol.hyp.txt'
 bslmm.hyp <- read_tsv(bslmm.hyp.file,
          col_types=cols(
@@ -893,7 +893,7 @@ Table: Hyperparameters summary
 ### BSLMM SNP Nomination for NCD
 
 
-```r
+``` r
 bslmm.results.file <- 'output/ncd.cholesterol.param.txt'
 bslmm.results <- read_tsv(bslmm.results.file, 
                                col_types = cols(chr=col_factor(levels=NULL))) %>%
@@ -921,7 +921,7 @@ Table: Variants with the largest effect sizes
 |3   |UNC4910274  |  26854828|      0| 0.004|  2.34| 0.026|    0.062|
 |4   |UNC7148030  |  44347922|      0| 0.003|  4.46| 0.013|    0.058|
 
-```r
+``` r
 bslmm.results  %>% 
   arrange(-gamma) %>%
   head(10) %>% kable(caption="Variants with the largest posterior probability")
@@ -944,14 +944,14 @@ Table: Variants with the largest posterior probability
 |3   |UNC4910274  | 26854828|      0| 0.004|  2.344| 0.026|    0.062|
 |17  |UNC27717713 | 26861900|      0| 0.000|  0.353| 0.026|    0.009|
 
-```r
+``` r
 top.snps <- bslmm.results
 ```
 
 ### BSLMM SNP Nomination for HFD
 
 
-```r
+``` r
 bslmm.results.file <- 'output/hfd.cholesterol.param.txt'
 bslmm.results <- read_tsv(bslmm.results.file, 
                                col_types = cols(chr=col_factor(levels=NULL))) %>%
@@ -979,7 +979,7 @@ Table: Variants with the largest effect sizes for HFD
 |17  |UNC27585545       |  13693352|      0| 0.008| 12.4| 0.015|    0.186|
 |4   |UNC8327379        | 138408221|      0| 0.007| 14.6| 0.010|    0.141|
 
-```r
+``` r
 bslmm.results  %>% 
   arrange(-gamma) %>%
   head(10) %>% kable(caption="Variants with the largest posterior probability for HFD")
@@ -1002,7 +1002,7 @@ Table: Variants with the largest posterior probability for HFD
 |4   |backupJAX00125209 | 138427554|      0| 0.008| 16.6| 0.012|    0.204|
 |4   |UNC8301426        | 136621550|      0| 0.008| 13.7| 0.010|    0.138|
 
-```r
+``` r
 top.snps <- bslmm.results
 ```
 
@@ -1011,7 +1011,7 @@ top.snps <- bslmm.results
 ### Comparason of BSLMM and LMM Nominated SNPs
 
 
-```r
+``` r
 combined.analysis <-
   full_join(bslmm.additive.results, lmm.ncd.results %>% mutate(chr=as.factor(chr)), by=c('chromosome','rs','position'),
             suffix=c('_bslmm','_lmm'))
@@ -1032,7 +1032,7 @@ ggplot(combined.analysis,
 ## Genomic Intervals
 
 
-```r
+``` r
 lmm.additive.data %>%
   arrange(p_wald) %>%
   head(25) -> top.snps #defines top snp as in lowest p_wald
@@ -1059,7 +1059,7 @@ Table: Summary of genomic regions with SNPs in the top 25 by p-value
 |---:|:---------------|--:|--------:|-----------:|------:|------:|------:|
 |  -9|1_171425406_H_C | -9|       25|       -7.46|     -9|     -9|   14.9|
 
-```r
+``` r
 range.gap=500000
 region<- paste(top.snps$chr[1],paste(top.snps$ps[1]-range.gap,top.snps$ps[1]+range.gap, sep=":"),sep=":")
 
@@ -1081,7 +1081,7 @@ Table: Genes near top SNP interval +/- 500000
 |gene_biotype |  n|genes |
 |:------------|--:|:-----|
 
-```r
+``` r
 # second snp
 region<- paste(top.snps$chr[2],paste(top.snps$ps[2]-range.gap,top.snps$ps[2]+range.gap, sep=":"),sep=":")
 
@@ -1102,7 +1102,7 @@ Table: Genes near second SNP interval +/- 500000
 |gene_biotype |  n|genes |
 |:------------|--:|:-----|
 
-```r
+``` r
 # third snp
 region<- paste(top.snps$chr[2],paste(top.snps$ps[3]-range.gap,top.snps$ps[3]+range.gap, sep=":"),sep=":")
 
@@ -1126,7 +1126,7 @@ Table: Genes near second SNP interval +/- 500000
 # Summary of Interesting SNPs
 
 
-```r
+``` r
 snps.of.interest <- bind_rows(top001.filtered,additive.snp.summary,hfhs.snp.summary,ncd.snp.summary)
 
 write_csv(snps.of.interest, file="SNPs_of_interest.csv")
@@ -1136,18 +1136,18 @@ snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest.
 # Session Information
 
 
-```r
+``` r
 sessionInfo()
 ```
 
 ```
-## R version 4.3.3 (2024-02-29)
-## Platform: x86_64-apple-darwin20 (64-bit)
-## Running under: macOS Sonoma 14.5
+## R version 4.4.1 (2024-06-14)
+## Platform: x86_64-apple-darwin20
+## Running under: macOS Sonoma 14.7
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.3-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.11.0
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1159,52 +1159,52 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] biomaRt_2.58.2      ggrepel_0.9.5       cowplot_1.1.3      
-##  [4] forcats_1.0.0       GWASTools_1.48.0    Biobase_2.62.0     
-##  [7] BiocGenerics_0.48.1 ggmanh_1.6.0        ggplot2_3.5.1      
+##  [1] biomaRt_2.60.1      ggrepel_0.9.6       cowplot_1.1.3      
+##  [4] forcats_1.0.0       GWASTools_1.50.0    Biobase_2.64.0     
+##  [7] BiocGenerics_0.50.0 ggmanh_1.8.0        ggplot2_3.5.1      
 ## [10] qqman_0.1.9         broom_1.0.6         dplyr_1.1.4        
-## [13] tidyr_1.3.1         readr_2.1.5         knitr_1.45         
+## [13] tidyr_1.3.1         readr_2.1.5         knitr_1.48         
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] DBI_1.2.2               gdsfmt_1.38.0           sandwich_3.1-0         
-##   [4] rlang_1.1.3             magrittr_2.0.3          multcomp_1.4-25        
-##   [7] compiler_4.3.3          RSQLite_2.3.6           mgcv_1.9-1             
-##  [10] png_0.1-8               vctrs_0.6.5             stringr_1.5.1          
-##  [13] quantreg_5.97           pkgconfig_2.0.3         shape_1.4.6.1          
-##  [16] crayon_1.5.2            fastmap_1.2.0           dbplyr_2.5.0           
-##  [19] XVector_0.42.0          backports_1.4.1         labeling_0.4.3         
-##  [22] utf8_1.2.4              rmarkdown_2.27          tzdb_0.4.0             
-##  [25] nloptr_2.0.3            MatrixModels_0.5-3      purrr_1.0.2            
-##  [28] bit_4.0.5               xfun_0.44               glmnet_4.1-8           
-##  [31] jomo_2.7-6              zlibbioc_1.48.0         logistf_1.26.0         
-##  [34] cachem_1.1.0            GenomeInfoDb_1.38.7     jsonlite_1.8.8         
-##  [37] progress_1.2.3          blob_1.2.4              highr_0.10             
-##  [40] pan_1.9                 prettyunits_1.2.0       parallel_4.3.3         
-##  [43] R6_2.5.1                stringi_1.8.4           bslib_0.7.0            
-##  [46] RColorBrewer_1.1-3      boot_1.3-30             DNAcopy_1.76.0         
-##  [49] rpart_4.1.23            lmtest_0.9-40           jquerylib_0.1.4        
-##  [52] estimability_1.5.1      Rcpp_1.0.12             iterators_1.0.14       
-##  [55] zoo_1.8-12              IRanges_2.36.0          Matrix_1.6-5           
-##  [58] splines_4.3.3           nnet_7.3-19             tidyselect_1.2.1       
-##  [61] rstudioapi_0.16.0       yaml_2.3.8              codetools_0.2-20       
-##  [64] curl_5.2.1              lattice_0.22-6          tibble_3.2.1           
-##  [67] KEGGREST_1.42.0         quantsmooth_1.68.0      withr_3.0.0            
-##  [70] evaluate_0.23           survival_3.6-4          BiocFileCache_2.10.1   
-##  [73] xml2_1.3.6              Biostrings_2.70.2       filelock_1.0.3         
-##  [76] pillar_1.9.0            mice_3.16.0             foreach_1.5.2          
-##  [79] stats4_4.3.3            generics_0.1.3          vroom_1.6.5            
-##  [82] hms_1.1.3               S4Vectors_0.40.2        munsell_0.5.1          
-##  [85] scales_1.3.0            minqa_1.2.6             calibrate_1.7.7        
-##  [88] xtable_1.8-4            GWASExactHW_1.2         glue_1.7.0             
-##  [91] emmeans_1.10.1          tools_4.3.3             data.table_1.15.4      
-##  [94] lme4_1.1-35.3           SparseM_1.81            mvtnorm_1.2-4          
-##  [97] XML_3.99-0.16.1         grid_4.3.3              AnnotationDbi_1.64.1   
-## [100] colorspace_2.1-0        GenomeInfoDbData_1.2.11 nlme_3.1-164           
-## [103] formula.tools_1.7.1     cli_3.6.2               rappdirs_0.3.3         
-## [106] fansi_1.0.6             gtable_0.3.5            sass_0.4.9             
-## [109] digest_0.6.35           operator.tools_1.6.3    TH.data_1.1-2          
-## [112] farver_2.1.2            memoise_2.0.1           htmltools_0.5.8.1      
-## [115] lifecycle_1.0.4         httr_1.4.7              mitml_0.4-5            
-## [118] bit64_4.0.5             MASS_7.3-60.0.1
+##   [1] DBI_1.2.3               gdsfmt_1.40.2           httr2_1.0.5            
+##   [4] sandwich_3.1-1          rlang_1.1.4             magrittr_2.0.3         
+##   [7] multcomp_1.4-26         compiler_4.4.1          RSQLite_2.3.7          
+##  [10] mgcv_1.9-1              png_0.1-8               vctrs_0.6.5            
+##  [13] stringr_1.5.1           quantreg_5.98           pkgconfig_2.0.3        
+##  [16] shape_1.4.6.1           crayon_1.5.3            fastmap_1.2.0          
+##  [19] dbplyr_2.5.0            XVector_0.44.0          backports_1.5.0        
+##  [22] labeling_0.4.3          utf8_1.2.4              rmarkdown_2.28         
+##  [25] tzdb_0.4.0              UCSC.utils_1.0.0        nloptr_2.1.1           
+##  [28] MatrixModels_0.5-3      purrr_1.0.2             bit_4.0.5              
+##  [31] xfun_0.47               glmnet_4.1-8            jomo_2.7-6             
+##  [34] zlibbioc_1.50.0         logistf_1.26.0          cachem_1.1.0           
+##  [37] GenomeInfoDb_1.40.1     jsonlite_1.8.8          progress_1.2.3         
+##  [40] blob_1.2.4              highr_0.11              pan_1.9                
+##  [43] prettyunits_1.2.0       parallel_4.4.1          R6_2.5.1               
+##  [46] stringi_1.8.4           bslib_0.8.0             RColorBrewer_1.1-3     
+##  [49] boot_1.3-31             DNAcopy_1.78.0          rpart_4.1.23           
+##  [52] lmtest_0.9-40           jquerylib_0.1.4         estimability_1.5.1     
+##  [55] Rcpp_1.0.13             iterators_1.0.14        zoo_1.8-12             
+##  [58] IRanges_2.38.1          Matrix_1.7-0            splines_4.4.1          
+##  [61] nnet_7.3-19             tidyselect_1.2.1        rstudioapi_0.16.0      
+##  [64] yaml_2.3.10             codetools_0.2-20        curl_5.2.2             
+##  [67] lattice_0.22-6          tibble_3.2.1            KEGGREST_1.44.1        
+##  [70] quantsmooth_1.70.0      withr_3.0.1             coda_0.19-4.1          
+##  [73] evaluate_0.24.0         survival_3.7-0          BiocFileCache_2.12.0   
+##  [76] xml2_1.3.6              Biostrings_2.72.1       filelock_1.0.3         
+##  [79] pillar_1.9.0            mice_3.16.0             foreach_1.5.2          
+##  [82] stats4_4.4.1            generics_0.1.3          vroom_1.6.5            
+##  [85] hms_1.1.3               S4Vectors_0.42.1        munsell_0.5.1          
+##  [88] scales_1.3.0            minqa_1.2.8             calibrate_1.7.7        
+##  [91] GWASExactHW_1.2         glue_1.7.0              emmeans_1.10.4         
+##  [94] tools_4.4.1             data.table_1.16.0       lme4_1.1-35.5          
+##  [97] SparseM_1.84-2          mvtnorm_1.3-1           grid_4.4.1             
+## [100] AnnotationDbi_1.66.0    colorspace_2.1-1        GenomeInfoDbData_1.2.12
+## [103] nlme_3.1-166            formula.tools_1.7.1     cli_3.6.3              
+## [106] rappdirs_0.3.3          fansi_1.0.6             gtable_0.3.5           
+## [109] sass_0.4.9              digest_0.6.37           operator.tools_1.6.3   
+## [112] TH.data_1.1-2           farver_2.1.2            memoise_2.0.1          
+## [115] htmltools_0.5.8.1       lifecycle_1.0.4         httr_1.4.7             
+## [118] mitml_0.4-5             bit64_4.0.5             MASS_7.3-61
 ```
 

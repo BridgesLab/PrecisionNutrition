@@ -171,6 +171,130 @@ summary.data %>%
         legend.title = element_text(size=12))
   
 ```
+# Chromosome 18 QTL 
+
+This was the QTL that was NCD-specifically associated.
+
+```{r pk18.qtl}
+library(forcats)
+qtl <- '18_46410922_G_A'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
+
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "Homozygous"='0',
+         "Heterozygous"='1',
+         "CC"='2')) %>% 
+    filter(Genotype!="CC") %>%
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = "Chromosome 18 QTL",
+       fill="Genotype") +
+  theme_classic(base_size = 16) +
+  scale_fill_manual(values=color.scheme) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))  +
+  theme(legend.position=c(0.15,0.85),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=12),
+            legend.box.background = element_blank(),
+    legend.key = element_rect(colour = NA, fill = NA),
+    legend.background = element_rect(fill = "transparent")) 
+  
+```
+
+# Chromosome 12 QTL 
+
+This was the QTL that was NCD-specifically associated.
+
+```{r pk12.qtl}
+library(forcats)
+qtl <- '12_114139385_A_B'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
+
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "Homozygous"='0',
+         "Heterozygous"='1',
+         "CC"='2')) %>% 
+    filter(Genotype!="CC") %>%
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = "Chromosome 18 QTL",
+       fill="Genotype") +
+  theme_classic(base_size = 16) +
+  scale_fill_manual(values=color.scheme) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))  +
+  theme(legend.position=c(0.15,0.85),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=12),
+            legend.box.background = element_blank(),
+    legend.key = element_rect(colour = NA, fill = NA),
+    legend.background = element_rect(fill = "transparent")) 
+  
+```
+
 
 ## Chromosome 1 QTL - Apoa2
 

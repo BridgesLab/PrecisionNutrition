@@ -55,6 +55,8 @@ forest(analysis,
 
 ## Bayesian Hierarchical Model
 
+**Goals and Justification**:  Our goal is to com up with a pooled estimate of the correlation between cholesterol and calcium in human observational studies.  In addition to the approach above, we decided to use a Bayesian approach for two reasons, one is that it allows us to produce full posterior distributions for both the within- and between study-variability.  The other is that it allows us to incorporate previous data, in this case the preclinical data reported in @cousineauCrosssectionalAssociationBlood2024.  
+
 Followed the procedure outlined in @bayesianmetabookdown and @harrer2021doing at [here]( https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html).  This uses a framework described by @higgins2008.  Under this approach there is a "true" effect ($\mu$) with a cross-study variance of $\tau$.  Within this each study ($\theta _k$) should be normally distributed defined:
 
 $$\theta _k \sim N(\mu,\tau^2)$$
@@ -71,7 +73,9 @@ $$\hat\theta _k \sim N(\mu,\sigma^2_k + \tau^2)$$
 $$
 p \sim (\mu,tau^2)
 $$
-We took an approach using *weakly informative* priors (recommended in @williamsBayesianMetaAnalysisWeakly2018) of $\mu = N(0,0.2)$ and $\tau=HC(0,0.5)$.  This means we predict the correlations to be around zero but with a standard deviation of $\pm 0.2$.  For the betwen study variance ($\tau$) we used the heavy-tailed only positive Half-Cauchy distribution.
+We took an approach using *weakly informative* priors (recommended in @williamsBayesianMetaAnalysisWeakly2018) of $\mu_{weak} = N(0,0.2)$ and $\tau=HC(0,0.5)$.  This means we predict the correlations to be around zero but with a standard deviation of $\pm 0.2$.  For the betwen study variance ($\tau$) we used the heavy-tailed only positive Half-Cauchy distribution.
+
+Our alternative prior was the preclinical prior descibed in @cousineauCrosssectionalAssociationBlood2024, which was that Spearman's $\rho$ was estimated at 0.4-0.5 depending on the condition (parameterized as $\mu_{alt}=N(0.45,0.1)).
 
 We calculated the standard error of the estimate of r using
 
@@ -85,19 +89,31 @@ data <-
 ```
 
 
-This was analysed using {brms} (see @) using no U-turn sampling (NUTS) as described in @hoffman14a.
+This was analysed using {brms} (see @) using no U-turn sampling (NUTS) as described in @hoffman14a.  
+
+**Model Specification** We used a Gaussian (normal) distribution to estimate the pooled effect using a random-effects meta-analysis model computed within brms (@brms_citation). The model included a fixed effect for the overall pooled estimate and random effects to account for between-study heterogeneity. The within-study variability was also accounted for in the model.
+
+**Justification of Priors**:  We set our prior probabilities that the correlation coefficient would be 0.4, normally distributed with a standard deviation of 0.1, based on the pre-clinical assoications described in @cousineauCrosssectionalAssociationBlood2024.  We used a weakly informative prior for the between study variation setting it to be a half-Cauchy distribution centered at 0 with a scale parameter of 0.5.
 
 ```{r calcium-brms}
 #| output: false
 library(brms)
-priors <- c(prior(normal(0,0.2), class = Intercept),
-            prior(cauchy(0,0.5), class = sd))
+priors <- c(prior(normal(0.4,0.1), class = Intercept),
+            prior(cauchy(0,0.5), class = sd, lb = 0))
 
+prior_summary(priors) %>% kable(caption="Prior summary for effects of transmission on engine type")
+```
+
+```{r brms-specification}
 meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
              data = data,
              prior = priors,
-             iter = 4000)
+             family = gaussian(), #default but specified
+             iter = 5000) #not the default
 ```
+
+
+
 
 ### Internpretation of Bayesian Analysis
 

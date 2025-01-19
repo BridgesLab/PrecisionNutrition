@@ -52,6 +52,10 @@ forest(analysis,
             fontsize=6,,
             test.overall.random=TRUE)
 ```
+### Summary of Standard Approach
+
+There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies. The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
+
 
 ## Bayesian Hierarchical Model
 
@@ -88,10 +92,7 @@ data <-
   mutate(se=sqrt((1-r^2)/(n-2)))
 ```
 
-
-This was analysed using {brms} (see @) using no U-turn sampling (NUTS) as described in @hoffman14a.  
-
-**Model Specification** We used a Gaussian (normal) distribution to estimate the pooled effect using a random-effects meta-analysis model computed within brms (@brms_citation). The model included a fixed effect for the overall pooled estimate and random effects to account for between-study heterogeneity. The within-study variability was also accounted for in the model.
+**Model Specification** We used a Gaussian (normal) distribution to estimate the pooled effect using a random-effects meta-analysis model computed within brms (@brms_citation) version `r packageVersion('brms')`. The model included a fixed effect for the overall pooled estimate and random effects to account for between-study heterogeneity. The within-study variability was also accounted for in the model.
 
 **Justification of Priors**:  We set our prior probabilities that the correlation coefficient would be 0.4, normally distributed with a standard deviation of 0.1, based on the pre-clinical assoications described in @cousineauCrosssectionalAssociationBlood2024.  We used a weakly informative prior for the between study variation setting it to be a half-Cauchy distribution centered at 0 with a scale parameter of 0.5.
 
@@ -104,7 +105,38 @@ priors <- c(prior(normal(0.4,0.1), class = Intercept),
 prior_summary(priors) %>% kable(caption="Prior summary for effects of transmission on engine type")
 ```
 
+#### Performing a Prior Predictive Check
+
+```{r prior-predictive-check}
+#| output: false
+brms.fit.prior.check <- 
+  brm(r|se(se) ~ 1 + (1|Study),
+      data = data,
+      prior = priors,
+      family = gaussian(),
+      sample_prior = "only")
+
+library(patchwork)
+library(ggplot2)
+p1 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "ribbon")
+p2 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "stat_2d")
+p3 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "stat") +
+  stat_bin(binwidth=0.6)
+p4 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "scatter_avg")
+combined_plot <- (p1 + p2) / (p3 + p4) + 
+  plot_annotation(title = "Prior Predictive Checks") &
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_classic(base_size=12)
+
+combined_plot
+```
+
+As seen above, we did several prior predictive checks and values from simulated from our prior distributions were similar to the observed data.
+
+The model was computed using {brms} (@brms_citation, version `r packageVersion('brms')`), calling Stan, using no U-turn sampling (NUTS) as described in @hoffman14a. This was implemented within R (@baseR) `r R.version.string`.
+
 ```{r brms-specification}
+#| output: false
 meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
              data = data,
              prior = priors,
@@ -112,24 +144,50 @@ meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
              iter = 5000) #not the default
 ```
 
+### MCMC Chain Convergence and Resolution
 
+```{r mcmc-chain}
+kable(data.frame(
+  Parameter = names(rhat(meta.brm)),
+  Rhat = format(rhat(meta.brm), nsmall = 5)),
+caption="Rhat values for model (should be between 0.99 and 1.01 for convergence).",
+row.names = F)
+```
 
+Chain convergence was good with a $\hat R$ between `r format(min(rhat(meta.brm),na.rm=T),nsmall=5)` and `r format(max(rhat(meta.brm),na.rm=T),nsmall=5)` for each model estimate.
 
-### Internpretation of Bayesian Analysis
+```{r ess}
+library(broom.mixed)
+tidy(meta.brm, ess = TRUE) %>% kable(caption="Model parameters including effective sample size")
+```
+The effective sample size was at least `r tidy(meta.brm, ess = TRUE) %>% pull(ess) %>% min(na.rm=T)` samples for each parameter.
+
+### Posterior Probability Check
+
+```{r post-probability}
+p1 <- pp_check(meta.brm, ndraws = 100, type = "ribbon")
+p2 <- pp_check(meta.brm, ndraws = 100, type = "stat_2d")
+p3 <- pp_check(meta.brm, ndraws = 100, type = "stat") 
+p4 <- pp_check(meta.brm, ndraws = 100, type = "scatter_avg")
+combined_plot <- (p1 + p2) / (p3 + p4) + 
+  plot_annotation(title = "Posterior Predictive Checks") &
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_classic(base_size=12)
+
+combined_plot
+```
+
+As shown above, the posterior predictive checks indicated a good model fit.
+
+### Interpretation of Posterior Probabilities
 
 ```{r bayesian-interpretation}
 #summary(meta.brm)
 #ranef(meta.brm)
 fixef(meta.brm) %>% kable(caption="Bayesian estimates of correlation between cholesterol and calcium")
+
+plot(meta.brm) 
 ```
-
-#### Posterior Probability Check
-
-```{r post-probability}
-pp_check(meta.brm)
-```
-
-#### Posterior Probabilities
 
 ```{r calcium-posterior-probabilities}
 post.samples <- as_draws_df(meta.brm, c("Intercept", "sd_Study__Intercept"))
@@ -137,8 +195,8 @@ names(post.samples) <- c("smd", "tau")
 library(ggplot2)
 
 ggplot(aes(x = smd), data = post.samples) +
-  geom_density(fill = "lightblue",                # set the color
-               color = "lightblue", alpha = 0.7) +  
+  geom_density(fill = "#FFCB05",                # set the color
+               color = "#FFCB05", alpha = 0.7) +  
   geom_vline(xintercept = mean(post.samples$smd),lty=2) +
   geom_vline(xintercept = 0,lty=2) +
   labs(x = expression(italic(r)),
@@ -146,13 +204,29 @@ ggplot(aes(x = smd), data = post.samples) +
   theme_classic(base_size=16)
 
 ggplot(aes(x = tau), data = post.samples) +
-  geom_density(fill = "lightgreen",               # set the color
-               color = "lightgreen", alpha = 0.7) +  
+  geom_density(fill = "#00274C",               # set the color
+               color = "#00274C", alpha = 0.7) +  
   geom_vline(xintercept= mean(post.samples$tau),lty=2) +        # add point at mean
     labs(x = expression(tau),
        y = element_blank()) +
   theme_classic(base_size=16)
 ```
+
+The distribution of the posterior probabilities are unimodal, approximately gaussian distributions with a mean of `r fixef(meta.brm)[,'Estimate']` with a 95% confidence interval of `r fixef(meta.brm)[,'Q2.5']`-`r fixef(meta.brm)[,'Q97.5']` for the pooled estimate of $r$.  This corresponds to a $R^2$ of `r fixef(meta.brm)[,'Estimate']^2`.
+
+#### Bayes Factors and Hypothesis Testing
+
+```{r bf-hypotheses}
+hypothesis(meta.brm, "Intercept>0")$hypothesis %>%
+  kable(caption="Hypothesis test for estimate >0", digits=3)
+
+#comparason to preclinical data
+hypothesis(meta.brm, "Intercept<0.39")$hypothesis %>%
+  kable(caption="Hypothesis test for estimate <0.39", digits=3)
+```
+
+The posterior probability that $r > 0$ was `r format(hypothesis(meta.brm, "Intercept>0.0")$hypothesis$Post.Prob,nsmall=20)`.  Similarly this was smaller than the effect observed in mice ($\rho<0.39$) `r format(hypothesis(meta.brm, "Intercept<0.39")$hypothesis$Post.Prob,nsmall=20)`.  In both cases the Bayes factor was >100 so this is extremely strong evidence of an effect (see @leeBayesianCognitiveModeling2014). 
+
 #### Forest Plot for Bayesian Meta-Analysis
 
 ```{r calcium-bayesian-forest}
@@ -214,10 +288,6 @@ ggplot(aes(b_Intercept,
        y = element_blank()) +
   theme_classic(base_size=16)
 ```
-
-## Summary
-
-There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies. The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
 
 ## References
 

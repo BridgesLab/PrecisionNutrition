@@ -84,6 +84,25 @@ code span.st { color: #4070a0; } /* String */
 code span.va { color: #19177c; } /* Variable */
 code span.vs { color: #4070a0; } /* VerbatimString */
 code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+div.csl-bib-body { }
+div.csl-entry {
+  clear: both;
+}
+.hanging div.csl-entry {
+  margin-left:2em;
+  text-indent:-2em;
+}
+div.csl-left-margin {
+  min-width:2em;
+  float:left;
+}
+div.csl-right-inline {
+  margin-left:2em;
+  padding-left:1em;
+}
+div.csl-indent {
+  margin-left: 2em;
+}
 </style>
 
 
@@ -98,6 +117,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <link href="cholesterol-calcium_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="cholesterol-calcium_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -110,8 +130,14 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
    
   <ul>
   <li><a href="#data-souces" id="toc-data-souces" class="nav-link active" data-scroll-target="#data-souces">Data Souces</a></li>
-  <li><a href="#meta-analysis" id="toc-meta-analysis" class="nav-link" data-scroll-target="#meta-analysis">Meta Analysis</a></li>
-  <li><a href="#analysis" id="toc-analysis" class="nav-link" data-scroll-target="#analysis">Analysis</a></li>
+  <li><a href="#meta-analysis---standard-approach" id="toc-meta-analysis---standard-approach" class="nav-link" data-scroll-target="#meta-analysis---standard-approach">Meta Analysis - Standard Approach</a></li>
+  <li><a href="#bayesian-hierarchical-model" id="toc-bayesian-hierarchical-model" class="nav-link" data-scroll-target="#bayesian-hierarchical-model">Bayesian Hierarchical Model</a>
+  <ul class="collapse">
+  <li><a href="#defining-a-prior-distribution" id="toc-defining-a-prior-distribution" class="nav-link" data-scroll-target="#defining-a-prior-distribution">Defining a Prior Distribution</a></li>
+  <li><a href="#internpretation-of-bayesian-analysis" id="toc-internpretation-of-bayesian-analysis" class="nav-link" data-scroll-target="#internpretation-of-bayesian-analysis">Internpretation of Bayesian Analysis</a></li>
+  </ul></li>
+  <li><a href="#summary" id="toc-summary" class="nav-link" data-scroll-target="#summary">Summary</a></li>
+  <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
 </nav>
@@ -151,10 +177,10 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(data.sheet)<span class="co">#from a google sheet</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The data can be found in the google sheet https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=1100702568&amp;single=true&amp;output=csv. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Mon Oct 30 11:00:09 2023</p>
+<p>The data can be found in a <a href="https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=1100702568&amp;single=true&amp;output=csv">google sheet</a>. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Sun Jan 19 10:44:51 2025</p>
 </section>
-<section id="meta-analysis" class="level2">
-<h2 class="anchored" data-anchor-id="meta-analysis">Meta Analysis</h2>
+<section id="meta-analysis---standard-approach" class="level2">
+<h2 class="anchored" data-anchor-id="meta-analysis---standard-approach">Meta Analysis - Standard Approach</h2>
 <p>Analysed data from mean +/- SD of cases and controls</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(meta)</span>
@@ -169,7 +195,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                 <span class="at">hakn =</span> <span class="cn">TRUE</span>,</span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>                 <span class="at">title=</span><span class="st">"Calcium and Cholesterol"</span>)</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">forest.meta</span>(analysis,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="fu">forest</span>(analysis,</span>
 <span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">fontsize=</span><span class="dv">6</span>,,</span>
 <span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">test.overall.random=</span><span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -177,51 +203,257 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </section>
-<section id="analysis" class="level1">
-<h1>Analysis</h1>
+<section id="bayesian-hierarchical-model" class="level2">
+<h2 class="anchored" data-anchor-id="bayesian-hierarchical-model">Bayesian Hierarchical Model</h2>
+<p>Followed the procedure outlined in <span class="citation" data-cites="bayesianmetabookdown">Harrer et al. (<a href="#ref-bayesianmetabookdown" role="doc-biblioref">2021a</a>)</span> and <span class="citation" data-cites="harrer2021doing">Harrer et al. (<a href="#ref-harrer2021doing" role="doc-biblioref">2021b</a>)</span> at <a href="https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html">here</a>. This uses a framework described by <span class="citation" data-cites="higgins2008">Higgins, Thompson, and Spiegelhalter (<a href="#ref-higgins2008" role="doc-biblioref">2008</a>)</span>. Under this approach there is a “true” effect (<span class="math inline">\(\mu\)</span>) with a cross-study variance of <span class="math inline">\(\tau\)</span>. Within this each study (<span class="math inline">\(\theta _k\)</span>) should be normally distributed defined:</p>
+<p><span class="math display">\[\theta _k \sim N(\mu,\tau^2)\]</span> Each study in turn is a proximate measure of the effect size in that population <span class="math inline">\(\hat{\theta_k}\)</span>, with sampling error <span class="math inline">\(\sigma^2\)</span> drawn from another normal distribution</p>
+<p><span class="math display">\[\hat\theta _k \sim N(\theta _k,\sigma^2_k)\]</span></p>
+<p>This can be simplified to</p>
+<p><span class="math display">\[\hat\theta _k \sim N(\mu,\sigma^2_k + \tau^2)\]</span></p>
+<section id="defining-a-prior-distribution" class="level3">
+<h3 class="anchored" data-anchor-id="defining-a-prior-distribution">Defining a Prior Distribution</h3>
+<p><span class="math display">\[
+p \sim (\mu,tau^2)
+\]</span> We took an approach using <em>weakly informative</em> priors (recommended in <span class="citation" data-cites="williamsBayesianMetaAnalysisWeakly2018">Williams, Rast, and Bürkner (<a href="#ref-williamsBayesianMetaAnalysisWeakly2018" role="doc-biblioref">2018</a>)</span>) of <span class="math inline">\(\mu = N(0,0.2)\)</span> and <span class="math inline">\(\tau=HC(0,0.5)\)</span>. This means we predict the correlations to be around zero but with a standard deviation of <span class="math inline">\(\pm 0.2\)</span>. For the betwen study variance (<span class="math inline">\(\tau\)</span>) we used the heavy-tailed only positive Half-Cauchy distribution.</p>
+<p>We calculated the standard error of the estimate of r using</p>
+<p><span class="math display">\[SE = \sqrt{\frac{(1 - r^2)}{(n - 2)}}\]</span></p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  data <span class="sc">%&gt;%</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">se=</span><span class="fu">sqrt</span>((<span class="dv">1</span><span class="sc">-</span>r<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span>(n<span class="dv">-2</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>This was analysed using {brms} (see @) using no U-turn sampling (NUTS) as described in <span class="citation" data-cites="hoffman14a">Hoffman and Gelman (<a href="#ref-hoffman14a" role="doc-biblioref">2014</a>)</span>.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(brms)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>priors <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">prior</span>(<span class="fu">normal</span>(<span class="dv">0</span>,<span class="fl">0.2</span>), <span class="at">class =</span> Intercept),</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>            <span class="fu">prior</span>(<span class="fu">cauchy</span>(<span class="dv">0</span>,<span class="fl">0.5</span>), <span class="at">class =</span> sd))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>meta.brm <span class="ot">&lt;-</span> <span class="fu">brm</span>(r<span class="sc">|</span><span class="fu">se</span>(se) <span class="sc">~</span> <span class="dv">1</span> <span class="sc">+</span> (<span class="dv">1</span><span class="sc">|</span>Study),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>             <span class="at">data =</span> data,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>             <span class="at">prior =</span> priors,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>             <span class="at">iter =</span> <span class="dv">4000</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="internpretation-of-bayesian-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="internpretation-of-bayesian-analysis">Internpretation of Bayesian Analysis</h3>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co">#summary(meta.brm)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="co">#ranef(meta.brm)</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">fixef</span>(meta.brm) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Bayesian estimates of correlation between cholesterol and calcium"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<table class="table table-sm table-striped">
+<caption>Bayesian estimates of correlation between cholesterol and calcium</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: right;">Estimate</th>
+<th style="text-align: right;">Est.Error</th>
+<th style="text-align: right;">Q2.5</th>
+<th style="text-align: right;">Q97.5</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Intercept</td>
+<td style="text-align: right;">0.167</td>
+<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.128</td>
+<td style="text-align: right;">0.205</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<section id="posterior-probability-check" class="level4">
+<h4 class="anchored" data-anchor-id="posterior-probability-check">Posterior Probability Check</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">pp_check</span>(meta.brm)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="figures/post-probability-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="posterior-probabilities" class="level4">
+<h4 class="anchored" data-anchor-id="posterior-probabilities">Posterior Probabilities</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>post.samples <span class="ot">&lt;-</span> <span class="fu">as_draws_df</span>(meta.brm, <span class="fu">c</span>(<span class="st">"Intercept"</span>, <span class="st">"sd_Study__Intercept"</span>))</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(post.samples) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"smd"</span>, <span class="st">"tau"</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> smd), <span class="at">data =</span> post.samples) <span class="sc">+</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">"lightblue"</span>,                <span class="co"># set the color</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">"lightblue"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span>  </span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">mean</span>(post.samples<span class="sc">$</span>smd),<span class="at">lty=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>,<span class="at">lty=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="fu">expression</span>(<span class="fu">italic</span>(r)),</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="figures/calcium-posterior-probabilities-1.png" class="img-fluid" width="672"></p>
+</div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> tau), <span class="at">data =</span> post.samples) <span class="sc">+</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density</span>(<span class="at">fill =</span> <span class="st">"lightgreen"</span>,               <span class="co"># set the color</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>               <span class="at">color =</span> <span class="st">"lightgreen"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span>  </span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept=</span> <span class="fu">mean</span>(post.samples<span class="sc">$</span>tau),<span class="at">lty=</span><span class="dv">2</span>) <span class="sc">+</span>        <span class="co"># add point at mean</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="fu">expression</span>(tau),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="figures/calcium-posterior-probabilities-2.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+<section id="forest-plot-for-bayesian-meta-analysis" class="level4">
+<h4 class="anchored" data-anchor-id="forest-plot-for-bayesian-meta-analysis">Forest Plot for Bayesian Meta-Analysis</h4>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidybayes)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggridges)</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(glue)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(stringr)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># posterior probabilitieis for each study</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>study.draws <span class="ot">&lt;-</span> <span class="fu">spread_draws</span>(meta.brm, r_Study[Study,], b_Intercept) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">b_Intercept =</span> r_Study <span class="sc">+</span> b_Intercept)</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a><span class="co"># pooled effect size draws</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>pooled.effect.draws <span class="ot">&lt;-</span> <span class="fu">spread_draws</span>(meta.brm, b_Intercept) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Study =</span> <span class="st">"Pooled Effect"</span>)</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co"># combined draws</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>forest.data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(study.draws, </span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>                         pooled.effect.draws) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>   <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">Study =</span> <span class="fu">str_replace_all</span>(Study, <span class="st">"[.]"</span>, <span class="st">" "</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>   <span class="fu">mutate</span>(<span class="at">Study =</span> <span class="fu">reorder</span>(Study, b_Intercept)) <span class="co">#arrange by effect size</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="co"># calculate effect size of each study</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>forest.data.summary <span class="ot">&lt;-</span> <span class="fu">group_by</span>(forest.data, Study) <span class="sc">%&gt;%</span> </span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mean_qi</span>(b_Intercept)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a><span class="co"># generate plot</span></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(<span class="fu">aes</span>(b_Intercept, </span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>           <span class="fu">relevel</span>(Study, <span class="st">"Pooled Effect"</span>, </span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>                   <span class="at">after =</span> <span class="cn">Inf</span>)), </span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>       <span class="at">data =</span> forest.data) <span class="sc">+</span></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add vertical lines for pooled effect and CI</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">fixef</span>(meta.brm)[<span class="dv">1</span>, <span class="dv">1</span>], </span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"grey"</span>, <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">fixef</span>(meta.brm)[<span class="dv">1</span>, <span class="dv">3</span><span class="sc">:</span><span class="dv">4</span>], </span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>             <span class="at">color =</span> <span class="st">"grey"</span>, <span class="at">linetype =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">color =</span> <span class="st">"black"</span>, </span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>             <span class="at">size =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add densities</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_density_ridges</span>(<span class="at">fill =</span> <span class="st">"grey"</span>, </span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>                      <span class="at">rel_min_height =</span> <span class="fl">0.01</span>, </span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>                      <span class="at">col =</span> <span class="cn">NA</span>, <span class="at">scale =</span> <span class="dv">1</span>,</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>                      <span class="at">alpha =</span> <span class="fl">0.8</span>) <span class="sc">+</span></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointinterval</span>(<span class="at">data =</span> forest.data.summary, </span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>                      <span class="at">size =</span> <span class="dv">1</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>                     <span class="at">orientation=</span><span class="st">'horizontal'</span>,</span>
+<span id="cb9-48"><a href="#cb9-48" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">aes</span>(<span class="at">xmin =</span> .lower, <span class="at">xmax =</span> .upper)) <span class="sc">+</span></span>
+<span id="cb9-49"><a href="#cb9-49" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb9-50"><a href="#cb9-50" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Add text and labels</span></span>
+<span id="cb9-51"><a href="#cb9-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="at">data =</span> <span class="fu">mutate_if</span>(forest.data.summary, </span>
+<span id="cb9-52"><a href="#cb9-52" aria-hidden="true" tabindex="-1"></a>                             is.numeric, round, <span class="dv">2</span>),</span>
+<span id="cb9-53"><a href="#cb9-53" aria-hidden="true" tabindex="-1"></a>    <span class="fu">aes</span>(<span class="at">label =</span> <span class="fu">glue</span>(<span class="st">"{b_Intercept} [{.lower}, {.upper}]"</span>), </span>
+<span id="cb9-54"><a href="#cb9-54" aria-hidden="true" tabindex="-1"></a>        <span class="at">x =</span> <span class="cn">Inf</span>), <span class="at">hjust =</span> <span class="st">"inward"</span>) <span class="sc">+</span></span>
+<span id="cb9-55"><a href="#cb9-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Correlation Coefficient"</span>, <span class="co"># summary measure</span></span>
+<span id="cb9-56"><a href="#cb9-56" aria-hidden="true" tabindex="-1"></a>       <span class="at">y =</span> <span class="fu">element_blank</span>()) <span class="sc">+</span></span>
+<span id="cb9-57"><a href="#cb9-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="figures/calcium-bayesian-forest-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
+</section>
+</section>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
 <p>There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies. The aggregate effect size is 0.17 +/- 0.018 (p=4.15^{-8}).</p>
+</section>
+<section id="references" class="level2">
+<h2 class="anchored" data-anchor-id="references">References</h2>
+<div id="refs" class="references csl-bib-body hanging-indent" role="doc-bibliography">
+<div id="ref-bayesianmetabookdown" class="csl-entry" role="doc-biblioentry">
+Harrer, Mathias, Pim Cuijpers, Furukawa Toshi A, and David D Ebert. 2021a. <span>“Chapter 13 Bayesian Meta-Analysis.”</span> <a href="https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html">https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html</a>.
+</div>
+<div id="ref-harrer2021doing" class="csl-entry" role="doc-biblioentry">
+———. 2021b. <em>Doing Meta-Analysis with <span>R</span>: A Hands-on Guide</em>. 1st ed. Boca Raton, FL; London: Chapman &amp; Hall/CRC Press.
+</div>
+<div id="ref-higgins2008" class="csl-entry" role="doc-biblioentry">
+Higgins, Julian P. T., Simon G. Thompson, and David J. Spiegelhalter. 2008. <span>“A Re-Evaluation of Random-Effects Meta-Analysis.”</span> <em>Journal of the Royal Statistical Society Series A: Statistics in Society</em> 172 (1): 137–59. <a href="https://doi.org/10.1111/j.1467-985X.2008.00552.x">https://doi.org/10.1111/j.1467-985X.2008.00552.x</a>.
+</div>
+<div id="ref-hoffman14a" class="csl-entry" role="doc-biblioentry">
+Hoffman, Matthew D., and Andrew Gelman. 2014. <span>“The No-u-Turn Sampler: Adaptively Setting Path Lengths in Hamiltonian Monte Carlo.”</span> <em>Journal of Machine Learning Research</em> 15 (47): 1593–623. <a href="http://jmlr.org/papers/v15/hoffman14a.html">http://jmlr.org/papers/v15/hoffman14a.html</a>.
+</div>
+<div id="ref-williamsBayesianMetaAnalysisWeakly2018" class="csl-entry" role="doc-biblioentry">
+Williams, Donald R., Philippe Rast, and Paul-Christian Bürkner. 2018. <span>“Bayesian <span>Meta-Analysis</span> with <span>Weakly Informative Prior Distributions</span>.”</span> OSF. <a href="https://doi.org/10.31234/osf.io/7tbrm">https://doi.org/10.31234/osf.io/7tbrm</a>.
+</div>
+</div>
 </section>
 <section id="session-information" class="level1">
 <h1>Session Information</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output cell-output-stdout">
-<pre><code>R version 4.2.2 (2022-10-31)
-Platform: x86_64-apple-darwin17.0 (64-bit)
-Running under: macOS Big Sur ... 10.16
+<pre><code>R version 4.4.2 (2024-10-31)
+Platform: x86_64-apple-darwin20
+Running under: macOS Monterey 12.7.6
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
-LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
+BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
 
 locale:
 [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Detroit
+tzcode source: internal
 
 attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] tidyr_1.3.0 meta_6.5-0  readr_2.1.4 knitr_1.44 
+ [1] forcats_1.0.0   stringr_1.5.1   glue_1.8.0      ggridges_0.5.6 
+ [5] tidybayes_3.0.7 ggplot2_3.5.1   brms_2.22.0     Rcpp_1.0.14    
+ [9] dplyr_1.1.4     tidyr_1.3.1     meta_8.0-1      metadat_1.2-0  
+[13] readr_2.1.5     knitr_1.49     
 
 loaded via a namespace (and not attached):
- [1] Rcpp_1.0.11         mathjaxr_1.6-0      nloptr_2.0.3       
- [4] pillar_1.9.0        compiler_4.2.2      tools_4.2.2        
- [7] metadat_1.2-0       boot_1.3-28.1       digest_0.6.33      
-[10] lme4_1.1-34         bit_4.0.5           nlme_3.1-163       
-[13] jsonlite_1.8.7      evaluate_0.22       lifecycle_1.0.3    
-[16] tibble_3.2.1        lattice_0.21-9      pkgconfig_2.0.3    
-[19] rlang_1.1.1         Matrix_1.5-4.1      cli_3.6.1          
-[22] rstudioapi_0.15.0   curl_5.1.0          yaml_2.3.7         
-[25] parallel_4.2.2      CompQuadForm_1.4.3  xfun_0.40          
-[28] fastmap_1.1.1       dplyr_1.1.3         xml2_1.3.5         
-[31] metafor_4.4-0       generics_0.1.3      vctrs_0.6.4        
-[34] htmlwidgets_1.6.2   hms_1.1.3           bit64_4.0.5        
-[37] grid_4.2.2          tidyselect_1.2.0    glue_1.6.2         
-[40] R6_2.5.1            fansi_1.0.5         vroom_1.6.4        
-[43] rmarkdown_2.25      minqa_1.2.6         purrr_1.0.2        
-[46] tzdb_0.4.0          magrittr_2.0.3      MASS_7.3-60        
-[49] htmltools_0.5.6.1   splines_4.2.2       numDeriv_2016.8-1.1
-[52] utf8_1.2.3          crayon_1.5.2       </code></pre>
+ [1] svUnit_1.0.6         tidyselect_1.2.1     farver_2.1.2        
+ [4] loo_2.8.0            fastmap_1.2.0        CompQuadForm_1.4.3  
+ [7] tensorA_0.36.2.1     mathjaxr_1.6-0       digest_0.6.37       
+[10] lifecycle_1.0.4      StanHeaders_2.32.10  processx_3.8.5      
+[13] magrittr_2.0.3       posterior_1.6.0      compiler_4.4.2      
+[16] rlang_1.1.4          tools_4.4.2          yaml_2.3.10         
+[19] labeling_0.4.3       bridgesampling_1.1-2 htmlwidgets_1.6.4   
+[22] bit_4.5.0.1          pkgbuild_1.4.5       curl_6.1.0          
+[25] plyr_1.8.9           xml2_1.3.6           abind_1.4-8         
+[28] withr_3.0.2          purrr_1.0.2          numDeriv_2016.8-1.1 
+[31] grid_4.4.2           stats4_4.4.2         colorspace_2.1-1    
+[34] inline_0.3.21        scales_1.3.0         MASS_7.3-64         
+[37] cli_3.6.3            mvtnorm_1.3-3        rmarkdown_2.29      
+[40] metafor_4.6-0        crayon_1.5.3         reformulas_0.4.0    
+[43] generics_0.1.3       RcppParallel_5.1.9   rstudioapi_0.17.1   
+[46] reshape2_1.4.4       tzdb_0.4.0           minqa_1.2.8         
+[49] rstan_2.32.6         splines_4.4.2        bayesplot_1.11.1    
+[52] parallel_4.4.2       matrixStats_1.5.0    vctrs_0.6.5         
+[55] boot_1.3-31          Matrix_1.7-1         jsonlite_1.8.9      
+[58] callr_3.7.6          arrayhelpers_1.1-0   hms_1.1.3           
+[61] bit64_4.5.2          ggdist_3.3.2         nloptr_2.1.1        
+[64] codetools_0.2-20     ps_1.8.1             distributional_0.5.0
+[67] stringi_1.8.4        gtable_0.3.6         QuickJSR_1.5.1      
+[70] lme4_1.1-36          munsell_0.5.1        tibble_3.2.1        
+[73] pillar_1.10.1        htmltools_0.5.8.1    Brobdingnag_1.2-9   
+[76] R6_2.5.1             Rdpack_2.6.2         vroom_1.6.5         
+[79] evaluate_1.0.3       lattice_0.22-6       rbibutils_2.3       
+[82] backports_1.5.0      rstantools_2.4.0     coda_0.19-4.1       
+[85] gridExtra_2.3        nlme_3.1-166         checkmate_2.3.2     
+[88] xfun_0.50            pkgconfig_2.0.3     </code></pre>
 </div>
 </div>
 </section>

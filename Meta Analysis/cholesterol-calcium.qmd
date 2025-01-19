@@ -5,9 +5,10 @@ format:
   html:
     toc: true
     toc-location: left
-editor: visual
+editor: source
 execute:
   keep-md: true
+bibliography: bayesian.bib
 ---
 
 ```{r global_options, include=FALSE}
@@ -28,9 +29,9 @@ library(readr)
 data <- read_csv(data.sheet)#from a google sheet
 ```
 
-The data can be found in the google sheet `r data.sheet`. This script can be found in `r getwd()` and was most recently run on `r date()`
+The data can be found in a [google sheet](`r data.sheet`). This script can be found in `r getwd()` and was most recently run on `r date()`
 
-## Meta Analysis
+## Meta Analysis - Standard Approach
 
 Analysed data from mean +/- SD of cases and controls
 
@@ -47,14 +48,165 @@ analysis <- metacor(data=data %>% dplyr::filter(!is.na(`r`)),
                  hakn = TRUE,
                  title="Calcium and Cholesterol")
 
-forest.meta(analysis,
+forest(analysis,
             fontsize=6,,
             test.overall.random=TRUE)
 ```
 
-# Analysis
+## Bayesian Hierarchical Model
 
-There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies.  The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
+Followed the procedure outlined in @bayesianmetabookdown and @harrer2021doing at [here]( https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html).  This uses a framework described by @higgins2008.  Under this approach there is a "true" effect ($\mu$) with a cross-study variance of $\tau$.  Within this each study ($\theta _k$) should be normally distributed defined:
+
+$$\theta _k \sim N(\mu,\tau^2)$$
+Each study in turn is a proximate measure of the effect size in that population $\hat{\theta_k}$, with sampling error $\sigma^2$ drawn from another normal distribution
+
+$$\hat\theta _k \sim N(\theta _k,\sigma^2_k)$$
+
+This can be simplified to
+
+$$\hat\theta _k \sim N(\mu,\sigma^2_k + \tau^2)$$
+
+### Defining a Prior Distribution
+
+$$
+p \sim (\mu,tau^2)
+$$
+We took an approach using *weakly informative* priors (recommended in @williamsBayesianMetaAnalysisWeakly2018) of $\mu = N(0,0.2)$ and $\tau=HC(0,0.5)$.  This means we predict the correlations to be around zero but with a standard deviation of $\pm 0.2$.  For the betwen study variance ($\tau$) we used the heavy-tailed only positive Half-Cauchy distribution.
+
+We calculated the standard error of the estimate of r using
+
+$$SE = \sqrt{\frac{(1 - r^2)}{(n - 2)}}$$
+
+```{r se-of-r}
+library(dplyr)
+data <-
+  data %>%
+  mutate(se=sqrt((1-r^2)/(n-2)))
+```
+
+
+This was analysed using {brms} (see @) using no U-turn sampling (NUTS) as described in @hoffman14a.
+
+```{r calcium-brms}
+#| output: false
+library(brms)
+priors <- c(prior(normal(0,0.2), class = Intercept),
+            prior(cauchy(0,0.5), class = sd))
+
+meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
+             data = data,
+             prior = priors,
+             iter = 4000)
+```
+
+### Internpretation of Bayesian Analysis
+
+```{r bayesian-interpretation}
+#summary(meta.brm)
+#ranef(meta.brm)
+fixef(meta.brm) %>% kable(caption="Bayesian estimates of correlation between cholesterol and calcium")
+```
+
+#### Posterior Probability Check
+
+```{r post-probability}
+pp_check(meta.brm)
+```
+
+#### Posterior Probabilities
+
+```{r calcium-posterior-probabilities}
+post.samples <- as_draws_df(meta.brm, c("Intercept", "sd_Study__Intercept"))
+names(post.samples) <- c("smd", "tau")
+library(ggplot2)
+
+ggplot(aes(x = smd), data = post.samples) +
+  geom_density(fill = "lightblue",                # set the color
+               color = "lightblue", alpha = 0.7) +  
+  geom_vline(xintercept = mean(post.samples$smd),lty=2) +
+  geom_vline(xintercept = 0,lty=2) +
+  labs(x = expression(italic(r)),
+       y = element_blank()) +
+  theme_classic(base_size=16)
+
+ggplot(aes(x = tau), data = post.samples) +
+  geom_density(fill = "lightgreen",               # set the color
+               color = "lightgreen", alpha = 0.7) +  
+  geom_vline(xintercept= mean(post.samples$tau),lty=2) +        # add point at mean
+    labs(x = expression(tau),
+       y = element_blank()) +
+  theme_classic(base_size=16)
+```
+#### Forest Plot for Bayesian Meta-Analysis
+
+```{r calcium-bayesian-forest}
+library(tidybayes)
+library(ggridges)
+library(glue)
+library(stringr)
+library(forcats)
+
+# posterior probabilitieis for each study
+study.draws <- spread_draws(meta.brm, r_Study[Study,], b_Intercept) %>% 
+  mutate(b_Intercept = r_Study + b_Intercept)
+
+# pooled effect size draws
+pooled.effect.draws <- spread_draws(meta.brm, b_Intercept) %>% 
+  mutate(Study = "Pooled Effect")
+
+# combined draws
+forest.data <- bind_rows(study.draws, 
+                         pooled.effect.draws) %>% 
+   ungroup() %>%
+   mutate(Study = str_replace_all(Study, "[.]", " ")) %>% 
+   mutate(Study = reorder(Study, b_Intercept)) #arrange by effect size
+
+# calculate effect size of each study
+forest.data.summary <- group_by(forest.data, Study) %>% 
+  mean_qi(b_Intercept)
+
+# generate plot
+ggplot(aes(b_Intercept, 
+           relevel(Study, "Pooled Effect", 
+                   after = Inf)), 
+       data = forest.data) +
+  
+  # Add vertical lines for pooled effect and CI
+  geom_vline(xintercept = fixef(meta.brm)[1, 1], 
+             color = "grey", size = 1) +
+  geom_vline(xintercept = fixef(meta.brm)[1, 3:4], 
+             color = "grey", linetype = 2) +
+  geom_vline(xintercept = 0, color = "black", 
+             size = 1) +
+  
+  # Add densities
+  geom_density_ridges(fill = "grey", 
+                      rel_min_height = 0.01, 
+                      col = NA, scale = 1,
+                      alpha = 0.8) +
+  geom_pointinterval(data = forest.data.summary, 
+                      size = 1,
+                     orientation='horizontal',
+                     aes(xmin = .lower, xmax = .upper)) +
+  
+  # Add text and labels
+  geom_text(data = mutate_if(forest.data.summary, 
+                             is.numeric, round, 2),
+    aes(label = glue("{b_Intercept} [{.lower}, {.upper}]"), 
+        x = Inf), hjust = "inward") +
+  labs(x = "Correlation Coefficient", # summary measure
+       y = element_blank()) +
+  theme_classic(base_size=16)
+```
+
+## Summary
+
+There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies. The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
+
+## References
+
+::: {#refs}
+:::
 
 # Session Information
 

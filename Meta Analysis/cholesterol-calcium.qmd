@@ -79,7 +79,7 @@ p \sim (\mu,tau^2)
 $$
 We took an approach using *weakly informative* priors (recommended in @williamsBayesianMetaAnalysisWeakly2018) of $\mu_{weak} = N(0,0.2)$ and $\tau=HC(0,0.5)$.  This means we predict the correlations to be around zero but with a standard deviation of $\pm 0.2$.  For the betwen study variance ($\tau$) we used the heavy-tailed only positive Half-Cauchy distribution.
 
-Our alternative prior was the preclinical prior descibed in @cousineauCrosssectionalAssociationBlood2024, which was that Spearman's $\rho$ was estimated at 0.4-0.5 depending on the condition (parameterized as $\mu_{alt}=N(0.45,0.1)).
+Our alternative prior was the preclinical prior descibed in @cousineauCrosssectionalAssociationBlood2024, which was that Spearman's $\rho$ was estimated at 0.4-0.5 depending on the condition (parameterized as $\mu_{alt}=N(0.45,0.1)$).
 
 We calculated the standard error of the estimate of r using
 
@@ -101,9 +101,8 @@ data <-
 library(brms)
 priors <- c(prior(normal(0.4,0.1), class = Intercept),
             prior(cauchy(0,0.5), class = sd, lb = 0))
-
-prior_summary(priors) %>% kable(caption="Prior summary for effects of transmission on engine type")
 ```
+
 
 #### Performing a Prior Predictive Check
 
@@ -142,6 +141,12 @@ meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
              prior = priors,
              family = gaussian(), #default but specified
              iter = 5000) #not the default
+```
+
+Here is a summary of the prior probabilities.
+
+```{r prior-summary}
+prior_summary(meta.brm,all=F) %>% kable(caption="Summary of prior probabilities")
 ```
 
 ### MCMC Chain Convergence and Resolution

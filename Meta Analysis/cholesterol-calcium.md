@@ -30,7 +30,7 @@ data <- read_csv(data.sheet)#from a google sheet
 :::
 
 
-The data can be found in a [google sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=1100702568&single=true&output=csv). This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Sun Jan 19 18:07:00 2025
+The data can be found in a [google sheet](https://docs.google.com/spreadsheets/d/e/2PACX-1vTyvQnc6bLRLGT6QXEMHxiAQVbK_zag_JIAjvYjTMXINcqdkBwglmg_mlj_k9ml9QsrNQl-tZgy8ACl/pub?gid=1100702568&single=true&output=csv). This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis and was most recently run on Sun Jan 19 18:22:16 2025
 
 ## Meta Analysis - Standard Approach
 
@@ -89,7 +89,7 @@ p \sim (\mu,tau^2)
 $$
 We took an approach using *weakly informative* priors (recommended in @williamsBayesianMetaAnalysisWeakly2018) of $\mu_{weak} = N(0,0.2)$ and $\tau=HC(0,0.5)$.  This means we predict the correlations to be around zero but with a standard deviation of $\pm 0.2$.  For the betwen study variance ($\tau$) we used the heavy-tailed only positive Half-Cauchy distribution.
 
-Our alternative prior was the preclinical prior descibed in @cousineauCrosssectionalAssociationBlood2024, which was that Spearman's $\rho$ was estimated at 0.4-0.5 depending on the condition (parameterized as $\mu_{alt}=N(0.45,0.1)).
+Our alternative prior was the preclinical prior descibed in @cousineauCrosssectionalAssociationBlood2024, which was that Spearman's $\rho$ was estimated at 0.4-0.5 depending on the condition (parameterized as $\mu_{alt}=N(0.45,0.1)$).
 
 We calculated the standard error of the estimate of r using
 
@@ -118,10 +118,9 @@ data <-
 library(brms)
 priors <- c(prior(normal(0.4,0.1), class = Intercept),
             prior(cauchy(0,0.5), class = sd, lb = 0))
-
-prior_summary(priors) %>% kable(caption="Prior summary for effects of transmission on engine type")
 ```
 :::
+
 
 
 #### Performing a Prior Predictive Check
@@ -171,6 +170,26 @@ meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
 :::
 
 
+Here is a summary of the prior probabilities.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+prior_summary(meta.brm,all=F) %>% kable(caption="Summary of prior probabilities")
+```
+
+::: {.cell-output-display}
+Table: Summary of prior probabilities
+
+|prior            |class     |coef |group |resp |dpar |nlpar |lb |ub |source |
+|:----------------|:---------|:----|:-----|:----|:----|:-----|:--|:--|:------|
+|normal(0.4, 0.1) |Intercept |     |      |     |     |      |   |   |user   |
+|cauchy(0, 0.5)   |sd        |     |      |     |     |      |0  |   |user   |
+:::
+:::
+
+
 ### MCMC Chain Convergence and Resolution
 
 
@@ -189,34 +208,34 @@ Table: Rhat values for model (should be between 0.99 and 1.01 for convergence).
 
 |Parameter                           |Rhat    |
 |:-----------------------------------|:-------|
-|b_Intercept                         |1.00364 |
-|sd_Study__Intercept                 |1.00091 |
+|b_Intercept                         |1.00414 |
+|sd_Study__Intercept                 |1.00089 |
 |sigma                               |NA      |
-|Intercept                           |1.00364 |
-|r_Study[DeBacquer1994f,Intercept]   |1.00230 |
-|r_Study[DeBacquer1994m,Intercept]   |1.00246 |
-|r_Study[Foley2008,Intercept]        |1.00301 |
-|r_Study[Gallo2016f,Intercept]       |1.00090 |
-|r_Study[Gallo2016f-pm,Intercept]    |1.00182 |
-|r_Study[Gallo2016m,Intercept]       |1.00215 |
-|r_Study[Green1987_m20-39,Intercept] |1.00064 |
-|r_Study[Green1987_m40-69,Intercept] |1.00065 |
-|r_Study[He2014f,Intercept]          |1.00031 |
-|r_Study[He2014m,Intercept]          |1.00062 |
-|r_Study[Jorde1999f,Intercept]       |1.00304 |
-|r_Study[Jorde1999m,Intercept]       |1.00302 |
-|r_Study[Kennedy2009f,Intercept]     |1.00133 |
-|r_Study[Kennedy2009m,Intercept]     |1.00047 |
-|r_Study[Lind1988,Intercept]         |1.00360 |
-|r_Study[Lind1997,Intercept]         |1.00161 |
-|r_Study[Meng2021,Intercept]         |1.00220 |
-|lprior                              |1.00364 |
-|lp__                                |1.00056 |
+|Intercept                           |1.00414 |
+|r_Study[DeBacquer1994f,Intercept]   |1.00239 |
+|r_Study[DeBacquer1994m,Intercept]   |1.00273 |
+|r_Study[Foley2008,Intercept]        |1.00298 |
+|r_Study[Gallo2016f,Intercept]       |1.00172 |
+|r_Study[Gallo2016f-pm,Intercept]    |1.00205 |
+|r_Study[Gallo2016m,Intercept]       |1.00282 |
+|r_Study[Green1987_m20-39,Intercept] |1.00055 |
+|r_Study[Green1987_m40-69,Intercept] |1.00010 |
+|r_Study[He2014f,Intercept]          |1.00117 |
+|r_Study[He2014m,Intercept]          |1.00095 |
+|r_Study[Jorde1999f,Intercept]       |1.00398 |
+|r_Study[Jorde1999m,Intercept]       |1.00368 |
+|r_Study[Kennedy2009f,Intercept]     |1.00134 |
+|r_Study[Kennedy2009m,Intercept]     |1.00073 |
+|r_Study[Lind1988,Intercept]         |1.00371 |
+|r_Study[Lind1997,Intercept]         |1.00141 |
+|r_Study[Meng2021,Intercept]         |1.00248 |
+|lprior                              |1.00408 |
+|lp__                                |1.00162 |
 :::
 :::
 
 
-Chain convergence was good with a $\hat R$ between 1.00031 and 1.00364 for each model estimate.
+Chain convergence was good with a $\hat R$ between 1.00010 and 1.00414 for each model estimate.
 
 
 ::: {.cell}
@@ -231,13 +250,13 @@ Table: Model parameters including effective sample size
 
 |effect   |component |group    |term            | estimate| std.error| conf.low| conf.high|  ess|
 |:--------|:---------|:--------|:---------------|--------:|---------:|--------:|---------:|----:|
-|fixed    |cond      |NA       |(Intercept)     |    0.176|     0.019|    0.140|     0.217| 1541|
-|ran_pars |cond      |Study    |sd__(Intercept) |    0.071|     0.017|    0.046|     0.110| 1765|
+|fixed    |cond      |NA       |(Intercept)     |    0.176|     0.019|    0.140|     0.214| 1531|
+|ran_pars |cond      |Study    |sd__(Intercept) |    0.071|     0.016|    0.046|     0.111| 1903|
 |ran_pars |cond      |Residual |sd__Observation |    0.000|     0.000|    0.000|     0.000|   NA|
 :::
 :::
 
-The effective sample size was at least 1540.977 samples for each parameter.
+The effective sample size was at least 1530.737 samples for each parameter.
 
 ### Posterior Probability Check
 
@@ -281,7 +300,7 @@ Table: Bayesian estimates of correlation between cholesterol and calcium
 
 |          | Estimate| Est.Error| Q2.5| Q97.5|
 |:---------|--------:|---------:|----:|-----:|
-|Intercept |    0.176|     0.019| 0.14| 0.217|
+|Intercept |    0.176|     0.019| 0.14| 0.214|
 :::
 
 ```{.r .cell-code}
@@ -330,7 +349,7 @@ ggplot(aes(x = tau), data = post.samples) +
 :::
 
 
-The distribution of the posterior probabilities are unimodal, approximately gaussian distributions with a mean of 0.176 with a 95% confidence interval of 0.14-0.217 for the pooled estimate of $r$.  This corresponds to a $R^2$ of 0.031.
+The distribution of the posterior probabilities are unimodal, approximately gaussian distributions with a mean of 0.176 with a 95% confidence interval of 0.14-0.214 for the pooled estimate of $r$.  This corresponds to a $R^2$ of 0.031.
 
 #### Bayes Factors and Hypothesis Testing
 
@@ -347,7 +366,7 @@ Table: Hypothesis test for estimate >0
 
 |Hypothesis      | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
 |:---------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
-|(Intercept) > 0 |    0.176|     0.019|    0.146|    0.208|        Inf|         1|*    |
+|(Intercept) > 0 |    0.176|     0.019|    0.146|    0.207|        Inf|         1|*    |
 :::
 
 ```{.r .cell-code}
@@ -361,7 +380,7 @@ Table: Hypothesis test for estimate <0.39
 
 |Hypothesis             | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
 |:----------------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
-|(Intercept)-(0.39) < 0 |   -0.214|     0.019|   -0.244|   -0.182|        Inf|         1|*    |
+|(Intercept)-(0.39) < 0 |   -0.214|     0.019|   -0.244|   -0.183|        Inf|         1|*    |
 :::
 :::
 

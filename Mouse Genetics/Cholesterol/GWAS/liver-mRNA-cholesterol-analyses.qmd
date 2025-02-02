@@ -1,0 +1,128 @@
+---
+title: "Liver mRNA TWAS Analysis"
+author: "Dave Bridges"
+format: html
+editor: source
+---
+
+```{r load}
+library(readr)
+library(dplyr)
+library(tidyr)
+library(broom)
+library(tidyverse)
+
+rna.datatfile <- 'dataset.mrna.Svenson_DO_HFD.v12.Rds'
+all.data <- readRDS(rna.datatfile)
+
+rna.data.raw <- all.data$data$raw %>% as.data.frame()
+
+library(janitor)
+rna.data.raw %>% t %>% as.data.frame -> rna.data
+
+gene.annotation <- all.data$annot.mrna %>%
+  mutate(start.true = start*1E6,
+         end.true = end*1E6)
+```
+
+Pulled out phenotype data
+
+```{r collecting-phenotype-data}
+phenotype.datatfile <- 'dataset.phenotype.Svenson_DO_HFD.v12.Rds'
+phenotype.data <- readRDS(phenotype.datatfile)
+
+library(tibble)
+chol.phenotypes <- 
+  phenotype.data$data$raw %>% 
+  as.data.frame %>%
+  select(chol2) %>%
+  mutate(chol2.scale = scale(chol2,center=T)) %>%
+  rownames_to_column("ID")
+
+library(forcats)
+group.data <- 
+  phenotype.data$annot.samples %>%
+  select(mouse.id,sex,diet) %>% 
+  column_to_rownames('mouse.id') %>% 
+  mutate_all(as.factor) %>%
+  rownames_to_column('ID')
+
+pheno.data.all <- full_join(chol.phenotypes,group.data,by="ID")
+```
+
+## Plots for Cholesterol-Liver mRNA Expression
+
+```{r plots}
+library(tibble)
+genes.of.interest <- c('Chrna2','Srebf1','Clstn3','Kif13b','Ascc3','Apoa1','Apoa2','Lpin1','Cdkal1','Slc16a1', 'Bdh1', 'Hmgcs2', 'Hmgcl', 'Hmgcr','Apoa2','Hnf1a','Mmab')
+
+for (gene in genes.of.interest) {
+
+  gene.id <- filter(gene.annotation, symbol==gene) %>% pull(gene.id)
+gene.data <- 
+  rna.data[gene.id,] %>% 
+  t %>% 
+  as.data.frame %>% 
+  rownames_to_column('ID') %>% 
+  left_join(pheno.data.all)
+
+ggplot(gene.data %>% filter(!(is.na(sex))),
+       aes(y=chol2,x=get(gene.id))) +
+  geom_point(aes(col=sex)) +
+  stat_smooth(method="lm") +
+  labs(title=gene,
+       x="Liver mRNA Expression",
+       y="Cholesterol (mg/dL)") +
+  theme_classic(base_size=16) -> plot.all
+print(plot.all)
+
+ggsave(filename=paste0("figures/cholesterol-",gene,"-plot.pdf"),
+       device=c("pdf"))
+ggsave(filename=paste0("figures/cholesterol-",gene,"-plot.png"),
+       device=c("png"))
+
+ggplot(gene.data %>% filter(!(is.na(sex))),
+       aes(y=chol2,x=get(gene.id))) +
+  geom_point(aes(col=diet)) +
+  facet_grid(~sex) +
+  stat_smooth(method="lm") +
+  labs(title=gene,
+       x="Liver mRNA Expression",
+       y="Cholesterol (mg/dL)") +
+  theme_classic(base_size=16) ->
+  plot.sex
+  
+print(plot.sex)
+ggsave(filename=paste0("figures/cholesterol-sex-",gene,"-plot.pdf"),
+       device=c("pdf"))
+ggsave(filename=paste0("figures/cholesterol-sex-",gene,"-plot.png"),
+       device=c("png"))
+
+
+
+ggplot(gene.data %>% filter(!(is.na(sex))),
+       aes(y=chol2,x=get(gene.id))) +
+  geom_point(aes(col=sex)) +
+  facet_grid(~diet) +
+  stat_smooth(method="lm") +
+  labs(title=gene,
+       x="Liver mRNA Expression",
+       y="Cholesterol (mg/dL)") +
+  theme_classic(base_size=16) ->
+  plot.sex
+  
+print(plot.sex)
+ggsave(filename=paste0("figures/cholesterol-diet-",gene,"-plot.pdf"),
+       device=c("pdf"))
+ggsave(filename=paste0("figures/cholesterol-diet-",gene,"-plot.png"),
+       device=c("png"))
+}
+```
+
+
+```
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

@@ -46,3 +46,8 @@ python assoc_conversion.py ../output/cholesterol_all.assoc.txt
 Clumping and ld calculations were done with the `plink-postprocessing.sh` script
 
 Clumps were annotated using `clumping-summary.qmd` and analysed using `clumps-twas-integration-diet.qmd` and `clumps-twas-integration-sex.qmd`.
+
+## To Visualize the Nominated QTLs as Barplots
+
+The `snps-of-interest.Rmd` script generates barplots of nominated SNPs.  These SNPs are pulled from the main genotype file from the main genotype file by running the command, which uses a list of SNPs (in `SNPs_of_interest.txt `) to make a shorter genotypes file.  These are pulled from lead snps from the clumps.
+

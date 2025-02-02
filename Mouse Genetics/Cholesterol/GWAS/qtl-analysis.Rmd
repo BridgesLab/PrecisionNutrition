@@ -607,16 +607,6 @@ getBM(attributes = c("external_gene_name",'start_position','gene_biotype'), filt
 top.snp.genes %>% kable(caption=paste("Genes near second SNP interval +/-", range.gap))
 ```
 
-# Summary of Interesting SNPs
-
-```{r snp-summary}
-snps.of.interest <- bind_rows(top001.filtered,additive.snp.summary,hfhs.snp.summary,ncd.snp.summary)
-
-write_csv(snps.of.interest, file="SNPs_of_interest.csv")
-snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest.txt") #just the rsids
-
-```
-
 # Session Information
 
 ```{r session-information, echo=T}

@@ -52,7 +52,37 @@ Used QTLs identified in **qtl_analysis.Rmd**, and create plots of their associat
 
 # Experimental Details
 
-This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where **SNPs_of_interest.txt** was generated as a nonredundant list of interesting SNPs
+This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where **SNPs_of_interest.txt** was generated as a nonredundant list of interesting SNPs.  This file has to be generated first then this code run after.
+
+## Identifying Interesting SNPs
+
+Loaded in SNPs from clumped QTL data
+
+```{r snp-summary}
+male.clump.filename <- 'ld-calculations/Annotated Gene Clumps Male QTLs.csv'
+female.clump.filename <- 'ld-calculations/Annotated Gene Clumps Female QTLs.csv'
+ncd.clump.filename <- 'ld-calculations/Annotated Gene Clumps NCD QTLs.csv'
+hfd.clump.filename <- 'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'
+
+library(readr)
+ncd.clump.data <- read_csv(ncd.clump.filename)
+hfd.clump.data <- read_csv(hfd.clump.filename)
+male.clump.data <- read_csv(male.clump.filename)
+female.clump.data <- read_csv(female.clump.filename)
+
+all.clumps <- bind_rows(ncd.clump.data,
+                        hfd.clump.data,
+                        male.clump.data,
+                        female.clump.data)
+unique.snps <-
+  all.clumps %>%
+  distinct(SNP) %>%
+  pull(SNP)
+
+unique.snps %>% write(file="SNPs_of_interest.txt") #just the rsids
+```
+
+Based on tht clump data we pulled out `r length(unique.snps)` interesting lead SNPs.
 
 ```{snps-code}
 grep -Ff SNPs_of_interest.txt Genotypes_all.bimbam > Genotypes_of_interest.bimbam

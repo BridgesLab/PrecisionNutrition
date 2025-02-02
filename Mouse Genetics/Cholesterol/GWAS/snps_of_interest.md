@@ -23,7 +23,38 @@ Used QTLs identified in **qtl_analysis.Rmd**, and create plots of their associat
 
 # Experimental Details
 
-This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where **SNPs_of_interest.txt** was generated as a nonredundant list of interesting SNPs
+This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where **SNPs_of_interest.txt** was generated as a nonredundant list of interesting SNPs.  This file has to be generated first then this code run after.
+
+## Identifying Interesting SNPs
+
+Loaded in SNPs from clumped QTL data
+
+
+``` r
+male.clump.filename <- 'ld-calculations/Annotated Gene Clumps Male QTLs.csv'
+female.clump.filename <- 'ld-calculations/Annotated Gene Clumps Female QTLs.csv'
+ncd.clump.filename <- 'ld-calculations/Annotated Gene Clumps NCD QTLs.csv'
+hfd.clump.filename <- 'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'
+
+library(readr)
+ncd.clump.data <- read_csv(ncd.clump.filename)
+hfd.clump.data <- read_csv(hfd.clump.filename)
+male.clump.data <- read_csv(male.clump.filename)
+female.clump.data <- read_csv(female.clump.filename)
+
+all.clumps <- bind_rows(ncd.clump.data,
+                        hfd.clump.data,
+                        male.clump.data,
+                        female.clump.data)
+unique.snps <-
+  all.clumps %>%
+  distinct(SNP) %>%
+  pull(SNP)
+
+unique.snps %>% write(file="SNPs_of_interest.txt") #just the rsids
+```
+
+Based on tht clump data we pulled out 60 interesting lead SNPs.
 
 ```{snps-code}
 grep -Ff SNPs_of_interest.txt Genotypes_all.bimbam > Genotypes_of_interest.bimbam
@@ -225,6 +256,74 @@ summary.data %>%
 
 ![](figures/pk18.qtl-2.png)<!-- -->
 
+# Chromosome 12 QTL 
+
+This was the QTL that was NCD-specifically associated.
+
+
+``` r
+library(forcats)
+qtl <- '12_114139385_A_B'
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "GG"='0',
+         "GC"='1',
+         "CC"='2')) %>%  
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = paste("Effects of ",qtl),
+       fill="Genotype") +
+  theme_classic(base_size = 18) 
+```
+
+![](figures/pk12.qtl-1.png)<!-- -->
+
+``` r
+summary.data %>%
+  filter(SNP==qtl) %>%  
+  mutate(Genotype=fct_recode(as.factor(Count),
+         "Homozygous"='0',
+         "Heterozygous"='1',
+         "CC"='2')) %>% 
+    filter(Genotype!="CC") %>%
+  ggplot(aes(y=Cholesterol.mean,
+             ymin=Cholesterol.mean-Cholesterol.se,
+             ymax=Cholesterol.mean+Cholesterol.se,
+             fill=Genotype,
+             x=diet,
+             label=n)) +
+  geom_bar(stat='identity',position="dodge", width=0.75) +
+  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
+  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
+  facet_grid(.~sex) +
+  labs(y="Cholesterol (mg/dL)",
+       x="",
+       title = "Chromosome 18 QTL",
+       fill="Genotype") +
+  theme_classic(base_size = 16) +
+  scale_fill_manual(values=color.scheme) +
+  guides(color = guide_legend(override.aes = list(fill = NA)))  +
+  theme(legend.position=c(0.15,0.85),
+        legend.text = element_text(size=10),
+        legend.title = element_text(size=12),
+            legend.box.background = element_blank(),
+    legend.key = element_rect(colour = NA, fill = NA),
+    legend.background = element_rect(fill = "transparent")) 
+```
+
+![](figures/pk12.qtl-2.png)<!-- -->
+
 
 ## Chromosome 1 QTL - Apoa2
 
@@ -324,9 +423,9 @@ sessionInfo()
 ```
 
 ```
-## R version 4.4.1 (2024-06-14)
+## R version 4.4.2 (2024-10-31)
 ## Platform: x86_64-apple-darwin20
-## Running under: macOS Sonoma 14.7
+## Running under: macOS Monterey 12.7.6
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
@@ -342,21 +441,20 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-## [1] forcats_1.0.0 ggplot2_3.5.1 broom_1.0.6   dplyr_1.1.4   tidyr_1.3.1  
-## [6] readr_2.1.5   knitr_1.48   
+## [1] forcats_1.0.0 ggplot2_3.5.1 broom_1.0.7   dplyr_1.1.4   tidyr_1.3.1  
+## [6] readr_2.1.5   knitr_1.49   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] bit_4.0.5         gtable_0.3.5      jsonlite_1.8.8    highr_0.11       
-##  [5] crayon_1.5.3      compiler_4.4.1    tidyselect_1.2.1  parallel_4.4.1   
-##  [9] jquerylib_0.1.4   scales_1.3.0      yaml_2.3.10       fastmap_1.2.0    
-## [13] R6_2.5.1          labeling_0.4.3    generics_0.1.3    backports_1.5.0  
-## [17] tibble_3.2.1      munsell_0.5.1     bslib_0.8.0       pillar_1.9.0     
-## [21] tzdb_0.4.0        rlang_1.1.4       utf8_1.2.4        cachem_1.1.0     
-## [25] xfun_0.47         sass_0.4.9        bit64_4.0.5       cli_3.6.3        
-## [29] withr_3.0.1       magrittr_2.0.3    digest_0.6.37     grid_4.4.1       
-## [33] vroom_1.6.5       rstudioapi_0.16.0 hms_1.1.3         lifecycle_1.0.4  
-## [37] vctrs_0.6.5       evaluate_0.24.0   glue_1.7.0        farver_2.1.2     
-## [41] fansi_1.0.6       colorspace_2.1-1  rmarkdown_2.28    purrr_1.0.2      
-## [45] tools_4.4.1       pkgconfig_2.0.3   htmltools_0.5.8.1
+##  [1] bit_4.5.0.1       gtable_0.3.6      jsonlite_1.8.9    crayon_1.5.3     
+##  [5] compiler_4.4.2    tidyselect_1.2.1  parallel_4.4.2    jquerylib_0.1.4  
+##  [9] scales_1.3.0      yaml_2.3.10       fastmap_1.2.0     R6_2.5.1         
+## [13] labeling_0.4.3    generics_0.1.3    backports_1.5.0   tibble_3.2.1     
+## [17] munsell_0.5.1     bslib_0.8.0       pillar_1.10.1     tzdb_0.4.0       
+## [21] rlang_1.1.4       cachem_1.1.0      xfun_0.50         sass_0.4.9       
+## [25] bit64_4.5.2       cli_3.6.3         withr_3.0.2       magrittr_2.0.3   
+## [29] digest_0.6.37     grid_4.4.2        vroom_1.6.5       rstudioapi_0.17.1
+## [33] hms_1.1.3         lifecycle_1.0.4   vctrs_0.6.5       evaluate_1.0.3   
+## [37] glue_1.8.0        farver_2.1.2      colorspace_2.1-1  rmarkdown_2.29   
+## [41] purrr_1.0.2       tools_4.4.2       pkgconfig_2.0.3   htmltools_0.5.8.1
 ```
 

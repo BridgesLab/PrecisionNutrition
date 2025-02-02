@@ -80,6 +80,13 @@ unique.snps <-
   pull(SNP)
 
 unique.snps %>% write(file="SNPs_of_interest.txt") #just the rsids
+diet.snps <- bind_rows(ncd.clump.data, hfd.clump.data) %>%
+  distinct(SNP) %>%
+  pull(SNP)
+
+sex.snps <- bind_rows(male.clump.data,female.clump.data) %>%
+  distinct(SNP) %>%
+  pull(SNP)
 ```
 
 Based on tht clump data we pulled out `r length(unique.snps)` interesting lead SNPs.
@@ -120,8 +127,6 @@ combined.data <- data.frame(Cholesterol=cholesterol.data$X1,
   mutate(diet = relevel(as.factor(diet),ref="NCD"))
 
 colnames(combined.data) <- c(colnames(combined.data)[1:3],snps$X1)
-
-
 ```
 
 
@@ -130,7 +135,7 @@ colnames(combined.data) <- c(colnames(combined.data)[1:3],snps$X1)
 combined.data.long <-
   combined.data %>%
   group_by(diet,sex) %>%
-  pivot_longer(cols=4:89,
+  pivot_longer(cols=4:ncol(combined.data), #first threre columns arer cholesterol, sex and diet
                names_to="SNP",
                values_to = "Count") 
 
@@ -140,17 +145,15 @@ summary.data <- combined.data.long %>%
   summarize(Cholesterol.mean = mean(Cholesterol,na.rm=T),
             Cholesterol.se= se(Cholesterol),
             n=length(Cholesterol)) 
-
-lm(Cholesterol ~ diet + sex, data=combined.data.long) %>% tidy %>% kable(caption="Summary statistics among all selected QTLs")
-
 ```
-# Chromosome 13 QTL 
 
-This was the QTL that was HFHS-specifically associated, we think this is *Cdkal1*.
+## QTL Barplots
 
-```{r pk13.qtl}
+This will generate a barplot for every QTL in the list
+
+```{r qtl-barplots}
 library(forcats)
-qtl <- '13_29976363_E_C'
+for (qtl in unique.snps) {
 summary.data %>%
   filter(SNP==qtl) %>%  
   mutate(Genotype=fct_recode(as.factor(Count),
@@ -168,10 +171,13 @@ summary.data %>%
   #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
   facet_grid(.~sex) +
   labs(y="Cholesterol (mg/dL)",
-       x="",
+       x=qtl,
        title = paste("Effects of ",qtl),
        fill="Genotype") +
-  theme_classic(base_size = 18) 
+  theme_classic(base_size = 18) -> qtl.barplot
+print(qtl.barplot)
+ggsave(plot=qtl.barplot, filename=paste0('QTL-Barplots/',qtl,'-all.png'))
+ggsave(plot=qtl.barplot, filename=paste0('QTL-Barplots/',qtl,'-all.pdf'))
 
 summary.data %>%
   filter(SNP==qtl) %>%  
@@ -192,222 +198,135 @@ summary.data %>%
   facet_grid(.~sex) +
   labs(y="Cholesterol (mg/dL)",
        x="",
-       title = "Chromosome 13 QTL",
+       title = qtl,
        fill="Genotype") +
   theme_classic(base_size = 16) +
   scale_fill_manual(values=color.scheme) +
-  theme(legend.position=c(0.15,0.8),
+  theme(legend.position='none',
         legend.text = element_text(size=10),
-        legend.title = element_text(size=12))
-  
-```
-# Chromosome 18 QTL 
+        legend.title = element_text(size=12)) ->
+  qtl.barplot.2
 
-This was the QTL that was NCD-specifically associated.
+print(qtl.barplot.2)
+ggsave(plot=qtl.barplot.2, filename=paste0('QTL-Barplots/',qtl,'-hets.png'))
+ggsave(plot=qtl.barplot.2, filename=paste0('QTL-Barplots/',qtl,'-hets.pdf'))
+}
 
-```{r pk18.qtl}
-library(forcats)
-qtl <- '18_46410922_G_A'
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count),
-         "GG"='0',
-         "GC"='1',
-         "CC"='2')) %>%  
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = paste("Effects of ",qtl),
-       fill="Genotype") +
-  theme_classic(base_size = 18) 
-
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count),
-         "Homozygous"='0',
-         "Heterozygous"='1',
-         "CC"='2')) %>% 
-    filter(Genotype!="CC") %>%
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = "Chromosome 18 QTL",
-       fill="Genotype") +
-  theme_classic(base_size = 16) +
-  scale_fill_manual(values=color.scheme) +
-  guides(color = guide_legend(override.aes = list(fill = NA)))  +
-  theme(legend.position=c(0.15,0.85),
-        legend.text = element_text(size=10),
-        legend.title = element_text(size=12),
-            legend.box.background = element_blank(),
-    legend.key = element_rect(colour = NA, fill = NA),
-    legend.background = element_rect(fill = "transparent")) 
-  
 ```
 
-# Chromosome 12 QTL 
+## Statistics
 
-This was the QTL that was NCD-specifically associated.
+This analysis performs the statistics, using simple linear models adjusting for sex, diet and testing for interactions between them and the genotype.  This is differrent from the p-values from the GEMMA analyses, since it dos not account for genetic similarity outside the QTL
 
-```{r pk12.qtl}
-library(forcats)
-qtl <- '12_114139385_A_B'
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count),
-         "GG"='0',
-         "GC"='1',
-         "CC"='2')) %>%  
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  #geom_text(aes(y=0),position=position_dodge(width=0.75)) +
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = paste("Effects of ",qtl),
-       fill="Genotype") +
-  theme_classic(base_size = 18) 
+### Diet-Stratified SNPS
 
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count),
-         "Homozygous"='0',
-         "Heterozygous"='1',
-         "CC"='2')) %>% 
-    filter(Genotype!="CC") %>%
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5,color="white") +
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = "Chromosome 18 QTL",
-       fill="Genotype") +
-  theme_classic(base_size = 16) +
-  scale_fill_manual(values=color.scheme) +
-  guides(color = guide_legend(override.aes = list(fill = NA)))  +
-  theme(legend.position=c(0.15,0.85),
-        legend.text = element_text(size=10),
-        legend.title = element_text(size=12),
-            legend.box.background = element_blank(),
-    legend.key = element_rect(colour = NA, fill = NA),
-    legend.background = element_rect(fill = "transparent")) 
-  
+```{r linear-models-diet}
+lm.data <- data.frame()
+for (qtl in diet.snps) {
+formula.no.int <- eval(bquote(Cholesterol ~ sex + diet + .(as.name(qtl))))
+lm.no.int <- lm(formula.no.int,data=combined.data) %>% tidy %>%
+  select(term,estimate,std.error,p.value) %>%
+  slice(4)
+
+formula.ncd <- eval(bquote(Cholesterol ~ sex + .(as.name(qtl))))
+lm.ncd <- lm(formula.ncd,data=combined.data %>% filter(diet=='NCD')) %>% tidy %>%
+  select(term,estimate,std.error,p.value) %>%
+  slice(3)
+
+formula.hfd <- eval(bquote(Cholesterol ~ sex + .(as.name(qtl))))
+lm.hfd<- lm(formula.hfd,data=combined.data %>% filter(diet=='HFHS')) %>% tidy %>%
+  select(term,estimate,std.error,p.value) %>%
+  slice(3)
+diet.data <- left_join(lm.hfd,lm.ncd,by="term",
+                      suffix=c("_hfd","_ncd"))
+
+
+qtl.data <- left_join(diet.data,lm.no.int,by="term",
+                      suffix=c("","_all"))
+
+lm.data <- bind_rows(lm.data,qtl.data)
+}
 ```
 
+## Summary of SNP-Level Analyses For Diet
 
-## Chromosome 1 QTL - Apoa2
+```{r snp-level-summary-diet}
+kable(lm.data %>% arrange(-abs(estimate)) %>% select(-starts_with('std.error')),
+      caption="Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)")
 
-```{r pk1.qtl}
-qtl <- '1_171425406_H_C'
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count), #not right
-         "GG"='0',
-         "GC"='1',
-         "CC"='2')) %>%  
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5) + 
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = paste("Effects of ",qtl),
-       fill="Genotype") +
-  theme_classic(base_size = 18) 
-  
+library(ggrepel)
+ggplot(lm.data,
+       aes(y=estimate_hfd,
+           ymin=estimate_hfd-std.error_hfd,
+           ymax=estimate_hfd+std.error_hfd,
+           x=estimate_ncd,
+           xmin=estimate_ncd-std.error_ncd,
+           xmax=estimate_ncd+std.error_ncd,)) +
+  geom_point() +
+  geom_errorbar(alpha=0.2) +
+  geom_errorbarh(alpha=0.2) +
+  labs(y="HFD Estimate (mg/dL)",
+       x="NCD Estimate (mg/dL)",
+       title="Estimates for Lead SNPs on Cholesterol") +
+  theme_classic(base_size=16) +
+  geom_vline(lty=2,xintercept=0) +
+  geom_hline(lty=2,yintercept=0)
 ```
-# Chromosome 5 QTL - Scarb1
 
-```{r pk5.qtl}
-qtl <- '5_123629774_B_E'
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count), #not right
-         "GG"='0',
-         "GC"='1',
-         "CC"='2')) %>%  
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5) +
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = paste("Effects of ",qtl),
-       fill="Genotype") +
-  theme_classic(base_size = 18) 
-  
+### Sex-Stratified SNPS
+
+```{r linear-models-sex}
+lm.data.sex <- data.frame()
+
+for (qtl in sex.snps) {
+formula.no.int <- eval(bquote(Cholesterol ~ sex + diet + .(as.name(qtl))))
+lm.no.int <- lm(formula.no.int,data=combined.data) %>% tidy %>%
+  select(term,estimate,std.error,p.value) %>%
+  slice(4)
+
+formula.f <- eval(bquote(Cholesterol ~ diet + .(as.name(qtl))))
+lm.f <- lm(formula.f,data=combined.data %>% filter(sex=='F')) %>% tidy %>%
+  select(term,estimate,std.error,p.value) %>%
+  slice(3)
+
+formula.m <- eval(bquote(Cholesterol ~ diet + .(as.name(qtl))))
+lm.m<- lm(formula.m,data=combined.data %>% filter(sex=='M')) %>% tidy %>%
+  select(term,estimate,std.error,p.value) %>%
+  slice(3)
+sex.data <- left_join(lm.f,lm.m,by="term",
+                      suffix=c("_f","_m"))
+
+
+qtl.data <- left_join(sex.data,lm.no.int,by="term",
+                      suffix=c("","_all"))
+
+lm.data.sex <- bind_rows(lm.data.sex,qtl.data)
+}
 ```
-# Chromosome 1a QTL - Unknown\
 
-This was the top BSLMM hit
+## Summary of SNP-Level Analyses For Diet
 
-```{r pk1b.qtl}
-qtl <- '1_138062762_D_H'
-summary.data %>%
-  filter(SNP==qtl) %>%  
-  mutate(Genotype=fct_recode(as.factor(Count), #not right
-         "GG"='0',
-         "GC"='1',
-         "CC"='2')) %>%  
-  ggplot(aes(y=Cholesterol.mean,
-             ymin=Cholesterol.mean-Cholesterol.se,
-             ymax=Cholesterol.mean+Cholesterol.se,
-             fill=Genotype,
-             x=diet,
-             label=n)) +
-  geom_bar(stat='identity',position="dodge", width=0.75) +
-  geom_errorbar(position=position_dodge(width=0.75), width=0.5) +
-  geom_text(aes(y=0),position=position_dodge(width=0.75), vjust = -0.5) + 
-  facet_grid(.~sex) +
-  labs(y="Cholesterol (mg/dL)",
-       x="",
-       title = paste("Effects of ",qtl),
-       fill="Genotype") +
-  theme_classic(base_size = 18) 
-  
+```{r snp-level-summary-sex}
+kable(lm.data.sex %>% arrange(-abs(estimate)) %>% select(-starts_with('std.error')),
+      caption="Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)")
+
+library(ggrepel)
+ggplot(lm.data.sex,
+       aes(y=estimate_f,
+           ymin=estimate_f-std.error_f,
+           ymax=estimate_f+std.error_f,
+           x=estimate_m,
+           xmin=estimate_m-std.error_m,
+           xmax=estimate_m+std.error_m,)) +
+  geom_point() +
+  geom_errorbar(alpha=0.2) +
+  geom_errorbarh(alpha=0.2) +
+  labs(y="Female Estimate (mg/dL)",
+       x="Male Estimate (mg/dL)",
+       title="Estimates for Lead SNPs on Cholesterol") +
+  theme_classic(base_size=16) +
+  geom_vline(lty=2,xintercept=0) +
+  geom_hline(lty=2,yintercept=0)
 ```
 
 # Session Information

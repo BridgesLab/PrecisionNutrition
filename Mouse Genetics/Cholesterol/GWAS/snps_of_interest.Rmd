@@ -251,7 +251,10 @@ lm.data <- bind_rows(lm.data,qtl.data)
 ## Summary of SNP-Level Analyses For Diet
 
 ```{r snp-level-summary-diet}
-kable(lm.data %>% arrange(-abs(estimate)) %>% select(-starts_with('std.error')),
+kable(lm.data %>% 
+        mutate(diet.difference=estimate_hfd-estimate_ncd) %>%
+        arrange(-abs(diet.difference)) %>% 
+        select(-starts_with('std.error')),
       caption="Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)")
 
 library(ggrepel)
@@ -304,10 +307,12 @@ lm.data.sex <- bind_rows(lm.data.sex,qtl.data)
 }
 ```
 
-## Summary of SNP-Level Analyses For Diet
+## Summary of SNP-Level Analyses For Sex
 
 ```{r snp-level-summary-sex}
-kable(lm.data.sex %>% arrange(-abs(estimate)) %>% select(-starts_with('std.error')),
+kable(lm.data.sex %>%
+        mutate(sex.difference=estimate_m-estimate_f) %>% 
+        arrange(-abs(sex.difference)) %>% select(-starts_with('std.error')),
       caption="Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)")
 
 library(ggrepel)

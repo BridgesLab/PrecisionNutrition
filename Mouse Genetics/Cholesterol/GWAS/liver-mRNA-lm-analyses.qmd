@@ -1,8 +1,21 @@
 ---
 title: "Liver mRNA TWAS Analysis"
 author: "Dave Bridges"
-format: html
+date: "October 29, 2024"
 editor: source
+format: 
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+theme: journal
+execute:
+  echo: true
+  warning: false
 ---
 
 ```{r load}
@@ -10,7 +23,7 @@ library(readr)
 library(dplyr)
 library(tidyr)
 library(broom)
-library(tidyverse)
+library(ggplot2)
 
 rna.datatfile <- 'dataset.mrna.Svenson_DO_HFD.v12.Rds'
 all.data <- readRDS(rna.datatfile)
@@ -52,7 +65,13 @@ pheno.data.all <- full_join(chol.phenotypes,group.data,by="ID")
 
 ## Linear Models with Cholesterol as Dependent Variable
 
-```{r chol-dep-lm}
+### Crude Models
+
+This analysis used this model for all groups
+
+$ Cholesterol \sim log(Expression) + sex$
+
+```{r chol-dep-lm-all}
 #| message: false
 lm.results <- data.frame()
 
@@ -80,10 +99,171 @@ lm.results.anno <- lm.results %>%
   left_join(select(gene.annotation, gene.id,symbol,chr,start.true,end.true),
                              by=c('ID'='gene.id'))
 
-lm.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using linear models, no covariates")
+lm.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using linear models, sex as a covariate")
 
 lm.results.anno %>% write_csv("Cholesterol - Expression Associations - Linear Model.csv")
 ```
+
+### HFD-Specific Models
+
+This analysis used this model for HFD mice, adjusting for the effect of sex.
+
+$ Cholesterol \sim log_2(Expression) + Sex$
+
+```{r chol-dep-lm-hfd}
+#| message: false
+lm.hfd.results <- data.frame()
+
+for (gene in rownames(rna.data)){
+gene.data <- 
+  rna.data[gene,] %>% 
+  t %>% 
+  as.data.frame %>% 
+  rownames_to_column('ID') %>% 
+  left_join(pheno.data.all) %>%
+  filter(diet=="hf")
+
+gene.lm <- lm(chol2~log2(get(gene)+1)+sex,data=gene.data)
+
+lm.hfd.results <- bind_rows(lm.hfd.results, list(ID=gene, 
+                                         beta=tidy(gene.lm)[2,]$estimate,
+                                         se=tidy(gene.lm)[2,]$std.error,
+                                         pval=tidy(gene.lm)[2,]$p.value,
+                                         r2 = glance(gene.lm)$adj.r.squared))
+}
+
+library(knitr)
+
+lm.hfd.results.anno <- lm.hfd.results %>%
+  mutate(padj=p.adjust(pval, method="BH")) %>%  
+  left_join(select(gene.annotation, gene.id,symbol,chr,start.true,end.true),
+                             by=c('ID'='gene.id'))
+
+lm.hfd.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using linear models, HFD only, adjusting for sex")
+
+lm.hfd.results.anno %>% write_csv("Cholesterol - Expression Associations - HFD Mice - Linear Model.csv")
+```
+
+### NCD-Specific Models
+
+This analysis used this model for NCD mice, adjusting for the effect of sex.
+
+$ Cholesterol \sim log_2(Expression) + Sex$
+
+```{r chol-dep-lm-ncd}
+#| message: false
+lm.ncd.results <- data.frame()
+
+for (gene in rownames(rna.data)){
+gene.data <- 
+  rna.data[gene,] %>% 
+  t %>% 
+  as.data.frame %>% 
+  rownames_to_column('ID') %>% 
+  left_join(pheno.data.all) %>%
+  filter(diet=="chow")
+
+gene.lm <- lm(chol2~log2(get(gene)+1)+sex,data=gene.data)
+
+lm.ncd.results <- bind_rows(lm.ncd.results, list(ID=gene, 
+                                         beta=tidy(gene.lm)[2,]$estimate,
+                                         se=tidy(gene.lm)[2,]$std.error,
+                                         pval=tidy(gene.lm)[2,]$p.value,
+                                         r2 = glance(gene.lm)$adj.r.squared))
+}
+
+library(knitr)
+
+lm.ncd.results.anno <- lm.ncd.results %>%
+  mutate(padj=p.adjust(pval, method="BH")) %>%  
+  left_join(select(gene.annotation, gene.id,symbol,chr,start.true,end.true),
+                             by=c('ID'='gene.id'))
+
+lm.ncd.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using linear models, NCD only, adjusting for sex")
+
+lm.ncd.results.anno %>% write_csv("Cholesterol - Expression Associations - NCD Mice - Linear Model.csv")
+```
+
+### Male-Specific Models
+
+This analysis used this model for male mice, adjusting for the effect of sex.
+
+$ Cholesterol \sim log_2(Expression) + Diet$
+
+```{r chol-dep-lm-male}
+#| message: false
+lm.male.results <- data.frame()
+
+for (gene in rownames(rna.data)){
+gene.data <- 
+  rna.data[gene,] %>% 
+  t %>% 
+  as.data.frame %>% 
+  rownames_to_column('ID') %>% 
+  left_join(pheno.data.all) %>%
+  filter(diet=="chow")
+
+gene.lm <- lm(chol2~log2(get(gene)+1)+sex,data=gene.data)
+
+lm.male.results <- bind_rows(lm.male.results, list(ID=gene, 
+                                         beta=tidy(gene.lm)[2,]$estimate,
+                                         se=tidy(gene.lm)[2,]$std.error,
+                                         pval=tidy(gene.lm)[2,]$p.value,
+                                         r2 = glance(gene.lm)$adj.r.squared))
+}
+
+library(knitr)
+
+lm.male.results.anno <- lm.male.results %>%
+  mutate(padj=p.adjust(pval, method="BH")) %>%  
+  left_join(select(gene.annotation, gene.id,symbol,chr,start.true,end.true),
+                             by=c('ID'='gene.id'))
+
+lm.male.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using linear models, male only, adjusting for diet")
+
+lm.male.results.anno %>% write_csv("Cholesterol - Expression Associations - Male Mice - Linear Model.csv")
+```
+
+### Female-Specific Models
+
+This analysis used this model for female mice, adjusting for the effect of sex.
+
+$ Cholesterol \sim log_2(Expression) + Diet$
+
+```{r chol-dep-lm-female}
+#| message: false
+lm.female.results <- data.frame()
+
+for (gene in rownames(rna.data)){
+gene.data <- 
+  rna.data[gene,] %>% 
+  t %>% 
+  as.data.frame %>% 
+  rownames_to_column('ID') %>% 
+  left_join(pheno.data.all) %>%
+  filter(diet=="chow")
+
+gene.lm <- lm(chol2~log2(get(gene)+1)+sex,data=gene.data)
+
+lm.female.results <- bind_rows(lm.female.results, list(ID=gene, 
+                                         beta=tidy(gene.lm)[2,]$estimate,
+                                         se=tidy(gene.lm)[2,]$std.error,
+                                         pval=tidy(gene.lm)[2,]$p.value,
+                                         r2 = glance(gene.lm)$adj.r.squared))
+}
+
+library(knitr)
+
+lm.female.results.anno <- lm.female.results %>%
+  mutate(padj=p.adjust(pval, method="BH")) %>%  
+  left_join(select(gene.annotation, gene.id,symbol,chr,start.true,end.true),
+                             by=c('ID'='gene.id'))
+
+lm.female.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using linear models, female only, adjusting for diet")
+
+lm.female.results.anno %>% write_csv("Cholesterol - Expression Associations - Female Mice - Linear Model.csv")
+```
+
 
 ### Plots for Linear Models
 
@@ -134,7 +314,7 @@ gene.data <-
   rownames_to_column('ID') %>% 
   left_join(pheno.data.all)
 
-gene.lm <- gam(chol2~s(get(gene)),data=gene.data)
+gene.lm <- gam(chol2~s(get(gene))+sex,data=gene.data)
 
 lm.results <- bind_rows(lm.results, list(ID=gene, 
                                          edf=tidy(gene.lm)[1,]$edf,
@@ -150,7 +330,7 @@ lm.results.anno <- lm.results %>%
   left_join(select(gene.annotation, gene.id,symbol,chr,start.true,end.true),
                              by=c('ID'='gene.id'))
 
-lm.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using a nonlinar generalized additive model, no covariates")
+lm.results.anno %>% arrange(pval) %>% head(25) %>% kable(caption="Top 25 associations using a nonlinar generalized additive model, with sex as a covariate")
 
 lm.results.anno %>% write_csv("Cholesterol - Expression Associations - GAM Model.csv")
 ```

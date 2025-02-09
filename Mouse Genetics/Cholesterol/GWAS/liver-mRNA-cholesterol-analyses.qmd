@@ -1,8 +1,20 @@
 ---
 title: "Liver mRNA TWAS Analysis"
 author: "Dave Bridges"
-format: html
 editor: source
+format: 
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+theme: journal
+execute:
+  echo: true
+  warning: false
 ---
 
 ```{r load}
@@ -54,7 +66,7 @@ pheno.data.all <- full_join(chol.phenotypes,group.data,by="ID")
 
 ```{r plots}
 library(tibble)
-genes.of.interest <- c('Chrna2','Srebf1','Clstn3','Kif13b','Ascc3','Apoa1','Apoa2','Lpin1','Cdkal1','Slc16a1', 'Bdh1', 'Hmgcs2', 'Hmgcl', 'Hmgcr','Apoa2','Hnf1a','Mmab')
+genes.of.interest <- c('Chrna2','Srebf1','Clstn3','Kif13b','Ascc3','Apoa1','Apoa2','Lpin1','Cdkal1','Bdh1', 'Hmgcs2', 'Hmgcl','Hmgcr','Apoa2','Hnf1a','Mmab','Ldlr','Slc16a1','Slc16a6','Slc16a7','Mvk') #error with Slc16a3/8
 
 for (gene in genes.of.interest) {
 
@@ -119,8 +131,78 @@ ggsave(filename=paste0("figures/cholesterol-diet-",gene,"-plot.png"),
 }
 ```
 
+## Summary Tables
 
+Loaded in the results files from the linear model analyses (diet and sex specific)
+
+```{r summary-data-entry}
+all.datafile <- 'Cholesterol - Expression Associations - Linear Model.csv'
+ncd.datafile <- 'Cholesterol - Expression Associations - NCD Mice - Linear Model.csv'
+hfd.datafile <- 'Cholesterol - Expression Associations - HFD Mice - Linear Model.csv'
+male.datafile <- 'Cholesterol - Expression Associations - Male Mice - Linear Model.csv'
+female.datafile <- 'Cholesterol - Expression Associations - Female Mice - Linear Model.csv'
+
+all.data <- read_csv(all.datafile)
+ncd.data <- read_csv(ncd.datafile)
+hfd.data <- read_csv(hfd.datafile)
+male.data <- read_csv(male.datafile)
+female.data <- read_csv(female.datafile)
 ```
+
+The datafiles were:
+
+* All Data - `r all.datafile`, this is adjusted for sex
+* NCD Data - `r ncd.datafile`, this is adjustd for sex
+* HFD Data = `r hfd.datafile`, this is adjusted for sex
+* Male Data = `r male.datafile`, this is adjusted for diet
+* Female Data = `r female.datafile`, this is adjusted for diet
+
+```{r summary-tables}
+column.order <- c("All","NCD","HFD","Males","Females") 
+library(knitr)
+bind_rows(all.data %>% filter(symbol %in% genes.of.interest) %>% mutate(model="All"),
+          ncd.data %>% filter(symbol %in% genes.of.interest) %>% mutate(model="NCD"),
+          hfd.data %>% filter(symbol %in% genes.of.interest) %>% mutate(model="HFD"),
+          male.data %>% filter(symbol %in% genes.of.interest) %>% mutate(model="Males"),
+          female.data %>% filter(symbol %in% genes.of.interest) %>% mutate(model="Females")) %>%
+  arrange(symbol,model) %>%
+  mutate(model = fct_relevel(model, column.order)) %>%
+  relocate(symbol) -> summary.data
+
+summary.data %>%
+  kable(caption="Summary of effect estimates for genes of interest in different models.")
+```
+
+### Cholesterol Data Heatmap
+
+```{r cholestrol-heatmap}
+library(pheatmap)
+cholesterol.genes <- c('Hmgcl','Hmgcs2','Hmgcr','Bdh1','Slc16a1','Slc16a3','Slc16a6','Slc16a7','Slc16a8','Ldlr','Mvk')
+
+heatmap.data <- filter(summary.data, symbol %in% cholesterol.genes) %>%
+  select(beta,model,symbol) %>% 
+  pivot_wider(names_from=model,values_from=beta) %>%
+  column_to_rownames('symbol') %>%
+  select(order(column.order)) %>%
+  as.matrix
+
+#to make coloring symmetrical
+max_value <- max(abs(heatmap.data))
+breaks <- seq(-max_value, max_value, length.out = 101)
+
+pheatmap(heatmap.data,
+         main="Effect Estimates",
+         fontsize=16,
+         breaks = breaks,
+         color = colorRampPalette(c("#00274C", "white", "#FFCB05"))(100),
+         #cellwidth=20,
+         #cellheight=20,
+         cluster_rows=T,
+         cluster_cols=F,
+         show_rownames=T,
+         show_colnames=T)
+```
+
 # Session Information
 
 ```{r session-info}

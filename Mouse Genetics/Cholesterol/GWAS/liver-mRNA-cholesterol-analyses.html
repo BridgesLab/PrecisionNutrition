@@ -72,10 +72,23 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 
 </head>
 
-<body class="fullcontent">
+<body>
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#plots-for-cholesterol-liver-mrna-expression" id="toc-plots-for-cholesterol-liver-mrna-expression" class="nav-link active" data-scroll-target="#plots-for-cholesterol-liver-mrna-expression">Plots for Cholesterol-Liver mRNA Expression</a></li>
+  <li><a href="#summary-tables" id="toc-summary-tables" class="nav-link" data-scroll-target="#summary-tables">Summary Tables</a>
+  <ul class="collapse">
+  <li><a href="#cholesterol-data-heatmap" id="toc-cholesterol-data-heatmap" class="nav-link" data-scroll-target="#cholesterol-data-heatmap">Cholesterol Data Heatmap</a></li>
+  </ul></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="liver-mRNA-cholesterol-analyses.md"><i class="bi bi-file-code"></i>Github (GFM)</a></li></ul></div></nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -102,432 +115,1738 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </header>
 
 <div class="cell">
+<details>
+<summary>Code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
-<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'dplyr'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:stats':
-
-    filter, lag</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:base':
-
-    intersect, setdiff, setequal, union</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
-✔ forcats   1.0.0     ✔ purrr     1.0.2
-✔ ggplot2   3.5.1     ✔ stringr   1.5.1
-✔ lubridate 1.9.4     ✔ tibble    3.2.1</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
-✖ dplyr::filter() masks stats::filter()
-✖ dplyr::lag()    masks stats::lag()
-ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>rna.datatfile <span class="ot">&lt;-</span> <span class="st">'dataset.mrna.Svenson_DO_HFD.v12.Rds'</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>all.data <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(rna.datatfile)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>rna.data.raw <span class="ot">&lt;-</span> all.data<span class="sc">$</span>data<span class="sc">$</span>raw <span class="sc">%&gt;%</span> <span class="fu">as.data.frame</span>()</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'janitor'
-
-The following objects are masked from 'package:stats':
-
-    chisq.test, fisher.test</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>rna.data.raw <span class="sc">%&gt;%</span> t <span class="sc">%&gt;%</span> as.data.frame <span class="ot">-&gt;</span> rna.data</span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>gene.annotation <span class="ot">&lt;-</span> all.data<span class="sc">$</span>annot.mrna <span class="sc">%&gt;%</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">start.true =</span> start<span class="sc">*</span><span class="fl">1E6</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>         <span class="at">end.true =</span> end<span class="sc">*</span><span class="fl">1E6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(broom)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>rna.datatfile <span class="ot">&lt;-</span> <span class="st">'dataset.mrna.Svenson_DO_HFD.v12.Rds'</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>all.data <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(rna.datatfile)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>rna.data.raw <span class="ot">&lt;-</span> all.data<span class="sc">$</span>data<span class="sc">$</span>raw <span class="sc">%&gt;%</span> <span class="fu">as.data.frame</span>()</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(janitor)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>rna.data.raw <span class="sc">%&gt;%</span> t <span class="sc">%&gt;%</span> as.data.frame <span class="ot">-&gt;</span> rna.data</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>gene.annotation <span class="ot">&lt;-</span> all.data<span class="sc">$</span>annot.mrna <span class="sc">%&gt;%</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">start.true =</span> start<span class="sc">*</span><span class="fl">1E6</span>,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">end.true =</span> end<span class="sc">*</span><span class="fl">1E6</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Pulled out phenotype data</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>phenotype.datatfile <span class="ot">&lt;-</span> <span class="st">'dataset.phenotype.Svenson_DO_HFD.v12.Rds'</span></span>
-<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>phenotype.data <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(phenotype.datatfile)</span>
-<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
-<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>chol.phenotypes <span class="ot">&lt;-</span> </span>
-<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  phenotype.data<span class="sc">$</span>data<span class="sc">$</span>raw <span class="sc">%&gt;%</span> </span>
-<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>  as.data.frame <span class="sc">%&gt;%</span></span>
-<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol2) <span class="sc">%&gt;%</span></span>
-<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol2.scale =</span> <span class="fu">scale</span>(chol2,<span class="at">center=</span>T)) <span class="sc">%&gt;%</span></span>
-<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">"ID"</span>)</span>
-<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
-<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>group.data <span class="ot">&lt;-</span> </span>
-<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  phenotype.data<span class="sc">$</span>annot.samples <span class="sc">%&gt;%</span></span>
-<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(mouse.id,sex,diet) <span class="sc">%&gt;%</span> </span>
-<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'mouse.id'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_all</span>(as.factor) <span class="sc">%&gt;%</span></span>
-<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">'ID'</span>)</span>
-<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>pheno.data.all <span class="ot">&lt;-</span> <span class="fu">full_join</span>(chol.phenotypes,group.data,<span class="at">by=</span><span class="st">"ID"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>phenotype.datatfile <span class="ot">&lt;-</span> <span class="st">'dataset.phenotype.Svenson_DO_HFD.v12.Rds'</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>phenotype.data <span class="ot">&lt;-</span> <span class="fu">readRDS</span>(phenotype.datatfile)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>chol.phenotypes <span class="ot">&lt;-</span> </span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  phenotype.data<span class="sc">$</span>data<span class="sc">$</span>raw <span class="sc">%&gt;%</span> </span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  as.data.frame <span class="sc">%&gt;%</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chol2) <span class="sc">%&gt;%</span></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">chol2.scale =</span> <span class="fu">scale</span>(chol2,<span class="at">center=</span>T)) <span class="sc">%&gt;%</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">"ID"</span>)</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>group.data <span class="ot">&lt;-</span> </span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>  phenotype.data<span class="sc">$</span>annot.samples <span class="sc">%&gt;%</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(mouse.id,sex,diet) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'mouse.id'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_all</span>(as.factor) <span class="sc">%&gt;%</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">'ID'</span>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>pheno.data.all <span class="ot">&lt;-</span> <span class="fu">full_join</span>(chol.phenotypes,group.data,<span class="at">by=</span><span class="st">"ID"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <section id="plots-for-cholesterol-liver-mrna-expression" class="level2">
 <h2 class="anchored" data-anchor-id="plots-for-cholesterol-liver-mrna-expression">Plots for Cholesterol-Liver mRNA Expression</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>genes.of.interest <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'Chrna2'</span>,<span class="st">'Srebf1'</span>,<span class="st">'Clstn3'</span>,<span class="st">'Kif13b'</span>,<span class="st">'Ascc3'</span>)</span>
-<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (gene <span class="cf">in</span> genes.of.interest) {</span>
-<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  gene.id <span class="ot">&lt;-</span> <span class="fu">filter</span>(gene.annotation, symbol<span class="sc">==</span>gene) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(gene.id)</span>
-<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>gene.data <span class="ot">&lt;-</span> </span>
-<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>  rna.data[gene.id,] <span class="sc">%&gt;%</span> </span>
-<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  t <span class="sc">%&gt;%</span> </span>
-<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>  as.data.frame <span class="sc">%&gt;%</span> </span>
-<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">'ID'</span>) <span class="sc">%&gt;%</span> </span>
-<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(pheno.data.all)</span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gene.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(sex))),</span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>chol2,<span class="at">x=</span><span class="fu">get</span>(gene.id))) <span class="sc">+</span></span>
-<span id="cb12-16"><a href="#cb12-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col=</span>sex)) <span class="sc">+</span></span>
-<span id="cb12-17"><a href="#cb12-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method=</span><span class="st">"lm"</span>) <span class="sc">+</span></span>
-<span id="cb12-18"><a href="#cb12-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span>gene,</span>
-<span id="cb12-19"><a href="#cb12-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Liver mRNA Expression"</span>,</span>
-<span id="cb12-20"><a href="#cb12-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>) <span class="sc">+</span></span>
-<span id="cb12-21"><a href="#cb12-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="ot">-&gt;</span> plot.all</span>
-<span id="cb12-22"><a href="#cb12-22" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot.all)</span>
-<span id="cb12-23"><a href="#cb12-23" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-24"><a href="#cb12-24" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-"</span>,gene,<span class="st">"-plot.pdf"</span>),</span>
-<span id="cb12-25"><a href="#cb12-25" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"pdf"</span>))</span>
-<span id="cb12-26"><a href="#cb12-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-"</span>,gene,<span class="st">"-plot.png"</span>),</span>
-<span id="cb12-27"><a href="#cb12-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"png"</span>))</span>
-<span id="cb12-28"><a href="#cb12-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb12-29"><a href="#cb12-29" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gene.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(sex))),</span>
-<span id="cb12-30"><a href="#cb12-30" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>chol2,<span class="at">x=</span><span class="fu">get</span>(gene.id))) <span class="sc">+</span></span>
-<span id="cb12-31"><a href="#cb12-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col=</span>diet)) <span class="sc">+</span></span>
-<span id="cb12-32"><a href="#cb12-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="sc">~</span>sex) <span class="sc">+</span></span>
-<span id="cb12-33"><a href="#cb12-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method=</span><span class="st">"lm"</span>) <span class="sc">+</span></span>
-<span id="cb12-34"><a href="#cb12-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span>gene,</span>
-<span id="cb12-35"><a href="#cb12-35" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Liver mRNA Expression"</span>,</span>
-<span id="cb12-36"><a href="#cb12-36" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>) <span class="sc">+</span></span>
-<span id="cb12-37"><a href="#cb12-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="ot">-&gt;</span></span>
-<span id="cb12-38"><a href="#cb12-38" aria-hidden="true" tabindex="-1"></a>  plot.sex</span>
-<span id="cb12-39"><a href="#cb12-39" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb12-40"><a href="#cb12-40" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot.sex)</span>
-<span id="cb12-41"><a href="#cb12-41" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-sex-"</span>,gene,<span class="st">"-plot.pdf"</span>),</span>
-<span id="cb12-42"><a href="#cb12-42" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"pdf"</span>))</span>
-<span id="cb12-43"><a href="#cb12-43" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-sex-"</span>,gene,<span class="st">"-plot.png"</span>),</span>
-<span id="cb12-44"><a href="#cb12-44" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"png"</span>))</span>
-<span id="cb12-45"><a href="#cb12-45" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Joining with `by = join_by(ID)`
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range
-(`stat_smooth()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tibble)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>genes.of.interest <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'Chrna2'</span>,<span class="st">'Srebf1'</span>,<span class="st">'Clstn3'</span>,<span class="st">'Kif13b'</span>,<span class="st">'Ascc3'</span>,<span class="st">'Apoa1'</span>,<span class="st">'Apoa2'</span>,<span class="st">'Lpin1'</span>,<span class="st">'Cdkal1'</span>,<span class="st">'Bdh1'</span>, <span class="st">'Hmgcs2'</span>, <span class="st">'Hmgcl'</span>,<span class="st">'Hmgcr'</span>,<span class="st">'Apoa2'</span>,<span class="st">'Hnf1a'</span>,<span class="st">'Mmab'</span>,<span class="st">'Ldlr'</span>,<span class="st">'Slc16a1'</span>,<span class="st">'Slc16a6'</span>,<span class="st">'Slc16a7'</span>,<span class="st">'Mvk'</span>) <span class="co">#error with Slc16a3/8</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (gene <span class="cf">in</span> genes.of.interest) {</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  gene.id <span class="ot">&lt;-</span> <span class="fu">filter</span>(gene.annotation, symbol<span class="sc">==</span>gene) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(gene.id)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>gene.data <span class="ot">&lt;-</span> </span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  rna.data[gene.id,] <span class="sc">%&gt;%</span> </span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  t <span class="sc">%&gt;%</span> </span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  as.data.frame <span class="sc">%&gt;%</span> </span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames_to_column</span>(<span class="st">'ID'</span>) <span class="sc">%&gt;%</span> </span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(pheno.data.all)</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gene.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(sex))),</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>chol2,<span class="at">x=</span><span class="fu">get</span>(gene.id))) <span class="sc">+</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col=</span>sex)) <span class="sc">+</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method=</span><span class="st">"lm"</span>) <span class="sc">+</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span>gene,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Liver mRNA Expression"</span>,</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>) <span class="sc">+</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="ot">-&gt;</span> plot.all</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot.all)</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-"</span>,gene,<span class="st">"-plot.pdf"</span>),</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"pdf"</span>))</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-"</span>,gene,<span class="st">"-plot.png"</span>),</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"png"</span>))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gene.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(sex))),</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>chol2,<span class="at">x=</span><span class="fu">get</span>(gene.id))) <span class="sc">+</span></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col=</span>diet)) <span class="sc">+</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="sc">~</span>sex) <span class="sc">+</span></span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method=</span><span class="st">"lm"</span>) <span class="sc">+</span></span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span>gene,</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Liver mRNA Expression"</span>,</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>) <span class="sc">+</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="ot">-&gt;</span></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  plot.sex</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot.sex)</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-sex-"</span>,gene,<span class="st">"-plot.pdf"</span>),</span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"pdf"</span>))</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-sex-"</span>,gene,<span class="st">"-plot.png"</span>),</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"png"</span>))</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(gene.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(sex))),</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>chol2,<span class="at">x=</span><span class="fu">get</span>(gene.id))) <span class="sc">+</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">col=</span>sex)) <span class="sc">+</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(<span class="sc">~</span>diet) <span class="sc">+</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">stat_smooth</span>(<span class="at">method=</span><span class="st">"lm"</span>) <span class="sc">+</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span>gene,</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Liver mRNA Expression"</span>,</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>) <span class="sc">+</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="ot">-&gt;</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>  plot.sex</span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(plot.sex)</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-diet-"</span>,gene,<span class="st">"-plot.pdf"</span>),</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"pdf"</span>))</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">"figures/cholesterol-diet-"</span>,gene,<span class="st">"-plot.png"</span>),</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>       <span class="at">device=</span><span class="fu">c</span>(<span class="st">"png"</span>))</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-1.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-2.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Joining with `by = join_by(ID)`
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-3.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-4.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Joining with `by = join_by(ID)`
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-5.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-6.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Joining with `by = join_by(ID)`
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-7.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-8.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Joining with `by = join_by(ID)`
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-9.png" class="img-fluid" width="672"></p>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>`geom_smooth()` using formula = 'y ~ x'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
 </div>
 <div class="cell-output-display">
 <p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-10.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-11.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-12.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Saving 7 x 5 in image
-`geom_smooth()` using formula = 'y ~ x'</code></pre>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-13.png" class="img-fluid" width="672"></p>
 </div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: Removed 4 rows containing non-finite outside the scale range (`stat_smooth()`).
-Removed 4 rows containing missing values or values outside the scale range
-(`geom_point()`).</code></pre>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-14.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-15.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-16.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-17.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-18.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-19.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-20.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-21.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-22.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-23.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-24.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-25.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-26.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-27.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-28.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-29.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-30.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-31.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-32.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-33.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-34.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-35.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-36.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-37.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-38.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-39.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-40.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-41.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-42.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-43.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-44.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-45.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-46.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-47.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-48.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-49.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-50.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-51.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-52.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-53.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-54.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-55.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-56.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-57.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-58.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-59.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-60.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-61.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-62.png" class="img-fluid" width="672"></p>
+</div>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/plots-63.png" class="img-fluid" width="672"></p>
 </div>
 </div>
+</section>
+<section id="summary-tables" class="level2">
+<h2 class="anchored" data-anchor-id="summary-tables">Summary Tables</h2>
+<p>Loaded in the results files from the linear model analyses (diet and sex specific)</p>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>all.datafile <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Linear Model.csv'</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ncd.datafile <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - NCD Mice - Linear Model.csv'</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>hfd.datafile <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - HFD Mice - Linear Model.csv'</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>male.datafile <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Male Mice - Linear Model.csv'</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>female.datafile <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Female Mice - Linear Model.csv'</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>all.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(all.datafile)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>ncd.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(ncd.datafile)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>hfd.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(hfd.datafile)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>male.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(male.datafile)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>female.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(female.datafile)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>The datafiles were:</p>
+<ul>
+<li>All Data - Cholesterol - Expression Associations - Linear Model.csv, this is adjusted for sex</li>
+<li>NCD Data - Cholesterol - Expression Associations - NCD Mice - Linear Model.csv, this is adjustd for sex</li>
+<li>HFD Data = Cholesterol - Expression Associations - HFD Mice - Linear Model.csv, this is adjusted for sex</li>
+<li>Male Data = Cholesterol - Expression Associations - Male Mice - Linear Model.csv, this is adjusted for diet</li>
+<li>Female Data = Cholesterol - Expression Associations - Female Mice - Linear Model.csv, this is adjusted for diet</li>
+</ul>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>column.order <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"All"</span>,<span class="st">"NCD"</span>,<span class="st">"HFD"</span>,<span class="st">"Males"</span>,<span class="st">"Females"</span>) </span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(all.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(symbol <span class="sc">%in%</span> genes.of.interest) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">model=</span><span class="st">"All"</span>),</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>          ncd.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(symbol <span class="sc">%in%</span> genes.of.interest) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">model=</span><span class="st">"NCD"</span>),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>          hfd.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(symbol <span class="sc">%in%</span> genes.of.interest) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">model=</span><span class="st">"HFD"</span>),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>          male.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(symbol <span class="sc">%in%</span> genes.of.interest) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">model=</span><span class="st">"Males"</span>),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>          female.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(symbol <span class="sc">%in%</span> genes.of.interest) <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">model=</span><span class="st">"Females"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(symbol,model) <span class="sc">%&gt;%</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">model =</span> <span class="fu">fct_relevel</span>(model, column.order)) <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(symbol) <span class="ot">-&gt;</span> summary.data</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>summary.data <span class="sc">%&gt;%</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Summary of effect estimates for genes of interest in different models."</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="table table-sm table-striped small">
+<caption>Summary of effect estimates for genes of interest in different models.</caption>
+<colgroup>
+<col style="width: 7%">
+<col style="width: 16%">
+<col style="width: 10%">
+<col style="width: 8%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 3%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 7%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">symbol</th>
+<th style="text-align: left;">ID</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">pval</th>
+<th style="text-align: right;">r2</th>
+<th style="text-align: right;">padj</th>
+<th style="text-align: left;">chr</th>
+<th style="text-align: right;">start.true</th>
+<th style="text-align: right;">end.true</th>
+<th style="text-align: left;">model</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Apoa1</td>
+<td style="text-align: left;">ENSMUSG00000032083</td>
+<td style="text-align: right;">5.6695008</td>
+<td style="text-align: right;">2.588110</td>
+<td style="text-align: right;">0.0289726</td>
+<td style="text-align: right;">0.0080176</td>
+<td style="text-align: right;">0.0676468</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">46228580</td>
+<td style="text-align: right;">46230466</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apoa1</td>
+<td style="text-align: left;">ENSMUSG00000032083</td>
+<td style="text-align: right;">3.0167813</td>
+<td style="text-align: right;">2.832740</td>
+<td style="text-align: right;">0.2879689</td>
+<td style="text-align: right;">0.1254920</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">46228580</td>
+<td style="text-align: right;">46230466</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apoa1</td>
+<td style="text-align: left;">ENSMUSG00000032083</td>
+<td style="text-align: right;">-5.1453763</td>
+<td style="text-align: right;">3.268727</td>
+<td style="text-align: right;">0.1168519</td>
+<td style="text-align: right;">0.0642907</td>
+<td style="text-align: right;">0.1743814</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">46228580</td>
+<td style="text-align: right;">46230466</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apoa1</td>
+<td style="text-align: left;">ENSMUSG00000032083</td>
+<td style="text-align: right;">3.0167813</td>
+<td style="text-align: right;">2.832740</td>
+<td style="text-align: right;">0.2879689</td>
+<td style="text-align: right;">0.1254920</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">46228580</td>
+<td style="text-align: right;">46230466</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apoa1</td>
+<td style="text-align: left;">ENSMUSG00000032083</td>
+<td style="text-align: right;">3.0167813</td>
+<td style="text-align: right;">2.832740</td>
+<td style="text-align: right;">0.2879689</td>
+<td style="text-align: right;">0.1254920</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">46228580</td>
+<td style="text-align: right;">46230466</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apoa2</td>
+<td style="text-align: left;">ENSMUSG00000005681</td>
+<td style="text-align: right;">-2.1914572</td>
+<td style="text-align: right;">2.581145</td>
+<td style="text-align: right;">0.3963004</td>
+<td style="text-align: right;">-0.0005943</td>
+<td style="text-align: right;">0.5090534</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">171225054</td>
+<td style="text-align: right;">171226379</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apoa2</td>
+<td style="text-align: left;">ENSMUSG00000005681</td>
+<td style="text-align: right;">0.7837223</td>
+<td style="text-align: right;">2.775690</td>
+<td style="text-align: right;">0.7779188</td>
+<td style="text-align: right;">0.1216188</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">171225054</td>
+<td style="text-align: right;">171226379</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apoa2</td>
+<td style="text-align: left;">ENSMUSG00000005681</td>
+<td style="text-align: right;">-4.8193875</td>
+<td style="text-align: right;">3.459749</td>
+<td style="text-align: right;">0.1649862</td>
+<td style="text-align: right;">0.0620941</td>
+<td style="text-align: right;">0.2279211</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">171225054</td>
+<td style="text-align: right;">171226379</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Apoa2</td>
+<td style="text-align: left;">ENSMUSG00000005681</td>
+<td style="text-align: right;">0.7837223</td>
+<td style="text-align: right;">2.775690</td>
+<td style="text-align: right;">0.7779188</td>
+<td style="text-align: right;">0.1216188</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">171225054</td>
+<td style="text-align: right;">171226379</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Apoa2</td>
+<td style="text-align: left;">ENSMUSG00000005681</td>
+<td style="text-align: right;">0.7837223</td>
+<td style="text-align: right;">2.775690</td>
+<td style="text-align: right;">0.7779188</td>
+<td style="text-align: right;">0.1216188</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">171225054</td>
+<td style="text-align: right;">171226379</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ascc3</td>
+<td style="text-align: left;">ENSMUSG00000038774</td>
+<td style="text-align: right;">-10.4271962</td>
+<td style="text-align: right;">3.629316</td>
+<td style="text-align: right;">0.0042497</td>
+<td style="text-align: right;">0.0152003</td>
+<td style="text-align: right;">0.0150613</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">50592669</td>
+<td style="text-align: right;">50851202</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ascc3</td>
+<td style="text-align: left;">ENSMUSG00000038774</td>
+<td style="text-align: right;">1.2473903</td>
+<td style="text-align: right;">4.150904</td>
+<td style="text-align: right;">0.7640501</td>
+<td style="text-align: right;">0.1216579</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">50592669</td>
+<td style="text-align: right;">50851202</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ascc3</td>
+<td style="text-align: left;">ENSMUSG00000038774</td>
+<td style="text-align: right;">-10.0214742</td>
+<td style="text-align: right;">4.441492</td>
+<td style="text-align: right;">0.0250024</td>
+<td style="text-align: right;">0.0748261</td>
+<td style="text-align: right;">0.0660853</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">50592669</td>
+<td style="text-align: right;">50851202</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ascc3</td>
+<td style="text-align: left;">ENSMUSG00000038774</td>
+<td style="text-align: right;">1.2473903</td>
+<td style="text-align: right;">4.150904</td>
+<td style="text-align: right;">0.7640501</td>
+<td style="text-align: right;">0.1216579</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">50592669</td>
+<td style="text-align: right;">50851202</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ascc3</td>
+<td style="text-align: left;">ENSMUSG00000038774</td>
+<td style="text-align: right;">1.2473903</td>
+<td style="text-align: right;">4.150904</td>
+<td style="text-align: right;">0.7640501</td>
+<td style="text-align: right;">0.1216579</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">50592669</td>
+<td style="text-align: right;">50851202</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bdh1</td>
+<td style="text-align: left;">ENSMUSG00000046598</td>
+<td style="text-align: right;">1.1657501</td>
+<td style="text-align: right;">3.023389</td>
+<td style="text-align: right;">0.6999846</td>
+<td style="text-align: right;">-0.0018146</td>
+<td style="text-align: right;">0.7771737</td>
+<td style="text-align: left;">16</td>
+<td style="text-align: right;">31422280</td>
+<td style="text-align: right;">31458901</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bdh1</td>
+<td style="text-align: left;">ENSMUSG00000046598</td>
+<td style="text-align: right;">-0.8035169</td>
+<td style="text-align: right;">3.785950</td>
+<td style="text-align: right;">0.8321042</td>
+<td style="text-align: right;">0.1214909</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">16</td>
+<td style="text-align: right;">31422280</td>
+<td style="text-align: right;">31458901</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bdh1</td>
+<td style="text-align: left;">ENSMUSG00000046598</td>
+<td style="text-align: right;">-11.6191711</td>
+<td style="text-align: right;">4.390242</td>
+<td style="text-align: right;">0.0087000</td>
+<td style="text-align: right;">0.0823910</td>
+<td style="text-align: right;">0.0457632</td>
+<td style="text-align: left;">16</td>
+<td style="text-align: right;">31422280</td>
+<td style="text-align: right;">31458901</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bdh1</td>
+<td style="text-align: left;">ENSMUSG00000046598</td>
+<td style="text-align: right;">-0.8035169</td>
+<td style="text-align: right;">3.785950</td>
+<td style="text-align: right;">0.8321042</td>
+<td style="text-align: right;">0.1214909</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">16</td>
+<td style="text-align: right;">31422280</td>
+<td style="text-align: right;">31458901</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bdh1</td>
+<td style="text-align: left;">ENSMUSG00000046598</td>
+<td style="text-align: right;">-0.8035169</td>
+<td style="text-align: right;">3.785950</td>
+<td style="text-align: right;">0.8321042</td>
+<td style="text-align: right;">0.1214909</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">16</td>
+<td style="text-align: right;">31422280</td>
+<td style="text-align: right;">31458901</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cdkal1</td>
+<td style="text-align: left;">ENSMUSG00000006191</td>
+<td style="text-align: right;">-11.0765308</td>
+<td style="text-align: right;">3.200005</td>
+<td style="text-align: right;">0.0005865</td>
+<td style="text-align: right;">0.0228312</td>
+<td style="text-align: right;">0.0032304</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">29191746</td>
+<td style="text-align: right;">29855674</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cdkal1</td>
+<td style="text-align: left;">ENSMUSG00000006191</td>
+<td style="text-align: right;">2.0826909</td>
+<td style="text-align: right;">3.207723</td>
+<td style="text-align: right;">0.5167874</td>
+<td style="text-align: right;">0.1228782</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">29191746</td>
+<td style="text-align: right;">29855674</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cdkal1</td>
+<td style="text-align: left;">ENSMUSG00000006191</td>
+<td style="text-align: right;">-10.6646608</td>
+<td style="text-align: right;">4.151583</td>
+<td style="text-align: right;">0.0108455</td>
+<td style="text-align: right;">0.0807977</td>
+<td style="text-align: right;">0.0482649</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">29191746</td>
+<td style="text-align: right;">29855674</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cdkal1</td>
+<td style="text-align: left;">ENSMUSG00000006191</td>
+<td style="text-align: right;">2.0826909</td>
+<td style="text-align: right;">3.207723</td>
+<td style="text-align: right;">0.5167874</td>
+<td style="text-align: right;">0.1228782</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">29191746</td>
+<td style="text-align: right;">29855674</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cdkal1</td>
+<td style="text-align: left;">ENSMUSG00000006191</td>
+<td style="text-align: right;">2.0826909</td>
+<td style="text-align: right;">3.207723</td>
+<td style="text-align: right;">0.5167874</td>
+<td style="text-align: right;">0.1228782</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">29191746</td>
+<td style="text-align: right;">29855674</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chrna2</td>
+<td style="text-align: left;">ENSMUSG00000022041</td>
+<td style="text-align: right;">9.4887506</td>
+<td style="text-align: right;">1.033720</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">0.1504871</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">66140960</td>
+<td style="text-align: right;">66152948</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Chrna2</td>
+<td style="text-align: left;">ENSMUSG00000022041</td>
+<td style="text-align: right;">2.6658706</td>
+<td style="text-align: right;">1.426189</td>
+<td style="text-align: right;">0.0628194</td>
+<td style="text-align: right;">0.1340375</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">66140960</td>
+<td style="text-align: right;">66152948</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chrna2</td>
+<td style="text-align: left;">ENSMUSG00000022041</td>
+<td style="text-align: right;">0.9268317</td>
+<td style="text-align: right;">1.808669</td>
+<td style="text-align: right;">0.6088423</td>
+<td style="text-align: right;">0.0551697</td>
+<td style="text-align: right;">0.6712439</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">66140960</td>
+<td style="text-align: right;">66152948</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Chrna2</td>
+<td style="text-align: left;">ENSMUSG00000022041</td>
+<td style="text-align: right;">2.6658706</td>
+<td style="text-align: right;">1.426189</td>
+<td style="text-align: right;">0.0628194</td>
+<td style="text-align: right;">0.1340375</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">66140960</td>
+<td style="text-align: right;">66152948</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chrna2</td>
+<td style="text-align: left;">ENSMUSG00000022041</td>
+<td style="text-align: right;">2.6658706</td>
+<td style="text-align: right;">1.426189</td>
+<td style="text-align: right;">0.0628194</td>
+<td style="text-align: right;">0.1340375</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">66140960</td>
+<td style="text-align: right;">66152948</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Clstn3</td>
+<td style="text-align: left;">ENSMUSG00000008153</td>
+<td style="text-align: right;">8.4417805</td>
+<td style="text-align: right;">1.086837</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">0.1120864</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">124430759</td>
+<td style="text-align: right;">124464794</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Clstn3</td>
+<td style="text-align: left;">ENSMUSG00000008153</td>
+<td style="text-align: right;">2.0198754</td>
+<td style="text-align: right;">1.443326</td>
+<td style="text-align: right;">0.1629775</td>
+<td style="text-align: right;">0.1284961</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">124430759</td>
+<td style="text-align: right;">124464794</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Clstn3</td>
+<td style="text-align: left;">ENSMUSG00000008153</td>
+<td style="text-align: right;">1.8039296</td>
+<td style="text-align: right;">1.597981</td>
+<td style="text-align: right;">0.2601399</td>
+<td style="text-align: right;">0.0593575</td>
+<td style="text-align: right;">0.3295498</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">124430759</td>
+<td style="text-align: right;">124464794</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Clstn3</td>
+<td style="text-align: left;">ENSMUSG00000008153</td>
+<td style="text-align: right;">2.0198754</td>
+<td style="text-align: right;">1.443326</td>
+<td style="text-align: right;">0.1629775</td>
+<td style="text-align: right;">0.1284961</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">124430759</td>
+<td style="text-align: right;">124464794</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Clstn3</td>
+<td style="text-align: left;">ENSMUSG00000008153</td>
+<td style="text-align: right;">2.0198754</td>
+<td style="text-align: right;">1.443326</td>
+<td style="text-align: right;">0.1629775</td>
+<td style="text-align: right;">0.1284961</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">124430759</td>
+<td style="text-align: right;">124464794</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcl</td>
+<td style="text-align: left;">ENSMUSG00000028672</td>
+<td style="text-align: right;">6.6256980</td>
+<td style="text-align: right;">3.197128</td>
+<td style="text-align: right;">0.0387748</td>
+<td style="text-align: right;">0.0069614</td>
+<td style="text-align: right;">0.0849394</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">135946448</td>
+<td style="text-align: right;">135962617</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcl</td>
+<td style="text-align: left;">ENSMUSG00000028672</td>
+<td style="text-align: right;">4.4436692</td>
+<td style="text-align: right;">3.463927</td>
+<td style="text-align: right;">0.2007955</td>
+<td style="text-align: right;">0.1273586</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">135946448</td>
+<td style="text-align: right;">135962617</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcl</td>
+<td style="text-align: left;">ENSMUSG00000028672</td>
+<td style="text-align: right;">-7.3761984</td>
+<td style="text-align: right;">4.414412</td>
+<td style="text-align: right;">0.0961124</td>
+<td style="text-align: right;">0.0655700</td>
+<td style="text-align: right;">0.1503337</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">135946448</td>
+<td style="text-align: right;">135962617</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcl</td>
+<td style="text-align: left;">ENSMUSG00000028672</td>
+<td style="text-align: right;">4.4436692</td>
+<td style="text-align: right;">3.463927</td>
+<td style="text-align: right;">0.2007955</td>
+<td style="text-align: right;">0.1273586</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">135946448</td>
+<td style="text-align: right;">135962617</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcl</td>
+<td style="text-align: left;">ENSMUSG00000028672</td>
+<td style="text-align: right;">4.4436692</td>
+<td style="text-align: right;">3.463927</td>
+<td style="text-align: right;">0.2007955</td>
+<td style="text-align: right;">0.1273586</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">135946448</td>
+<td style="text-align: right;">135962617</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcr</td>
+<td style="text-align: left;">ENSMUSG00000021670</td>
+<td style="text-align: right;">-9.3235352</td>
+<td style="text-align: right;">1.478871</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">0.0761610</td>
+<td style="text-align: right;">0.0000001</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">96648967</td>
+<td style="text-align: right;">96670936</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcr</td>
+<td style="text-align: left;">ENSMUSG00000021670</td>
+<td style="text-align: right;">-1.9593126</td>
+<td style="text-align: right;">1.715971</td>
+<td style="text-align: right;">0.2546806</td>
+<td style="text-align: right;">0.1261116</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">96648967</td>
+<td style="text-align: right;">96670936</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcr</td>
+<td style="text-align: left;">ENSMUSG00000021670</td>
+<td style="text-align: right;">-1.6616427</td>
+<td style="text-align: right;">2.234514</td>
+<td style="text-align: right;">0.4578719</td>
+<td style="text-align: right;">0.0563755</td>
+<td style="text-align: right;">0.5284518</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">96648967</td>
+<td style="text-align: right;">96670936</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcr</td>
+<td style="text-align: left;">ENSMUSG00000021670</td>
+<td style="text-align: right;">-1.9593126</td>
+<td style="text-align: right;">1.715971</td>
+<td style="text-align: right;">0.2546806</td>
+<td style="text-align: right;">0.1261116</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">96648967</td>
+<td style="text-align: right;">96670936</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcr</td>
+<td style="text-align: left;">ENSMUSG00000021670</td>
+<td style="text-align: right;">-1.9593126</td>
+<td style="text-align: right;">1.715971</td>
+<td style="text-align: right;">0.2546806</td>
+<td style="text-align: right;">0.1261116</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">96648967</td>
+<td style="text-align: right;">96670936</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcs2</td>
+<td style="text-align: left;">ENSMUSG00000027875</td>
+<td style="text-align: right;">-3.0947073</td>
+<td style="text-align: right;">3.298506</td>
+<td style="text-align: right;">0.3486169</td>
+<td style="text-align: right;">-0.0002549</td>
+<td style="text-align: right;">0.4623869</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">98280435</td>
+<td style="text-align: right;">98310738</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcs2</td>
+<td style="text-align: left;">ENSMUSG00000027875</td>
+<td style="text-align: right;">-1.6768248</td>
+<td style="text-align: right;">3.617447</td>
+<td style="text-align: right;">0.6434023</td>
+<td style="text-align: right;">0.1221172</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">98280435</td>
+<td style="text-align: right;">98310738</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcs2</td>
+<td style="text-align: left;">ENSMUSG00000027875</td>
+<td style="text-align: right;">-9.9989115</td>
+<td style="text-align: right;">4.343364</td>
+<td style="text-align: right;">0.0222350</td>
+<td style="text-align: right;">0.0756572</td>
+<td style="text-align: right;">0.0626043</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">98280435</td>
+<td style="text-align: right;">98310738</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hmgcs2</td>
+<td style="text-align: left;">ENSMUSG00000027875</td>
+<td style="text-align: right;">-1.6768248</td>
+<td style="text-align: right;">3.617447</td>
+<td style="text-align: right;">0.6434023</td>
+<td style="text-align: right;">0.1221172</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">98280435</td>
+<td style="text-align: right;">98310738</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hmgcs2</td>
+<td style="text-align: left;">ENSMUSG00000027875</td>
+<td style="text-align: right;">-1.6768248</td>
+<td style="text-align: right;">3.617447</td>
+<td style="text-align: right;">0.6434023</td>
+<td style="text-align: right;">0.1221172</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">98280435</td>
+<td style="text-align: right;">98310738</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hnf1a</td>
+<td style="text-align: left;">ENSMUSG00000029556</td>
+<td style="text-align: right;">-16.3148558</td>
+<td style="text-align: right;">3.917068</td>
+<td style="text-align: right;">0.0000371</td>
+<td style="text-align: right;">0.0336134</td>
+<td style="text-align: right;">0.0003847</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114948980</td>
+<td style="text-align: right;">114971094</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hnf1a</td>
+<td style="text-align: left;">ENSMUSG00000029556</td>
+<td style="text-align: right;">4.5251813</td>
+<td style="text-align: right;">3.936726</td>
+<td style="text-align: right;">0.2515125</td>
+<td style="text-align: right;">0.1261758</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114948980</td>
+<td style="text-align: right;">114971094</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hnf1a</td>
+<td style="text-align: left;">ENSMUSG00000029556</td>
+<td style="text-align: right;">-9.0876722</td>
+<td style="text-align: right;">5.508187</td>
+<td style="text-align: right;">0.1003570</td>
+<td style="text-align: right;">0.0652851</td>
+<td style="text-align: right;">0.1551037</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114948980</td>
+<td style="text-align: right;">114971094</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hnf1a</td>
+<td style="text-align: left;">ENSMUSG00000029556</td>
+<td style="text-align: right;">4.5251813</td>
+<td style="text-align: right;">3.936726</td>
+<td style="text-align: right;">0.2515125</td>
+<td style="text-align: right;">0.1261758</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114948980</td>
+<td style="text-align: right;">114971094</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hnf1a</td>
+<td style="text-align: left;">ENSMUSG00000029556</td>
+<td style="text-align: right;">4.5251813</td>
+<td style="text-align: right;">3.936726</td>
+<td style="text-align: right;">0.2515125</td>
+<td style="text-align: right;">0.1261758</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114948980</td>
+<td style="text-align: right;">114971094</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kif13b</td>
+<td style="text-align: left;">ENSMUSG00000060012</td>
+<td style="text-align: right;">-15.0990849</td>
+<td style="text-align: right;">2.805736</td>
+<td style="text-align: right;">0.0000001</td>
+<td style="text-align: right;">0.0561502</td>
+<td style="text-align: right;">0.0000043</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">64652531</td>
+<td style="text-align: right;">64806296</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kif13b</td>
+<td style="text-align: left;">ENSMUSG00000060012</td>
+<td style="text-align: right;">-5.2070985</td>
+<td style="text-align: right;">3.479772</td>
+<td style="text-align: right;">0.1358767</td>
+<td style="text-align: right;">0.1295144</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">64652531</td>
+<td style="text-align: right;">64806296</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kif13b</td>
+<td style="text-align: left;">ENSMUSG00000060012</td>
+<td style="text-align: right;">-7.4887100</td>
+<td style="text-align: right;">3.647610</td>
+<td style="text-align: right;">0.0412147</td>
+<td style="text-align: right;">0.0713207</td>
+<td style="text-align: right;">0.0856758</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">64652531</td>
+<td style="text-align: right;">64806296</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kif13b</td>
+<td style="text-align: left;">ENSMUSG00000060012</td>
+<td style="text-align: right;">-5.2070985</td>
+<td style="text-align: right;">3.479772</td>
+<td style="text-align: right;">0.1358767</td>
+<td style="text-align: right;">0.1295144</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">64652531</td>
+<td style="text-align: right;">64806296</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Kif13b</td>
+<td style="text-align: left;">ENSMUSG00000060012</td>
+<td style="text-align: right;">-5.2070985</td>
+<td style="text-align: right;">3.479772</td>
+<td style="text-align: right;">0.1358767</td>
+<td style="text-align: right;">0.1295144</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">64652531</td>
+<td style="text-align: right;">64806296</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ldlr</td>
+<td style="text-align: left;">ENSMUSG00000032193</td>
+<td style="text-align: right;">-13.3166539</td>
+<td style="text-align: right;">2.803864</td>
+<td style="text-align: right;">0.0000027</td>
+<td style="text-align: right;">0.0438540</td>
+<td style="text-align: right;">0.0000510</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">21723576</td>
+<td style="text-align: right;">21749916</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ldlr</td>
+<td style="text-align: left;">ENSMUSG00000032193</td>
+<td style="text-align: right;">-3.5246181</td>
+<td style="text-align: right;">3.454263</td>
+<td style="text-align: right;">0.3085901</td>
+<td style="text-align: right;">0.1251517</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">21723576</td>
+<td style="text-align: right;">21749916</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ldlr</td>
+<td style="text-align: left;">ENSMUSG00000032193</td>
+<td style="text-align: right;">-3.1375886</td>
+<td style="text-align: right;">3.696645</td>
+<td style="text-align: right;">0.3969054</td>
+<td style="text-align: right;">0.0570692</td>
+<td style="text-align: right;">0.4683115</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">21723576</td>
+<td style="text-align: right;">21749916</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ldlr</td>
+<td style="text-align: left;">ENSMUSG00000032193</td>
+<td style="text-align: right;">-3.5246181</td>
+<td style="text-align: right;">3.454263</td>
+<td style="text-align: right;">0.3085901</td>
+<td style="text-align: right;">0.1251517</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">21723576</td>
+<td style="text-align: right;">21749916</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ldlr</td>
+<td style="text-align: left;">ENSMUSG00000032193</td>
+<td style="text-align: right;">-3.5246181</td>
+<td style="text-align: right;">3.454263</td>
+<td style="text-align: right;">0.3085901</td>
+<td style="text-align: right;">0.1251517</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">21723576</td>
+<td style="text-align: right;">21749916</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lpin1</td>
+<td style="text-align: left;">ENSMUSG00000020593</td>
+<td style="text-align: right;">-1.1472997</td>
+<td style="text-align: right;">1.534029</td>
+<td style="text-align: right;">0.4548955</td>
+<td style="text-align: right;">-0.0009384</td>
+<td style="text-align: right;">0.5656342</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">16535669</td>
+<td style="text-align: right;">16589770</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Lpin1</td>
+<td style="text-align: left;">ENSMUSG00000020593</td>
+<td style="text-align: right;">-2.4975215</td>
+<td style="text-align: right;">1.467126</td>
+<td style="text-align: right;">0.0900005</td>
+<td style="text-align: right;">0.1318947</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">16535669</td>
+<td style="text-align: right;">16589770</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lpin1</td>
+<td style="text-align: left;">ENSMUSG00000020593</td>
+<td style="text-align: right;">0.2900484</td>
+<td style="text-align: right;">2.044354</td>
+<td style="text-align: right;">0.8873024</td>
+<td style="text-align: right;">0.0541606</td>
+<td style="text-align: right;">0.9099546</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">16535669</td>
+<td style="text-align: right;">16589770</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Lpin1</td>
+<td style="text-align: left;">ENSMUSG00000020593</td>
+<td style="text-align: right;">-2.4975215</td>
+<td style="text-align: right;">1.467126</td>
+<td style="text-align: right;">0.0900005</td>
+<td style="text-align: right;">0.1318947</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">16535669</td>
+<td style="text-align: right;">16589770</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lpin1</td>
+<td style="text-align: left;">ENSMUSG00000020593</td>
+<td style="text-align: right;">-2.4975215</td>
+<td style="text-align: right;">1.467126</td>
+<td style="text-align: right;">0.0900005</td>
+<td style="text-align: right;">0.1318947</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">16535669</td>
+<td style="text-align: right;">16589770</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mmab</td>
+<td style="text-align: left;">ENSMUSG00000029575</td>
+<td style="text-align: right;">-18.5419930</td>
+<td style="text-align: right;">2.312221</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">0.1187055</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114431034</td>
+<td style="text-align: right;">114444060</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mmab</td>
+<td style="text-align: left;">ENSMUSG00000029575</td>
+<td style="text-align: right;">0.8202457</td>
+<td style="text-align: right;">2.765015</td>
+<td style="text-align: right;">0.7669913</td>
+<td style="text-align: right;">0.1216494</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114431034</td>
+<td style="text-align: right;">114444060</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mmab</td>
+<td style="text-align: left;">ENSMUSG00000029575</td>
+<td style="text-align: right;">-8.6809209</td>
+<td style="text-align: right;">3.629687</td>
+<td style="text-align: right;">0.0175885</td>
+<td style="text-align: right;">0.0773264</td>
+<td style="text-align: right;">0.0567946</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114431034</td>
+<td style="text-align: right;">114444060</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mmab</td>
+<td style="text-align: left;">ENSMUSG00000029575</td>
+<td style="text-align: right;">0.8202457</td>
+<td style="text-align: right;">2.765015</td>
+<td style="text-align: right;">0.7669913</td>
+<td style="text-align: right;">0.1216494</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114431034</td>
+<td style="text-align: right;">114444060</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mmab</td>
+<td style="text-align: left;">ENSMUSG00000029575</td>
+<td style="text-align: right;">0.8202457</td>
+<td style="text-align: right;">2.765015</td>
+<td style="text-align: right;">0.7669913</td>
+<td style="text-align: right;">0.1216494</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114431034</td>
+<td style="text-align: right;">114444060</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: left;">ENSMUSG00000041939</td>
+<td style="text-align: right;">-16.1407894</td>
+<td style="text-align: right;">1.847984</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">0.1380694</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114444269</td>
+<td style="text-align: right;">114460591</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: left;">ENSMUSG00000041939</td>
+<td style="text-align: right;">2.8851504</td>
+<td style="text-align: right;">2.371010</td>
+<td style="text-align: right;">0.2248687</td>
+<td style="text-align: right;">0.1267575</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114444269</td>
+<td style="text-align: right;">114460591</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: left;">ENSMUSG00000041939</td>
+<td style="text-align: right;">-5.3849461</td>
+<td style="text-align: right;">3.270013</td>
+<td style="text-align: right;">0.1009899</td>
+<td style="text-align: right;">0.0652438</td>
+<td style="text-align: right;">0.1558069</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114444269</td>
+<td style="text-align: right;">114460591</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: left;">ENSMUSG00000041939</td>
+<td style="text-align: right;">2.8851504</td>
+<td style="text-align: right;">2.371010</td>
+<td style="text-align: right;">0.2248687</td>
+<td style="text-align: right;">0.1267575</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114444269</td>
+<td style="text-align: right;">114460591</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: left;">ENSMUSG00000041939</td>
+<td style="text-align: right;">2.8851504</td>
+<td style="text-align: right;">2.371010</td>
+<td style="text-align: right;">0.2248687</td>
+<td style="text-align: right;">0.1267575</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114444269</td>
+<td style="text-align: right;">114460591</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a1</td>
+<td style="text-align: left;">ENSMUSG00000032902</td>
+<td style="text-align: right;">-7.6480159</td>
+<td style="text-align: right;">2.500941</td>
+<td style="text-align: right;">0.0023552</td>
+<td style="text-align: right;">0.0174593</td>
+<td style="text-align: right;">0.0095752</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">104638668</td>
+<td style="text-align: right;">104658462</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a1</td>
+<td style="text-align: left;">ENSMUSG00000032902</td>
+<td style="text-align: right;">3.8790093</td>
+<td style="text-align: right;">2.424642</td>
+<td style="text-align: right;">0.1109634</td>
+<td style="text-align: right;">0.1306733</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">104638668</td>
+<td style="text-align: right;">104658462</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a1</td>
+<td style="text-align: left;">ENSMUSG00000032902</td>
+<td style="text-align: right;">-9.0781974</td>
+<td style="text-align: right;">3.304002</td>
+<td style="text-align: right;">0.0064848</td>
+<td style="text-align: right;">0.0845235</td>
+<td style="text-align: right;">0.0439051</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">104638668</td>
+<td style="text-align: right;">104658462</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a1</td>
+<td style="text-align: left;">ENSMUSG00000032902</td>
+<td style="text-align: right;">3.8790093</td>
+<td style="text-align: right;">2.424642</td>
+<td style="text-align: right;">0.1109634</td>
+<td style="text-align: right;">0.1306733</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">104638668</td>
+<td style="text-align: right;">104658462</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a1</td>
+<td style="text-align: left;">ENSMUSG00000032902</td>
+<td style="text-align: right;">3.8790093</td>
+<td style="text-align: right;">2.424642</td>
+<td style="text-align: right;">0.1109634</td>
+<td style="text-align: right;">0.1306733</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">104638668</td>
+<td style="text-align: right;">104658462</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a6</td>
+<td style="text-align: left;">ENSMUSG00000041920</td>
+<td style="text-align: right;">-4.8413216</td>
+<td style="text-align: right;">2.262396</td>
+<td style="text-align: right;">0.0328775</td>
+<td style="text-align: right;">0.0075578</td>
+<td style="text-align: right;">0.0745890</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">109450855</td>
+<td style="text-align: right;">109473598</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a6</td>
+<td style="text-align: left;">ENSMUSG00000041920</td>
+<td style="text-align: right;">1.5117865</td>
+<td style="text-align: right;">2.059688</td>
+<td style="text-align: right;">0.4636784</td>
+<td style="text-align: right;">0.1233091</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">109450855</td>
+<td style="text-align: right;">109473598</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a6</td>
+<td style="text-align: left;">ENSMUSG00000041920</td>
+<td style="text-align: right;">-5.0582510</td>
+<td style="text-align: right;">3.260100</td>
+<td style="text-align: right;">0.1221598</td>
+<td style="text-align: right;">0.0640031</td>
+<td style="text-align: right;">0.1805235</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">109450855</td>
+<td style="text-align: right;">109473598</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a6</td>
+<td style="text-align: left;">ENSMUSG00000041920</td>
+<td style="text-align: right;">1.5117865</td>
+<td style="text-align: right;">2.059688</td>
+<td style="text-align: right;">0.4636784</td>
+<td style="text-align: right;">0.1233091</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">109450855</td>
+<td style="text-align: right;">109473598</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a6</td>
+<td style="text-align: left;">ENSMUSG00000041920</td>
+<td style="text-align: right;">1.5117865</td>
+<td style="text-align: right;">2.059688</td>
+<td style="text-align: right;">0.4636784</td>
+<td style="text-align: right;">0.1233091</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">109450855</td>
+<td style="text-align: right;">109473598</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a7</td>
+<td style="text-align: left;">ENSMUSG00000020102</td>
+<td style="text-align: right;">-3.9297566</td>
+<td style="text-align: right;">1.804177</td>
+<td style="text-align: right;">0.0298928</td>
+<td style="text-align: right;">0.0079036</td>
+<td style="text-align: right;">0.0693780</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">125226464</td>
+<td style="text-align: right;">125328963</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a7</td>
+<td style="text-align: left;">ENSMUSG00000020102</td>
+<td style="text-align: right;">-3.9519130</td>
+<td style="text-align: right;">2.548201</td>
+<td style="text-align: right;">0.1222631</td>
+<td style="text-align: right;">0.1301155</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">125226464</td>
+<td style="text-align: right;">125328963</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a7</td>
+<td style="text-align: left;">ENSMUSG00000020102</td>
+<td style="text-align: right;">-1.3556743</td>
+<td style="text-align: right;">3.283676</td>
+<td style="text-align: right;">0.6801043</td>
+<td style="text-align: right;">0.0547865</td>
+<td style="text-align: right;">0.7343205</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">125226464</td>
+<td style="text-align: right;">125328963</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc16a7</td>
+<td style="text-align: left;">ENSMUSG00000020102</td>
+<td style="text-align: right;">-3.9519130</td>
+<td style="text-align: right;">2.548201</td>
+<td style="text-align: right;">0.1222631</td>
+<td style="text-align: right;">0.1301155</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">125226464</td>
+<td style="text-align: right;">125328963</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc16a7</td>
+<td style="text-align: left;">ENSMUSG00000020102</td>
+<td style="text-align: right;">-3.9519130</td>
+<td style="text-align: right;">2.548201</td>
+<td style="text-align: right;">0.1222631</td>
+<td style="text-align: right;">0.1301155</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">125226464</td>
+<td style="text-align: right;">125328963</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Srebf1</td>
+<td style="text-align: left;">ENSMUSG00000020538</td>
+<td style="text-align: right;">4.5375786</td>
+<td style="text-align: right;">2.110031</td>
+<td style="text-align: right;">0.0320278</td>
+<td style="text-align: right;">0.0076528</td>
+<td style="text-align: right;">0.0731406</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">60199089</td>
+<td style="text-align: right;">60222581</td>
+<td style="text-align: left;">All</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Srebf1</td>
+<td style="text-align: left;">ENSMUSG00000020538</td>
+<td style="text-align: right;">1.0428632</td>
+<td style="text-align: right;">2.269138</td>
+<td style="text-align: right;">0.6462331</td>
+<td style="text-align: right;">0.1221037</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">60199089</td>
+<td style="text-align: right;">60222581</td>
+<td style="text-align: left;">Females</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Srebf1</td>
+<td style="text-align: left;">ENSMUSG00000020538</td>
+<td style="text-align: right;">-0.4879524</td>
+<td style="text-align: right;">3.077482</td>
+<td style="text-align: right;">0.8741598</td>
+<td style="text-align: right;">0.0541815</td>
+<td style="text-align: right;">0.8998479</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">60199089</td>
+<td style="text-align: right;">60222581</td>
+<td style="text-align: left;">HFD</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Srebf1</td>
+<td style="text-align: left;">ENSMUSG00000020538</td>
+<td style="text-align: right;">1.0428632</td>
+<td style="text-align: right;">2.269138</td>
+<td style="text-align: right;">0.6462331</td>
+<td style="text-align: right;">0.1221037</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">60199089</td>
+<td style="text-align: right;">60222581</td>
+<td style="text-align: left;">Males</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Srebf1</td>
+<td style="text-align: left;">ENSMUSG00000020538</td>
+<td style="text-align: right;">1.0428632</td>
+<td style="text-align: right;">2.269138</td>
+<td style="text-align: right;">0.6462331</td>
+<td style="text-align: right;">0.1221037</td>
+<td style="text-align: right;">0.9998133</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">60199089</td>
+<td style="text-align: right;">60222581</td>
+<td style="text-align: left;">NCD</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<section id="cholesterol-data-heatmap" class="level3">
+<h3 class="anchored" data-anchor-id="cholesterol-data-heatmap">Cholesterol Data Heatmap</h3>
+<div class="cell">
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(pheatmap)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>cholesterol.genes <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">'Hmgcl'</span>,<span class="st">'Hmgcs2'</span>,<span class="st">'Hmgcr'</span>,<span class="st">'Bdh1'</span>,<span class="st">'Slc16a1'</span>,<span class="st">'Slc16a3'</span>,<span class="st">'Slc16a6'</span>,<span class="st">'Slc16a7'</span>,<span class="st">'Slc16a8'</span>,<span class="st">'Ldlr'</span>,<span class="st">'Mvk'</span>)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>heatmap.data <span class="ot">&lt;-</span> <span class="fu">filter</span>(summary.data, symbol <span class="sc">%in%</span> cholesterol.genes) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(beta,model,symbol) <span class="sc">%&gt;%</span> </span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from=</span>model,<span class="at">values_from=</span>beta) <span class="sc">%&gt;%</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">column_to_rownames</span>(<span class="st">'symbol'</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">order</span>(column.order)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  as.matrix</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="co">#to make coloring symmetrical</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>max_value <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">abs</span>(heatmap.data))</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>breaks <span class="ot">&lt;-</span> <span class="fu">seq</span>(<span class="sc">-</span>max_value, max_value, <span class="at">length.out =</span> <span class="dv">101</span>)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a><span class="fu">pheatmap</span>(heatmap.data,</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">main=</span><span class="st">"Effect Estimates"</span>,</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">fontsize=</span><span class="dv">16</span>,</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">breaks =</span> breaks,</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>         <span class="at">color =</span> <span class="fu">colorRampPalette</span>(<span class="fu">c</span>(<span class="st">"#00274C"</span>, <span class="st">"white"</span>, <span class="st">"#FFCB05"</span>))(<span class="dv">100</span>),</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>         <span class="co">#cellwidth=20,</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>         <span class="co">#cellheight=20,</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">cluster_rows=</span>T,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">cluster_cols=</span>F,</span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>         <span class="at">show_rownames=</span>T,</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">show_colnames=</span>T)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<p><img src="liver-mRNA-cholesterol-analyses_files/figure-html/cholestrol-heatmap-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+</section>
 </section>
 <section id="session-information" class="level1">
 <h1>Session Information</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details>
+<summary>Code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.4.0 (2024-04-24)
 Platform: x86_64-pc-linux-gnu
@@ -552,23 +1871,25 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] janitor_2.2.1   lubridate_1.9.4 forcats_1.0.0   stringr_1.5.1  
- [5] purrr_1.0.2     tibble_3.2.1    ggplot2_3.5.1   tidyverse_2.0.0
- [9] broom_1.0.7     tidyr_1.3.1     dplyr_1.1.4     readr_2.1.5    
+ [1] pheatmap_1.0.12 knitr_1.49      janitor_2.2.1   lubridate_1.9.4
+ [5] forcats_1.0.0   stringr_1.5.1   purrr_1.0.2     tibble_3.2.1   
+ [9] ggplot2_3.5.1   tidyverse_2.0.0 broom_1.0.7     tidyr_1.3.1    
+[13] dplyr_1.1.4     readr_2.1.5    
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.3    stringi_1.8.4     lattice_0.22-6    hms_1.1.3        
- [5] digest_0.6.37     magrittr_2.0.3    evaluate_1.0.1    grid_4.4.0       
- [9] timechange_0.3.0  fastmap_1.2.0     jsonlite_1.8.9    Matrix_1.7-0     
-[13] backports_1.5.0   mgcv_1.9-1        scales_1.3.0      textshaping_0.4.1
-[17] cli_3.6.3         rlang_1.1.4       munsell_0.5.1     splines_4.4.0    
-[21] withr_3.0.2       yaml_2.3.9        tools_4.4.0       tzdb_0.4.0       
-[25] colorspace_2.1-1  vctrs_0.6.5       R6_2.5.1          lifecycle_1.0.4  
-[29] snakecase_0.11.1  ragg_1.3.3        pkgconfig_2.0.3   pillar_1.10.1    
-[33] gtable_0.3.6      glue_1.8.0        systemfonts_1.1.0 xfun_0.50        
-[37] tidyselect_1.2.1  rstudioapi_0.17.1 knitr_1.49        farver_2.1.2     
-[41] htmltools_0.5.8.1 nlme_3.1-164      rmarkdown_2.29    labeling_0.4.3   
-[45] compiler_4.4.0   </code></pre>
+ [1] generics_0.1.3     stringi_1.8.4      lattice_0.22-6     hms_1.1.3         
+ [5] digest_0.6.37      magrittr_2.0.3     RColorBrewer_1.1-3 evaluate_1.0.1    
+ [9] grid_4.4.0         timechange_0.3.0   fastmap_1.2.0      jsonlite_1.8.9    
+[13] Matrix_1.7-0       backports_1.5.0    mgcv_1.9-1         scales_1.3.0      
+[17] textshaping_0.4.1  cli_3.6.3          crayon_1.5.3       rlang_1.1.4       
+[21] bit64_4.5.2        munsell_0.5.1      splines_4.4.0      withr_3.0.2       
+[25] yaml_2.3.9         parallel_4.4.0     tools_4.4.0        tzdb_0.4.0        
+[29] colorspace_2.1-1   vctrs_0.6.5        R6_2.5.1           lifecycle_1.0.4   
+[33] snakecase_0.11.1   bit_4.5.0.1        htmlwidgets_1.6.4  vroom_1.6.5       
+[37] ragg_1.3.3         pkgconfig_2.0.3    pillar_1.10.1      gtable_0.3.6      
+[41] glue_1.8.0         systemfonts_1.1.0  xfun_0.50          tidyselect_1.2.1  
+[45] rstudioapi_0.17.1  farver_2.1.2       htmltools_0.5.8.1  nlme_3.1-164      
+[49] rmarkdown_2.29     labeling_0.4.3     compiler_4.4.0    </code></pre>
 </div>
 </div>
 </section>

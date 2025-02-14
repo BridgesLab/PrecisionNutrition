@@ -255,17 +255,16 @@ pheatmap(moduleTraitCor,
          display_numbers = TRUE, 
          main = "Module-Trait Relationships")
 
-# Identify key genes (hub genes) in significant modules
-significantModules = names(which(apply(moduleTraitPvalue, 1, min) < 0.05))
-hubGenes = list()
-for (module in significantModules) {
-  moduleGenes = which(moduleColors == module)
-  geneModuleMembership = cor(multiExpr[[1]]$data[, moduleGenes], MEs[, module], use = "p")
-  hubGenes[[module]] = names(sort(geneModuleMembership, decreasing = TRUE)[1:10])
-}
+# Create a table of correlations and p-values
+corPvalueTable <- data.frame(
+  Module = rownames(moduleTraitCor),
+  Correlation = moduleTraitCor[, "chol2"],
+  Pvalue = moduleTraitPvalue[, "chol2"]
+)
 
-# Print hub genes for significant modules
-hubGenes
+# Display the table using kable
+library(knitr)
+kable(corPvalueTable, caption = "Correlation and P-value of Module Eigengenes with 'chol2'")
 ```
 
 ## Correlating Module Eigengenes with Phenotype 'chol2'
@@ -295,6 +294,9 @@ ggplot(chol2CorData, aes(x = Module, y = Correlation, fill = Pvalue < 0.05)) +
   theme_minimal() +
   labs(title = "Module-Trait Relationships with 'chol2'", x = "Module", y = "Correlation with 'chol2'") +
   scale_fill_manual(values = c("TRUE" = "red", "FALSE" = "grey"), name = "Significant")
+
+# Display the table using kable
+kable(chol2CorData, caption = "Correlation and P-value of Module Eigengenes with 'chol2'")
 
 # Identify key genes (hub genes) in significant modules
 significantModules = names(which(moduleChol2Pvalue < 0.05))

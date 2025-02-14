@@ -44,22 +44,27 @@ Followed instructions on https://horvath.genetics.ucla.edu/html/CoexpressionNetw
 ```{r data-preparation}
 library(WGCNA)
 options(stringsAsFactors = F)
-expression.filename <- "GSE72759_DO192_RNAseq_UpperQuartileNormalized_n21454genes_forGEOSubmission.txt"
 
-library(tibble)
-expression.data <- read_tsv(expression.filename) %>%
-  rename(gene_id=1) %>%
-  column_to_rownames('gene_id') %>%
-  t %>% as.data.frame #rotate with samples on the left and genes on the columns
+phenotype.datatfile <- '../dataset.phenotype.Svenson_DO_HFD.v12.Rds'
+all.phenotype.data <- readRDS(phenotype.datatfile)
+annotation <- all.phenotype.data$annot.samples[c('mouse.id','sex','diet')]
 
-phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
-phenotype.data <- read_csv(phenotype.filename) %>% 
-  select(mouse.id,chol2,sex,diet) %>%
-  column_to_rownames('mouse.id')
+phenotype.data <- 
+  all.phenotype.data$data$raw %>% 
+  as.data.frame 
+
+phenotype.data$mouse.id <- rownames(phenotype.data)
+
+phenotype.data <-
+  phenotype.data %>%
+  left_join(annotation,by='mouse.id')
   
-phenotype.data[phenotype.data=='-999999'] <- NA
+expression.datatfile <- '../dataset.mrna.Svenson_DO_HFD.v12.Rds'
+expression.data <- readRDS(expression.datatfile)
+mrna.data <-
+  expression.data$data$raw %>% as.data.frame
 
-good.genes <- goodSamplesGenes(expression.data)
+good.genes <- goodSamplesGenes(mrna.data)
 #check if all genes are ok, not too many missing values for genes or samples
 good.genes$allOK
 ```
@@ -72,15 +77,15 @@ setLabels <- c("NCD-M","HFHS-M","NCD-F","HFHS-F")
 multiExpr=vector(mode="list",length=nSets) #create vector with two datasets
 
 #filter for only exprerssion data where we have appropriatet phenotype data
-chow.mice.m <- phenotype.data %>% filter(diet=="chow"&sex=="M") %>% rownames
-hf.mice.m <- phenotype.data %>% filter(diet=="hf"&sex=="M") %>% rownames
-chow.mice.f <- phenotype.data %>% filter(diet=="chow"&sex=="F") %>% rownames
-hf.mice.f <- phenotype.data %>% filter(diet=="hf"&sex=="F") %>% rownames
+chow.mice.m <- phenotype.data %>% filter(diet=="chow"&sex=="M") %>% pull(mouse.id)
+hf.mice.m <- phenotype.data %>% filter(diet=="hf"&sex=="M") %>% pull(mouse.id)
+chow.mice.f <- phenotype.data %>% filter(diet=="chow"&sex=="F") %>% pull(mouse.id)
+hf.mice.f <- phenotype.data %>% filter(diet=="hf"&sex=="F") %>% pull(mouse.id)
 
-chow.expression.m <- expression.data[chow.mice.m,] %>% na.omit
-hf.expression.m <- expression.data[hf.mice.m,] %>% na.omit
-chow.expression.f <- expression.data[chow.mice.f,] %>% na.omit
-hf.expression.f <- expression.data[hf.mice.f,] %>% na.omit
+chow.expression.m <- mrna.data[chow.mice.m,] %>% na.omit
+hf.expression.m <- mrna.data[hf.mice.m,] %>% na.omit
+chow.expression.f <- mrna.data[chow.mice.f,] %>% na.omit
+hf.expression.f <- mrna.data[hf.mice.f,] %>% na.omit
 
 # enter data on expression in to multiExpr object
 multiExpr[[1]]=list(data=chow.expression.m)
@@ -146,7 +151,7 @@ nGenes = exprSize$nGenes;
 nSamples = exprSize$nSamples;
 ```
 
-The combined dataset includes `r nGenes` genes and `r nSamples` samples separated into `nSets` datasets (`r`paste(setLabels, collapse=",")\`).
+The combined dataset includes `r nGenes` genes and `r nSamples` samples separated into `nSets` datasets (`r paste(setLabels, collapse=",")`).
 
 ```{r wgcna-network-construction}
 # Choose a set of soft-thresholding powers
@@ -178,7 +183,7 @@ for (set in 1:nSets)
 }
 # Plot the quantities in the chosen columns vs. the soft thresholding power
 sizeGrWindow(8, 6)
-#pdf(file = "Plots/scaleFreeAnalysis.pdf", wi = 8, he = 6)
+pdf(file = "scaleFreeAnalysis.pdf", wi = 8, he = 6)
 par(mfcol = c(2,2));
 par(mar = c(4.2, 4.2 , 2.2, 0.5))
 cex1 = 0.7;
@@ -204,18 +209,18 @@ for (col in 1:length(plotCols)) for (set in 1:nSets)
   } else
     legend("topright", legend = setLabels, col = colors, pch = 20) ;
 }
-#dev.off();
+dev.off();
 ```
 
 
 ```{r network-construction}
-network.power <-6
-net = blockwiseConsensusModules(
+network.power <- 15 #based on the max SFT R2 maximum
+net <- blockwiseConsensusModules(
         multiExpr, 
         power = network.power, 
-        minModuleSize = 20, #default is 20, tutorial said 30
+        minModuleSize = 30, #default is 20, tutorial said 30
         deepSplit = 2, #default
-        maxBlockSize = nrow(chow.expression.f),
+        maxBlockSize = ncol(mrna.data), #total number of genes
         pamRespectsDendro = FALSE, 
         mergeCutHeight = 0.25,
         numericLabels = TRUE,
@@ -224,7 +229,7 @@ net = blockwiseConsensusModules(
         verbose = 1)
 ```
 
-Constructed modules with `r network.power` soft-thresholding power, based on the visualization of the .
+Constructed modules with `r network.power` soft-thresholding power, based on the visualization of the soft-thresholding power $R^2$.
 
 ## Plotting Samples Clustered by Consensus Modules
 
@@ -246,20 +251,7 @@ plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
 
 # Convert labels to colors for plotting
 mergedColors = labels2colors(net$colors)
-# Plot the dendrogram and the module colors underneath
-plotDendroAndColors(net$dendrograms[[2]], mergedColors[net$blockGenes[[1]]],
-                    "Module colors",
-                    dendroLabels = FALSE, hang = 0.03,
-                    addGuide = TRUE, guideHang = 0.05)
 
-# plotDendroAndColors(consTree, moduleColors,
-#                     "Module colors",
-#                     dendroLabels = FALSE, hang = 0.03,
-#                     addGuide = TRUE, guideHang = 0.05,
-#                     main = "Consensus gene dendrogram and module colors")
-
-moduleLabels = net$colors
-moduleColors = labels2colors(net$colors)
 MEs = net$MEs;
 geneTree = net$dendrograms[[1]];
 ```

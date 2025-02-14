@@ -66,7 +66,7 @@ pheno.data.all <- full_join(chol.phenotypes,group.data,by="ID")
 
 ```{r plots}
 library(tibble)
-genes.of.interest <- c('Chrna2','Srebf1','Clstn3','Kif13b','Ascc3','Apoa1','Apoa2','Lpin1','Cdkal1','Bdh1', 'Hmgcs2', 'Hmgcl','Hmgcr','Apoa2','Hnf1a','Mmab','Ldlr','Slc16a1','Slc16a6','Slc16a7','Mvk') #error with Slc16a3/8
+genes.of.interest <- c('Chrna2','Srebf1','Clstn3','Kif13b','Ascc3','Apoa1','Apoa2','Lpin1','Cdkal1','Bdh1', 'Hmgcs2', 'Hmgcl','Hmgcr','Apoa2','Hnf1a','Mmab','Ldlr','Slc16a1','Slc16a6','Slc16a7','Mvk','Cyp7a1','Cyp27a1','Cyp7b1') #error with Slc16a3/8
 
 for (gene in genes.of.interest) {
 
@@ -177,7 +177,7 @@ summary.data %>%
 
 ```{r cholestrol-heatmap}
 library(pheatmap)
-cholesterol.genes <- c('Hmgcl','Hmgcs2','Hmgcr','Bdh1','Slc16a1','Slc16a3','Slc16a6','Slc16a7','Slc16a8','Ldlr','Mvk')
+cholesterol.genes <- c('Hmgcl','Hmgcs2','Hmgcr','Bdh1','Slc16a1','Slc16a3','Slc16a6','Slc16a7','Slc16a8','Ldlr','Mvk','Cyp7a1','Cyp7b1','Cyp27a1')
 
 heatmap.data <- filter(summary.data, symbol %in% cholesterol.genes) %>%
   select(beta,model,symbol) %>% 

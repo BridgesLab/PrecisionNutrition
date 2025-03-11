@@ -5,9 +5,10 @@ format:
   html:
     toc: true
     toc-location: left
-editor: visual
+editor: source
 execute:
   keep-md: true
+bibliography: bayesian.bib
 ---
 
 ```{r global_options, include=FALSE}
@@ -28,9 +29,9 @@ library(readr)
 data <- read_csv(data.sheet)#from a google sheet
 ```
 
-The data can be found in the google sheet `r data.sheet`. This script can be found in `r getwd()` and was most recently run on `r date()`
+The data can be found in a [google sheet](`r data.sheet`). This script can be found in `r getwd()` and was most recently run on `r date()`
 
-## Meta Analysis
+## Meta Analysis - Standard Approach
 
 Analysed data from mean +/- SD of cases and controls
 
@@ -47,14 +48,256 @@ analysis <- metacor(data=data %>% dplyr::filter(!is.na(`r`)),
                  hakn = TRUE,
                  title="Calcium and Cholesterol")
 
-forest.meta(analysis,
+forest(analysis,
             fontsize=6,,
             test.overall.random=TRUE)
 ```
+### Summary of Standard Approach
 
-# Analysis
+There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies. The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
 
-There is solid evidence of cross-sectional associations between cholesterol and calcium levels in multiple studies.  The aggregate effect size is `r analysis$TE.random` +/- `r analysis$seTE.random` (p=`r analysis$pval.random`).
+
+## Bayesian Hierarchical Model
+
+**Goals and Justification**:  Our goal is to com up with a pooled estimate of the correlation between cholesterol and calcium in human observational studies.  In addition to the approach above, we decided to use a Bayesian approach for two reasons, one is that it allows us to produce full posterior distributions for both the within- and between study-variability.  The other is that it allows us to incorporate previous data, in this case the preclinical data reported in @cousineauCrosssectionalAssociationBlood2024.  
+
+Followed the procedure outlined in @bayesianmetabookdown and @harrer2021doing at [here]( https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html).  This uses a framework described by @higgins2008.  Under this approach there is a "true" effect ($\mu$) with a cross-study variance of $\tau$.  Within this each study ($\theta _k$) should be normally distributed defined:
+
+$$\theta _k \sim N(\mu,\tau^2)$$
+Each study in turn is a proximate measure of the effect size in that population $\hat{\theta_k}$, with sampling error $\sigma^2$ drawn from another normal distribution
+
+$$\hat\theta _k \sim N(\theta _k,\sigma^2_k)$$
+
+This can be simplified to
+
+$$\hat\theta _k \sim N(\mu,\sigma^2_k + \tau^2)$$
+
+### Defining a Prior Distribution
+
+$$
+p \sim (\mu,tau^2)
+$$
+We took an approach using *weakly informative* priors (recommended in @williamsBayesianMetaAnalysisWeakly2018) of $\mu_{weak} = N(0,0.2)$ and $\tau=HC(0,0.5)$.  This means we predict the correlations to be around zero but with a standard deviation of $\pm 0.2$.  For the betwen study variance ($\tau$) we used the heavy-tailed only positive Half-Cauchy distribution.
+
+Our alternative prior was the preclinical prior descibed in @cousineauCrosssectionalAssociationBlood2024, which was that Spearman's $\rho$ was estimated at 0.4-0.5 depending on the condition (parameterized as $\mu_{alt}=N(0.45,0.1)$).
+
+We calculated the standard error of the estimate of r using
+
+$$SE = \sqrt{\frac{(1 - r^2)}{(n - 2)}}$$
+
+```{r se-of-r}
+library(dplyr)
+data <-
+  data %>%
+  mutate(se=sqrt((1-r^2)/(n-2)))
+```
+
+**Model Specification** We used a Gaussian (normal) distribution to estimate the pooled effect using a random-effects meta-analysis model computed within brms (@brms_citation) version `r packageVersion('brms')`. The model included a fixed effect for the overall pooled estimate and random effects to account for between-study heterogeneity. The within-study variability was also accounted for in the model.
+
+**Justification of Priors**:  We set our prior probabilities that the correlation coefficient would be 0.4, normally distributed with a standard deviation of 0.1, based on the pre-clinical assoications described in @cousineauCrosssectionalAssociationBlood2024.  We used a weakly informative prior for the between study variation setting it to be a half-Cauchy distribution centered at 0 with a scale parameter of 0.5.
+
+```{r calcium-brms}
+#| output: false
+library(brms)
+priors <- c(prior(normal(0.4,0.1), class = Intercept),
+            prior(cauchy(0,0.5), class = sd, lb = 0))
+```
+
+
+#### Performing a Prior Predictive Check
+
+```{r prior-predictive-check}
+#| output: false
+brms.fit.prior.check <- 
+  brm(r|se(se) ~ 1 + (1|Study),
+      data = data,
+      prior = priors,
+      family = gaussian(),
+      sample_prior = "only")
+
+library(patchwork)
+library(ggplot2)
+p1 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "ribbon")
+p2 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "stat_2d")
+p3 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "stat") +
+  stat_bin(binwidth=0.6)
+p4 <- pp_check(brms.fit.prior.check, ndraws = 100, type = "scatter_avg")
+combined_plot <- (p1 + p2) / (p3 + p4) + 
+  plot_annotation(title = "Prior Predictive Checks") &
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_classic(base_size=12)
+
+combined_plot
+```
+
+As seen above, we did several prior predictive checks and values from simulated from our prior distributions were similar to the observed data.
+
+The model was computed using {brms} (@brms_citation, version `r packageVersion('brms')`), calling Stan, using no U-turn sampling (NUTS) as described in @hoffman14a. This was implemented within R (@baseR) `r R.version.string`.
+
+```{r brms-specification}
+#| output: false
+meta.brm <- brm(r|se(se) ~ 1 + (1|Study),
+             data = data,
+             prior = priors,
+             family = gaussian(), #default but specified
+             iter = 5000) #not the default
+```
+
+Here is a summary of the prior probabilities.
+
+```{r prior-summary}
+prior_summary(meta.brm,all=F) %>% kable(caption="Summary of prior probabilities")
+```
+
+### MCMC Chain Convergence and Resolution
+
+```{r mcmc-chain}
+kable(data.frame(
+  Parameter = names(rhat(meta.brm)),
+  Rhat = format(rhat(meta.brm), nsmall = 5)),
+caption="Rhat values for model (should be between 0.99 and 1.01 for convergence).",
+row.names = F)
+```
+
+Chain convergence was good with a $\hat R$ between `r format(min(rhat(meta.brm),na.rm=T),nsmall=5)` and `r format(max(rhat(meta.brm),na.rm=T),nsmall=5)` for each model estimate.
+
+```{r ess}
+library(broom.mixed)
+tidy(meta.brm, ess = TRUE) %>% kable(caption="Model parameters including effective sample size")
+```
+The effective sample size was at least `r tidy(meta.brm, ess = TRUE) %>% pull(ess) %>% min(na.rm=T)` samples for each parameter.
+
+### Posterior Probability Check
+
+```{r post-probability}
+p1 <- pp_check(meta.brm, ndraws = 100, type = "ribbon")
+p2 <- pp_check(meta.brm, ndraws = 100, type = "stat_2d")
+p3 <- pp_check(meta.brm, ndraws = 100, type = "stat") 
+p4 <- pp_check(meta.brm, ndraws = 100, type = "scatter_avg")
+combined_plot <- (p1 + p2) / (p3 + p4) + 
+  plot_annotation(title = "Posterior Predictive Checks") &
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme_classic(base_size=12)
+
+combined_plot
+```
+
+As shown above, the posterior predictive checks indicated a good model fit.
+
+### Interpretation of Posterior Probabilities
+
+```{r bayesian-interpretation}
+#summary(meta.brm)
+#ranef(meta.brm)
+fixef(meta.brm) %>% kable(caption="Bayesian estimates of correlation between cholesterol and calcium")
+
+plot(meta.brm) 
+```
+
+```{r calcium-posterior-probabilities}
+post.samples <- as_draws_df(meta.brm, c("Intercept", "sd_Study__Intercept"))
+names(post.samples) <- c("smd", "tau")
+library(ggplot2)
+
+ggplot(aes(x = smd), data = post.samples) +
+  geom_density(fill = "#FFCB05",                # set the color
+               color = "#FFCB05", alpha = 0.7) +  
+  geom_vline(xintercept = mean(post.samples$smd),lty=2) +
+  geom_vline(xintercept = 0,lty=2) +
+  labs(x = expression(italic(r)),
+       y = element_blank()) +
+  theme_classic(base_size=16)
+
+ggplot(aes(x = tau), data = post.samples) +
+  geom_density(fill = "#00274C",               # set the color
+               color = "#00274C", alpha = 0.7) +  
+  geom_vline(xintercept= mean(post.samples$tau),lty=2) +        # add point at mean
+    labs(x = expression(tau),
+       y = element_blank()) +
+  theme_classic(base_size=16)
+```
+
+The distribution of the posterior probabilities are unimodal, approximately gaussian distributions with a mean of `r fixef(meta.brm)[,'Estimate']` with a 95% confidence interval of `r fixef(meta.brm)[,'Q2.5']`-`r fixef(meta.brm)[,'Q97.5']` for the pooled estimate of $r$.  This corresponds to a $R^2$ of `r fixef(meta.brm)[,'Estimate']^2`.
+
+#### Bayes Factors and Hypothesis Testing
+
+```{r bf-hypotheses}
+hypothesis(meta.brm, "Intercept>0")$hypothesis %>%
+  kable(caption="Hypothesis test for estimate >0", digits=3)
+
+#comparason to preclinical data
+hypothesis(meta.brm, "Intercept<0.39")$hypothesis %>%
+  kable(caption="Hypothesis test for estimate <0.39", digits=3)
+```
+
+The posterior probability that $r > 0$ was `r format(hypothesis(meta.brm, "Intercept>0.0")$hypothesis$Post.Prob,nsmall=20)`.  Similarly this was smaller than the effect observed in mice ($\rho<0.39$) `r format(hypothesis(meta.brm, "Intercept<0.39")$hypothesis$Post.Prob,nsmall=20)`.  In both cases the Bayes factor was >100 so this is extremely strong evidence of an effect (see @leeBayesianCognitiveModeling2014). 
+
+#### Forest Plot for Bayesian Meta-Analysis
+
+```{r calcium-bayesian-forest}
+library(tidybayes)
+library(ggridges)
+library(glue)
+library(stringr)
+library(forcats)
+
+# posterior probabilitieis for each study
+study.draws <- spread_draws(meta.brm, r_Study[Study,], b_Intercept) %>% 
+  mutate(b_Intercept = r_Study + b_Intercept)
+
+# pooled effect size draws
+pooled.effect.draws <- spread_draws(meta.brm, b_Intercept) %>% 
+  mutate(Study = "Pooled Effect")
+
+# combined draws
+forest.data <- bind_rows(study.draws, 
+                         pooled.effect.draws) %>% 
+   ungroup() %>%
+   mutate(Study = str_replace_all(Study, "[.]", " ")) %>% 
+   mutate(Study = reorder(Study, b_Intercept)) #arrange by effect size
+
+# calculate effect size of each study
+forest.data.summary <- group_by(forest.data, Study) %>% 
+  mean_qi(b_Intercept)
+
+# generate plot
+ggplot(aes(b_Intercept, 
+           relevel(Study, "Pooled Effect", 
+                   after = Inf)), 
+       data = forest.data) +
+  
+  # Add vertical lines for pooled effect and CI
+  geom_vline(xintercept = fixef(meta.brm)[1, 1], 
+             color = "grey", size = 1) +
+  geom_vline(xintercept = fixef(meta.brm)[1, 3:4], 
+             color = "grey", linetype = 2) +
+  geom_vline(xintercept = 0, color = "black", 
+             size = 1) +
+  
+  # Add densities
+  geom_density_ridges(fill = "grey", 
+                      rel_min_height = 0.01, 
+                      col = NA, scale = 1,
+                      alpha = 0.8) +
+  geom_pointinterval(data = forest.data.summary, 
+                      size = 1,
+                     orientation='horizontal',
+                     aes(xmin = .lower, xmax = .upper)) +
+  
+  # Add text and labels
+  geom_text(data = mutate_if(forest.data.summary, 
+                             is.numeric, round, 2),
+    aes(label = glue("{b_Intercept} [{.lower}, {.upper}]"), 
+        x = Inf), hjust = "inward") +
+  labs(x = "Correlation Coefficient", # summary measure
+       y = element_blank()) +
+  theme_classic(base_size=16)
+```
+
+## References
+
+::: {#refs}
+:::
 
 # Session Information
 

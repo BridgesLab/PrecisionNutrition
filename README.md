@@ -13,7 +13,7 @@ This repository contains raw data for studies done by the [Bridges Lab](http://b
 
 | Publication | Dataset | Tag |
 |-------------|---------|-----|
-| Cousineau, C.M., K. Loftus, G.D. Churchill, and D. Bridges. Cross-sectional association between blood cholesterol and calcium levels in genetically diverse strains of mice. 2023.   FEBS Open |[<img src="https://zenodo.org/badge/DOI/10.5281/zenodo.10408266.svg">](https://doi.org/10.5281/zenodo.10408266) | 1.0.0 |
+| Cousineau, C.M., K. Loftus, G.D. Churchill, and D. Bridges. Cross-sectional association between blood cholesterol and calcium levels in genetically diverse strains of mice. 2023.   FEBS Open  14: 426-433 [doi: http://dx.doi.org/10.1002/2211-5463.13757](http://dx.doi.org/10.1002/2211-5463.13757)|[<img src="https://zenodo.org/badge/DOI/10.5281/zenodo.10408266.svg">](https://doi.org/10.5281/zenodo.10408266) | 1.0.0 |
 
 
 # Struture of this Repository

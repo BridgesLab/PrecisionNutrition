@@ -366,35 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-<<<<<<< Updated upstream
-| 0.247|      0|     1.000|  1.003| 0.059|
-| 0.064|      1|     0.753|  0.760| 0.045|
-| 0.060|      2|     0.689|  0.732| 0.045|
-| 0.036|      3|     0.629|  0.641| 0.040|
-| 0.023|      4|     0.593|  0.646| 0.045|
-| 0.022|      5|     0.569|  0.643| 0.046|
-| 0.015|      6|     0.547|  0.636| 0.045|
-| 0.015|      7|     0.532|  0.619| 0.043|
-| 0.014|      8|     0.516|  0.625| 0.043|
-| 0.011|      9|     0.502|  0.647| 0.043|
-| 0.011|     10|     0.491|  0.653| 0.045|
-| 0.010|     11|     0.481|  0.653| 0.045|
-| 0.010|     12|     0.470|  0.646| 0.041|
-=======
 | 0.247|      0|     1.000|  1.002| 0.059|
-| 0.064|      1|     0.753|  0.758| 0.045|
-| 0.060|      2|     0.689|  0.731| 0.044|
-| 0.036|      3|     0.629|  0.659| 0.042|
-| 0.023|      4|     0.593|  0.662| 0.046|
-| 0.022|      5|     0.569|  0.665| 0.047|
-| 0.015|      6|     0.547|  0.673| 0.047|
-| 0.015|      7|     0.532|  0.692| 0.048|
-| 0.014|      8|     0.516|  0.695| 0.048|
-| 0.011|      9|     0.502|  0.704| 0.048|
-| 0.011|     10|     0.491|  0.718| 0.049|
-| 0.010|     11|     0.481|  0.718| 0.049|
-| 0.010|     12|     0.470|  0.720| 0.050|
->>>>>>> Stashed changes
+| 0.064|      1|     0.753|  0.757| 0.045|
+| 0.060|      2|     0.689|  0.711| 0.044|
+| 0.036|      3|     0.629|  0.637| 0.040|
+| 0.023|      4|     0.593|  0.661| 0.044|
+| 0.022|      5|     0.569|  0.663| 0.045|
+| 0.015|      6|     0.547|  0.657| 0.045|
+| 0.015|      7|     0.532|  0.667| 0.045|
+| 0.014|      8|     0.516|  0.666| 0.045|
+| 0.011|      9|     0.502|  0.662| 0.045|
+| 0.011|     10|     0.491|  0.676| 0.046|
+| 0.010|     11|     0.481|  0.675| 0.046|
+| 0.010|     12|     0.470|  0.696| 0.049|
 
 ``` r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -888,6 +872,186 @@ summary(lm.calcium.chol.sex.bw)
 ## F-statistic:  127 on 3 and 761 DF,  p-value: <2e-16
 ```
 
+## Diagnostic Plots for Calcium - Cholesterol Models
+
+Based this analysis on [Bridges Lab Website - Linar Models](https://bridgeslab.github.io/Lab-Documents/Experimental%20Policies/correlations-linear-models.html#testing-the-assumptions-of-the-model)
+
+
+``` r
+chol.ca.lm <- lm(chol2~calcium2+sex+diet, data=cholesterol.data)
+par(mfrow = c(2, 2))
+plot(chol.ca.lm)
+```
+
+![](figures/calcium-chol-diagnostics-1.png)<!-- -->
+
+``` r
+#checking for model curvature
+# Get the data actually used in the model (no NAs)
+model_data <- model.frame(chol.ca.lm)
+
+# Add residuals to that data
+model_data$resid <- residuals(chol.ca.lm)
+
+# Now plot residuals vs calcium2
+ggplot(model_data, aes(x=calcium2,y=resid)) +
+  geom_point() +
+  geom_abline(slope=0, intercept=0, color="red") +
+  geom_smooth(color="blue",se=FALSE) +
+  labs(y="Residuals",
+       x="Calcium (mg/dL)") +
+  theme_classic(base_size = 16)
+```
+
+![](figures/calcium-chol-diagnostics-2.png)<!-- -->
+
+``` r
+#checking for colinearity between covariates
+library(car)
+vif(chol.ca.lm) |> kable(caption="Variance inflation factors for calcium model, a value under 5 suggests a lack of colinearity")
+```
+
+
+
+Table: Variance inflation factors for calcium model, a value under 5 suggests a lack of colinearity
+
+|         |    x|
+|:--------|----:|
+|calcium2 | 1.02|
+|sex      | 1.00|
+|diet     | 1.02|
+
+``` r
+table(cholesterol.data$sex, cholesterol.data$diet) |> 
+  kable(caption="Balance counts for model")
+```
+
+
+
+Table: Balance counts for model
+
+|   | chow|  hf|
+|:--|----:|---:|
+|F  |  225| 198|
+|M  |  224| 193|
+
+``` r
+#group differences for residuals
+ggplot(model_data, aes(x=sex, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+```
+
+![](figures/calcium-chol-diagnostics-3.png)<!-- -->
+
+``` r
+ggplot(model_data, aes(x=diet, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+```
+
+![](figures/calcium-chol-diagnostics-4.png)<!-- -->
+
+``` r
+leveneTest(resid ~ sex,data =model_data) |> 
+  kable(caption="Test for equal variance of residuals by sex")
+```
+
+
+
+Table: Test for equal variance of residuals by sex
+
+|      |  Df| F value| Pr(>F)|
+|:-----|---:|-------:|------:|
+|group |   1|   0.263|  0.608|
+|      | 764|      NA|     NA|
+
+``` r
+leveneTest(resid ~ diet,data=model_data)|> 
+  kable(caption="Test for equal variance of residuals by diet", digits=c(1,2,99))
+```
+
+
+
+Table: Test for equal variance of residuals by diet
+
+|      |  Df| F value|   Pr(>F)|
+|:-----|---:|-------:|--------:|
+|group |   1|    31.1| 3.44e-08|
+|      | 764|      NA|       NA|
+
+``` r
+#since diet residuals had unequal variance tried using robust standard errors
+library(sandwich)
+library(lmtest)
+
+# Calculate robust standard errors
+robust_se <- vcovHC(chol.ca.lm, type = "HC3")
+
+# Use coeftest for inference with robust SE
+coeftest(chol.ca.lm, vcov = robust_se) |> 
+  tidy() |>
+  kable(caption="Results using robust standard errors for calcium model", digits=c(0,2,2,3,99))
+```
+
+
+
+Table: Results using robust standard errors for calcium model
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -34.2|      6.98|     -4.90| 1.17e-06|
+|calcium2    |     12.6|      0.78|     16.22| 4.64e-51|
+|sexM        |     17.8|      1.78|      9.96| 4.77e-22|
+|diethf      |     28.4|      1.83|     15.55| 1.50e-47|
+Looking at these visualizations:
+
+* From the Residuals vs Fitted plot, the points seem approximately evenly scattered, with mild non-linearity.  There is no strong funnel shape
+* The QQ plot shows moderately normal distribution of the residuals, with some outliers.  Suggests some non-normality in these residuals.
+* The Scale-Location plot shows a slight funnel shape, suggesting some non-constant variance (non homoscedasticity).  This is not a strong funnel shape, so it is not a major concern.
+* Residuals vs Leverage shows few influential outliers.
+* The plot of residuals vs fitted valus suggests some nonlinearity with the best fit line curving up at both ends.
+
+### Non-Linear Analysis of Cholsterol-Calcium
+
+
+``` r
+#nonlinear quadratic
+chol.ca.poly <- lm(chol2 ~ calcium2 + I(calcium2^2) + sex + diet, data = cholesterol.data)
+
+#flexible splines
+library(splines)
+chol.ca.spline <- lm(chol2 ~ ns(calcium2, df = 4) + sex + diet, data = cholesterol.data)
+
+#generalized additive model
+library(mgcv)
+chol.ca.gam <- gam(chol2 ~ s(calcium2) + sex + diet, data = cholesterol.data)
+
+#comparing models
+AIC(chol.ca.lm, chol.ca.poly, chol.ca.spline, chol.ca.gam) |> kable(caption="AIC for nonlinear model fits")
+```
+
+
+
+Table: AIC for nonlinear model fits
+
+|               | df|  AIC|
+|:--------------|--:|----:|
+|chol.ca.lm     |  5| 7086|
+|chol.ca.poly   |  6| 7086|
+|chol.ca.spline |  8| 7089|
+|chol.ca.gam    |  5| 7086|
+
+``` r
+#summary(chol.ca.gam)  # look at edf for s(calcium2)
+```
+
+This suggests that the models all perform similarly (higher AIC is bad), in this case its probably best to stick with the linear model.  The linear model is easier to interpret and understand, and is likely sufficient for this analysis.
+
 ## Effects of Diet and Sex on Calcium
 
 
@@ -995,7 +1159,7 @@ cholesterol.data %>%
 ## Proportions of Elevated Calcium and Cholesterol
 
 
-```r
+``` r
 cutoff.counts <- 
   cholesterol.data %>%
   mutate(High.Ca = calcium2>10.5,
@@ -1019,7 +1183,7 @@ kable(cutoff.counts %>% mutate(High.Chol.pct=High.Chol/(Not.High.Chol+High.Chol)
 |FALSE |           727|         6|         0.819|
 |TRUE  |            31|         2|         6.061|
 
-```r
+``` r
 fisher.test(as.matrix(cutoff.counts)) %>% tidy(caption="Fisher Test for enrichment of high cholesterol in mice with high calcium")
 ```
 
@@ -1689,17 +1853,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-<<<<<<< Updated upstream
-## ACME             1.6482       1.0160         2.37  <2e-16 ***
-## ADE             12.9034      11.3874        14.66  <2e-16 ***
-## Total Effect    14.5516      12.9955        16.29  <2e-16 ***
-## Prop. Mediated   0.1133       0.0687         0.16  <2e-16 ***
-=======
-## ACME             1.6482       0.9818         2.39  <2e-16 ***
-## ADE             12.9034      11.2605        14.71  <2e-16 ***
-## Total Effect    14.5516      12.9203        16.23  <2e-16 ***
-## Prop. Mediated   0.1133       0.0695         0.16  <2e-16 ***
->>>>>>> Stashed changes
+## ACME             1.6482       1.0286         2.39  <2e-16 ***
+## ADE             12.9034      11.2819        14.55  <2e-16 ***
+## Total Effect    14.5516      13.0101        16.15  <2e-16 ***
+## Prop. Mediated   0.1133       0.0706         0.17  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1820,17 +1977,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-<<<<<<< Updated upstream
-## ACME              8.110        5.440        10.78  <2e-16 ***
-## ADE              24.010       19.331        29.06  <2e-16 ***
-## Total Effect     32.119       28.155        36.26  <2e-16 ***
-## Prop. Mediated    0.252        0.164         0.35  <2e-16 ***
-=======
-## ACME              8.110        5.606        10.63  <2e-16 ***
-## ADE              24.010       19.511        28.62  <2e-16 ***
-## Total Effect     32.119       28.380        36.08  <2e-16 ***
-## Prop. Mediated    0.252        0.172         0.34  <2e-16 ***
->>>>>>> Stashed changes
+## ACME              8.110        5.498        10.73  <2e-16 ***
+## ADE              24.010       19.580        28.89  <2e-16 ***
+## Total Effect     32.119       28.377        36.46  <2e-16 ***
+## Prop. Mediated    0.252        0.170         0.34  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1894,17 +2044,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-<<<<<<< Updated upstream
-## ACME             2.0783       1.2032         2.96  <2e-16 ***
-## ADE             12.5614      10.9362        14.33  <2e-16 ***
-## Total Effect    14.6397      13.0412        16.46  <2e-16 ***
-## Prop. Mediated   0.1420       0.0828         0.20  <2e-16 ***
-=======
-## ACME             2.0783       1.2047         2.99  <2e-16 ***
-## ADE             12.5614      10.9176        14.18  <2e-16 ***
-## Total Effect    14.6397      13.0647        16.28  <2e-16 ***
-## Prop. Mediated   0.1420       0.0849         0.20  <2e-16 ***
->>>>>>> Stashed changes
+## ACME             2.0783       1.2434         2.92  <2e-16 ***
+## ADE             12.5614      10.8629        14.41  <2e-16 ***
+## Total Effect    14.6397      12.9468        16.39  <2e-16 ***
+## Prop. Mediated   0.1420       0.0856         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2152,9 +2295,9 @@ sessionInfo()
 ```
 
 ```
-## R version 4.4.1 (2024-06-14)
+## R version 4.4.2 (2024-10-31)
 ## Platform: x86_64-apple-darwin20
-## Running under: macOS Sonoma 14.7
+## Running under: macOS Monterey 12.7.6
 ## 
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
@@ -2167,52 +2310,53 @@ sessionInfo()
 ## tzcode source: internal
 ## 
 ## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## [1] splines   stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
 ## 
 ## other attached packages:
-##  [1] randomForest_4.7-1.2 ipred_0.9-15         caret_6.0-94        
-##  [4] lattice_0.22-6       mediation_4.5.0      sandwich_3.1-1      
-##  [7] mvtnorm_1.3-1        Matrix_1.7-0         MASS_7.3-61         
-## [10] gridExtra_2.3        effectsize_0.8.9     rattle_5.5.1        
-## [13] bitops_1.0-9         tibble_3.2.1         rpart_4.1.23        
-## [16] tree_1.0-43          broom_1.0.6          ggplot2_3.5.1       
-## [19] forcats_1.0.0        readr_2.1.5          dplyr_1.1.4         
-## [22] tidyr_1.3.1          knitr_1.48          
+##  [1] randomForest_4.7-1.2 ipred_0.9-15         caret_7.0-1         
+##  [4] lattice_0.22-6       mediation_4.5.0      mvtnorm_1.3-3       
+##  [7] Matrix_1.7-1         MASS_7.3-64          gridExtra_2.3       
+## [10] mgcv_1.9-1           nlme_3.1-166         lmtest_0.9-40       
+## [13] zoo_1.8-13           sandwich_3.1-1       car_3.1-3           
+## [16] carData_3.0-5        effectsize_1.0.0     rattle_5.5.1        
+## [19] bitops_1.0-9         tibble_3.2.1         rpart_4.1.24        
+## [22] tree_1.0-44          broom_1.0.7          ggplot2_3.5.1       
+## [25] forcats_1.0.0        readr_2.1.5          dplyr_1.1.4         
+## [28] tidyr_1.3.1          knitr_1.49          
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] pROC_1.18.5          rlang_1.1.4          magrittr_2.0.3      
-##   [4] rpart.plot_3.1.2     compiler_4.4.1       mgcv_1.9-1          
-##   [7] reshape2_1.4.4       vctrs_0.6.5          stringr_1.5.1       
-##  [10] pkgconfig_2.0.3      crayon_1.5.3         fastmap_1.2.0       
-##  [13] backports_1.5.0      labeling_0.4.3       utf8_1.2.4          
-##  [16] rmarkdown_2.28       prodlim_2024.06.25   tzdb_0.4.0          
-##  [19] nloptr_2.1.1         purrr_1.0.2          bit_4.0.5           
-##  [22] xfun_0.47            cachem_1.1.0         jsonlite_1.8.8      
-##  [25] recipes_1.1.0        highr_0.11           parallel_4.4.1      
-##  [28] cluster_2.1.6        R6_2.5.1             bslib_0.8.0         
-##  [31] stringi_1.8.4        RColorBrewer_1.1-3   parallelly_1.38.0   
-##  [34] boot_1.3-31          lubridate_1.9.3      jquerylib_0.1.4     
-##  [37] estimability_1.5.1   Rcpp_1.0.13          iterators_1.0.14    
-##  [40] future.apply_1.11.2  zoo_1.8-12           base64enc_0.1-3     
-##  [43] parameters_0.22.2    timechange_0.3.0     splines_4.4.1       
-##  [46] nnet_7.3-19          tidyselect_1.2.1     rstudioapi_0.16.0   
-##  [49] yaml_2.3.10          timeDate_4032.109    codetools_0.2-20    
-##  [52] listenv_0.9.1        plyr_1.8.9           withr_3.0.1         
-##  [55] bayestestR_0.14.0    coda_0.19-4.1        evaluate_0.24.0     
-##  [58] foreign_0.8-87       future_1.34.0        survival_3.7-0      
-##  [61] lpSolve_5.6.21       pillar_1.9.0         stats4_4.4.1        
-##  [64] checkmate_2.3.2      foreach_1.5.2        insight_0.20.5      
-##  [67] generics_0.1.3       vroom_1.6.5          hms_1.1.3           
-##  [70] munsell_0.5.1        scales_1.3.0         minqa_1.2.8         
-##  [73] globals_0.16.3       class_7.3-22         glue_1.7.0          
-##  [76] emmeans_1.10.4       Hmisc_5.1-3          tools_4.4.1         
-##  [79] data.table_1.16.0    lme4_1.1-35.5        ModelMetrics_1.2.2.2
-##  [82] gower_1.0.1          grid_4.4.1           datawizard_0.13.0   
-##  [85] colorspace_2.1-1     nlme_3.1-166         htmlTable_2.4.3     
-##  [88] Formula_1.2-5        cli_3.6.3            fansi_1.0.6         
-##  [91] lava_1.8.0           gtable_0.3.5         sass_0.4.9          
-##  [94] digest_0.6.37        htmlwidgets_1.6.4    farver_2.1.2        
-##  [97] htmltools_0.5.8.1    lifecycle_1.0.4      hardhat_1.4.0       
-## [100] bit64_4.0.5
+##  [1] Rdpack_2.6.2         pROC_1.18.5          rlang_1.1.6         
+##  [4] magrittr_2.0.3       rpart.plot_3.1.2     compiler_4.4.2      
+##  [7] reshape2_1.4.4       vctrs_0.6.5          stringr_1.5.1       
+## [10] pkgconfig_2.0.3      crayon_1.5.3         fastmap_1.2.0       
+## [13] backports_1.5.0      labeling_0.4.3       utf8_1.2.4          
+## [16] rmarkdown_2.29       prodlim_2025.04.28   tzdb_0.5.0          
+## [19] nloptr_2.1.1         purrr_1.0.2          bit_4.5.0.1         
+## [22] xfun_0.50            cachem_1.1.0         jsonlite_1.8.9      
+## [25] recipes_1.3.0        parallel_4.4.2       cluster_2.1.8       
+## [28] R6_2.5.1             bslib_0.8.0          stringi_1.8.4       
+## [31] RColorBrewer_1.1-3   parallelly_1.41.0    boot_1.3-31         
+## [34] lubridate_1.9.4      jquerylib_0.1.4      Rcpp_1.0.14         
+## [37] iterators_1.0.14     future.apply_1.11.3  base64enc_0.1-3     
+## [40] parameters_0.25.0    timechange_0.3.0     nnet_7.3-20         
+## [43] tidyselect_1.2.1     rstudioapi_0.17.1    abind_1.4-8         
+## [46] yaml_2.3.10          timeDate_4041.110    codetools_0.2-20    
+## [49] listenv_0.9.1        plyr_1.8.9           withr_3.0.2         
+## [52] bayestestR_0.16.0    evaluate_1.0.3       foreign_0.8-88      
+## [55] future_1.34.0        survival_3.8-3       archive_1.1.12      
+## [58] lpSolve_5.6.23       pillar_1.10.1        stats4_4.4.2        
+## [61] checkmate_2.3.2      foreach_1.5.2        reformulas_0.4.0    
+## [64] insight_1.3.0        generics_0.1.3       vroom_1.6.5         
+## [67] hms_1.1.3            munsell_0.5.1        scales_1.3.0        
+## [70] minqa_1.2.8          globals_0.16.3       class_7.3-23        
+## [73] glue_1.8.0           Hmisc_5.2-2          tools_4.4.2         
+## [76] data.table_1.16.4    lme4_1.1-36          ModelMetrics_1.2.2.2
+## [79] gower_1.0.2          grid_4.4.2           rbibutils_2.3       
+## [82] datawizard_1.0.2     colorspace_2.1-1     htmlTable_2.4.3     
+## [85] Formula_1.2-5        cli_3.6.5            lava_1.8.1          
+## [88] gtable_0.3.6         sass_0.4.9           digest_0.6.37       
+## [91] htmlwidgets_1.6.4    farver_2.1.2         htmltools_0.5.8.1   
+## [94] lifecycle_1.0.4      hardhat_1.4.1        bit64_4.5.2
 ```
 

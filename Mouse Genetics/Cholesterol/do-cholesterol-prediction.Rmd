@@ -367,6 +367,97 @@ summary(lm.calcium.chol.sex.bw)
 
 ```
 
+## Diagnostic Plots for Calcium - Cholesterol Models
+
+Based this analysis on [Bridges Lab Website - Linar Models](https://bridgeslab.github.io/Lab-Documents/Experimental%20Policies/correlations-linear-models.html#testing-the-assumptions-of-the-model)
+
+```{r calcium-chol-diagnostics}
+chol.ca.lm <- lm(chol2~calcium2+sex+diet, data=cholesterol.data)
+par(mfrow = c(2, 2))
+plot(chol.ca.lm)
+
+#checking for model curvature
+# Get the data actually used in the model (no NAs)
+model_data <- model.frame(chol.ca.lm)
+
+# Add residuals to that data
+model_data$resid <- residuals(chol.ca.lm)
+
+# Now plot residuals vs calcium2
+ggplot(model_data, aes(x=calcium2,y=resid)) +
+  geom_point() +
+  geom_abline(slope=0, intercept=0, color="red") +
+  geom_smooth(color="blue",se=FALSE) +
+  labs(y="Residuals",
+       x="Calcium (mg/dL)") +
+  theme_classic(base_size = 16)
+
+#checking for colinearity between covariates
+library(car)
+vif(chol.ca.lm) |> kable(caption="Variance inflation factors for calcium model, a value under 5 suggests a lack of colinearity")
+
+table(cholesterol.data$sex, cholesterol.data$diet) |> 
+  kable(caption="Balance counts for model")
+
+#group differences for residuals
+ggplot(model_data, aes(x=sex, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+
+ggplot(model_data, aes(x=diet, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+
+leveneTest(resid ~ sex,data =model_data) |> 
+  kable(caption="Test for equal variance of residuals by sex")
+leveneTest(resid ~ diet,data=model_data)|> 
+  kable(caption="Test for equal variance of residuals by diet", digits=c(1,2,99))
+
+#since diet residuals had unequal variance tried using robust standard errors
+library(sandwich)
+library(lmtest)
+
+# Calculate robust standard errors
+robust_se <- vcovHC(chol.ca.lm, type = "HC3")
+
+# Use coeftest for inference with robust SE
+coeftest(chol.ca.lm, vcov = robust_se) |> 
+  tidy() |>
+  kable(caption="Results using robust standard errors for calcium model", digits=c(0,2,2,3,99))
+```
+Looking at these visualizations:
+
+* From the Residuals vs Fitted plot, the points seem approximately evenly scattered, with mild non-linearity.  There is no strong funnel shape
+* The QQ plot shows moderately normal distribution of the residuals, with some outliers.  Suggests some non-normality in these residuals.
+* The Scale-Location plot shows a slight funnel shape, suggesting some non-constant variance (non homoscedasticity).  This is not a strong funnel shape, so it is not a major concern.
+* Residuals vs Leverage shows few influential outliers.
+* The plot of residuals vs fitted valus suggests some nonlinearity with the best fit line curving up at both ends.
+
+### Non-Linear Analysis of Cholsterol-Calcium
+
+```{r chol-calcium-nonlinear}
+#nonlinear quadratic
+chol.ca.poly <- lm(chol2 ~ calcium2 + I(calcium2^2) + sex + diet, data = cholesterol.data)
+
+#flexible splines
+library(splines)
+chol.ca.spline <- lm(chol2 ~ ns(calcium2, df = 4) + sex + diet, data = cholesterol.data)
+
+#generalized additive model
+library(mgcv)
+chol.ca.gam <- gam(chol2 ~ s(calcium2) + sex + diet, data = cholesterol.data)
+
+#comparing models
+AIC(chol.ca.lm, chol.ca.poly, chol.ca.spline, chol.ca.gam) |> kable(caption="AIC for nonlinear model fits")
+#summary(chol.ca.gam)  # look at edf for s(calcium2)
+```
+
+This suggests that the models all perform similarly (higher AIC is bad), in this case its probably best to stick with the linear model.  The linear model is easier to interpret and understand, and is likely sufficient for this analysis.
+
 ## Effects of Diet and Sex on Calcium
 
 ```{r calcium-stratification}

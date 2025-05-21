@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.001| 0.059|
-| 0.064|      1|     0.753|  0.755| 0.045|
-| 0.060|      2|     0.689|  0.725| 0.044|
-| 0.036|      3|     0.629|  0.635| 0.040|
-| 0.023|      4|     0.593|  0.647| 0.043|
-| 0.022|      5|     0.569|  0.640| 0.042|
-| 0.015|      6|     0.547|  0.628| 0.042|
-| 0.015|      7|     0.532|  0.637| 0.042|
-| 0.014|      8|     0.516|  0.627| 0.041|
-| 0.011|      9|     0.502|  0.656| 0.043|
-| 0.011|     10|     0.491|  0.653| 0.045|
-| 0.010|     11|     0.481|  0.654| 0.046|
-| 0.010|     12|     0.470|  0.652| 0.046|
+| 0.247|      0|     1.000|  1.003| 0.059|
+| 0.064|      1|     0.753|  0.757| 0.045|
+| 0.060|      2|     0.689|  0.738| 0.045|
+| 0.036|      3|     0.629|  0.636| 0.040|
+| 0.023|      4|     0.593|  0.649| 0.043|
+| 0.022|      5|     0.569|  0.650| 0.043|
+| 0.015|      6|     0.547|  0.646| 0.043|
+| 0.015|      7|     0.532|  0.646| 0.043|
+| 0.014|      8|     0.516|  0.646| 0.043|
+| 0.011|      9|     0.502|  0.660| 0.045|
+| 0.011|     10|     0.491|  0.665| 0.045|
+| 0.010|     11|     0.481|  0.665| 0.045|
+| 0.010|     12|     0.470|  0.667| 0.045|
 
 ``` r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1161,21 +1161,21 @@ Table: Rhat values for model testing the association between weight and transmis
 
 |Parameter        |Rhat    |
 |:----------------|:-------|
-|b_Intercept      |1.00016 |
-|b_calcium2       |1.00020 |
-|b_sexM           |1.00036 |
-|b_diethf         |0.99992 |
-|sigma            |1.00054 |
-|nu               |1.00000 |
-|Intercept        |1.00024 |
-|prior_Intercept  |1.00006 |
-|prior_b_calcium2 |1.00013 |
-|prior_b_sexM     |0.99989 |
-|prior_b_diethf   |1.00008 |
-|prior_sigma      |0.99989 |
-|prior_nu         |1.00019 |
-|lprior           |1.00029 |
-|lp__             |1.00031 |
+|b_Intercept      |0.99998 |
+|b_calcium2       |1.00015 |
+|b_sexM           |1.00065 |
+|b_diethf         |1.00033 |
+|sigma            |1.00068 |
+|nu               |1.00068 |
+|Intercept        |1.00047 |
+|prior_Intercept  |1.00029 |
+|prior_b_calcium2 |1.00003 |
+|prior_b_sexM     |1.00020 |
+|prior_b_diethf   |1.00028 |
+|prior_sigma      |1.00007 |
+|prior_nu         |0.99997 |
+|lprior           |1.00036 |
+|lp__             |1.00067 |
 
 ``` r
 library(broom.mixed)
@@ -1188,17 +1188,17 @@ Table: Model random effects, including ESS
 
 |effect   |component |group    |term                           | estimate| std.error| conf.low| conf.high|   ess|
 |:--------|:---------|:--------|:------------------------------|--------:|---------:|--------:|---------:|-----:|
-|fixed    |cond      |NA       |(Intercept)                    |  -30.302|     7.186|   -44.16|     -16.0| 10500|
-|fixed    |cond      |NA       |calcium2                       |   12.100|     0.786|    10.54|      13.6| 10259|
-|fixed    |cond      |NA       |sexM                           |   17.567|     1.686|    14.28|      20.9| 11696|
-|fixed    |cond      |NA       |diethf                         |   26.901|     1.711|    23.59|      30.3| 11593|
-|fixed    |cond      |NA       |sigma                          |   20.889|     0.872|    19.21|      22.6|  8144|
-|fixed    |cond      |NA       |priorcalcium2                  |    0.493|    30.138|   -58.81|      59.3| 12338|
-|fixed    |cond      |NA       |priorsexM                      |   10.009|    29.810|   -48.15|      68.5| 11821|
-|ran_pars |cond      |Residual |sd__Observation                |   30.771|    44.950|   -57.13|     119.5| 11823|
-|ran_pars |cond      |Residual |prior_sigma__NA.NA.prior_sigma |   34.683|    39.575|     1.04|     131.4| 11975|
+|fixed    |cond      |NA       |(Intercept)                    |  -30.381|     7.140|    -44.6|     -16.5| 12157|
+|fixed    |cond      |NA       |calcium2                       |   12.107|     0.780|     10.6|      13.6| 11815|
+|fixed    |cond      |NA       |sexM                           |   17.555|     1.672|     14.2|      20.9| 10645|
+|fixed    |cond      |NA       |diethf                         |   26.921|     1.732|     23.5|      30.3| 11119|
+|fixed    |cond      |NA       |sigma                          |   20.874|     0.875|     19.2|      22.6|  8291|
+|fixed    |cond      |NA       |priorcalcium2                  |    0.834|    30.201|    -58.7|      59.3| 11971|
+|fixed    |cond      |NA       |priorsexM                      |   10.641|    29.866|    -47.6|      69.7| 11403|
+|ran_pars |cond      |Residual |sd__Observation                |   30.346|    45.195|    -58.7|     118.9| 11738|
+|ran_pars |cond      |Residual |prior_sigma__NA.NA.prior_sigma |   35.212|    39.871|      1.1|     136.6| 11691|
 
-The effective sample size was >8144.306 and Rhat ranged between 0.99989 and 1.00054, indicating that the model converged well.
+The effective sample size was >8290.675 and Rhat ranged between 0.99997 and 1.00068, indicating that the model converged well.
 
 ### Posterior Prediction Checks
 
@@ -1297,10 +1297,10 @@ Table: Posterior estimates
 
 |          | Estimate| Est.Error|  Q2.5| Q97.5|
 |:---------|--------:|---------:|-----:|-----:|
-|Intercept |    -30.3|     7.186| -44.2| -16.0|
-|calcium2  |     12.1|     0.786|  10.5|  13.6|
-|sexM      |     17.6|     1.686|  14.3|  20.9|
-|diethf    |     26.9|     1.711|  23.6|  30.3|
+|Intercept |    -30.4|      7.14| -44.6| -16.5|
+|calcium2  |     12.1|      0.78|  10.6|  13.6|
+|sexM      |     17.6|      1.67|  14.2|  20.9|
+|diethf    |     26.9|      1.73|  23.5|  30.3|
 
 ``` r
 hypothesis(chol.ca.brms, "calcium2>0")$hypothesis %>%
@@ -1313,7 +1313,7 @@ Table: Hypothesis test that calcium effect is >0
 
 |Hypothesis     | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
 |:--------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
-|(calcium2) > 0 |     12.1|     0.786|     10.8|     13.4|        Inf|         1|*    |
+|(calcium2) > 0 |     12.1|      0.78|     10.8|     13.4|        Inf|         1|*    |
 
 ``` r
 hypothesis(chol.ca.brms, "calcium2>10")$hypothesis %>%
@@ -1326,7 +1326,7 @@ Table: Hypothesis test that calcium effect is >10
 
 |Hypothesis          | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
 |:-------------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
-|(calcium2)-(10) > 0 |      2.1|     0.786|    0.798|     3.39|        266|     0.996|*    |
+|(calcium2)-(10) > 0 |     2.11|      0.78|    0.833|     3.41|        363|     0.997|*    |
 
 
 ## Effects of Diet and Sex on Calcium
@@ -2130,10 +2130,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       0.9984         2.38  <2e-16 ***
-## ADE             12.9034      11.1973        14.66  <2e-16 ***
-## Total Effect    14.5516      12.9803        16.32  <2e-16 ***
-## Prop. Mediated   0.1133       0.0693         0.16  <2e-16 ***
+## ACME             1.6482       1.0398         2.39  <2e-16 ***
+## ADE             12.9034      11.1252        14.58  <2e-16 ***
+## Total Effect    14.5516      12.7339        16.23  <2e-16 ***
+## Prop. Mediated   0.1133       0.0724         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2254,10 +2254,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.416        10.81  <2e-16 ***
-## ADE              24.010       19.243        28.86  <2e-16 ***
-## Total Effect     32.119       28.381        36.20  <2e-16 ***
-## Prop. Mediated    0.252        0.168         0.35  <2e-16 ***
+## ACME              8.110        5.541        10.69  <2e-16 ***
+## ADE              24.010       19.491        28.77  <2e-16 ***
+## Total Effect     32.119       28.588        36.05  <2e-16 ***
+## Prop. Mediated    0.252        0.172         0.34  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2321,10 +2321,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2325         3.01  <2e-16 ***
-## ADE             12.5614      10.8668        14.27  <2e-16 ***
-## Total Effect    14.6397      13.0046        16.39  <2e-16 ***
-## Prop. Mediated   0.1420       0.0867         0.20  <2e-16 ***
+## ACME              2.078        1.274         3.01  <2e-16 ***
+## ADE              12.561       10.947        14.32  <2e-16 ***
+## Total Effect     14.640       12.999        16.51  <2e-16 ***
+## Prop. Mediated    0.142        0.087         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2467,98 +2467,98 @@ left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
   arrange(-abs(estimate)) -> cor.data.combined
 
 cor.data.combined %>%
-  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
-        digits=c(0,3,0,99,99,3,3,99,99))
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter with cholesterol at 19 weeks",
+        digits=c(0,3,3,99,99,3,3,99,99))
 ```
 
 
 
-Table: Correlation coefficients and diet/sex adjusted estimates for each clinical parameter
+Table: Correlation coefficients and diet/sex adjusted estimates for each clinical parameter with cholesterol at 19 weeks
 
 |Parameter                                                       |   n| estimate| cor.p.value| cor.p.adj|    beta|      se| lm.p.value| lm.p.adj|
 |:---------------------------------------------------------------|---:|--------:|-----------:|---------:|-------:|-------:|----------:|--------:|
-|Cholesterol at 19 weeks                                         | 818|        1|    0.00e+00|  0.00e+00|      NA|      NA|         NA|       NA|
-|High density lipoprotein at 19 weeks                            | 814|        1|    0.00e+00|  0.00e+00|   1.188|   0.016|   0.00e+00| 0.00e+00|
-|Cholesterol at 8 weeks                                          | 789|        1|    0.00e+00|  0.00e+00|   0.673|   0.036|   9.88e-64| 9.88e-64|
-|High density lipoprotein at 8 weeks                             | 787|        1|    0.00e+00|  0.00e+00|   0.785|   0.047|   1.09e-53| 1.09e-53|
-|Non-HDL Cholesterol at 19 weeks                                 | 812|        1|    2.05e-72|  6.87e-71|   1.808|   0.067|   0.00e+00| 0.00e+00|
-|Albumin to creatinine ratio at 20 weeks                         | 192|        0|    8.81e-12|  2.79e-11|      NA|      NA|         NA|       NA|
-|Fat tissue mass at 21 weeks                                     | 818|        0|    9.23e-42|  2.15e-40|   1.275|   0.223|   1.47e-08| 1.47e-08|
-|Total tissue mass at 21 weeks                                   | 818|        0|    1.02e-41|  2.15e-40|   0.779|   0.144|   8.89e-08| 8.89e-08|
-|Weight at 21 weeks                                              | 818|        0|    8.87e-39|  1.24e-37|   0.743|   0.148|   6.13e-07| 6.13e-07|
-|Glucose at 19 weeks                                             | 815|        0|    3.46e-38|  4.14e-37|   0.116|   0.020|   9.40e-09| 9.40e-09|
-|Calcium, time 2 at 19 weeks                                     | 768|        0|    1.08e-33|  8.28e-33|  12.579|   0.866|   2.31e-42| 2.31e-42|
-|Fat tissue mass at 12 weeks                                     | 832|        0|    5.41e-34|  4.32e-33|   1.034|   0.329|   1.75e-03| 1.75e-03|
-|Non-HDL Cholesterol at 8 weeks                                  | 787|        0|    1.29e-31|  8.65e-31|   1.254|   0.108|   7.35e-29| 7.35e-29|
-|Total tissue mass at 12 weeks                                   | 832|        0|    4.53e-30|  2.72e-29|   0.611|   0.195|   1.81e-03| 1.81e-03|
-|Leptin at 8 weeks                                               | 826|        0|    8.96e-30|  5.19e-29|   0.153|   0.046|   9.99e-04| 9.99e-04|
-|Albumin to creatinine ratio at 11 weeks                         | 197|        0|    7.18e-08|  1.85e-07|      NA|      NA|         NA|       NA|
-|Weight at 12 weeks                                              | 832|        0|    3.92e-28|  1.83e-27|   0.645|   0.198|   1.20e-03| 1.20e-03|
-|Glutamate dehydrogenase at 19 weeks                             | 766|        0|    5.63e-22|  2.20e-21|   0.577|   0.077|   2.12e-13| 2.12e-13|
-|Insulin at 8 weeks                                              | 821|        0|    4.22e-22|  1.73e-21|  -0.053|   0.019|   5.66e-03| 5.66e-03|
-|Lean tissue mass at 21 weeks                                    | 818|        0|    4.67e-18|  1.74e-17|   0.966|   0.289|   8.81e-04| 8.81e-04|
-|Glucose at 8 weeks                                              | 741|        0|    7.06e-14|  2.32e-13|   0.028|   0.027|   2.93e-01| 2.93e-01|
-|Adiponectin at 8 weeks                                          | 195|        0|    2.00e-04|  4.25e-04|      NA|      NA|         NA|       NA|
-|Lean tissue mass at 12 weeks                                    | 832|        0|    1.76e-14|  5.92e-14|   0.731|   0.336|   2.98e-02| 2.98e-02|
-|Total bilirubin at 19 weeks                                     | 145|        0|    2.16e-03|  4.17e-03|   9.741|   9.893|   3.26e-01| 3.26e-01|
-|Mouse length at 21 weeks                                        | 819|        0|    9.60e-13|  3.10e-12|   5.842|   2.592|   2.45e-02| 2.45e-02|
-|Non-esterified fatty acids at 19 weeks                          | 677|        0|    3.42e-09|  9.74e-09|  16.300|   1.674|   4.81e-21| 4.81e-21|
-|Triglycericdes at 19 weeks                                      | 819|        0|    2.38e-09|  6.90e-09|   0.177|   0.017|   3.77e-24| 3.77e-24|
-|Phophorous at 19 weeks                                          | 769|        0|    1.30e-07|  3.25e-07|   3.631|   0.850|   2.17e-05| 2.17e-05|
-|Mouse length at 12 weeks                                        | 832|        0|    4.72e-08|  1.24e-07|   3.804|   2.637|   1.50e-01| 1.50e-01|
-|Mean corpuscular volume at 22 weeks                             | 601|        0|    4.89e-04|  1.01e-03|   0.501|   0.395|   2.06e-01| 2.06e-01|
-|Glutamate dehydrogenase at 8 weeks                              | 690|        0|    2.97e-04|  6.23e-04|   0.202|   0.137|   1.40e-01| 1.40e-01|
-|Calcium, time 1 at 8 weeks                                      | 644|        0|    5.39e-04|  1.10e-03|   4.385|   1.276|   6.28e-04| 6.28e-04|
-|Hear rate at 13 weeks                                           | 781|        0|    1.12e-03|  2.26e-03|   0.001|   0.022|   9.76e-01| 9.76e-01|
-|Lipase at 19 weeks                                              |  97|        0|    2.60e-01|  3.44e-01|   1.104|   0.467|   2.03e-02| 2.03e-02|
-|Total bilirubin at 8 weeks                                      | 187|        0|    1.19e-01|  1.84e-01|  -7.290|  14.121|   6.06e-01| 6.06e-01|
-|Corpuscular hemoglobin concentration, mean at 22 weeks          | 601|        0|    5.00e-03|  9.55e-03|  -0.871|   0.778|   2.63e-01| 2.63e-01|
-|ECG: R to R wave time at 13 weeks                               | 781|        0|    1.99e-03|  3.90e-03|   0.021|   0.210|   9.19e-01| 9.19e-01|
-|Ghrelin at 8 weeks                                              | 195|        0|    1.37e-01|  2.04e-01| 503.636| 140.525|   4.30e-04| 4.30e-04|
-|Mean corpuscular hemoglobin concentration at 22 weeks           | 586|        0|    9.77e-03|  1.80e-02|  -1.086|   0.765|   1.56e-01| 1.56e-01|
-|Non-esterified fatty acids at 8 weeks                           | 691|        0|    2.38e-02|  4.29e-02|   8.196|   1.783|   5.14e-06| 5.14e-06|
-|Reticulocyte counts at 22 weeks                                 | 601|        0|    6.16e-02|  1.06e-01|  -0.104|   0.654|   8.74e-01| 8.74e-01|
-|Mean corpuscular hemoglobin concentration at 10 weeks           | 627|        0|    6.61e-02|  1.09e-01|  -1.195|   0.795|   1.33e-01| 1.33e-01|
-|ECG: S ot T wave time at 13 weeks                               | 781|        0|    6.52e-02|  1.09e-01|   0.123|   0.342|   7.19e-01| 7.19e-01|
-|Blood urea nitrogen at 19 weeks                                 | 818|        0|    6.33e-02|  1.07e-01|   1.505|   0.234|   2.06e-10| 2.06e-10|
-|Bone mineal content at 21 weeks                                 | 818|        0|    6.61e-02|  1.09e-01|  -1.039|  11.192|   9.26e-01| 9.26e-01|
-|Mean corpuscular hemoglobin at 22 weeks                         | 586|        0|    1.26e-01|  1.94e-01|  -0.035|   1.309|   9.78e-01| 9.78e-01|
-|Hemoglobin distribution width at 10 weeks                       | 628|        0|    1.14e-01|  1.79e-01|  -9.422|   6.394|   1.41e-01| 1.41e-01|
-|Blood urea nitrogen at 8 weeks                                  | 787|        0|    7.88e-02|  1.29e-01|   0.508|   0.262|   5.32e-02| 5.32e-02|
-|Corpuscular hemoglobin concentration, mean at 10 weeks          | 628|        0|    1.29e-01|  1.96e-01|  -0.066|   0.911|   9.42e-01| 9.42e-01|
-|Reticulocyte counts at 10 weeks                                 | 628|        0|    1.36e-01|  2.04e-01|   0.126|   0.603|   8.35e-01| 8.35e-01|
-|Hear rate variation at 13 weeks                                 | 781|        0|    1.00e-01|  1.61e-01|   0.061|   0.045|   1.80e-01| 1.80e-01|
-|Red blood cell counts at 22 weeks                               | 601|        0|    1.59e-01|  2.30e-01|   0.564|   1.198|   6.38e-01| 6.38e-01|
-|Bone mineal density at 21 weeks                                 | 818|        0|    1.03e-01|  1.63e-01|  -1.194|   9.795|   9.03e-01| 9.03e-01|
-|Hematocrit at 22 weeks                                          | 601|        0|    1.85e-01|  2.61e-01|   0.322|   0.244|   1.87e-01| 1.87e-01|
-|Hematocrit at 10 weeks                                          | 628|        0|    1.88e-01|  2.63e-01|   0.050|   0.272|   8.53e-01| 8.53e-01|
-|ECG: root mean squared std. dev. (not sure of what) at 13 weeks | 781|        0|    1.60e-01|  2.30e-01|   0.373|   0.244|   1.27e-01| 1.27e-01|
-|ECG: corrected QT interval at 13 weeks                          | 781|        0|    1.84e-01|  2.61e-01|  -0.015|   0.369|   9.67e-01| 9.67e-01|
-|Mean corpuscular volume at 10 weeks                             | 628|        0|    2.36e-01|  3.15e-01|   0.113|   0.393|   7.75e-01| 7.75e-01|
-|White blood cell counts at 22 weeks                             | 604|        0|    2.63e-01|  3.45e-01|   0.786|   0.377|   3.75e-02| 3.75e-02|
-|Triglycericdes at 8 weeks                                       | 788|        0|    2.09e-01|  2.86e-01|   0.071|   0.017|   5.10e-05| 5.10e-05|
-|Mean platelet volume at 10 weeks                                | 628|        0|    2.92e-01|  3.77e-01|  -2.651|   1.352|   5.04e-02| 5.04e-02|
-|Calculated hemoglobin at 10 weeks                               | 628|        0|    2.98e-01|  3.79e-01|   0.145|   0.952|   8.79e-01| 8.79e-01|
-|ECG: P to R wave time at 13 weeks                               | 781|        0|    2.74e-01|  3.57e-01|  -0.387|   0.279|   1.65e-01| 1.65e-01|
-|Hemoglobin distribution width at 22 weeks                       | 601|        0|    4.50e-01|  5.53e-01| -15.301|   5.854|   9.18e-03| 9.18e-03|
-|ECG: QRS wave time at 13 weeks                                  | 781|        0|    4.51e-01|  5.53e-01|  -1.041|   0.923|   2.60e-01| 2.60e-01|
-|ECG: P to Q wave time at 13 weeks                               | 781|        0|    4.62e-01|  5.55e-01|  -0.332|   0.311|   2.87e-01| 2.87e-01|
-|White blood cell counts at 10 weeks                             | 628|        0|    5.23e-01|  6.19e-01|   0.101|   0.393|   7.98e-01| 7.98e-01|
-|Platelets at 22 weeks                                           | 601|        0|    5.47e-01|  6.38e-01|   0.002|   0.003|   6.22e-01| 6.22e-01|
-|DO outbreeding generation and litter                            | 840|        0|    4.97e-01|  5.92e-01|      NA|      NA|         NA|       NA|
-|Platelets at 10 weeks                                           | 628|        0|    6.55e-01|  7.53e-01|  -0.001|   0.004|   8.04e-01| 8.04e-01|
-|Mean platelet volume at 22 weeks                                | 601|        0|    6.97e-01|  7.81e-01|  -0.143|   1.176|   9.03e-01| 9.03e-01|
-|Red blood cell distribution width at 10 weeks                   | 628|        0|    7.12e-01|  7.87e-01|  -0.603|   0.829|   4.67e-01| 4.67e-01|
-|Bone mineal density at 12 weeks                                 | 832|        0|    6.97e-01|  7.81e-01|  -0.968|  10.125|   9.24e-01| 9.24e-01|
-|Fructoseamine at 8 weeks                                        |  93|        0|    9.01e-01|  9.46e-01|  -0.281|   0.233|   2.32e-01| 2.32e-01|
-|Calculated hemoglobin at 22 weeks                               | 601|        0|    8.33e-01|  9.01e-01|   0.457|   0.877|   6.03e-01| 6.03e-01|
-|measured hemoglobin at 22 weeks                                 | 586|        0|    8.98e-01|  9.46e-01|   0.247|   0.866|   7.76e-01| 7.76e-01|
-|Mean corpuscular hemoglobin at 10 weeks                         | 627|        0|    9.42e-01|  9.76e-01|  -1.026|   1.274|   4.21e-01| 4.21e-01|
-|Red blood cell distribution width at 22 weeks                   | 601|        0|    9.53e-01|  9.76e-01|  -1.345|   0.794|   9.08e-02| 9.08e-02|
-|Red blood cell counts at 10 weeks                               | 628|        0|    9.70e-01|  9.87e-01|  -0.058|   1.222|   9.62e-01| 9.62e-01|
-|Bone mineal content at 12 weeks                                 | 832|        0|    9.82e-01|  9.87e-01|   0.141|  11.830|   9.90e-01| 9.90e-01|
-|measured hemoglobin at 10 weeks                                 | 627|        0|    9.86e-01|  9.87e-01|  -0.653|   0.969|   5.00e-01| 5.00e-01|
-|Phophorous at 8 weeks                                           | 644|        0|    9.87e-01|  9.87e-01|   0.380|   0.967|   6.94e-01| 6.94e-01|
+|Cholesterol at 19 weeks                                         | 818|    1.000|    0.00e+00|  0.00e+00|      NA|      NA|         NA|       NA|
+|High density lipoprotein at 19 weeks                            | 814|    0.946|    0.00e+00|  0.00e+00|   1.188|   0.016|   0.00e+00| 0.00e+00|
+|Cholesterol at 8 weeks                                          | 789|    0.723|    0.00e+00|  0.00e+00|   0.673|   0.036|   9.88e-64| 9.88e-64|
+|High density lipoprotein at 8 weeks                             | 787|    0.703|    0.00e+00|  0.00e+00|   0.785|   0.047|   1.09e-53| 1.09e-53|
+|Non-HDL Cholesterol at 19 weeks                                 | 812|    0.574|    2.05e-72|  6.87e-71|   1.808|   0.067|   0.00e+00| 0.00e+00|
+|Albumin to creatinine ratio at 20 weeks                         | 192|    0.467|    8.81e-12|  2.79e-11|      NA|      NA|         NA|       NA|
+|Fat tissue mass at 21 weeks                                     | 818|    0.449|    9.23e-42|  2.15e-40|   1.275|   0.223|   1.47e-08| 1.47e-08|
+|Total tissue mass at 21 weeks                                   | 818|    0.448|    1.02e-41|  2.15e-40|   0.779|   0.144|   8.89e-08| 8.89e-08|
+|Weight at 21 weeks                                              | 818|    0.433|    8.87e-39|  1.24e-37|   0.743|   0.148|   6.13e-07| 6.13e-07|
+|Glucose at 19 weeks                                             | 815|    0.431|    3.46e-38|  4.14e-37|   0.116|   0.020|   9.40e-09| 9.40e-09|
+|Calcium, time 2 at 19 weeks                                     | 768|    0.417|    1.08e-33|  8.28e-33|  12.579|   0.866|   2.31e-42| 2.31e-42|
+|Fat tissue mass at 12 weeks                                     | 832|    0.404|    5.41e-34|  4.32e-33|   1.034|   0.329|   1.75e-03| 1.75e-03|
+|Non-HDL Cholesterol at 8 weeks                                  | 787|    0.400|    1.29e-31|  8.65e-31|   1.254|   0.108|   7.35e-29| 7.35e-29|
+|Total tissue mass at 12 weeks                                   | 832|    0.381|    4.53e-30|  2.72e-29|   0.611|   0.195|   1.81e-03| 1.81e-03|
+|Leptin at 8 weeks                                               | 826|    0.380|    8.96e-30|  5.19e-29|   0.153|   0.046|   9.99e-04| 9.99e-04|
+|Albumin to creatinine ratio at 11 weeks                         | 197|    0.372|    7.18e-08|  1.85e-07|      NA|      NA|         NA|       NA|
+|Weight at 12 weeks                                              | 832|    0.368|    3.92e-28|  1.83e-27|   0.645|   0.198|   1.20e-03| 1.20e-03|
+|Glutamate dehydrogenase at 19 weeks                             | 766|    0.338|    5.63e-22|  2.20e-21|   0.577|   0.077|   2.12e-13| 2.12e-13|
+|Insulin at 8 weeks                                              | 821|    0.328|    4.22e-22|  1.73e-21|  -0.053|   0.019|   5.66e-03| 5.66e-03|
+|Lean tissue mass at 21 weeks                                    | 818|    0.296|    4.67e-18|  1.74e-17|   0.966|   0.289|   8.81e-04| 8.81e-04|
+|Glucose at 8 weeks                                              | 741|    0.270|    7.06e-14|  2.32e-13|   0.028|   0.027|   2.93e-01| 2.93e-01|
+|Adiponectin at 8 weeks                                          | 195|    0.263|    2.00e-04|  4.25e-04|      NA|      NA|         NA|       NA|
+|Lean tissue mass at 12 weeks                                    | 832|    0.262|    1.76e-14|  5.92e-14|   0.731|   0.336|   2.98e-02| 2.98e-02|
+|Total bilirubin at 19 weeks                                     | 145|    0.253|    2.16e-03|  4.17e-03|   9.741|   9.893|   3.26e-01| 3.26e-01|
+|Mouse length at 21 weeks                                        | 819|    0.246|    9.60e-13|  3.10e-12|   5.842|   2.592|   2.45e-02| 2.45e-02|
+|Non-esterified fatty acids at 19 weeks                          | 677|    0.225|    3.42e-09|  9.74e-09|  16.300|   1.674|   4.81e-21| 4.81e-21|
+|Triglycericdes at 19 weeks                                      | 819|    0.207|    2.38e-09|  6.90e-09|   0.177|   0.017|   3.77e-24| 3.77e-24|
+|Phophorous at 19 weeks                                          | 769|    0.189|    1.30e-07|  3.25e-07|   3.631|   0.850|   2.17e-05| 2.17e-05|
+|Mouse length at 12 weeks                                        | 832|    0.188|    4.72e-08|  1.24e-07|   3.804|   2.637|   1.50e-01| 1.50e-01|
+|Mean corpuscular volume at 22 weeks                             | 601|    0.142|    4.89e-04|  1.01e-03|   0.501|   0.395|   2.06e-01| 2.06e-01|
+|Glutamate dehydrogenase at 8 weeks                              | 690|    0.137|    2.97e-04|  6.23e-04|   0.202|   0.137|   1.40e-01| 1.40e-01|
+|Calcium, time 1 at 8 weeks                                      | 644|    0.136|    5.39e-04|  1.10e-03|   4.385|   1.276|   6.28e-04| 6.28e-04|
+|Hear rate at 13 weeks                                           | 781|    0.116|    1.12e-03|  2.26e-03|   0.001|   0.022|   9.76e-01| 9.76e-01|
+|Lipase at 19 weeks                                              |  97|    0.116|    2.60e-01|  3.44e-01|   1.104|   0.467|   2.03e-02| 2.03e-02|
+|Total bilirubin at 8 weeks                                      | 187|    0.115|    1.19e-01|  1.84e-01|  -7.290|  14.121|   6.06e-01| 6.06e-01|
+|Corpuscular hemoglobin concentration, mean at 22 weeks          | 601|   -0.114|    5.00e-03|  9.55e-03|  -0.871|   0.778|   2.63e-01| 2.63e-01|
+|ECG: R to R wave time at 13 weeks                               | 781|   -0.110|    1.99e-03|  3.90e-03|   0.021|   0.210|   9.19e-01| 9.19e-01|
+|Ghrelin at 8 weeks                                              | 195|    0.107|    1.37e-01|  2.04e-01| 503.636| 140.525|   4.30e-04| 4.30e-04|
+|Mean corpuscular hemoglobin concentration at 22 weeks           | 586|   -0.107|    9.77e-03|  1.80e-02|  -1.086|   0.765|   1.56e-01| 1.56e-01|
+|Non-esterified fatty acids at 8 weeks                           | 691|    0.086|    2.38e-02|  4.29e-02|   8.196|   1.783|   5.14e-06| 5.14e-06|
+|Reticulocyte counts at 22 weeks                                 | 601|    0.076|    6.16e-02|  1.06e-01|  -0.104|   0.654|   8.74e-01| 8.74e-01|
+|Mean corpuscular hemoglobin concentration at 10 weeks           | 627|   -0.073|    6.61e-02|  1.09e-01|  -1.195|   0.795|   1.33e-01| 1.33e-01|
+|ECG: S ot T wave time at 13 weeks                               | 781|   -0.066|    6.52e-02|  1.09e-01|   0.123|   0.342|   7.19e-01| 7.19e-01|
+|Blood urea nitrogen at 19 weeks                                 | 818|    0.065|    6.33e-02|  1.07e-01|   1.505|   0.234|   2.06e-10| 2.06e-10|
+|Bone mineal content at 21 weeks                                 | 818|    0.064|    6.61e-02|  1.09e-01|  -1.039|  11.192|   9.26e-01| 9.26e-01|
+|Mean corpuscular hemoglobin at 22 weeks                         | 586|    0.063|    1.26e-01|  1.94e-01|  -0.035|   1.309|   9.78e-01| 9.78e-01|
+|Hemoglobin distribution width at 10 weeks                       | 628|    0.063|    1.14e-01|  1.79e-01|  -9.422|   6.394|   1.41e-01| 1.41e-01|
+|Blood urea nitrogen at 8 weeks                                  | 787|   -0.063|    7.88e-02|  1.29e-01|   0.508|   0.262|   5.32e-02| 5.32e-02|
+|Corpuscular hemoglobin concentration, mean at 10 weeks          | 628|   -0.061|    1.29e-01|  1.96e-01|  -0.066|   0.911|   9.42e-01| 9.42e-01|
+|Reticulocyte counts at 10 weeks                                 | 628|   -0.060|    1.36e-01|  2.04e-01|   0.126|   0.603|   8.35e-01| 8.35e-01|
+|Hear rate variation at 13 weeks                                 | 781|   -0.059|    1.00e-01|  1.61e-01|   0.061|   0.045|   1.80e-01| 1.80e-01|
+|Red blood cell counts at 22 weeks                               | 601|   -0.058|    1.59e-01|  2.30e-01|   0.564|   1.198|   6.38e-01| 6.38e-01|
+|Bone mineal density at 21 weeks                                 | 818|    0.057|    1.03e-01|  1.63e-01|  -1.194|   9.795|   9.03e-01| 9.03e-01|
+|Hematocrit at 22 weeks                                          | 601|    0.054|    1.85e-01|  2.61e-01|   0.322|   0.244|   1.87e-01| 1.87e-01|
+|Hematocrit at 10 weeks                                          | 628|    0.053|    1.88e-01|  2.63e-01|   0.050|   0.272|   8.53e-01| 8.53e-01|
+|ECG: root mean squared std. dev. (not sure of what) at 13 weeks | 781|   -0.050|    1.60e-01|  2.30e-01|   0.373|   0.244|   1.27e-01| 1.27e-01|
+|ECG: corrected QT interval at 13 weeks                          | 781|   -0.048|    1.84e-01|  2.61e-01|  -0.015|   0.369|   9.67e-01| 9.67e-01|
+|Mean corpuscular volume at 10 weeks                             | 628|    0.047|    2.36e-01|  3.15e-01|   0.113|   0.393|   7.75e-01| 7.75e-01|
+|White blood cell counts at 22 weeks                             | 604|    0.046|    2.63e-01|  3.45e-01|   0.786|   0.377|   3.75e-02| 3.75e-02|
+|Triglycericdes at 8 weeks                                       | 788|    0.045|    2.09e-01|  2.86e-01|   0.071|   0.017|   5.10e-05| 5.10e-05|
+|Mean platelet volume at 10 weeks                                | 628|   -0.042|    2.92e-01|  3.77e-01|  -2.651|   1.352|   5.04e-02| 5.04e-02|
+|Calculated hemoglobin at 10 weeks                               | 628|    0.042|    2.98e-01|  3.79e-01|   0.145|   0.952|   8.79e-01| 8.79e-01|
+|ECG: P to R wave time at 13 weeks                               | 781|   -0.039|    2.74e-01|  3.57e-01|  -0.387|   0.279|   1.65e-01| 1.65e-01|
+|Hemoglobin distribution width at 22 weeks                       | 601|   -0.031|    4.50e-01|  5.53e-01| -15.301|   5.854|   9.18e-03| 9.18e-03|
+|ECG: QRS wave time at 13 weeks                                  | 781|   -0.027|    4.51e-01|  5.53e-01|  -1.041|   0.923|   2.60e-01| 2.60e-01|
+|ECG: P to Q wave time at 13 weeks                               | 781|   -0.026|    4.62e-01|  5.55e-01|  -0.332|   0.311|   2.87e-01| 2.87e-01|
+|White blood cell counts at 10 weeks                             | 628|   -0.026|    5.23e-01|  6.19e-01|   0.101|   0.393|   7.98e-01| 7.98e-01|
+|Platelets at 22 weeks                                           | 601|    0.025|    5.47e-01|  6.38e-01|   0.002|   0.003|   6.22e-01| 6.22e-01|
+|DO outbreeding generation and litter                            | 840|    0.023|    4.97e-01|  5.92e-01|      NA|      NA|         NA|       NA|
+|Platelets at 10 weeks                                           | 628|   -0.018|    6.55e-01|  7.53e-01|  -0.001|   0.004|   8.04e-01| 8.04e-01|
+|Mean platelet volume at 22 weeks                                | 601|    0.016|    6.97e-01|  7.81e-01|  -0.143|   1.176|   9.03e-01| 9.03e-01|
+|Red blood cell distribution width at 10 weeks                   | 628|   -0.015|    7.12e-01|  7.87e-01|  -0.603|   0.829|   4.67e-01| 4.67e-01|
+|Bone mineal density at 12 weeks                                 | 832|   -0.014|    6.97e-01|  7.81e-01|  -0.968|  10.125|   9.24e-01| 9.24e-01|
+|Fructoseamine at 8 weeks                                        |  93|    0.013|    9.01e-01|  9.46e-01|  -0.281|   0.233|   2.32e-01| 2.32e-01|
+|Calculated hemoglobin at 22 weeks                               | 601|   -0.009|    8.33e-01|  9.01e-01|   0.457|   0.877|   6.03e-01| 6.03e-01|
+|measured hemoglobin at 22 weeks                                 | 586|   -0.005|    8.98e-01|  9.46e-01|   0.247|   0.866|   7.76e-01| 7.76e-01|
+|Mean corpuscular hemoglobin at 10 weeks                         | 627|    0.003|    9.42e-01|  9.76e-01|  -1.026|   1.274|   4.21e-01| 4.21e-01|
+|Red blood cell distribution width at 22 weeks                   | 601|   -0.002|    9.53e-01|  9.76e-01|  -1.345|   0.794|   9.08e-02| 9.08e-02|
+|Red blood cell counts at 10 weeks                               | 628|    0.002|    9.70e-01|  9.87e-01|  -0.058|   1.222|   9.62e-01| 9.62e-01|
+|Bone mineal content at 12 weeks                                 | 832|   -0.001|    9.82e-01|  9.87e-01|   0.141|  11.830|   9.90e-01| 9.90e-01|
+|measured hemoglobin at 10 weeks                                 | 627|    0.001|    9.86e-01|  9.87e-01|  -0.653|   0.969|   5.00e-01| 5.00e-01|
+|Phophorous at 8 weeks                                           | 644|    0.001|    9.87e-01|  9.87e-01|   0.380|   0.967|   6.94e-01| 6.94e-01|
 
 ``` r
 write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")

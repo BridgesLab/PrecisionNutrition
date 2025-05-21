@@ -1176,8 +1176,8 @@ left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
   arrange(-abs(estimate)) -> cor.data.combined
 
 cor.data.combined %>%
-  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
-        digits=c(0,3,0,99,99,3,3,99,99))
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter with cholesterol at 19 weeks",
+        digits=c(0,3,3,99,99,3,3,99,99))
 
 write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")
 

@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.002| 0.059|
-| 0.064|      1|     0.753|  0.757| 0.045|
-| 0.060|      2|     0.689|  0.711| 0.044|
-| 0.036|      3|     0.629|  0.637| 0.040|
-| 0.023|      4|     0.593|  0.661| 0.044|
-| 0.022|      5|     0.569|  0.663| 0.045|
-| 0.015|      6|     0.547|  0.657| 0.045|
-| 0.015|      7|     0.532|  0.667| 0.045|
-| 0.014|      8|     0.516|  0.666| 0.045|
-| 0.011|      9|     0.502|  0.662| 0.045|
-| 0.011|     10|     0.491|  0.676| 0.046|
-| 0.010|     11|     0.481|  0.675| 0.046|
-| 0.010|     12|     0.470|  0.696| 0.049|
+| 0.247|      0|     1.000|  1.001| 0.059|
+| 0.064|      1|     0.753|  0.755| 0.045|
+| 0.060|      2|     0.689|  0.725| 0.044|
+| 0.036|      3|     0.629|  0.635| 0.040|
+| 0.023|      4|     0.593|  0.647| 0.043|
+| 0.022|      5|     0.569|  0.640| 0.042|
+| 0.015|      6|     0.547|  0.628| 0.042|
+| 0.015|      7|     0.532|  0.637| 0.042|
+| 0.014|      8|     0.516|  0.627| 0.041|
+| 0.011|      9|     0.502|  0.656| 0.043|
+| 0.011|     10|     0.491|  0.653| 0.045|
+| 0.010|     11|     0.481|  0.654| 0.046|
+| 0.010|     12|     0.470|  0.652| 0.046|
 
 ``` r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -1051,6 +1051,283 @@ Table: AIC for nonlinear model fits
 ```
 
 This suggests that the models all perform similarly (higher AIC is bad), in this case its probably best to stick with the linear model.  The linear model is easier to interpret and understand, and is likely sufficient for this analysis.
+
+## Bayesian Approach to Understanding Calcium-Cholesterol Relationship
+
+We employed a Bayesian approach to understanding the calcium-cholesterol relationship because it enables a continuous probability interpretation of the hypotheses under investigation, facilitates the incorporation of prior knowledge when available, and provides a direct and transparent quantification of uncertainty. Bayesian methods also offer substantial flexibility for modeling complex relationships and adjusting for confounding variables. This framework supports more intuitive and informative inferences regarding associations and potential causal effects, particularly when accounting for multiple confounders or integrating prior data.
+
+Our **goal** is to understand, in mice, the relationship between calcium and cholesterol, since it was nominated by our rergression tree approach.  We are **modeling** this in the form of a linear regression with sex and diet of the mice as non-interacting covariates.  
+
+
+``` r
+# Load required packages
+library(brms)
+library(dplyr)
+
+# Define informative priors (adjust based on your epidemiological context)
+priors <- c(
+  # Prior for intercept - adjust mean/sd based on domain knowledge
+  prior(normal(80, 10), class = "Intercept"),
+  
+  # Priors for your covariates - adjusted to mak them slightly less informative
+  prior(normal(30, 45), class = "b", coef = "diethf"),
+  prior(normal(10, 30), class = "b", coef = "sexM"),
+  prior(normal(0, 30), class = "b", coef = "calcium2")
+)
+```
+
+
+``` r
+# For sampling priors
+chol.ca.brms.priors <- brm(
+  chol2 ~ calcium2 + sex + diet,
+  data = cholesterol.data,
+  family = student(), # fits to the more robust t-distribution, based on posterior checks
+  prior = priors,
+  sample_prior = "only",
+  chains = 4,
+  iter = 2000
+)
+
+# Fit the Bayesian linear regression model
+chol.ca.brms <- brm(
+  formula = chol2 ~ calcium2 + sex + diet,
+  data = cholesterol.data,
+  family = student(),  # fits to the more robust t-distribution, based on posterior checks
+  prior = priors,
+  sample_prior = TRUE,  # For prior predictive checks
+  chains = 4,
+  iter = 4000,
+  warmup = 1000,
+  cores = 4,
+  control = list(adapt_delta = 0.95) # Helps prevent divergent transitions
+)
+```
+
+#### Prior Predictive Checks
+
+
+``` r
+prior_summary(chol.ca.brms) |>
+  kable(caption="Summary of priors information provided to brms")
+```
+
+
+
+Table: Summary of priors information provided to brms
+
+|prior                 |class     |coef     |group |resp |dpar |nlpar |lb |ub |source  |
+|:---------------------|:---------|:--------|:-----|:----|:----|:-----|:--|:--|:-------|
+|                      |b         |         |      |     |     |      |   |   |default |
+|normal(0, 30)         |b         |calcium2 |      |     |     |      |   |   |user    |
+|normal(30, 45)        |b         |diethf   |      |     |     |      |   |   |user    |
+|normal(10, 30)        |b         |sexM     |      |     |     |      |   |   |user    |
+|normal(80, 10)        |Intercept |         |      |     |     |      |   |   |user    |
+|gamma(2, 0.1)         |nu        |         |      |     |     |      |1  |   |default |
+|student_t(3, 0, 31.9) |sigma     |         |      |     |     |      |0  |   |default |
+
+``` r
+pp_check(chol.ca.brms.priors, type = "dens_overlay", ndraws = 100)  
+```
+
+![](figures/calcium-chol-prior-predictive-1.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms.priors, type = "boxplot", group = "diet")
+```
+
+![](figures/calcium-chol-prior-predictive-2.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms.priors, type = "boxplot", group = "sex")
+```
+
+![](figures/calcium-chol-prior-predictive-3.png)<!-- -->
+
+### Checking for Model Convergence
+
+
+``` r
+kable(data.frame(
+  Parameter = names(rhat(chol.ca.brms)),
+  Rhat = format(rhat(chol.ca.brms), nsmall = 5)),
+caption="Rhat values for model testing the association between weight and transmission (should b between 0.99 and 1.01 for convergence).",
+row.names = F)
+```
+
+
+
+Table: Rhat values for model testing the association between weight and transmission (should b between 0.99 and 1.01 for convergence).
+
+|Parameter        |Rhat    |
+|:----------------|:-------|
+|b_Intercept      |1.00016 |
+|b_calcium2       |1.00020 |
+|b_sexM           |1.00036 |
+|b_diethf         |0.99992 |
+|sigma            |1.00054 |
+|nu               |1.00000 |
+|Intercept        |1.00024 |
+|prior_Intercept  |1.00006 |
+|prior_b_calcium2 |1.00013 |
+|prior_b_sexM     |0.99989 |
+|prior_b_diethf   |1.00008 |
+|prior_sigma      |0.99989 |
+|prior_nu         |1.00019 |
+|lprior           |1.00029 |
+|lp__             |1.00031 |
+
+``` r
+library(broom.mixed)
+tidy(chol.ca.brms, ess = TRUE) %>% kable(caption="Model random effects, including ESS")
+```
+
+
+
+Table: Model random effects, including ESS
+
+|effect   |component |group    |term                           | estimate| std.error| conf.low| conf.high|   ess|
+|:--------|:---------|:--------|:------------------------------|--------:|---------:|--------:|---------:|-----:|
+|fixed    |cond      |NA       |(Intercept)                    |  -30.302|     7.186|   -44.16|     -16.0| 10500|
+|fixed    |cond      |NA       |calcium2                       |   12.100|     0.786|    10.54|      13.6| 10259|
+|fixed    |cond      |NA       |sexM                           |   17.567|     1.686|    14.28|      20.9| 11696|
+|fixed    |cond      |NA       |diethf                         |   26.901|     1.711|    23.59|      30.3| 11593|
+|fixed    |cond      |NA       |sigma                          |   20.889|     0.872|    19.21|      22.6|  8144|
+|fixed    |cond      |NA       |priorcalcium2                  |    0.493|    30.138|   -58.81|      59.3| 12338|
+|fixed    |cond      |NA       |priorsexM                      |   10.009|    29.810|   -48.15|      68.5| 11821|
+|ran_pars |cond      |Residual |sd__Observation                |   30.771|    44.950|   -57.13|     119.5| 11823|
+|ran_pars |cond      |Residual |prior_sigma__NA.NA.prior_sigma |   34.683|    39.575|     1.04|     131.4| 11975|
+
+The effective sample size was >8144.306 and Rhat ranged between 0.99989 and 1.00054, indicating that the model converged well.
+
+### Posterior Prediction Checks
+
+
+``` r
+pp_check(chol.ca.brms, type = "dens_overlay",ndraws=100)
+```
+
+![](figures/calcium-chol-posterior-predictive-1.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "stat", stat = "mean")
+```
+
+![](figures/calcium-chol-posterior-predictive-2.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "stat", stat = "sd")
+```
+
+![](figures/calcium-chol-posterior-predictive-3.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "boxplot", group = "diet")
+```
+
+![](figures/calcium-chol-posterior-predictive-4.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "boxplot", group = "sex")
+```
+
+![](figures/calcium-chol-posterior-predictive-5.png)<!-- -->
+
+### Posterior Summaries
+
+
+``` r
+plot(chol.ca.brms)
+```
+
+![](figures/calcium-chol-posterior-summaries-1.png)<!-- -->![](figures/calcium-chol-posterior-summaries-2.png)<!-- -->
+
+``` r
+library(ggplot2)
+library(cowplot)
+b_calcium2_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_calcium2)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Calcium (beta)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+b_diet_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_diethf)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Diet (HF)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+b_sex_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_sexM)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Sex (M)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+# Align plots on the bottom axis
+aligned_plots <- align_plots(b_calcium2_plot, b_diet_plot, b_sex_plot, align = "v", axis = "b")
+
+# Draw the aligned plots in a grid
+plot_grid(plotlist = aligned_plots, ncol = 1)
+```
+
+![](figures/calcium-chol-posterior-summaries-3.png)<!-- -->
+
+``` r
+fixef(chol.ca.brms) %>% kable(caption="Posterior estimates", digits=3)
+```
+
+
+
+Table: Posterior estimates
+
+|          | Estimate| Est.Error|  Q2.5| Q97.5|
+|:---------|--------:|---------:|-----:|-----:|
+|Intercept |    -30.3|     7.186| -44.2| -16.0|
+|calcium2  |     12.1|     0.786|  10.5|  13.6|
+|sexM      |     17.6|     1.686|  14.3|  20.9|
+|diethf    |     26.9|     1.711|  23.6|  30.3|
+
+``` r
+hypothesis(chol.ca.brms, "calcium2>0")$hypothesis %>%
+  kable(caption="Hypothesis test that calcium effect is >0", digits=3)
+```
+
+
+
+Table: Hypothesis test that calcium effect is >0
+
+|Hypothesis     | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
+|:--------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
+|(calcium2) > 0 |     12.1|     0.786|     10.8|     13.4|        Inf|         1|*    |
+
+``` r
+hypothesis(chol.ca.brms, "calcium2>10")$hypothesis %>%
+  kable(caption="Hypothesis test that calcium effect is >10", digits=3)
+```
+
+
+
+Table: Hypothesis test that calcium effect is >10
+
+|Hypothesis          | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
+|:-------------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
+|(calcium2)-(10) > 0 |      2.1|     0.786|    0.798|     3.39|        266|     0.996|*    |
+
 
 ## Effects of Diet and Sex on Calcium
 
@@ -1853,10 +2130,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0286         2.39  <2e-16 ***
-## ADE             12.9034      11.2819        14.55  <2e-16 ***
-## Total Effect    14.5516      13.0101        16.15  <2e-16 ***
-## Prop. Mediated   0.1133       0.0706         0.17  <2e-16 ***
+## ACME             1.6482       0.9984         2.38  <2e-16 ***
+## ADE             12.9034      11.1973        14.66  <2e-16 ***
+## Total Effect    14.5516      12.9803        16.32  <2e-16 ***
+## Prop. Mediated   0.1133       0.0693         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1977,10 +2254,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.498        10.73  <2e-16 ***
-## ADE              24.010       19.580        28.89  <2e-16 ***
-## Total Effect     32.119       28.377        36.46  <2e-16 ***
-## Prop. Mediated    0.252        0.170         0.34  <2e-16 ***
+## ACME              8.110        5.416        10.81  <2e-16 ***
+## ADE              24.010       19.243        28.86  <2e-16 ***
+## Total Effect     32.119       28.381        36.20  <2e-16 ***
+## Prop. Mediated    0.252        0.168         0.35  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2044,10 +2321,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2434         2.92  <2e-16 ***
-## ADE             12.5614      10.8629        14.41  <2e-16 ***
-## Total Effect    14.6397      12.9468        16.39  <2e-16 ***
-## Prop. Mediated   0.1420       0.0856         0.20  <2e-16 ***
+## ACME             2.0783       1.2325         3.01  <2e-16 ***
+## ADE             12.5614      10.8668        14.27  <2e-16 ***
+## Total Effect    14.6397      13.0046        16.39  <2e-16 ***
+## Prop. Mediated   0.1420       0.0867         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2317,46 +2594,54 @@ sessionInfo()
 ##  [1] randomForest_4.7-1.2 ipred_0.9-15         caret_7.0-1         
 ##  [4] lattice_0.22-6       mediation_4.5.0      mvtnorm_1.3-3       
 ##  [7] Matrix_1.7-1         MASS_7.3-64          gridExtra_2.3       
-## [10] mgcv_1.9-1           nlme_3.1-166         lmtest_0.9-40       
-## [13] zoo_1.8-13           sandwich_3.1-1       car_3.1-3           
-## [16] carData_3.0-5        effectsize_1.0.0     rattle_5.5.1        
-## [19] bitops_1.0-9         tibble_3.2.1         rpart_4.1.24        
-## [22] tree_1.0-44          broom_1.0.7          ggplot2_3.5.1       
-## [25] forcats_1.0.0        readr_2.1.5          dplyr_1.1.4         
-## [28] tidyr_1.3.1          knitr_1.49          
+## [10] cowplot_1.1.3        broom.mixed_0.2.9.6  brms_2.22.0         
+## [13] Rcpp_1.0.14          mgcv_1.9-1           nlme_3.1-166        
+## [16] lmtest_0.9-40        zoo_1.8-13           sandwich_3.1-1      
+## [19] car_3.1-3            carData_3.0-5        effectsize_1.0.0    
+## [22] rattle_5.5.1         bitops_1.0-9         tibble_3.2.1        
+## [25] rpart_4.1.24         tree_1.0-44          broom_1.0.7         
+## [28] ggplot2_3.5.1        forcats_1.0.0        readr_2.1.5         
+## [31] dplyr_1.1.4          tidyr_1.3.1          knitr_1.49          
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] Rdpack_2.6.2         pROC_1.18.5          rlang_1.1.6         
-##  [4] magrittr_2.0.3       rpart.plot_3.1.2     compiler_4.4.2      
-##  [7] reshape2_1.4.4       vctrs_0.6.5          stringr_1.5.1       
-## [10] pkgconfig_2.0.3      crayon_1.5.3         fastmap_1.2.0       
-## [13] backports_1.5.0      labeling_0.4.3       utf8_1.2.4          
-## [16] rmarkdown_2.29       prodlim_2025.04.28   tzdb_0.5.0          
-## [19] nloptr_2.1.1         purrr_1.0.2          bit_4.5.0.1         
-## [22] xfun_0.50            cachem_1.1.0         jsonlite_1.8.9      
-## [25] recipes_1.3.0        parallel_4.4.2       cluster_2.1.8       
-## [28] R6_2.5.1             bslib_0.8.0          stringi_1.8.4       
-## [31] RColorBrewer_1.1-3   parallelly_1.41.0    boot_1.3-31         
-## [34] lubridate_1.9.4      jquerylib_0.1.4      Rcpp_1.0.14         
-## [37] iterators_1.0.14     future.apply_1.11.3  base64enc_0.1-3     
-## [40] parameters_0.25.0    timechange_0.3.0     nnet_7.3-20         
-## [43] tidyselect_1.2.1     rstudioapi_0.17.1    abind_1.4-8         
-## [46] yaml_2.3.10          timeDate_4041.110    codetools_0.2-20    
-## [49] listenv_0.9.1        plyr_1.8.9           withr_3.0.2         
-## [52] bayestestR_0.16.0    evaluate_1.0.3       foreign_0.8-88      
-## [55] future_1.34.0        survival_3.8-3       archive_1.1.12      
-## [58] lpSolve_5.6.23       pillar_1.10.1        stats4_4.4.2        
-## [61] checkmate_2.3.2      foreach_1.5.2        reformulas_0.4.0    
-## [64] insight_1.3.0        generics_0.1.3       vroom_1.6.5         
-## [67] hms_1.1.3            munsell_0.5.1        scales_1.3.0        
-## [70] minqa_1.2.8          globals_0.16.3       class_7.3-23        
-## [73] glue_1.8.0           Hmisc_5.2-2          tools_4.4.2         
-## [76] data.table_1.16.4    lme4_1.1-36          ModelMetrics_1.2.2.2
-## [79] gower_1.0.2          grid_4.4.2           rbibutils_2.3       
-## [82] datawizard_1.0.2     colorspace_2.1-1     htmlTable_2.4.3     
-## [85] Formula_1.2-5        cli_3.6.5            lava_1.8.1          
-## [88] gtable_0.3.6         sass_0.4.9           digest_0.6.37       
-## [91] htmlwidgets_1.6.4    farver_2.1.2         htmltools_0.5.8.1   
-## [94] lifecycle_1.0.4      hardhat_1.4.1        bit64_4.5.2
+##   [1] RColorBrewer_1.1-3   tensorA_0.36.2.1     rstudioapi_0.17.1   
+##   [4] jsonlite_1.8.9       datawizard_1.0.2     magrittr_2.0.3      
+##   [7] farver_2.1.2         nloptr_2.1.1         rmarkdown_2.29      
+##  [10] vctrs_0.6.5          minqa_1.2.8          base64enc_0.1-3     
+##  [13] htmltools_0.5.8.1    distributional_0.5.0 pROC_1.18.5         
+##  [16] Formula_1.2-5        sass_0.4.9           parallelly_1.41.0   
+##  [19] StanHeaders_2.32.10  bslib_0.8.0          htmlwidgets_1.6.4   
+##  [22] plyr_1.8.9           lubridate_1.9.4      cachem_1.1.0        
+##  [25] iterators_1.0.14     lifecycle_1.0.4      pkgconfig_2.0.3     
+##  [28] R6_2.5.1             fastmap_1.2.0        rbibutils_2.3       
+##  [31] future_1.34.0        digest_0.6.37        colorspace_2.1-1    
+##  [34] furrr_0.3.1          ps_1.8.1             Hmisc_5.2-2         
+##  [37] labeling_0.4.3       timechange_0.3.0     abind_1.4-8         
+##  [40] compiler_4.4.2       bit64_4.5.2          withr_3.0.2         
+##  [43] htmlTable_2.4.3      backports_1.5.0      inline_0.3.21       
+##  [46] QuickJSR_1.5.1       pkgbuild_1.4.5       lava_1.8.1          
+##  [49] loo_2.8.0            ModelMetrics_1.2.2.2 tools_4.4.2         
+##  [52] foreign_0.8-88       future.apply_1.11.3  nnet_7.3-20         
+##  [55] glue_1.8.0           callr_3.7.6          grid_4.4.2          
+##  [58] checkmate_2.3.2      cluster_2.1.8        reshape2_1.4.4      
+##  [61] recipes_1.3.0        generics_0.1.3       lpSolve_5.6.23      
+##  [64] gtable_0.3.6         tzdb_0.5.0           class_7.3-23        
+##  [67] data.table_1.16.4    hms_1.1.3            utf8_1.2.4          
+##  [70] foreach_1.5.2        pillar_1.10.1        stringr_1.5.1       
+##  [73] vroom_1.6.5          posterior_1.6.0      survival_3.8-3      
+##  [76] bit_4.5.0.1          tidyselect_1.2.1     reformulas_0.4.0    
+##  [79] stats4_4.4.2         xfun_0.50            bridgesampling_1.1-2
+##  [82] hardhat_1.4.1        timeDate_4041.110    matrixStats_1.5.0   
+##  [85] rstan_2.32.6         stringi_1.8.4        yaml_2.3.10         
+##  [88] boot_1.3-31          evaluate_1.0.3       codetools_0.2-20    
+##  [91] rpart.plot_3.1.2     archive_1.1.12       cli_3.6.5           
+##  [94] RcppParallel_5.1.9   parameters_0.25.0    Rdpack_2.6.2        
+##  [97] munsell_0.5.1        processx_3.8.5       jquerylib_0.1.4     
+## [100] globals_0.16.3       coda_0.19-4.1        parallel_4.4.2      
+## [103] rstantools_2.4.0     gower_1.0.2          bayestestR_0.16.0   
+## [106] bayesplot_1.11.1     Brobdingnag_1.2-9    lme4_1.1-36         
+## [109] listenv_0.9.1        prodlim_2025.04.28   scales_1.3.0        
+## [112] insight_1.3.0        purrr_1.0.2          crayon_1.5.3        
+## [115] rlang_1.1.6
 ```
 

@@ -17,7 +17,10 @@ execute:
   warning: false
 ---
 
-```{r global_options}
+
+::: {.cell}
+
+```{.r .cell-code}
 # hide this code chunk
 #| echo: false
 #| message: false
@@ -34,12 +37,19 @@ library(knitr)
 # sets maize and blue color scheme
 color_scheme <- c("#00274c", "#ffcb05")
 ```
+:::
+
+
 
 This script analyses the clumped data for the calcium and LDL-C summary statistics from UK Biobank.  The clumps were 
 
 ## Data Entry
 
-```{r datafiles}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 calcium.clumps.datafile <- 'biomarkers-30680-both_sexes-irnt-results.clumps'
 ldlc.clumps.datafile <- 'biomarkers-30780-both_sexes-irnt-results.clumps'
 
@@ -49,8 +59,11 @@ ldlc.freq.file <- 'biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq'
 calcium.sumstats.file <- 'biomarkers-30680-both_sexes-irnt.tsv'
 ldlc.sumstats.file <- 'biomarkers-30780-both_sexes-irnt.tsv'
 ```
+:::
 
-The calcium summary stats is in `r calcium.sumstats.file` and the LDL-C summary stats file is in `r ldlc.sumstats.file`.  The clumps were generated using the following plink2 options:
+
+
+The calcium summary stats is in biomarkers-30680-both_sexes-irnt.tsv and the LDL-C summary stats file is in biomarkers-30780-both_sexes-irnt.tsv.  The clumps were generated using the following plink2 options:
 
 ```
 # or 30780 for LDL-C 
@@ -67,12 +80,16 @@ plink2 \
   --out biomarkers-30680-both_sexes-irnt-results 
 ```
   
-Frequencies we then calculated from these clumped results and are present in the `r calcium.freq.file` and `r ldlc.freq.file`
+Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq and biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq
   
 
 ## Calcium SNPs
 
-```{r calcium-snps}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 # Read clumped SNPs
 calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols())
 
@@ -123,12 +140,29 @@ calcium.summary_metrics <- calcium.instruments %>%
   )
 
 kable(calcium.summary_metrics, caption="Summary of calcium instruments")
+```
 
+::: {.cell-output-display}
+
+
+Table: Summary of calcium instruments
+
+| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|      362|     0.0963254| 115.0375| 69.57594| 0.3208676| 0.0328442|   127.065|
+
+
+:::
+
+```{.r .cell-code}
 calcium.instruments |> 
   rename(CHR=`#CHROM`) |>
   select(ID,CHR,POS,ALT_FREQS) |>
   write_csv("Calcium Instruments from UKBB.csv")
 ```
+:::
+
+
 
 For each SNP calculated the $R^2$ and the $F$ statistic using these formulas:
 
@@ -143,7 +177,11 @@ Where $MAF$ is the allele frequency from 1000 Genomes, EUR subset, $\beta$ is th
 
 ## LDL-C SNPs
 
-```{r ldlc-snps}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 # Read clumped SNPs
 ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())
 
@@ -194,18 +232,81 @@ ldlc.summary_metrics <- ldlc.instruments %>%
   )
 
 kable(ldlc.summary_metrics, caption="Summary of LDL-C instruments")
+```
 
+::: {.cell-output-display}
+
+
+Table: Summary of LDL-C instruments
+
+| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|      313|     0.1236359| 185.9985| 64.24422| 0.3087037| 0.0397375|   211.557|
+
+
+:::
+
+```{.r .cell-code}
 ldlc.instruments |> 
   rename(CHR=`#CHROM`) |>
   select(ID,CHR,POS,ALT_FREQS) |>
   write_csv("LDL-C Instruments from UKBB.csv")
 ```
+:::
+
+
 
   
 
 
 ## Session Information
 
-```{r session-information}
+
+
+::: {.cell}
+
+```{.r .cell-code}
 sessionInfo()
 ```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+R version 4.5.1 (2025-06-13)
+Platform: aarch64-apple-darwin20
+Running under: macOS Sequoia 15.6.1
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Detroit
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] knitr_1.50      lubridate_1.9.4 forcats_1.0.0   stringr_1.5.1  
+ [5] dplyr_1.1.4     purrr_1.1.0     readr_2.1.5     tidyr_1.3.1    
+ [9] tibble_3.3.0    ggplot2_3.5.2   tidyverse_2.0.0
+
+loaded via a namespace (and not attached):
+ [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
+ [5] compiler_4.5.1     tidyselect_1.2.1   parallel_4.5.1     scales_1.4.0      
+ [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           generics_0.1.4    
+[13] pillar_1.11.0      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6       
+[17] stringi_1.8.7      xfun_0.52          bit64_4.6.0-1      timechange_0.3.0  
+[21] cli_3.6.5          withr_3.0.2        magrittr_2.0.3     digest_0.6.37     
+[25] grid_4.5.1         vroom_1.6.5        rstudioapi_0.17.1  hms_1.1.3         
+[29] lifecycle_1.0.4    vctrs_0.6.5        evaluate_1.0.4     glue_1.8.0        
+[33] farver_2.1.2       rmarkdown_2.29     tools_4.5.1        pkgconfig_2.0.3   
+[37] htmltools_0.5.8.1 
+```
+
+
+:::
+:::

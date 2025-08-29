@@ -1,4 +1,4 @@
-# Analysis of Summary Statistics for Calcium and LDL-C
+# Analysis of Summary Statistics for Calcium and LDL-C from UK Biobank
 
 We wanted to be able to download summary statistics for some traits, and do clumping analysis using plink2
 
@@ -29,9 +29,9 @@ As a result I get set of PLINK-format genotype files for each chromosome, contai
 Downloaded from UK Biobank and did LD clumping (using `ld-clumping.slurm` script).  This script has two stages
 
 1. It creates a merged genotype file, after fixing the headers (1000G_EUR)merged) in plnk2 format.
-2. This reference genome was used to clump the summary statistics for the LDL-C (biomarkers-30780-both_sexes-irnt.tsv) and calcium (biomarkers-30680-both_sexes-irnt.tsv) GWAS downloaded from UK Biobank.  Again these large tsv files are stored on GreatLakes or DataDen and not in this repository.
-2. The ld clumping was done using plink 10000 kb windows with cutoffs at 5E-8 to pick a SNP and 1E-6 as a secondary cutoff.  The clump R2 is set to 0.01.
+2. This reference genome was used to clump the summary statistics for the LDL-C (biomarkers-30780-both_sexes-irnt.tsv) and calcium (biomarkers-30680-both_sexes-irnt.tsv) GWAS downloaded from UK Biobank.  
+2. The ld clumping was done using plink 10000 kb windows with cutoffs at 5E-8 to pick a SNP and 1E-6 as a secondary cutoff.  The clump R2 was set to 0.01.
 
-## Analysis of Instrument SNPS
+## Filtering and Analysis of Instrument SNPS
 
-SNPS were clumped using plink as above and analyzed using the R script `ld_clump_analysis.qmd`
+SNPS were clumped using plink as above and analyzed using the R script `ld_clump_analysis.qmd`.  We filtered to only include SNPS with a European MAF >= 0.01 and calculated summary statistics for both calcium and cholesterol SNPs.

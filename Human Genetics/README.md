@@ -34,4 +34,4 @@ Downloaded from UK Biobank and did LD clumping (using `ld-clumping.slurm` script
 
 ## Filtering and Analysis of Instrument SNPS
 
-SNPS were clumped using plink as above and analyzed using the R script `ld_clump_analysis.qmd`.  We filtered to only include SNPS with a European MAF >= 0.01 and calculated summary statistics for both calcium and cholesterol SNPs.
+SNPS were clumped using plink as above and analyzed using the R script `ld_clump_analysis.qmd`.  We filtered to only include SNPS with a European MAF >= 0.01 and calculated summary statistics for both calcium and cholesterol SNPs.  Wrote out the list of filtered SNPs.

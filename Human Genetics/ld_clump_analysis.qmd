@@ -1,0 +1,196 @@
+---
+title: "Calcium and LDLC Clump Analysis from UK Biobank"
+author: "Dave Bridges"
+date: "2025-06-18"
+editor: source
+format: 
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-clumps/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+This script analyses the clumped data for the calcium and LDL-C summary statistics from UK Biobank.  The clumps were 
+
+## Data Entry
+
+```{r datafiles}
+calcium.clumps.datafile <- 'biomarkers-30680-both_sexes-irnt-results.clumps'
+ldlc.clumps.datafile <- 'biomarkers-30780-both_sexes-irnt-results.clumps'
+
+calcium.freq.file <- 'biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq'
+ldlc.freq.file <- 'biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq'
+
+calcium.sumstats.file <- 'biomarkers-30680-both_sexes-irnt.tsv'
+ldlc.sumstats.file <- 'biomarkers-30780-both_sexes-irnt.tsv'
+```
+
+The calcium summary stats is in `r calcium.sumstats.file` and the LDL-C summary stats file is in `r ldlc.sumstats.file`.  The clumps were generated using the following plink2 options:
+
+  --clump-id-field VARIANT
+  --clump-kb 10000
+  --clump-p-field P
+  --clump-p1 5e-8
+  --clump-p2 1e-6
+  --clump-r2 0.001
+  --out biomarkers-30780-both_sexes-irnt-results
+  --pfile 1000G_EUR_merged
+  --threads 4
+  
+Frequencies we then calculated from these clumped results and are present in the `r calcium.freq.file` and `r ldlc.freq.file`
+  
+
+## Calcium SNPs
+
+```{r calcium-snps}
+# Read clumped SNPs
+calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols())
+
+# Read frequency file (from PLINK --freq output)
+calcium.freqs <- read_tsv(calcium.freq.file, col_types = cols())
+
+# Read full summary stats (with BETA)
+calcium.sumstats <- read_tsv(calcium.sumstats.file, col_types = cols())
+
+# Inspect the column names to confirm merging keys and data availability
+# head(calcium.clumps)
+# head(calcium.freqs)
+# head(calcium.sumstats)
+
+# The clump file 'SNP' column should match frequency 'ID' column
+# The sumstats 'VARIANT' column should match clumps 'SNP' column
+
+# Merge clumps with frequency (to get MAF)
+calcium.clumps_freq <- calcium.clumps %>%
+  inner_join(calcium.freqs %>% select(ID, ALT_FREQS), by = "ID")
+
+# Merge with summary stats (to get beta)
+calcium.clumps_freq_beta <- calcium.clumps_freq %>%
+  inner_join(calcium.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA), by = "ID")
+
+# Filter by MAF >= 0.01
+calcium.instruments <- calcium.clumps_freq_beta %>%
+  filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
+
+n.calcium <- 431888  # replace with your actual exposure GWAS sample size
+
+calcium.instruments <- calcium.instruments %>%
+  mutate(
+    R2 = 2 * ALT_FREQS * (1 - ALT_FREQS) * BETA^2,
+    F = (R2 * (n.calcium - 2)) / (1 - R2)
+  )
+
+# Calculate summary metrics
+calcium.summary_metrics <- calcium.instruments %>%
+  summarise(
+    num_snps = n(),
+    cumulative_R2 = sum(R2, na.rm = TRUE),
+    mean_F = mean(F, na.rm=TRUE),
+    median_F = median(F, na.rm=TRUE),
+    mean_maf = mean(ALT_FREQS, na.rm = TRUE),
+    mean_beta = mean(abs(BETA), na.rm = TRUE),
+    overall_F = (cumulative_R2 * (n.calcium - num_snps - 1)) / ((1 - cumulative_R2) * num_snps)
+  )
+
+kable(calcium.summary_metrics, caption="Summary of calcium instruments")
+```
+
+For each SNP calculated the $R^2$ and the $F$ statistic using these formulas:
+
+$$
+R^2 = 2 \times \text{MAF} \times (1 - \text{MAF}) \times \beta^2
+$$
+
+$$
+F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
+$$
+Where $MAF$ is the allele frequency from 1000 Genomes, EUR subset, $\beta$ is the effect size of the allele from UK Biobank, $N$ is the sample size of that trait in UK BioBank, and $k$ is the number of instruments (SNPs).  The $F$ statistic is used to assess instrument strength, with values above 10 indicating strong instruments.
+
+## LDL-C SNPs
+
+```{r ldlc-snps}
+# Read clumped SNPs
+ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())
+
+# Read frequency file (from PLINK --freq output)
+ldlc.freqs <- read_tsv(ldlc.freq.file, col_types = cols())
+
+# Read full summary stats (with BETA)
+ldlc.sumstats <- read_tsv(ldlc.sumstats.file, col_types = cols())
+
+# Inspect the column names to confirm merging keys and data availability
+# head(ldlc.clumps)
+# head(ldlc.freq)
+# head(ldlc.sumstats)
+
+# The clump file 'SNP' column should match frequency 'ID' column
+# The sumstats 'VARIANT' column should match clumps 'SNP' column
+
+# Merge clumps with frequency (to get MAF)
+ldlc.clumps_freq <- ldlc.clumps %>%
+  inner_join(ldlc.freqs %>% select(ID, ALT_FREQS), by = "ID")
+
+# Merge with summary stats (to get beta)
+ldlc.clumps_freq_beta <- ldlc.clumps_freq %>%
+  inner_join(ldlc.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA), by = "ID")
+
+# Filter by MAF >= 0.01
+ldlc.instruments <- ldlc.clumps_freq_beta %>%
+  filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
+
+n.ldlc <- 469680   # replace with your actual exposure GWAS sample size
+
+ldlc.instruments <- ldlc.instruments %>%
+  mutate(
+    R2 = 2 * ALT_FREQS * (1 - ALT_FREQS) * BETA^2,
+    F = (R2 * (n.ldlc - 2)) / (1 - R2)
+  )
+
+# Calculate summary metrics
+ldlc.summary_metrics <- ldlc.instruments %>%
+  summarise(
+    num_snps = n(),
+    cumulative_R2 = sum(R2, na.rm = TRUE),    
+    mean_F = mean(F, na.rm=TRUE),
+    median_F = median(F, na.rm=TRUE),
+    mean_maf = mean(ALT_FREQS, na.rm = TRUE),
+    mean_beta = mean(abs(BETA), na.rm = TRUE),
+    overall_F = (cumulative_R2 * (n.ldlc - num_snps - 1)) / ((1 - cumulative_R2) * num_snps)
+  )
+
+kable(ldlc.summary_metrics, caption="Summary of LDL-C instruments")
+```
+
+  
+
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

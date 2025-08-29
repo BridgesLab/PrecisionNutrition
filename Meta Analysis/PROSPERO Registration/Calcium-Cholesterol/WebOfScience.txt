@@ -1,0 +1,7 @@
+Web of Science Core Collection Search Strategy
+--------------------------------
+TS=( (calcium OR "serum calcium" OR "plasma calcium" OR hypercalcem* OR hypocalcem*)
+     AND (cholesterol OR "total cholesterol" OR LDL OR "LDL-C" OR HDL OR "HDL-C" OR dyslipid*)
+     AND (blood OR serum OR plasma) )
+Refine: Document Types = Article OR Early Access; exclude Meeting Abstracts if desired.
+No date or language limits applied.

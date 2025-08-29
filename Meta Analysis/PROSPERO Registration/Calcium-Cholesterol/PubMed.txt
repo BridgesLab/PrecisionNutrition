@@ -1,0 +1,18 @@
+PubMed (MEDLINE) Search Strategy
+--------------------------------
+(
+  ("Calcium/blood"[Mesh] OR "Calcium, Ionized"[Mesh] OR calcium[tiab] OR "serum calcium"[tiab] OR "plasma calcium"[tiab] OR hypercalcem*[tiab] OR hypocalcem*[tiab])
+)
+AND
+(
+  ("Cholesterol/blood"[Mesh] OR "Cholesterol, LDL"[Mesh] OR "Cholesterol, HDL"[Mesh] OR cholesterol[tiab] OR "total cholesterol"[tiab] OR LDL[tiab] OR "LDL-C"[tiab] OR HDL[tiab] OR "HDL-C"[tiab] OR dyslipid*[tiab])
+)
+AND
+(
+  (blood[tiab] OR serum[tiab] OR plasma[tiab] OR "Blood"[Mesh])
+)
+NOT
+(
+  animals[mh] NOT humans[mh]
+)
+No date or language limits applied.

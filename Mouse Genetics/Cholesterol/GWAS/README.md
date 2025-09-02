@@ -3,6 +3,12 @@
 Created bimbam genotype files and annotation files (Annotation.csv, Covariates.[diet/sex/gxe].tab, and Cholesterol_[all/ncd/hfd]) using `bimbam-generation.sh` from the version 12 dataset downloaded `core.Svenson_DO_HFD.v12.Rdata ` on November 3, 2023.
 Ran GEMMA for several analyses or cholesterol analyses using `gemma-all.sh`
 
+The `bimbam-generation.sh` script runs the following markdown files to stup files for GEMMA analyses
+
+* Bimbam-generation.qmd (generate the genotype files)
+* SNP-Annotation.qmd (generates the SNP annotation files)
+* Phenotype-setup.qmd (generates the phenotype files)
+
 In order to generate PRS and clumping had to re-generate genotype files for Plink format (bed/bim/fam files).  This was done using **Plink-generation.qmd** within the prior script which had to ignore the dosage data and just round each snp up to 0/1/2 (Plink 1.9 does not use dosage data, Plink 2+ didnt have ld calculations set up yet.
 
 The GWAS analyses were run for these groups:

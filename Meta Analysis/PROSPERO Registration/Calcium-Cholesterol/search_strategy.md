@@ -16,6 +16,10 @@ All records retrieved through these supplementary methods will be screened using
 
 Searches will be limited to human studies with no date or language restrictions; non-English articles will be translated where feasible (or listed as “awaiting classification” if translation is not possible). Publication types excluded at screening: animal studies, case reports/series, editorials, narrative reviews.
 
+## RCTs and Group Level Changes
+
+Randomized or nonrandomized intervention studies will be included only if they report such an association. Studies that only report group-wise changes in calcium and cholesterol without estimating their association will be excluded from the main analysis but may be summarised descriptively as a secondary analysis.
+
 ## Documentation
 
 The detailed line-by-line strategies for each database (including subject headings and keywords) are provided in the protocol appendix and will be rerun prior to final analyses to capture newly published records.

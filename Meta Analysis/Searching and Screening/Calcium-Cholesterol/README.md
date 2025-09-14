@@ -1,6 +1,11 @@
 ## Initial Screening of Manuscripts
 
-Following the search strategy described in the [PROSPERO documentation](../../PROSPERO%20Registration/Calcium-Cholesterol/search_strategy.md).
+Following the search strategy described in the [PROSPERO documentation](../../PROSPERO%20Registration/Calcium-Cholesterol/search_strategy.md).  Searches were done on PubMed, EMBASE, Cochrane (CENTRAL, and CINAHL), and Web of Science with bib files saved. These were imported into Zotero (XXX total references) and de-duplicated to YYY references.
+
+### Raw Files
+
+- PubMed: pubmed-serumcalci-set
+- EMBASE: records.ris
 
 Notes:
 

@@ -82,10 +82,10 @@ These data can be found in `r getwd()` in files named `r library.file` and `r de
 
 ```{r manual-screening}
 added.fields <- c('DateScreened','Screener','Decision','FullTextView','ExclusionReason','Notes')
-deduplicatd.library |>
-  select(Key,Title,DOI,`Abstract Note`) |>
-  mutate(!!!set_names(rep(NA, length(added.fields)), added.fields)) |>
-  write_csv("Screening Log.csv")
+# deduplicatd.library |>
+#   select(Key,Title,DOI,`Abstract Note`) |>
+#   mutate(!!!set_names(rep(NA, length(added.fields)), added.fields)) |>
+#   write_csv("Screening Log.csv")
 ```
 
 This screen flagged `r combined.file |> filter(method_ineligible==1) |> nrow()` out of `r combined.file |> nrow()` articles.

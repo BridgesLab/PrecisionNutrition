@@ -1,0 +1,120 @@
+---
+title: "Validation of Pre-Screening of Deduplicated Articles by GPT-5"
+author: "Dave Bridges"
+date: "2025-09-21"
+editor: source
+format: 
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures/"
+  gfm:
+    html-math-method: webtex
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+I used a GPT-based screen to evaluate the deduplicated list to remove meta-analyses, nonhuman studies, and review articles
+
+## GPT Prompt
+
+You are acting as an expert systematic-reviewer following PRISMA guidelines.  
+You will classify each article in a deduplicated list by reading its Title and Abstract (fields: `Title`, `Abstract Note`).
+
+Flag any article as:
+- "Case report/series" if the title or abstract clearly states “case report”, “case series”, or “a case of …”.
+- "Review/Systematic review/Meta-analysis" if the title or abstract clearly states “systematic review”, “meta-analysis”, “review article”, or “narrative review”.
+- "Non-human study" only if it is clear the study population is not human and no human data are included.
+- "Unsure" if you cannot confidently classify it into one of the above categories.
+
+Be conservative: only flag an article if it clearly matches the criteria.  
+Do not exclude any article with both human and non-human data.
+
+Output a CSV file with two columns:  
+`Key` (article key from input file) and `Reason` (one of the four categories above).
+
+## Raw Data
+
+Describe your raw data files, including what the columns mean (and what units they are in).
+
+```{r data-input}
+library(readr) #loads the readr package
+library.file <- 'deduplicated-library.csv'
+deduplicated.file <- 'classified_articles.csv'
+
+deduplicatd.library <- read_csv(library.file)
+annotation <- read_csv(deduplicated.file)
+
+combined.file <- left_join(deduplicatd.library,annotation, by="Key") |>
+  mutate(Key = as.factor(Reason)) |>
+  mutate(method_ineligible = ifelse(Reason !="Unsure", 1, 0))
+```
+
+These data can be found in `r getwd()` in files named `r library.file` and `r deduplicated.file`.  This input file was most recently updated on `r format(file.info(library.file)$mtime, "%Y-%m-%d")`.  This script was most recently updated on `r date()`.
+
+## Analysis
+
+### Manual Screening
+
+```{r manual-screening}
+added.fields <- c('DateScreened','Screener','Decision','FullTextView','ExclusionReason','Notes')
+deduplicatd.library |>
+  select(Key,Title,DOI,`Abstract Note`) |>
+  mutate(!!!set_names(rep(NA, length(added.fields)), added.fields)) |>
+  write_csv("Screening Log.csv")
+```
+
+This screen flagged `r combined.file |> filter(method_ineligible==1) |> nrow()` out of `r combined.file |> nrow()` articles.
+
+### Annotations by Key
+
+```{r annotations-by-key}
+combined.file %>%
+  group_by(Reason) |>
+  count() -> annotation.counts
+library(knitr)
+library(kableExtra)
+kable(annotation.counts, caption="Annotated articles by keys")
+
+ggplot(annotation.counts |> filter(Reason!="Unsure"),
+       aes(x=reorder(Reason,desc(n)),y=n)) +
+  geom_bar(stat='identity') +
+  theme_classic(base_size=16) +
+  labs(y='Removed articles',
+       x='') +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1))
+```
+
+## Interpretation
+
+A brief summary of what the interpretation of these results were
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

@@ -18,7 +18,7 @@ Searches will be limited to human studies with no date or language restrictions;
 
 ## RCTs and Group Level Changes
 
-Randomized or nonrandomized intervention studies will be included only if they report such an association. Studies that only report group-wise changes in calcium and cholesterol without estimating their association will be excluded from the main analysis but may be summarised descriptively as a secondary analysis.
+Randomized or nonrandomized intervention studies will be initially included only if they report such an association. Studies that only report group-wise changes in calcium and cholesterol without estimating their association will be excluded from the main analysis but may be summarised descriptively as a secondary analysis.  Full-text articles will be noted for this analysis if there is a change between groups or across treatments in either serum calcium or a blood lipid measurement.
 
 ## Documentation
 

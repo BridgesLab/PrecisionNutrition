@@ -12,9 +12,21 @@ These are all found in this folder
 - Cochrane CINAHL: ae563724-ae52-4a0f-b528-4bc02b1205ad.bib (734 records).  Had to manually clean double quotes and extra curly brackets in the abstracts.
 - Web of Science: savedrecs.ris and savedrecs (1).ris (1021 records, had to download in two parts) https://www.webofscience.com/wos/woscc/summary/55f88581-4004-40e7-9bdb-1cfb392fbddf-0179f0d203/relevance/1
 
+### Manual Screening of Deduplicated Articles
+
+To screen articles to read the full text we will exclude articles if their abstract/title indicates:
+
+- not a a human study
+- not a case study 
+- doest not measure serum calcium and any blood lipids (triglycerides, HDL, LDL or total cholesterol).
+- is a review article, a systematic review or a meta-analysis
+
+In those cases the article will be marked as If it is not (e.g. fails those criteria above) we mark **No** in that `FullTextView` column, **Exclude** under `Decision`, and the reason under `ExclusionReason`.  If a paper is excluded for multiple reasons, they are separated by a ";" The initials and date at which the article was screened will be marked in `DateScreened` and `Screener` via a shared google sheet.
+
 ### Initial GPT-Based Screening
 
-We used a scripted GPT-5 prompt (Supplementary Table S1) to classify and exclude non-eligible records based on Title and Abstract. Prompt text and code are available in our repository.
+We used a scripted GPT-5 prompt (Supplementary Table S1) to classify and exclude non-eligible records based on Title and Abstract. Prompt text and code are available in our repository.  We initially automatically classified records using a GPT-5 prompt (Supplementary File S1).
+We drew a stratified random sample of 250 records (125 flagged, 125 unflagged) for manual screening by two independent reviewers.
 
 #### Prompt
 

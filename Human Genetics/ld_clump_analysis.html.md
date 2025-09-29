@@ -50,17 +50,20 @@ This script analyses the clumped data for the calcium and LDL-C summary statisti
 ```{.r .cell-code}
 calcium.clumps.datafile <- 'biomarkers-30680-both_sexes-irnt-results.clumps'
 ldlc.clumps.datafile <- 'biomarkers-30780-both_sexes-irnt-results.clumps'
+tc.clumps.datafile <- 'biomarkers-30690-both_sexes-irnt-results.clumps'
 
 calcium.freq.file <- 'biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq'
 ldlc.freq.file <- 'biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq'
+tc.freq.file <- 'biomarkers-30690-both_sexes-irnt-results-clumped-snps.afreq'
 
 calcium.sumstats.file <- 'biomarkers-30680-both_sexes-irnt.tsv'
 ldlc.sumstats.file <- 'biomarkers-30780-both_sexes-irnt.tsv'
+tc.sumstats.file <- 'biomarkers-30690-both_sexes-irnt.tsv'
 ```
 :::
 
 
-The calcium summary stats is in biomarkers-30680-both_sexes-irnt.tsv and the LDL-C summary stats file is in biomarkers-30780-both_sexes-irnt.tsv.  The clumps were generated using the following plink2 options:
+The calcium summary stats is in biomarkers-30680-both_sexes-irnt.tsv, the total cholesterol in biomarkers-30690-both_sexes-irnt.tsv and the LDL-C summary stats file is in biomarkers-30780-both_sexes-irnt.tsv.  The clumps were generated using the following plink2 options:
 
 ```
 # or 30780 for LDL-C 
@@ -77,7 +80,7 @@ plink2 \
   --out biomarkers-30680-both_sexes-irnt-results 
 ```
   
-Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq and biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq
+Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq, biomarkers-30690-both_sexes-irnt-results-clumped-snps.afreq and biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq
   
 
 ## Calcium SNPs
@@ -86,10 +89,10 @@ Frequencies we then calculated from these clumped results and are present in the
 ::: {.cell}
 
 ```{.r .cell-code}
-# Read clumped SNPs
+# Read clumped SNPs and expand out clumped SNPs
 calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols()) |>
-  rename(P_clumping = P)#to separate from sumstats p-value
-
+  rename(P_clumping = P) 
+  
 # Read frequency file (from PLINK --freq output)
 calcium.freqs <- read_tsv(calcium.freq.file, col_types = cols())
 
@@ -104,13 +107,17 @@ calcium.sumstats <- read_tsv(calcium.sumstats.file, col_types = cols())
 # The clump file 'SNP' column should match frequency 'ID' column
 # The sumstats 'VARIANT' column should match clumps 'SNP' column
 
-# Merge clumps with frequency (to get MAF)
-calcium.clumps_freq <- calcium.clumps %>%
-  inner_join(calcium.freqs %>% select(ID, ALT_FREQS), by = "ID")
+# Merge clumps with frequency (to get MAF for each SNP)
+calcium.clumps_freq <- 
+  calcium.clumps %>%
+  select(-`#CHROM`) |>
+  left_join(calcium.freqs, by = c("ID"="ID")) #missing MAF for most SNPs
 
 # Merge with summary stats (to get beta)
-calcium.clumps_freq_beta <- calcium.clumps_freq %>%
-  inner_join(calcium.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA,SE,P), by = "ID")
+calcium.clumps_freq_beta <- 
+  calcium.clumps_freq %>%
+  inner_join(calcium.sumstats, 
+             by = c("ID"="VARIANT"))
 
 # Filter by MAF >= 0.01
 calcium.instruments <- calcium.clumps_freq_beta %>%
@@ -125,7 +132,8 @@ calcium.instruments <- calcium.instruments %>%
   )
 
 # Calculate summary metrics
-calcium.summary_metrics <- calcium.instruments %>%
+calcium.summary_metrics <- 
+  calcium.instruments %>%
   summarise(
     num_snps = n(),
     cumulative_R2 = sum(R2, na.rm = TRUE),
@@ -173,91 +181,6 @@ $$
 F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 $$
 Where $MAF$ is the allele frequency from 1000 Genomes, EUR subset, $\beta$ is the effect size of the allele from UK Biobank, $N$ is the sample size of that trait in UK BioBank, and $k$ is the number of instruments (SNPs).  The $F$ statistic is used to assess instrument strength, with values above 10 indicating strong instruments.
-
-## LDL-C SNPs
-
-
-::: {.cell}
-
-```{.r .cell-code}
-# Read clumped SNPs
-ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())|>
-  rename(P_clumping = P) #to separate from sumstats p-value
-
-# Read frequency file (from PLINK --freq output)
-ldlc.freqs <- read_tsv(ldlc.freq.file, col_types = cols())
-
-# Read full summary stats (with BETA)
-ldlc.sumstats <- read_tsv(ldlc.sumstats.file, col_types = cols())
-
-# Inspect the column names to confirm merging keys and data availability
-# head(ldlc.clumps)
-# head(ldlc.freq)
-# head(ldlc.sumstats)
-
-# The clump file 'SNP' column should match frequency 'ID' column
-# The sumstats 'VARIANT' column should match clumps 'SNP' column
-
-# Merge clumps with frequency (to get MAF)
-ldlc.clumps_freq <- ldlc.clumps %>%
-  inner_join(ldlc.freqs %>% select(ID, ALT_FREQS), by = "ID")
-
-# Merge with summary stats (to get beta)
-ldlc.clumps_freq_beta <- ldlc.clumps_freq %>%
-  inner_join(ldlc.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA, SE, P), by = "ID")
-
-# Filter by MAF >= 0.01
-ldlc.instruments <- ldlc.clumps_freq_beta %>%
-  filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
-
-n.ldlc <- 469680   # replace with your actual exposure GWAS sample size
-
-ldlc.instruments <- ldlc.instruments %>%
-  mutate(
-    R2 = 2 * ALT_FREQS * (1 - ALT_FREQS) * BETA^2,
-    F = (R2 * (n.ldlc - 2)) / (1 - R2)
-  )
-
-# Calculate summary metrics
-ldlc.summary_metrics <- ldlc.instruments %>%
-  summarise(
-    num_snps = n(),
-    cumulative_R2 = sum(R2, na.rm = TRUE),    
-    mean_F = mean(F, na.rm=TRUE),
-    median_F = median(F, na.rm=TRUE),
-    mean_maf = mean(ALT_FREQS, na.rm = TRUE),
-    mean_beta = mean(abs(BETA), na.rm = TRUE),
-    overall_F = (cumulative_R2 * (n.ldlc - num_snps - 1)) / ((1 - cumulative_R2) * num_snps)
-  )
-
-kable(ldlc.summary_metrics, caption="Summary of LDL-C instruments")
-```
-
-::: {.cell-output-display}
-
-
-Table: Summary of LDL-C instruments
-
-| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|      313|     0.1236359| 185.9985| 64.24422| 0.3087037| 0.0397375|   211.557|
-
-
-:::
-
-```{.r .cell-code}
-ldlc.instruments |> 
-  separate(ID, into = c("CHR", "POS", "REF", "ALT"), sep = ":", remove = FALSE) %>%
-  # choose which is EA/OA – here I assume ALT is the effect allele
-  rename(EA = ALT, OA = REF) |>
-  mutate(N_exposure=n.ldlc) |>
-  select(ID,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
-  write_csv("LDL-C Instruments from UKBB.csv")
-```
-:::
-
-
-  
 
 
 ## Session Information

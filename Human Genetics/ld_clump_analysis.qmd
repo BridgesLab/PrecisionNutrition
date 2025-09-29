@@ -73,9 +73,10 @@ Frequencies we then calculated from these clumped results and are present in the
 ## Calcium SNPs
 
 ```{r calcium-snps}
-# Read clumped SNPs
-calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols())
-
+# Read clumped SNPs and expand out clumped SNPs
+calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols()) |>
+  rename(P_clumping = P) 
+  
 # Read frequency file (from PLINK --freq output)
 calcium.freqs <- read_tsv(calcium.freq.file, col_types = cols())
 
@@ -90,13 +91,17 @@ calcium.sumstats <- read_tsv(calcium.sumstats.file, col_types = cols())
 # The clump file 'SNP' column should match frequency 'ID' column
 # The sumstats 'VARIANT' column should match clumps 'SNP' column
 
-# Merge clumps with frequency (to get MAF)
-calcium.clumps_freq <- calcium.clumps %>%
-  inner_join(calcium.freqs %>% select(ID, ALT_FREQS), by = "ID")
+# Merge clumps with frequency (to get MAF for each SNP)
+calcium.clumps_freq <- 
+  calcium.clumps %>%
+  select(-`#CHROM`) |>
+  left_join(calcium.freqs, by = c("ID"="ID")) #missing MAF for most SNPs
 
 # Merge with summary stats (to get beta)
-calcium.clumps_freq_beta <- calcium.clumps_freq %>%
-  inner_join(calcium.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA), by = "ID")
+calcium.clumps_freq_beta <- 
+  calcium.clumps_freq %>%
+  inner_join(calcium.sumstats, 
+             by = c("ID"="VARIANT"))
 
 # Filter by MAF >= 0.01
 calcium.instruments <- calcium.clumps_freq_beta %>%
@@ -111,7 +116,8 @@ calcium.instruments <- calcium.instruments %>%
   )
 
 # Calculate summary metrics
-calcium.summary_metrics <- calcium.instruments %>%
+calcium.summary_metrics <- 
+  calcium.instruments %>%
   summarise(
     num_snps = n(),
     cumulative_R2 = sum(R2, na.rm = TRUE),
@@ -125,8 +131,11 @@ calcium.summary_metrics <- calcium.instruments %>%
 kable(calcium.summary_metrics, caption="Summary of calcium instruments")
 
 calcium.instruments |> 
-  rename(CHR=`#CHROM`) |>
-  select(ID,CHR,POS,ALT_FREQS) |>
+  separate(ID, into = c("CHR", "POS", "REF", "ALT"), sep = ":", remove = FALSE) %>%
+  # choose which is EA/OA – here I assume ALT is the effect allele
+  rename(EA = ALT, OA = REF) |>
+  mutate(N_exposure=n.calcium) |>
+  select(ID,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("Calcium Instruments from UKBB.csv")
 ```
 
@@ -144,8 +153,14 @@ Where $MAF$ is the allele frequency from 1000 Genomes, EUR subset, $\beta$ is th
 ## LDL-C SNPs
 
 ```{r ldlc-snps}
-# Read clumped SNPs
-ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())
+# Read clumped SNPs and expand out clumped SNPs
+ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())|>
+  rename(P_clumping = P) |> #to separate from sumstats p-value
+  mutate(SP2 = ifelse(is.na(SP2), "", SP2)) %>%     # replace NA with empty string
+  separate_rows(SP2, sep = ",") %>%                 # one SNP per row
+  mutate(SNP = ifelse(SP2 == "", ID, SP2)) %>%     # use SP2 if present, else lead SNP ID
+  select(`#CHROM`, POS, ID, everything()) |>
+  rename(LEAD_SNP=ID)
 
 # Read frequency file (from PLINK --freq output)
 ldlc.freqs <- read_tsv(ldlc.freq.file, col_types = cols())
@@ -163,11 +178,11 @@ ldlc.sumstats <- read_tsv(ldlc.sumstats.file, col_types = cols())
 
 # Merge clumps with frequency (to get MAF)
 ldlc.clumps_freq <- ldlc.clumps %>%
-  inner_join(ldlc.freqs %>% select(ID, ALT_FREQS), by = "ID")
+  inner_join(ldlc.freqs %>% select(ID, ALT_FREQS), by = "SNP")
 
 # Merge with summary stats (to get beta)
 ldlc.clumps_freq_beta <- ldlc.clumps_freq %>%
-  inner_join(ldlc.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA), by = "ID")
+  inner_join(ldlc.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA, SE, P), by = "SNP")
 
 # Filter by MAF >= 0.01
 ldlc.instruments <- ldlc.clumps_freq_beta %>%
@@ -182,7 +197,9 @@ ldlc.instruments <- ldlc.instruments %>%
   )
 
 # Calculate summary metrics
-ldlc.summary_metrics <- ldlc.instruments %>%
+ldlc.summary_metrics <- 
+  ldlc.instruments %>%
+  distinct(LEAD_SNP,.keep_all = T) |> #only calculate for lead SNP
   summarise(
     num_snps = n(),
     cumulative_R2 = sum(R2, na.rm = TRUE),    
@@ -196,8 +213,11 @@ ldlc.summary_metrics <- ldlc.instruments %>%
 kable(ldlc.summary_metrics, caption="Summary of LDL-C instruments")
 
 ldlc.instruments |> 
-  rename(CHR=`#CHROM`) |>
-  select(ID,CHR,POS,ALT_FREQS) |>
+  separate(ID, into = c("CHR", "POS", "REF", "ALT"), sep = ":", remove = FALSE) %>%
+  # choose which is EA/OA – here I assume ALT is the effect allele
+  rename(EA = ALT, OA = REF) |>
+  mutate(N_exposure=n.ldlc) |>
+  select(SNP,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("LDL-C Instruments from UKBB.csv")
 ```
 

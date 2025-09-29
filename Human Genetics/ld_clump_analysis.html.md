@@ -40,11 +40,9 @@ color_scheme <- c("#00274c", "#ffcb05")
 :::
 
 
-
 This script analyses the clumped data for the calcium and LDL-C summary statistics from UK Biobank.  The clumps were 
 
 ## Data Entry
-
 
 
 ::: {.cell}
@@ -60,7 +58,6 @@ calcium.sumstats.file <- 'biomarkers-30680-both_sexes-irnt.tsv'
 ldlc.sumstats.file <- 'biomarkers-30780-both_sexes-irnt.tsv'
 ```
 :::
-
 
 
 The calcium summary stats is in biomarkers-30680-both_sexes-irnt.tsv and the LDL-C summary stats file is in biomarkers-30780-both_sexes-irnt.tsv.  The clumps were generated using the following plink2 options:
@@ -86,12 +83,12 @@ Frequencies we then calculated from these clumped results and are present in the
 ## Calcium SNPs
 
 
-
 ::: {.cell}
 
 ```{.r .cell-code}
 # Read clumped SNPs
-calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols())
+calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols()) |>
+  rename(P_clumping = P)#to separate from sumstats p-value
 
 # Read frequency file (from PLINK --freq output)
 calcium.freqs <- read_tsv(calcium.freq.file, col_types = cols())
@@ -113,7 +110,7 @@ calcium.clumps_freq <- calcium.clumps %>%
 
 # Merge with summary stats (to get beta)
 calcium.clumps_freq_beta <- calcium.clumps_freq %>%
-  inner_join(calcium.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA), by = "ID")
+  inner_join(calcium.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA,SE,P), by = "ID")
 
 # Filter by MAF >= 0.01
 calcium.instruments <- calcium.clumps_freq_beta %>%
@@ -156,12 +153,14 @@ Table: Summary of calcium instruments
 
 ```{.r .cell-code}
 calcium.instruments |> 
-  rename(CHR=`#CHROM`) |>
-  select(ID,CHR,POS,ALT_FREQS) |>
+  separate(ID, into = c("CHR", "POS", "REF", "ALT"), sep = ":", remove = FALSE) %>%
+  # choose which is EA/OA – here I assume ALT is the effect allele
+  rename(EA = ALT, OA = REF) |>
+  mutate(N_exposure=n.calcium) |>
+  select(ID,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("Calcium Instruments from UKBB.csv")
 ```
 :::
-
 
 
 For each SNP calculated the $R^2$ and the $F$ statistic using these formulas:
@@ -178,12 +177,12 @@ Where $MAF$ is the allele frequency from 1000 Genomes, EUR subset, $\beta$ is th
 ## LDL-C SNPs
 
 
-
 ::: {.cell}
 
 ```{.r .cell-code}
 # Read clumped SNPs
-ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())
+ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols())|>
+  rename(P_clumping = P) #to separate from sumstats p-value
 
 # Read frequency file (from PLINK --freq output)
 ldlc.freqs <- read_tsv(ldlc.freq.file, col_types = cols())
@@ -205,7 +204,7 @@ ldlc.clumps_freq <- ldlc.clumps %>%
 
 # Merge with summary stats (to get beta)
 ldlc.clumps_freq_beta <- ldlc.clumps_freq %>%
-  inner_join(ldlc.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA), by = "ID")
+  inner_join(ldlc.sumstats %>% rename(ID = VARIANT) %>% select(ID, BETA, SE, P), by = "ID")
 
 # Filter by MAF >= 0.01
 ldlc.instruments <- ldlc.clumps_freq_beta %>%
@@ -248,19 +247,20 @@ Table: Summary of LDL-C instruments
 
 ```{.r .cell-code}
 ldlc.instruments |> 
-  rename(CHR=`#CHROM`) |>
-  select(ID,CHR,POS,ALT_FREQS) |>
+  separate(ID, into = c("CHR", "POS", "REF", "ALT"), sep = ":", remove = FALSE) %>%
+  # choose which is EA/OA – here I assume ALT is the effect allele
+  rename(EA = ALT, OA = REF) |>
+  mutate(N_exposure=n.ldlc) |>
+  select(ID,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("LDL-C Instruments from UKBB.csv")
 ```
 :::
-
 
 
   
 
 
 ## Session Information
-
 
 
 ::: {.cell}
@@ -274,7 +274,7 @@ sessionInfo()
 ```
 R version 4.5.1 (2025-06-13)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.6.1
+Running under: macOS Sequoia 15.7
 
 Matrix products: default
 BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
@@ -290,21 +290,21 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] knitr_1.50      lubridate_1.9.4 forcats_1.0.0   stringr_1.5.1  
+ [1] knitr_1.50      lubridate_1.9.4 forcats_1.0.0   stringr_1.5.2  
  [5] dplyr_1.1.4     purrr_1.1.0     readr_2.1.5     tidyr_1.3.1    
- [9] tibble_3.3.0    ggplot2_3.5.2   tidyverse_2.0.0
+ [9] tibble_3.3.0    ggplot2_4.0.0   tidyverse_2.0.0
 
 loaded via a namespace (and not attached):
  [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
  [5] compiler_4.5.1     tidyselect_1.2.1   parallel_4.5.1     scales_1.4.0      
  [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           generics_0.1.4    
-[13] pillar_1.11.0      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6       
-[17] stringi_1.8.7      xfun_0.52          bit64_4.6.0-1      timechange_0.3.0  
-[21] cli_3.6.5          withr_3.0.2        magrittr_2.0.3     digest_0.6.37     
-[25] grid_4.5.1         vroom_1.6.5        rstudioapi_0.17.1  hms_1.1.3         
-[29] lifecycle_1.0.4    vctrs_0.6.5        evaluate_1.0.4     glue_1.8.0        
-[33] farver_2.1.2       rmarkdown_2.29     tools_4.5.1        pkgconfig_2.0.3   
-[37] htmltools_0.5.8.1 
+[13] htmlwidgets_1.6.4  pillar_1.11.0      RColorBrewer_1.1-3 tzdb_0.5.0        
+[17] rlang_1.1.6        stringi_1.8.7      xfun_0.53          S7_0.2.0          
+[21] bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5          withr_3.0.2       
+[25] magrittr_2.0.4     digest_0.6.37      grid_4.5.1         vroom_1.6.5       
+[29] rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5       
+[33] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       rmarkdown_2.29    
+[37] tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 
 ```
 
 

@@ -1,6 +1,6 @@
 # Analysis of Summary Statistics for Calcium and LDL-C from UK Biobank
 
-We wanted to be able to download summary statistics for some traits, and do clumping analysis using plink2
+We wanted to be able to download summary statistics for some traits, and do clumping analysis using plink2.
 
 ## Software Requirements
 
@@ -26,11 +26,22 @@ As a result I get set of PLINK-format genotype files for each chromosome, contai
 
 ## Summary Statistics Files
 
-Downloaded from UK Biobank and did LD clumping (using `ld-clumping.slurm` script).  This script has two stages
+### UK Biobank Phenotype Summary Statistics
 
-1. It creates a merged genotype file, after fixing the headers (1000G_EUR)merged) in plnk2 format.
+The manifest for these files including links was found on the [Pan-UK Biobank phenotype manifest](https://docs.google.com/spreadsheets/d/1AeeADtT0U1AukliiNyiVzVRdLYPkTbruQSk38DeutU8/edit?gid=1450719288#gid=1450719288):
+
+* Total Cholesterol (trait 30690; 420607 cases) from https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_flat_files/biomarkers-30690-both_sexes-irnt.tsv.bgz
+* LDL Cholesterol (trait 30780; 419831 cases) from https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_flat_files/biomarkers-30780-both_sexes-irnt.tsv.bgz
+* Serum Calcium (trait 30680; 385066 cases) from https://pan-ukb-us-east-1.s3.amazonaws.com/sumstats_flat_files/biomarkers-30680-both_sexes-irnt.tsv.bgz
+
+These were extracted via zcat for use in the clumping analsyes.
+
+Did LD clumping (using `ld-clumping.slurm` script).  This script has two stages
+
+1. It creates a merged genotype file, after fixing the headers (1000G_EUR_merged) in plink2 format.
 2. This reference genome was used to clump the summary statistics for the LDL-C (biomarkers-30780-both_sexes-irnt.tsv) and calcium (biomarkers-30680-both_sexes-irnt.tsv) GWAS downloaded from UK Biobank.  
-2. The ld clumping was done using plink 10000 kb windows with cutoffs at 5E-8 to pick a SNP and 1E-6 as a secondary cutoff.  The clump R2 was set to 0.01.
+3. The ld clumping was done using plink 10000 kb windows with cutoffs at 5E-8 to pick a SNP and 1E-6 as a secondary cutoff.  The clump R2 was set to 0.01.
+4. Calculated MAFs for both clumped and all SNPs.
 
 ## Filtering and Analysis of Instrument SNPS
 

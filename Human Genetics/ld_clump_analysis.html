@@ -114,6 +114,7 @@ window.Quarto = {
   <ul>
   <li><a href="#data-entry" id="toc-data-entry" class="nav-link active" data-scroll-target="#data-entry">Data Entry</a></li>
   <li><a href="#calcium-snps" id="toc-calcium-snps" class="nav-link" data-scroll-target="#calcium-snps">Calcium SNPs</a></li>
+  <li><a href="#matching-exposure-clumped-snps-to-outcome-snps" id="toc-matching-exposure-clumped-snps-to-outcome-snps" class="nav-link" data-scroll-target="#matching-exposure-clumped-snps-to-outcome-snps">Matching Exposure Clumped SNPs to Outcome SNPs</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
 </nav>
@@ -181,13 +182,15 @@ window.Quarto = {
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>ldlc.clumps.datafile <span class="ot">&lt;-</span> <span class="st">'biomarkers-30780-both_sexes-irnt-results.clumps'</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>tc.clumps.datafile <span class="ot">&lt;-</span> <span class="st">'biomarkers-30690-both_sexes-irnt-results.clumps'</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>calcium.freq.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq'</span></span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ldlc.freq.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq'</span></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>tc.freq.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30690-both_sexes-irnt-results-clumped-snps.afreq'</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>calcium.freq.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30680-all-snps.afreq'</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>ldlc.freq.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30780-all-snps.afreq'</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>tc.freq.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30690-all-snps.afreq'</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>calcium.sumstats.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30680-both_sexes-irnt.tsv'</span></span>
 <span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>ldlc.sumstats.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30780-both_sexes-irnt.tsv'</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>tc.sumstats.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30690-both_sexes-irnt.tsv'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>tc.sumstats.file <span class="ot">&lt;-</span> <span class="st">'biomarkers-30690-both_sexes-irnt.tsv'</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>calcium.outcome.gwas.file <span class="ot">&lt;-</span> <span class="st">'PheWeb Summary Statistics/phenocode-Ca.tsv.gz'</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>The calcium summary stats is in biomarkers-30680-both_sexes-irnt.tsv, the total cholesterol in biomarkers-30690-both_sexes-irnt.tsv and the LDL-C summary stats file is in biomarkers-30780-both_sexes-irnt.tsv. The clumps were generated using the following plink2 options:</p>
@@ -203,7 +206,7 @@ plink2 \
   --clump-kb 10000 \
   --threads 4 \
   --out biomarkers-30680-both_sexes-irnt-results </code></pre>
-<p>Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq, biomarkers-30690-both_sexes-irnt-results-clumped-snps.afreq and biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq</p>
+<p>Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-all-snps.afreq, biomarkers-30690-all-snps.afreq and biomarkers-30780-all-snps.afreq</p>
 </section>
 <section id="calcium-snps" class="level2">
 <h2 class="anchored" data-anchor-id="calcium-snps">Calcium SNPs</h2>
@@ -213,67 +216,86 @@ plink2 \
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Read clumped SNPs and expand out clumped SNPs</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>calcium.clumps <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(calcium.clumps.datafile, <span class="at">col_types =</span> <span class="fu">cols</span>()) <span class="sc">|&gt;</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">P_clumping =</span> P) </span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Read frequency file (from PLINK --freq output)</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>calcium.freqs <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(calcium.freq.file, <span class="at">col_types =</span> <span class="fu">cols</span>())</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a><span class="co"># Read full summary stats (with BETA)</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>calcium.sumstats <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(calcium.sumstats.file, <span class="at">col_types =</span> <span class="fu">cols</span>())</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Inspect the column names to confirm merging keys and data availability</span></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># head(calcium.clumps)</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a><span class="co"># head(calcium.freqs)</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a><span class="co"># head(calcium.sumstats)</span></span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a><span class="co"># The clump file 'SNP' column should match frequency 'ID' column</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a><span class="co"># The sumstats 'VARIANT' column should match clumps 'SNP' column</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Expanded out clumps from the SP2 column</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>calcium.clumps.expanded <span class="ot">&lt;-</span> calcium.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate_rows</span>(SP2, <span class="at">sep =</span> <span class="st">","</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Read frequency file (from PLINK --freq output)</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>calcium.freqs <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(calcium.freq.file, <span class="at">col_types =</span> <span class="fu">cols</span>())</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Read full summary stats (with BETA)</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>calcium.sumstats <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(calcium.sumstats.file, <span class="at">col_types =</span> <span class="fu">cols</span>())</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Read in the outcome GWAS summary statitiscis</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>calcium.outcome <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(calcium.outcome.gwas.file, <span class="at">col_types =</span> <span class="fu">cols</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID=</span><span class="fu">paste</span>(chrom, pos, ref,alt, <span class="at">sep=</span><span class="st">":"</span>))</span>
 <span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge clumps with frequency (to get MAF for each SNP)</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>calcium.clumps_freq <span class="ot">&lt;-</span> </span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  calcium.clumps <span class="sc">%&gt;%</span></span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">`</span><span class="at">#CHROM</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(calcium.freqs, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"ID"</span><span class="ot">=</span><span class="st">"ID"</span>)) <span class="co">#missing MAF for most SNPs</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge with summary stats (to get beta)</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>calcium.clumps_freq_beta <span class="ot">&lt;-</span> </span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  calcium.clumps_freq <span class="sc">%&gt;%</span></span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(calcium.sumstats, </span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"ID"</span><span class="ot">=</span><span class="st">"VARIANT"</span>))</span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
-<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="ot">&lt;-</span> calcium.clumps_freq_beta <span class="sc">%&gt;%</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>n.calcium <span class="ot">&lt;-</span> <span class="dv">431888</span>  <span class="co"># replace with your actual exposure GWAS sample size</span></span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="ot">&lt;-</span> calcium.instruments <span class="sc">%&gt;%</span></span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">R2 =</span> <span class="dv">2</span> <span class="sc">*</span> ALT_FREQS <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> ALT_FREQS) <span class="sc">*</span> BETA<span class="sc">^</span><span class="dv">2</span>,</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">F =</span> (R2 <span class="sc">*</span> (n.calcium <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> R2)</span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate summary metrics</span></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>calcium.summary_metrics <span class="ot">&lt;-</span> </span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>  calcium.instruments <span class="sc">%&gt;%</span></span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">num_snps =</span> <span class="fu">n</span>(),</span>
-<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">cumulative_R2 =</span> <span class="fu">sum</span>(R2, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F =</span> <span class="fu">mean</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F =</span> <span class="fu">median</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_maf =</span> <span class="fu">mean</span>(ALT_FREQS, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_beta =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(BETA), <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">overall_F =</span> (cumulative_R2 <span class="sc">*</span> (n.calcium <span class="sc">-</span> num_snps <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">/</span> ((<span class="dv">1</span> <span class="sc">-</span> cumulative_R2) <span class="sc">*</span> num_snps)</span>
-<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(calcium.summary_metrics, <span class="at">caption=</span><span class="st">"Summary of calcium instruments"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co"># Found SNPs that matched between clumped SNPs and outcome GWAS</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>calcium.matched.snps <span class="ot">&lt;-</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(calcium.clumps.expanded, calcium.outcome,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>          <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"SP2"</span><span class="ot">=</span><span class="st">"ID"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(ID,<span class="at">.keep_all=</span><span class="cn">TRUE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+<section id="matching-exposure-clumped-snps-to-outcome-snps" class="level2">
+<h2 class="anchored" data-anchor-id="matching-exposure-clumped-snps-to-outcome-snps">Matching Exposure Clumped SNPs to Outcome SNPs</h2>
+<p>There were only25 SNPs in common between the calcium clumped SNPs and the calcium outcome GWAS summary statistics. Looked up LD SNPs from each lead SNP and checked how many of those intersected and found there are now 1880 SNPS in common between the datasets (not accounting for clumping). After comparing to the outcome GWAS there were 275 SNPs that are present in both the clumped SNPs and the outcome GWAS.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge clumps with frequency (to get MAF for each SNP)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>calcium.clumps_freq <span class="ot">&lt;-</span> </span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  calcium.matched.snps <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="st">`</span><span class="at">#CHROM</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(calcium.freqs, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"ID"</span><span class="ot">=</span><span class="st">"ID"</span>)) <span class="co">#missing MAF for most SNPs</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># Merge with summary stats (to get beta)</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>calcium.clumps_freq_beta <span class="ot">&lt;-</span> </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  calcium.clumps_freq <span class="sc">%&gt;%</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(calcium.sumstats, </span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"ID"</span><span class="ot">=</span><span class="st">"VARIANT"</span>))</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="ot">&lt;-</span> calcium.clumps_freq_beta <span class="sc">%&gt;%</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>We then filtered out 6 SNPs with MAF &lt; 0.01 or &gt; 0.99, leaving 269 SNPs as instruments for calcium.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>n.calcium <span class="ot">&lt;-</span> <span class="dv">385066</span>  <span class="co"># replace with your actual exposure GWAS sample size</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="ot">&lt;-</span> calcium.instruments <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">R2 =</span> <span class="dv">2</span> <span class="sc">*</span> ALT_FREQS <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> ALT_FREQS) <span class="sc">*</span> BETA<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">F =</span> (R2 <span class="sc">*</span> (n.calcium <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> R2)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate summary metrics</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>calcium.summary_metrics <span class="ot">&lt;-</span> </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  calcium.instruments <span class="sc">%&gt;%</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">num_snps =</span> <span class="fu">n</span>(),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">cumulative_R2 =</span> <span class="fu">sum</span>(R2, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F =</span> <span class="fu">mean</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F =</span> <span class="fu">median</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_maf =</span> <span class="fu">mean</span>(ALT_FREQS, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_beta =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(BETA), <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">overall_F =</span> (cumulative_R2 <span class="sc">*</span> (n.calcium <span class="sc">-</span> num_snps <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">/</span> ((<span class="dv">1</span> <span class="sc">-</span> cumulative_R2) <span class="sc">*</span> num_snps)</span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(calcium.summary_metrics, <span class="at">caption=</span><span class="st">"Summary of calcium instruments"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Summary of calcium instruments</caption>
 <colgroup>
 <col style="width: 12%">
-<col style="width: 19%">
-<col style="width: 12%">
+<col style="width: 20%">
+<col style="width: 11%">
 <col style="width: 12%">
 <col style="width: 14%">
 <col style="width: 14%">
@@ -292,26 +314,26 @@ plink2 \
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">362</td>
-<td style="text-align: right;">0.0963254</td>
-<td style="text-align: right;">115.0375</td>
-<td style="text-align: right;">69.57594</td>
-<td style="text-align: right;">0.3208676</td>
-<td style="text-align: right;">0.0328442</td>
-<td style="text-align: right;">127.065</td>
+<td style="text-align: right;">269</td>
+<td style="text-align: right;">0.0826442</td>
+<td style="text-align: right;">118.438</td>
+<td style="text-align: right;">67.85091</td>
+<td style="text-align: right;">0.3379611</td>
+<td style="text-align: right;">0.0324861</td>
+<td style="text-align: right;">128.8704</td>
 </tr>
 </tbody>
 </table>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="sc">|&gt;</span> </span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">separate</span>(ID, <span class="at">into =</span> <span class="fu">c</span>(<span class="st">"CHR"</span>, <span class="st">"POS"</span>, <span class="st">"REF"</span>, <span class="st">"ALT"</span>), <span class="at">sep =</span> <span class="st">":"</span>, <span class="at">remove =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># choose which is EA/OA – here I assume ALT is the effect allele</span></span>
-<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">EA =</span> ALT, <span class="at">OA =</span> REF) <span class="sc">|&gt;</span></span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">N_exposure=</span>n.calcium) <span class="sc">|&gt;</span></span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(ID,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, <span class="st">`</span><span class="at">F</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
-<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Calcium Instruments from UKBB.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="sc">|&gt;</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">EA =</span> alt, ,</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">OA =</span> ref,</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">CHR =</span> chrom) <span class="sc">|&gt;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">N_exposure=</span>n.calcium) <span class="sc">|&gt;</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SP2,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, <span class="st">`</span><span class="at">F</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Calcium Instruments from UKBB.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>For each SNP calculated the <span class="math inline">\(R^2\)</span> and the <span class="math inline">\(F\)</span> statistic using these formulas:</p>
@@ -327,7 +349,7 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)

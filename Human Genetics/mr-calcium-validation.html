@@ -143,7 +143,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Mon Sep 29 08:44:15 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Mon Sep 29 12:54:49 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -158,8 +158,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># loaded and renamed columns</span></span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>instruments.calcium <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(instruments.calcium.file) <span class="sc">|&gt;</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">SNP                       =</span> ID,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.exposure               =</span> ID,  </span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">SNP                       =</span> SP2,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.exposure               =</span> SP2,  </span>
 <span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta.exposure             =</span> BETA,</span>
 <span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">se.exposure               =</span> SE,</span>
 <span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect_allele.exposure    =</span> EA,</span>
@@ -201,19 +201,139 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 <p>Harmonization results</p>
 <ul>
-<li>We used 362 SNPs as instruments for calcium from UK Biobank.</li>
-<li>There were 25 SNPs in common between the exposure and outcome datasets.</li>
-<li>A total of 26 SNPs remained for use after harmonization</li>
+<li>We used 269 SNPs as instruments for calcium from UK Biobank.</li>
+<li>There were 269 SNPs in common between the exposure and outcome datasets.</li>
+<li>A total of 270 SNPs remained for use after harmonization</li>
 <li>Removed 0 SNPs due to allele mismatches</li>
-<li>Identified 3 palindromic SNPs</li>
+<li>Identified 21 palindromic SNPs</li>
 </ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data.annot <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">R2 =</span> <span class="dv">2</span> <span class="sc">*</span> eaf.outcome <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> eaf.outcome) <span class="sc">*</span> beta.outcome<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">F =</span> (R2 <span class="sc">*</span> (samplesize.outcome.calcium <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> R2))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate summary metrics</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>calcium.summary_metrics.outcome <span class="ot">&lt;-</span> </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  data.annot <span class="sc">%&gt;%</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">num_snps =</span> <span class="fu">n</span>(),</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>   <span class="at">cumulative_R2 =</span> <span class="fu">sum</span>(R2, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F =</span> <span class="fu">mean</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F =</span> <span class="fu">median</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_maf =</span> <span class="fu">mean</span>(eaf.outcome, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_beta =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(beta.outcome), <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">overall_F =</span> (cumulative_R2 <span class="sc">*</span> (samplesize.outcome.calcium <span class="sc">-</span> <span class="fu">n</span>() <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">/</span> ((<span class="dv">1</span> <span class="sc">-</span> cumulative_R2) <span class="sc">*</span> <span class="fu">n</span>())</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(calcium.summary_metrics.outcome, <span class="at">caption=</span><span class="st">"Summary of calcium instruments for outcome GWAS"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Summary of calcium instruments for outcome GWAS</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 20%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 12%">
+<col style="width: 14%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: right;">num_snps</th>
+<th style="text-align: right;">cumulative_R2</th>
+<th style="text-align: right;">mean_F</th>
+<th style="text-align: right;">median_F</th>
+<th style="text-align: right;">mean_maf</th>
+<th style="text-align: right;">mean_beta</th>
+<th style="text-align: right;">overall_F</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">270</td>
+<td style="text-align: right;">0.0171846</td>
+<td style="text-align: right;">2.934478</td>
+<td style="text-align: right;">1.509012</td>
+<td style="text-align: right;">0.275463</td>
+<td style="text-align: right;">0.012093</td>
+<td style="text-align: right;">2.967857</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(data)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(calcium.control.mr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code> id.exposure         id.outcome          outcome            exposure        
+ Length:264         Length:264         Length:264         Length:264        
+ Class :character   Class :character   Class :character   Class :character  
+ Mode  :character   Mode  :character   Mode  :character   Mode  :character  
+                                                                            
+                                                                            
+                                                                            
+    method               nsnp             b                 se         
+ Length:264         Min.   :1.000   Min.   :-1.8556   Min.   :0.04448  
+ Class :character   1st Qu.:1.000   1st Qu.:-0.1051   1st Qu.:0.26035  
+ Mode  :character   Median :1.000   Median : 0.2050   Median :0.35097  
+                    Mean   :1.004   Mean   : 0.1825   Mean   :0.33637  
+                    3rd Qu.:1.000   3rd Qu.: 0.5137   3rd Qu.:0.41512  
+                    Max.   :2.000   Max.   : 1.5834   Max.   :1.04167  
+      pval          
+ Min.   :1.000e-08  
+ 1st Qu.:4.550e-02  
+ Median :2.354e-01  
+ Mean   :3.354e-01  
+ 3rd Qu.:6.052e-01  
+ Max.   :1.000e+00  </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#mr_forest_plot(calcium.control.mr)</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>dat_h_steiger <span class="ot">&lt;-</span> <span class="fu">steiger_filtering</span>(data)</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(dat_h_steiger<span class="sc">$</span>steiger_direction) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>&lt; table of extent 0 &gt;</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(calcium.control.mr, <span class="fu">aes</span>(<span class="at">y=</span><span class="fu">reorder</span>(id.outcome,b),<span class="at">x=</span>b)) <span class="sc">+</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin=</span>b<span class="sc">-</span>se, <span class="at">xmax=</span>b<span class="sc">+</span>se), <span class="at">width=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Mendelian Randomization Results for Calcium"</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Instrument"</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Effect Size (Beta)"</span>) <span class="sc">+</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/calcium-mr-positive-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
 </section>
 <section id="session-information" class="level2">
 <h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)
@@ -234,22 +354,23 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] TwoSampleMR_0.6.22 lubridate_1.9.4    forcats_1.0.0      stringr_1.5.2     
- [5] dplyr_1.1.4        purrr_1.1.0        readr_2.1.5        tidyr_1.3.1       
- [9] tibble_3.3.0       ggplot2_4.0.0      tidyverse_2.0.0   
+ [1] knitr_1.50         TwoSampleMR_0.6.22 lubridate_1.9.4    forcats_1.0.0     
+ [5] stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0        readr_2.1.5       
+ [9] tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
- [5] compiler_4.5.1     Rcpp_1.1.0         tidyselect_1.2.1   parallel_4.5.1    
- [9] scales_1.4.0       yaml_2.3.10        fastmap_1.2.0      plyr_1.8.9        
-[13] R6_2.6.1           generics_0.1.4     knitr_1.50         htmlwidgets_1.6.4 
-[17] pillar_1.11.0      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6       
-[21] stringi_1.8.7      xfun_0.53          S7_0.2.0           bit64_4.6.0-1     
-[25] timechange_0.3.0   cli_3.6.5          withr_3.0.2        magrittr_2.0.4    
-[29] digest_0.6.37      grid_4.5.1         vroom_1.6.5        rstudioapi_0.17.1 
-[33] hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5        data.table_1.17.8 
-[37] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       rmarkdown_2.29    
-[41] tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 </code></pre>
+ [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
+ [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
+ [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      plyr_1.8.9        
+[13] jsonlite_2.0.0     scales_1.4.0       mnormt_2.1.1       cli_3.6.5         
+[17] rlang_1.1.6        crayon_1.5.3       bit64_4.6.0-1      withr_3.0.2       
+[21] yaml_2.3.10        tools_4.5.1        parallel_4.5.1     tzdb_0.5.0        
+[25] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4 
+[29] bit_4.6.0          vroom_1.6.5        psych_2.5.6        pkgconfig_2.0.3   
+[33] pillar_1.11.0      gtable_0.3.6       glue_1.8.0         data.table_1.17.8 
+[37] Rcpp_1.1.0         xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1 
+[41] farver_2.1.2       nlme_3.1-168       htmltools_0.5.8.1  labeling_0.4.3    
+[45] rmarkdown_2.29     compiler_4.5.1     S7_0.2.0          </code></pre>
 </div>
 </div>
 </section>

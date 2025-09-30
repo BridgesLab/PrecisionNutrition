@@ -52,13 +52,15 @@ calcium.clumps.datafile <- 'biomarkers-30680-both_sexes-irnt-results.clumps'
 ldlc.clumps.datafile <- 'biomarkers-30780-both_sexes-irnt-results.clumps'
 tc.clumps.datafile <- 'biomarkers-30690-both_sexes-irnt-results.clumps'
 
-calcium.freq.file <- 'biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq'
-ldlc.freq.file <- 'biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq'
-tc.freq.file <- 'biomarkers-30690-both_sexes-irnt-results-clumped-snps.afreq'
+calcium.freq.file <- 'biomarkers-30680-all-snps.afreq'
+ldlc.freq.file <- 'biomarkers-30780-all-snps.afreq'
+tc.freq.file <- 'biomarkers-30690-all-snps.afreq'
 
 calcium.sumstats.file <- 'biomarkers-30680-both_sexes-irnt.tsv'
 ldlc.sumstats.file <- 'biomarkers-30780-both_sexes-irnt.tsv'
 tc.sumstats.file <- 'biomarkers-30690-both_sexes-irnt.tsv'
+
+calcium.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-Ca.tsv.gz'
 ```
 :::
 
@@ -80,7 +82,7 @@ plink2 \
   --out biomarkers-30680-both_sexes-irnt-results 
 ```
   
-Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-both_sexes-irnt-results-clumped-snps.afreq, biomarkers-30690-both_sexes-irnt-results-clumped-snps.afreq and biomarkers-30780-both_sexes-irnt-results-clumped-snps.afreq
+Frequencies we then calculated from these clumped results and are present in the biomarkers-30680-all-snps.afreq, biomarkers-30690-all-snps.afreq and biomarkers-30780-all-snps.afreq
   
 
 ## Calcium SNPs
@@ -92,24 +94,41 @@ Frequencies we then calculated from these clumped results and are present in the
 # Read clumped SNPs and expand out clumped SNPs
 calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols()) |>
   rename(P_clumping = P) 
-  
+
+# Expanded out clumps from the SP2 column
+calcium.clumps.expanded <- calcium.clumps %>%
+  separate_rows(SP2, sep = ",")
+
 # Read frequency file (from PLINK --freq output)
 calcium.freqs <- read_tsv(calcium.freq.file, col_types = cols())
 
 # Read full summary stats (with BETA)
 calcium.sumstats <- read_tsv(calcium.sumstats.file, col_types = cols())
 
-# Inspect the column names to confirm merging keys and data availability
-# head(calcium.clumps)
-# head(calcium.freqs)
-# head(calcium.sumstats)
+# Read in the outcome GWAS summary statitiscis
+calcium.outcome <- read_tsv(calcium.outcome.gwas.file, col_types = cols()) |>
+  mutate(ID=paste(chrom, pos, ref,alt, sep=":"))
 
-# The clump file 'SNP' column should match frequency 'ID' column
-# The sumstats 'VARIANT' column should match clumps 'SNP' column
+# Found SNPs that matched between clumped SNPs and outcome GWAS
+calcium.matched.snps <-
+  inner_join(calcium.clumps.expanded, calcium.outcome,
+          by = c("SP2"="ID")) |>
+  distinct(ID,.keep_all=TRUE)
+```
+:::
 
+
+## Matching Exposure Clumped SNPs to Outcome SNPs
+
+There were only25 SNPs in common between the calcium clumped SNPs and the calcium outcome GWAS summary statistics.  Looked up LD SNPs from each lead SNP and checked how many of those intersected and found there are now 1880 SNPS in common between the datasets (not accounting for clumping).  After comparing to the outcome GWAS there were 275 SNPs that are present in both the clumped SNPs and the outcome GWAS.
+
+
+::: {.cell}
+
+```{.r .cell-code}
 # Merge clumps with frequency (to get MAF for each SNP)
 calcium.clumps_freq <- 
-  calcium.clumps %>%
+  calcium.matched.snps %>%
   select(-`#CHROM`) |>
   left_join(calcium.freqs, by = c("ID"="ID")) #missing MAF for most SNPs
 
@@ -122,8 +141,17 @@ calcium.clumps_freq_beta <-
 # Filter by MAF >= 0.01
 calcium.instruments <- calcium.clumps_freq_beta %>%
   filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
+```
+:::
 
-n.calcium <- 431888  # replace with your actual exposure GWAS sample size
+
+We then filtered out 6 SNPs with MAF < 0.01 or > 0.99, leaving 269 SNPs as instruments for calcium.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+n.calcium <- 385066  # replace with your actual exposure GWAS sample size
 
 calcium.instruments <- calcium.instruments %>%
   mutate(
@@ -152,20 +180,20 @@ kable(calcium.summary_metrics, caption="Summary of calcium instruments")
 
 Table: Summary of calcium instruments
 
-| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|      362|     0.0963254| 115.0375| 69.57594| 0.3208676| 0.0328442|   127.065|
+| num_snps| cumulative_R2|  mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------:|-------:|--------:|---------:|---------:|---------:|
+|      269|     0.0826442| 118.438| 67.85091| 0.3379611| 0.0324861|  128.8704|
 
 
 :::
 
 ```{.r .cell-code}
 calcium.instruments |> 
-  separate(ID, into = c("CHR", "POS", "REF", "ALT"), sep = ":", remove = FALSE) %>%
-  # choose which is EA/OA – here I assume ALT is the effect allele
-  rename(EA = ALT, OA = REF) |>
+  rename(EA = alt, ,
+         OA = ref,
+         CHR = chrom) |>
   mutate(N_exposure=n.calcium) |>
-  select(ID,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
+  select(SP2,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("Calcium Instruments from UKBB.csv")
 ```
 :::

@@ -39,7 +39,7 @@ These were extracted via zcat for use in the clumping analsyes.
 Did LD clumping (using `ld-clumping.slurm` script).  This script has two stages
 
 1. It creates a merged genotype file, after fixing the headers (1000G_EUR_merged) in plink2 format.
-2. This reference genome was used to clump the summary statistics for the LDL-C (biomarkers-30780-both_sexes-irnt.tsv) and calcium (biomarkers-30680-both_sexes-irnt.tsv) GWAS downloaded from UK Biobank.  
+2. This reference genome was used to clump the summary statistics for Total Cholesterol, LDL-C, and calcium after some trimming of the file.
 3. The ld clumping was done using plink 10000 kb windows with cutoffs at 5E-8 to pick a SNP and 1E-6 as a secondary cutoff.  The clump R2 was set to 0.01.
 4. Calculated MAFs for both clumped and all SNPs.
 

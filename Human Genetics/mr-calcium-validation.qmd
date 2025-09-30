@@ -52,8 +52,8 @@ samplesize.outcome.calcium <- 46100
 # loaded and renamed columns
 instruments.calcium <- read_csv(instruments.calcium.file) |>
   rename(
-    SNP                       = ID,
-    id.exposure               = ID,  
+    SNP                       = SP2,
+    id.exposure               = SP2,  
     beta.exposure             = BETA,
     se.exposure               = SE,
     effect_allele.exposure    = EA,
@@ -100,6 +100,49 @@ Harmonization results
 - A total of `r nrow(data)` SNPs remained for use after harmonization
 - Removed `r sum(data$remove)` SNPs due to allele mismatches
 - Identified `r sum(data$palindromic)` palindromic SNPs 
+
+```{r calcium-strength}
+data.annot <- data |>
+  mutate(R2 = 2 * eaf.outcome * (1 - eaf.outcome) * beta.outcome^2,
+         F = (R2 * (samplesize.outcome.calcium - 2)) / (1 - R2))
+
+# Calculate summary metrics
+calcium.summary_metrics.outcome <- 
+  data.annot %>%
+  ungroup %>%
+  summarise(
+    num_snps = n(),
+   cumulative_R2 = sum(R2, na.rm = TRUE),
+    mean_F = mean(F, na.rm=TRUE),
+    median_F = median(F, na.rm=TRUE),
+    mean_maf = mean(eaf.outcome, na.rm = TRUE),
+    mean_beta = mean(abs(beta.outcome), na.rm = TRUE),
+    overall_F = (cumulative_R2 * (samplesize.outcome.calcium - n() - 1)) / ((1 - cumulative_R2) * n())
+  )
+
+library(knitr)
+kable(calcium.summary_metrics.outcome, caption="Summary of calcium instruments for outcome GWAS")
+```
+
+```{r calcium-mr-positive}
+calcium.control.mr <- mr(data)
+summary(calcium.control.mr)
+#mr_forest_plot(calcium.control.mr)
+
+dat_h_steiger <- steiger_filtering(data)
+table(dat_h_steiger$steiger_direction) 
+
+ggplot(calcium.control.mr, aes(y=reorder(id.outcome,b),x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-se, xmax=b+se), width=0.2) +
+  theme_classic() +
+  labs(title="Mendelian Randomization Results for Calcium",
+       y="Instrument",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") +
+  theme(axis.text.y = element_text(size=2))
+```   
+
 
 ## Session Information
 

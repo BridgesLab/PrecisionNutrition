@@ -95,7 +95,14 @@ Frequencies we then calculated from these clumped results and are present in the
 calcium.clumps <- read_tsv(calcium.clumps.datafile, col_types = cols()) |>
   rename(P_clumping = P) 
 
-# Expanded out clumps from the SP2 column
+# Read in the outcome GWAS summary statitiscis
+calcium.outcome <- read_tsv(calcium.outcome.gwas.file, col_types = cols()) |>
+  mutate(ID=paste(chrom, pos, ref,alt, sep=":"))
+
+# First identify the lead SNPs that are in both the clumped SNPs and the outcome GWAS
+lead.snps.in.outcome <- intersect(calcium.clumps$ID, calcium.outcome$ID)
+
+# Expanded out clumps from the SP2 column, this is to find SNPs that are buried in the clumps
 calcium.clumps.expanded <- calcium.clumps %>%
   separate_rows(SP2, sep = ",")
 
@@ -105,47 +112,43 @@ calcium.freqs <- read_tsv(calcium.freq.file, col_types = cols())
 # Read full summary stats (with BETA)
 calcium.sumstats <- read_tsv(calcium.sumstats.file, col_types = cols())
 
-# Read in the outcome GWAS summary statitiscis
-calcium.outcome <- read_tsv(calcium.outcome.gwas.file, col_types = cols()) |>
-  mutate(ID=paste(chrom, pos, ref,alt, sep=":"))
-
 # Found SNPs that matched between clumped SNPs and outcome GWAS
-calcium.matched.snps <-
-  inner_join(calcium.clumps.expanded, calcium.outcome,
+calcium.merged.snps.provisional <-
+  left_join(calcium.clumps.expanded, calcium.outcome,
           by = c("SP2"="ID")) |>
-  distinct(ID,.keep_all=TRUE)
-```
-:::
+  left_join(calcium.freqs, by = c("SP2"="ID","#CHROM"="#CHROM")) |>
+  left_join(calcium.sumstats, by = c("SP2"="VARIANT")) |>
+  mutate(present_in_outcome = SP2 %in% calcium.outcome$ID) 
 
-
-## Matching Exposure Clumped SNPs to Outcome SNPs
-
-There were only25 SNPs in common between the calcium clumped SNPs and the calcium outcome GWAS summary statistics.  Looked up LD SNPs from each lead SNP and checked how many of those intersected and found there are now 1880 SNPS in common between the datasets (not accounting for clumping).  After comparing to the outcome GWAS there were 275 SNPs that are present in both the clumped SNPs and the outcome GWAS.
-
-
-::: {.cell}
-
-```{.r .cell-code}
-# Merge clumps with frequency (to get MAF for each SNP)
-calcium.clumps_freq <- 
-  calcium.matched.snps %>%
-  select(-`#CHROM`) |>
-  left_join(calcium.freqs, by = c("ID"="ID")) #missing MAF for most SNPs
-
-# Merge with summary stats (to get beta)
-calcium.clumps_freq_beta <- 
-  calcium.clumps_freq %>%
-  inner_join(calcium.sumstats, 
-             by = c("ID"="VARIANT"))
+# Strategy per clump:
+calcium.best_per_clump <- 
+  calcium.merged.snps.provisional %>%
+  filter(present_in_outcome==T) %>% #lose a lot here
+  group_by(ID) %>%
+  arrange(
+    # 1. prefer if SNP itself is the lead
+    desc(SP2 == ID),
+    # 2. prefer smaller p-value (stronger in exposure)
+    P
+  ) %>%
+  slice_head(n = 1) %>%   # <-- guarantees one row per group
+  ungroup()
 
 # Filter by MAF >= 0.01
-calcium.instruments <- calcium.clumps_freq_beta %>%
+calcium.instruments <- 
+  calcium.best_per_clump %>%
   filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
 ```
 :::
 
 
-We then filtered out 6 SNPs with MAF < 0.01 or > 0.99, leaving 269 SNPs as instruments for calcium.
+### Instrument Selection Summary for Calcium
+
+| Stage                          | SNPs                          |
+|--------------------------------|-------------------------------|
+| UKBB SNPs                      | 28987534    |
+| After LD Clumping              | 454      |
+| After MAF Filtering            | 275 |
 
 
 ::: {.cell}
@@ -155,7 +158,7 @@ n.calcium <- 385066  # replace with your actual exposure GWAS sample size
 
 calcium.instruments <- calcium.instruments %>%
   mutate(
-    R2 = 2 * ALT_FREQS * (1 - ALT_FREQS) * BETA^2,
+    R2 = 2 * maf * (1 - maf) * beta^2,
     F = (R2 * (n.calcium - 2)) / (1 - R2)
   )
 
@@ -180,9 +183,9 @@ kable(calcium.summary_metrics, caption="Summary of calcium instruments")
 
 Table: Summary of calcium instruments
 
-| num_snps| cumulative_R2|  mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|--------:|-------------:|-------:|--------:|---------:|---------:|---------:|
-|      269|     0.0826442| 118.438| 67.85091| 0.3379611| 0.0324861|  128.8704|
+| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|      275|     0.0286807| 40.19957| 17.71617| 0.3675692| 0.0260401|  41.31612|
 
 
 :::

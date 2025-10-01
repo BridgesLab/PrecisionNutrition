@@ -72,6 +72,35 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="mr-calcium-validation_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="mr-calcium-validation_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -84,7 +113,12 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
-  <li><a href="#data-entry" id="toc-data-entry" class="nav-link" data-scroll-target="#data-entry">Data Entry</a></li>
+  <li><a href="#data-entry" id="toc-data-entry" class="nav-link" data-scroll-target="#data-entry">Data Entry</a>
+  <ul class="collapse">
+  <li><a href="#mr-egger-intercept" id="toc-mr-egger-intercept" class="nav-link" data-scroll-target="#mr-egger-intercept">MR-Egger Intercept</a></li>
+  <li><a href="#heterogeneity-statistics" id="toc-heterogeneity-statistics" class="nav-link" data-scroll-target="#heterogeneity-statistics">Heterogeneity Statistics</a></li>
+  <li><a href="#leave-one-out-analysis" id="toc-leave-one-out-analysis" class="nav-link" data-scroll-target="#leave-one-out-analysis">Leave-one-out Analysis</a></li>
+  </ul></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="mr-calcium-validation.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
@@ -136,14 +170,15 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co">#load these packages, nearly always needed</span></span>
 <span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span>
-<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># sets maize and blue color scheme</span></span>
-<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>color_scheme <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"#00274c"</span>, <span class="st">"#ffcb05"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># sets maize and blue color scheme</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>color_scheme <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"#00274c"</span>, <span class="st">"#ffcb05"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Mon Sep 29 12:54:49 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 1 11:51:39 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -159,34 +194,32 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>instruments.calcium <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(instruments.calcium.file) <span class="sc">|&gt;</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
 <span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">SNP                       =</span> SP2,</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.exposure               =</span> SP2,  </span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta.exposure             =</span> BETA,</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">se.exposure               =</span> SE,</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect_allele.exposure    =</span> EA,</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">other_allele.exposure     =</span> OA,</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval.exposure             =</span> P,</span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf.exposure              =</span> ALT_FREQS,</span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">samplesize.exposure       =</span> N_exposure</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">exposure=</span><span class="st">"Calcium (UK Biobank)"</span>,</span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">SNP=</span>id.exposure)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta.exposure             =</span> BETA,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">se.exposure               =</span> SE,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect_allele.exposure    =</span> EA,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">other_allele.exposure     =</span> OA,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval.exposure             =</span> P,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf.exposure              =</span> ALT_FREQS,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">samplesize.exposure       =</span> N_exposure</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id.exposure=</span><span class="st">"Calcium (UK Biobank)"</span>,</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>         <span class="at">exposure=</span><span class="st">"Calcium (UK Biobank)"</span>)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>gwas.calcium <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(gwas.calcium.file) <span class="sc">|&gt;</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID=</span><span class="fu">paste</span>(chrom, pos, ref,alt, <span class="at">sep=</span><span class="st">":"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">SNP                        =</span> ID,            <span class="co"># or ID if that’s the matching ID</span></span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">id.outcome                 =</span> ID,               <span class="co"># can also just set to a string</span></span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta.outcome               =</span> beta,</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">se.outcome                 =</span> sebeta,</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect_allele.outcome      =</span> alt,   <span class="co"># whichever is effect allele</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">other_allele.outcome       =</span> ref,   <span class="co"># whichever is other allele</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval.outcome               =</span> pval,</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf.outcome                =</span> maf,</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">outcome =</span> <span class="st">"Calcium (Michigan GWAS)"</span>,</span>
-<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>         <span class="at">SNP=</span>id.outcome,<span class="co"># name of your trait)</span></span>
-<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>         <span class="at">samplesize.outcome =</span> samplesize.outcome.calcium)  <span class="co"># sample size for MGI/BioVU for calcium)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>gwas.calcium <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(gwas.calcium.file) <span class="sc">|&gt;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID=</span><span class="fu">paste</span>(chrom, pos, ref,alt, <span class="at">sep=</span><span class="st">":"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">SNP                        =</span> ID,            <span class="co"># or ID if that’s the matching ID</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta.outcome               =</span> beta,</span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">se.outcome                 =</span> sebeta,</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">effect_allele.outcome      =</span> alt,   <span class="co"># whichever is effect allele</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">other_allele.outcome       =</span> ref,   <span class="co"># whichever is other allele</span></span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval.outcome               =</span> pval,</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf.outcome                =</span> maf,</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id.outcome =</span> <span class="st">"Calcium (Michigan GWAS)"</span>,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>         <span class="at">outcome =</span> <span class="st">"Calcium (Michigan GWAS)"</span>,</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>         <span class="at">samplesize.outcome =</span> samplesize.outcome.calcium)  <span class="co"># sample size for MGI/BioVU for calcium)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>This presumes the sample sizes was 46100 from Table 1 of https://doi.org/10.1371/journal.pgen.1009077.</p>
@@ -196,56 +229,436 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(TwoSampleMR)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(instruments.calcium, gwas.calcium, <span class="at">action =</span> <span class="dv">2</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(instruments.calcium, gwas.calcium, <span class="at">action =</span> <span class="dv">2</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(data<span class="sc">$</span>mr_keep) <span class="sc">|&gt;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Number of SNPs kept for MR analysis"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Number of SNPs kept for MR analysis</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Var1</th>
+<th style="text-align: right;">Freq</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">275</td>
+</tr>
+</tbody>
+</table>
 </div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(data<span class="sc">$</span>palindromic)  <span class="sc">|&gt;</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Number of palindromic SNPs"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Number of palindromic SNPs</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Var1</th>
+<th style="text-align: right;">Freq</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">255</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">22</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">allele_match =</span> (<span class="fu">toupper</span>(effect_allele.exposure) <span class="sc">==</span> <span class="fu">toupper</span>(effect_allele.outcome)) <span class="sc">&amp;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>                  (<span class="fu">toupper</span>(other_allele.exposure) <span class="sc">==</span> <span class="fu">toupper</span>(other_allele.outcome)),</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">allele_swapped =</span> (<span class="fu">toupper</span>(effect_allele.exposure) <span class="sc">==</span> <span class="fu">toupper</span>(other_allele.outcome)) <span class="sc">&amp;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                    (<span class="fu">toupper</span>(other_allele.exposure) <span class="sc">==</span> <span class="fu">toupper</span>(effect_allele.outcome))</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a><span class="co"># 2) EAF concordance checks (detect possible strand/orientation issues)</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a><span class="co"># requires eaf.exposure and eaf.outcome present</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span>(<span class="fu">all</span>(<span class="fu">c</span>(<span class="st">"eaf.exposure"</span>,<span class="st">"eaf.outcome"</span>) <span class="sc">%in%</span> <span class="fu">names</span>(data))){</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">eaf_diff =</span> <span class="fu">abs</span>(eaf.exposure <span class="sc">-</span> eaf.outcome),</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>      <span class="at">eaf_flip_diff =</span> <span class="fu">abs</span>(eaf.exposure <span class="sc">-</span> (<span class="dv">1</span> <span class="sc">-</span> eaf.outcome)),</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>      <span class="at">suspicious_eaf =</span> (eaf_diff <span class="sc">&gt;</span> <span class="fl">0.2</span> <span class="sc">&amp;</span> eaf_flip_diff <span class="sc">&gt;</span> <span class="fl">0.2</span>)  <span class="co"># very different frequencies</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>(data<span class="sc">$</span>eaf_diff)</span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>(data<span class="sc">$</span>eaf_flip_diff)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Num suspicious EAFs:"</span>, <span class="fu">sum</span>(data<span class="sc">$</span>suspicious_eaf, <span class="at">na.rm=</span><span class="cn">TRUE</span>), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"No EAF columns present for both datasets; consider adding reference panel EAFs.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Num suspicious EAFs: 0 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># 3) List discordant SNPs</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sign_match =</span> <span class="fu">sign</span>(beta.exposure) <span class="sc">==</span> <span class="fu">sign</span>(beta.outcome))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>discordant <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>sign_match) <span class="sc">%&gt;%</span></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP, beta.exposure, se.exposure, beta.outcome, se.outcome,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>         effect_allele.exposure, other_allele.exposure,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>         effect_allele.outcome, other_allele.outcome,</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>         palindromic, ambiguous, eaf.exposure, eaf.outcome)</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(discordant <span class="sc">|&gt;</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>        <span class="fu">arrange</span>(beta.exposure) <span class="sc">|&gt;</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        <span class="fu">select</span>(SNP,beta.exposure,se.exposure,beta.outcome,se.outcome),</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption=</span><span class="st">"Discordant SNPs where the beta coefficients directionally differ between exposure and outcome"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Discordant SNPs where the beta coefficients directionally differ between exposure and outcome</caption>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 20%">
+<col style="width: 17%">
+<col style="width: 19%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">SNP</th>
+<th style="text-align: right;">beta.exposure</th>
+<th style="text-align: right;">se.exposure</th>
+<th style="text-align: right;">beta.outcome</th>
+<th style="text-align: right;">se.outcome</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">2:234264848:C:G</td>
+<td style="text-align: right;">-0.04882</td>
+<td style="text-align: right;">0.002709</td>
+<td style="text-align: right;">0.0400</td>
+<td style="text-align: right;">0.0070</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10:100179851:T:C</td>
+<td style="text-align: right;">-0.03719</td>
+<td style="text-align: right;">0.004556</td>
+<td style="text-align: right;">0.0043</td>
+<td style="text-align: right;">0.0120</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">16:47980267:T:C</td>
+<td style="text-align: right;">-0.03655</td>
+<td style="text-align: right;">0.005844</td>
+<td style="text-align: right;">0.0051</td>
+<td style="text-align: right;">0.0160</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5:131329591:T:C</td>
+<td style="text-align: right;">-0.02572</td>
+<td style="text-align: right;">0.003741</td>
+<td style="text-align: right;">0.0005</td>
+<td style="text-align: right;">0.0096</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">12:4004752:T:C</td>
+<td style="text-align: right;">-0.02562</td>
+<td style="text-align: right;">0.003298</td>
+<td style="text-align: right;">0.0012</td>
+<td style="text-align: right;">0.0085</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:1095130:T:C</td>
+<td style="text-align: right;">-0.02524</td>
+<td style="text-align: right;">0.002786</td>
+<td style="text-align: right;">0.0010</td>
+<td style="text-align: right;">0.0081</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10:96035980:T:C</td>
+<td style="text-align: right;">-0.02221</td>
+<td style="text-align: right;">0.004032</td>
+<td style="text-align: right;">0.0055</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">3:121323008:C:G</td>
+<td style="text-align: right;">-0.02193</td>
+<td style="text-align: right;">0.003964</td>
+<td style="text-align: right;">0.0099</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:111989372:T:G</td>
+<td style="text-align: right;">-0.02055</td>
+<td style="text-align: right;">0.004040</td>
+<td style="text-align: right;">0.0015</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6:25745243:A:T</td>
+<td style="text-align: right;">-0.01892</td>
+<td style="text-align: right;">0.002773</td>
+<td style="text-align: right;">0.0020</td>
+<td style="text-align: right;">0.0072</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:51524292:A:G</td>
+<td style="text-align: right;">-0.01865</td>
+<td style="text-align: right;">0.002634</td>
+<td style="text-align: right;">0.0098</td>
+<td style="text-align: right;">0.0068</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">14:70000399:A:C</td>
+<td style="text-align: right;">-0.01821</td>
+<td style="text-align: right;">0.003351</td>
+<td style="text-align: right;">0.0028</td>
+<td style="text-align: right;">0.0085</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">19:3369753:C:G</td>
+<td style="text-align: right;">-0.01767</td>
+<td style="text-align: right;">0.003447</td>
+<td style="text-align: right;">0.0120</td>
+<td style="text-align: right;">0.0095</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2:165539661:T:C</td>
+<td style="text-align: right;">-0.01696</td>
+<td style="text-align: right;">0.002570</td>
+<td style="text-align: right;">0.0037</td>
+<td style="text-align: right;">0.0066</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6:44097472:T:C</td>
+<td style="text-align: right;">-0.01666</td>
+<td style="text-align: right;">0.003138</td>
+<td style="text-align: right;">0.0063</td>
+<td style="text-align: right;">0.0079</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:66820449:T:C</td>
+<td style="text-align: right;">-0.01576</td>
+<td style="text-align: right;">0.002533</td>
+<td style="text-align: right;">0.0041</td>
+<td style="text-align: right;">0.0065</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">19:35370305:A:G</td>
+<td style="text-align: right;">-0.01430</td>
+<td style="text-align: right;">0.002619</td>
+<td style="text-align: right;">0.0014</td>
+<td style="text-align: right;">0.0068</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">14:30364061:C:G</td>
+<td style="text-align: right;">-0.01397</td>
+<td style="text-align: right;">0.002769</td>
+<td style="text-align: right;">0.0130</td>
+<td style="text-align: right;">0.0075</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:202207993:T:C</td>
+<td style="text-align: right;">0.01268</td>
+<td style="text-align: right;">0.002512</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.0065</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">20:62586262:T:C</td>
+<td style="text-align: right;">0.01384</td>
+<td style="text-align: right;">0.002572</td>
+<td style="text-align: right;">-0.0034</td>
+<td style="text-align: right;">0.0067</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">16:54573024:A:G</td>
+<td style="text-align: right;">0.01404</td>
+<td style="text-align: right;">0.002640</td>
+<td style="text-align: right;">-0.0027</td>
+<td style="text-align: right;">0.0071</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">22:39131727:T:G</td>
+<td style="text-align: right;">0.01406</td>
+<td style="text-align: right;">0.002635</td>
+<td style="text-align: right;">-0.0110</td>
+<td style="text-align: right;">0.0068</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13:110955187:T:C</td>
+<td style="text-align: right;">0.01500</td>
+<td style="text-align: right;">0.002756</td>
+<td style="text-align: right;">-0.0063</td>
+<td style="text-align: right;">0.0073</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">21:37835347:A:T</td>
+<td style="text-align: right;">0.01630</td>
+<td style="text-align: right;">0.002865</td>
+<td style="text-align: right;">-0.0014</td>
+<td style="text-align: right;">0.0075</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:10213497:A:G</td>
+<td style="text-align: right;">0.01634</td>
+<td style="text-align: right;">0.003023</td>
+<td style="text-align: right;">-0.0002</td>
+<td style="text-align: right;">0.0078</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">12:4057955:T:C</td>
+<td style="text-align: right;">0.01683</td>
+<td style="text-align: right;">0.002947</td>
+<td style="text-align: right;">-0.0023</td>
+<td style="text-align: right;">0.0078</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:131089135:T:C</td>
+<td style="text-align: right;">0.01689</td>
+<td style="text-align: right;">0.003111</td>
+<td style="text-align: right;">-0.0029</td>
+<td style="text-align: right;">0.0081</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10:65393613:A:G</td>
+<td style="text-align: right;">0.01743</td>
+<td style="text-align: right;">0.002640</td>
+<td style="text-align: right;">-0.0016</td>
+<td style="text-align: right;">0.0069</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:103151136:A:G</td>
+<td style="text-align: right;">0.01981</td>
+<td style="text-align: right;">0.003588</td>
+<td style="text-align: right;">-0.0210</td>
+<td style="text-align: right;">0.0096</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">20:52786406:T:C</td>
+<td style="text-align: right;">0.02285</td>
+<td style="text-align: right;">0.003207</td>
+<td style="text-align: right;">-0.0008</td>
+<td style="text-align: right;">0.0083</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:54846400:A:G</td>
+<td style="text-align: right;">0.02574</td>
+<td style="text-align: right;">0.003572</td>
+<td style="text-align: right;">-0.0063</td>
+<td style="text-align: right;">0.0090</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">20:52813216:T:C</td>
+<td style="text-align: right;">0.03049</td>
+<td style="text-align: right;">0.004855</td>
+<td style="text-align: right;">-0.0044</td>
+<td style="text-align: right;">0.0130</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:96061242:C:G</td>
+<td style="text-align: right;">0.05118</td>
+<td style="text-align: right;">0.006802</td>
+<td style="text-align: right;">-0.0011</td>
+<td style="text-align: right;">0.0180</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggrepel)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(data, <span class="fu">aes</span>(<span class="at">x=</span>beta.exposure, <span class="at">y=</span>beta.outcome, <span class="at">color =</span> sign_match)) <span class="sc">+</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> beta.outcome <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se.outcome, <span class="at">ymax =</span> beta.outcome <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se.outcome), <span class="at">width=</span><span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="at">data =</span> <span class="fu">filter</span>(data, <span class="sc">!</span>sign_match), <span class="fu">aes</span>(<span class="at">label=</span>SNP), <span class="at">hjust=</span><span class="dv">0</span>, <span class="at">vjust=</span><span class="dv">0</span>, <span class="at">size=</span><span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>() <span class="sc">+</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">"beta.exposure"</span>, <span class="at">y=</span><span class="st">"beta.outcome"</span>, <span class="at">title=</span><span class="st">"Exposure vs Outcome betas; discordant SNPs labeled"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/calcium-harmonizing-snps-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>There were 33 discordant SNPs between the exposure and outcome datasets. These are listed above. We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise. These were kept in the analysis</p>
 <p>Harmonization results</p>
 <ul>
-<li>We used 269 SNPs as instruments for calcium from UK Biobank.</li>
-<li>There were 269 SNPs in common between the exposure and outcome datasets.</li>
-<li>A total of 270 SNPs remained for use after harmonization</li>
+<li>We used 275 SNPs as instruments for calcium from UK Biobank.</li>
+<li>There were 275 SNPs in common between the exposure and outcome datasets.</li>
+<li>A total of 277 SNPs remained for use after harmonization</li>
 <li>Removed 0 SNPs due to allele mismatches</li>
-<li>Identified 21 palindromic SNPs</li>
+<li>Identified 22 palindromic SNPs</li>
 </ul>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>data.annot <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">R2 =</span> <span class="dv">2</span> <span class="sc">*</span> eaf.outcome <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> eaf.outcome) <span class="sc">*</span> beta.outcome<span class="sc">^</span><span class="dv">2</span>,</span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">F =</span> (R2 <span class="sc">*</span> (samplesize.outcome.calcium <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> R2))</span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="co"># Calculate summary metrics</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>calcium.summary_metrics.outcome <span class="ot">&lt;-</span> </span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  data.annot <span class="sc">%&gt;%</span></span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  ungroup <span class="sc">%&gt;%</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">num_snps =</span> <span class="fu">n</span>(),</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>   <span class="at">cumulative_R2 =</span> <span class="fu">sum</span>(R2, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F =</span> <span class="fu">mean</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F =</span> <span class="fu">median</span>(F, <span class="at">na.rm=</span><span class="cn">TRUE</span>),</span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_maf =</span> <span class="fu">mean</span>(eaf.outcome, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_beta =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(beta.outcome), <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">overall_F =</span> (cumulative_R2 <span class="sc">*</span> (samplesize.outcome.calcium <span class="sc">-</span> <span class="fu">n</span>() <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">/</span> ((<span class="dv">1</span> <span class="sc">-</span> cumulative_R2) <span class="sc">*</span> <span class="fu">n</span>())</span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(calcium.summary_metrics.outcome, <span class="at">caption=</span><span class="st">"Summary of calcium instruments for outcome GWAS"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>data.annot <span class="ot">&lt;-</span> data <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">R2.exposure =</span> <span class="dv">2</span> <span class="sc">*</span> eaf.exposure <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> eaf.exposure) <span class="sc">*</span> beta.exposure<span class="sc">^</span><span class="dv">2</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">F.exposure =</span> (R2.exposure <span class="sc">*</span> (samplesize.exposure <span class="sc">-</span> <span class="dv">2</span>)) <span class="sc">/</span> (<span class="dv">1</span> <span class="sc">-</span> R2.exposure)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>calcium.exposure.summary <span class="ot">&lt;-</span> data.annot <span class="sc">%&gt;%</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">num_snps =</span> <span class="fu">n</span>(),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">samplesize.exposure =</span> <span class="fu">first</span>(samplesize.exposure),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">cumulative_R2 =</span> <span class="fu">sum</span>(R2.exposure, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F =</span> <span class="fu">mean</span>(F.exposure, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F =</span> <span class="fu">median</span>(F.exposure, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_maf =</span> <span class="fu">mean</span>(eaf.exposure, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_beta =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(beta.exposure), <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">overall_F =</span> (cumulative_R2 <span class="sc">*</span> (samplesize.exposure <span class="sc">-</span> num_snps <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">/</span> </span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>                     ((<span class="dv">1</span> <span class="sc">-</span> cumulative_R2) <span class="sc">*</span> num_snps))</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a><span class="co"># For outcome (e.g., cholesterol) SNPs</span></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>outcome.summary_metrics <span class="ot">&lt;-</span> data.annot <span class="sc">%&gt;%</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">num_snps =</span> <span class="fu">n</span>(),</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_beta =</span> <span class="fu">mean</span>(<span class="fu">abs</span>(beta.outcome), <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_se =</span> <span class="fu">mean</span>(se.outcome, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_maf =</span> <span class="fu">mean</span>(eaf.outcome, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(calcium.exposure.summary, <span class="at">caption=</span><span class="st">"Summary of calcium instruments after harmonisation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Summary of calcium instruments for outcome GWAS</caption>
+<caption>Summary of calcium instruments after harmonisation</caption>
 <colgroup>
-<col style="width: 12%">
-<col style="width: 20%">
-<col style="width: 12%">
-<col style="width: 12%">
-<col style="width: 12%">
-<col style="width: 14%">
-<col style="width: 14%">
+<col style="width: 10%">
+<col style="width: 22%">
+<col style="width: 15%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 11%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: right;">num_snps</th>
+<th style="text-align: right;">samplesize.exposure</th>
 <th style="text-align: right;">cumulative_R2</th>
 <th style="text-align: right;">mean_F</th>
 <th style="text-align: right;">median_F</th>
@@ -256,13 +669,39 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">270</td>
-<td style="text-align: right;">0.0171846</td>
-<td style="text-align: right;">2.934478</td>
-<td style="text-align: right;">1.509012</td>
-<td style="text-align: right;">0.275463</td>
-<td style="text-align: right;">0.012093</td>
-<td style="text-align: right;">2.967857</td>
+<td style="text-align: right;">277</td>
+<td style="text-align: right;">385066</td>
+<td style="text-align: right;">0.0638365</td>
+<td style="text-align: right;">88.8467</td>
+<td style="text-align: right;">54.59161</td>
+<td style="text-align: right;">0.3670863</td>
+<td style="text-align: right;">0.0259874</td>
+<td style="text-align: right;">94.72378</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(outcome.summary_metrics, <span class="at">caption=</span><span class="st">"Summary of outcome summary "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Summary of outcome summary</caption>
+<thead>
+<tr class="header">
+<th style="text-align: right;">num_snps</th>
+<th style="text-align: right;">mean_beta</th>
+<th style="text-align: right;">mean_se</th>
+<th style="text-align: right;">mean_maf</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: right;">277</td>
+<td style="text-align: right;">0.0146729</td>
+<td style="text-align: right;">0.0089444</td>
+<td style="text-align: right;">0.2610072</td>
 </tr>
 </tbody>
 </table>
@@ -271,53 +710,99 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(data)</span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(calcium.control.mr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
-<div class="cell-output cell-output-stdout">
-<pre><code> id.exposure         id.outcome          outcome            exposure        
- Length:264         Length:264         Length:264         Length:264        
- Class :character   Class :character   Class :character   Class :character  
- Mode  :character   Mode  :character   Mode  :character   Mode  :character  
-                                                                            
-                                                                            
-                                                                            
-    method               nsnp             b                 se         
- Length:264         Min.   :1.000   Min.   :-1.8556   Min.   :0.04448  
- Class :character   1st Qu.:1.000   1st Qu.:-0.1051   1st Qu.:0.26035  
- Mode  :character   Median :1.000   Median : 0.2050   Median :0.35097  
-                    Mean   :1.004   Mean   : 0.1825   Mean   :0.33637  
-                    3rd Qu.:1.000   3rd Qu.: 0.5137   3rd Qu.:0.41512  
-                    Max.   :2.000   Max.   : 1.5834   Max.   :1.04167  
-      pval          
- Min.   :1.000e-08  
- 1st Qu.:4.550e-02  
- Median :2.354e-01  
- Mean   :3.354e-01  
- 3rd Qu.:6.052e-01  
- Max.   :1.000e+00  </code></pre>
-</div>
-<details class="code-fold">
-<summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#mr_forest_plot(calcium.control.mr)</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>dat_h_steiger <span class="ot">&lt;-</span> <span class="fu">steiger_filtering</span>(data)</span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(dat_h_steiger<span class="sc">$</span>steiger_direction) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(data,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_ivw"</span>, </span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_egger_regression"</span>, </span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_median"</span>, </span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_mode"</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>dat_h_steiger <span class="ot">&lt;-</span> <span class="fu">steiger_filtering</span>(data)</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(dat_h_steiger<span class="sc">$</span>steiger_direction) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>&lt; table of extent 0 &gt;</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(calcium.control.mr, <span class="fu">aes</span>(<span class="at">y=</span><span class="fu">reorder</span>(id.outcome,b),<span class="at">x=</span>b)) <span class="sc">+</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin=</span>b<span class="sc">-</span>se, <span class="at">xmax=</span>b<span class="sc">+</span>se), <span class="at">width=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
-<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Mendelian Randomization Results for Calcium"</span>,</span>
-<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Instrument"</span>,</span>
-<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Effect Size (Beta)"</span>) <span class="sc">+</span></span>
-<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Positive Control"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MR Results for Calcium Positive Control</caption>
+<colgroup>
+<col style="width: 23%">
+<col style="width: 20%">
+<col style="width: 25%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">nsnp</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">pval</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">0.544</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.000000e+00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">0.681</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">5.752555e-34</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">Weighted median</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">0.558</td>
+<td style="text-align: right;">0.033</td>
+<td style="text-align: right;">2.694839e-63</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">Weighted mode</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">0.557</td>
+<td style="text-align: right;">0.060</td>
+<td style="text-align: right;">5.524691e-18</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(calcium.control.mr, <span class="fu">aes</span>(<span class="at">y=</span>method,<span class="at">x=</span>b)) <span class="sc">+</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin=</span>b<span class="sc">-</span>se, <span class="at">xmax=</span>b<span class="sc">+</span>se), <span class="at">width=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Mendelian Randomization Results for Calcium"</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">""</span>,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Effect Size (Beta)"</span>) <span class="sc">+</span></span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -327,13 +812,217 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </div>
 </div>
 </div>
+<p>The primary result, using the inverse variance weighted method shows a 0.5437075 <span class="math inline">\(\pm\)</span> 0.0234494 increase in calcium (Michigan GWAS) per 1 unit increase in calcium (UK Biobank). This is statistically significant with a p-value of 6.2499238^{-119}. All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.</p>
+<section id="mr-egger-intercept" class="level3">
+<h3 class="anchored" data-anchor-id="mr-egger-intercept">MR-Egger Intercept</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>egger_intercept <span class="ot">&lt;-</span> <span class="fu">mr_pleiotropy_test</span>(data)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>egger_intercept<span class="sc">|&gt;</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Pleiotropy Results for Calcium Positive Control"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MR Pleiotropy Results for Calcium Positive Control</caption>
+<colgroup>
+<col style="width: 29%">
+<col style="width: 25%">
+<col style="width: 19%">
+<col style="width: 12%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">exposure</th>
+<th style="text-align: right;">egger_intercept</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">pval</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: right;">-0.0040361</td>
+<td style="text-align: right;">0.0012601</td>
+<td style="text-align: right;">0.0015212</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The MR-Egger intercept is with a p-value of 0.0015212, indicating some evidence of directional pleiotropy. Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.</p>
+</section>
+<section id="heterogeneity-statistics" class="level3">
+<h3 class="anchored" data-anchor-id="heterogeneity-statistics">Heterogeneity Statistics</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Heterogeneity tests for IVW and MR-Egger</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>heterogeneity <span class="ot">&lt;-</span> <span class="fu">mr_heterogeneity</span>(data)</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>heterogeneity<span class="sc">|&gt;</span></span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Heterogeneity Results for Calcium Positive Control"</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MR Heterogeneity Results for Calcium Positive Control</caption>
+<colgroup>
+<col style="width: 24%">
+<col style="width: 21%">
+<col style="width: 26%">
+<col style="width: 8%">
+<col style="width: 5%">
+<col style="width: 13%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">Q</th>
+<th style="text-align: right;">Q_df</th>
+<th style="text-align: right;">Q_pval</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">433.461</td>
+<td style="text-align: right;">273</td>
+<td style="text-align: right;">2.060484e-09</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">449.751</td>
+<td style="text-align: right;">274</td>
+<td style="text-align: right;">1.083278e-10</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns: method, Q, Q_df, Q_pval</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Interpretation: small Q_pval (&lt;0.05) indicates heterogeneity among SNPs</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>This is expected with polygenic traits and does not necessarily invalidate the overall causal estimate, particularly since robust methods (weighted median, weighted mode) gave consistent results.</p>
+</section>
+<section id="leave-one-out-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="leave-one-out-analysis">Leave-one-out Analysis</h3>
+<p>Using IVW methods</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.control.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs"</span>,</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">SNP</th>
+<th style="text-align: right;">diff</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">3:121993247:A:G</td>
+<td style="text-align: right;">-0.03487</td>
+<td style="text-align: right;">0.50884</td>
+<td style="text-align: right;">0.02420</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2:234264848:C:G</td>
+<td style="text-align: right;">0.02258</td>
+<td style="text-align: right;">0.56629</td>
+<td style="text-align: right;">0.02113</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:97400324:A:G</td>
+<td style="text-align: right;">-0.00581</td>
+<td style="text-align: right;">0.53789</td>
+<td style="text-align: right;">0.02351</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">9:80366259:T:C</td>
+<td style="text-align: right;">-0.00503</td>
+<td style="text-align: right;">0.53867</td>
+<td style="text-align: right;">0.02336</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:43458250:T:C</td>
+<td style="text-align: right;">-0.00365</td>
+<td style="text-align: right;">0.54006</td>
+<td style="text-align: right;">0.02339</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">20:52720530:A:G</td>
+<td style="text-align: right;">-0.00347</td>
+<td style="text-align: right;">0.54024</td>
+<td style="text-align: right;">0.02349</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns: SNP, nsnp, b, se, pval — gives causal estimate with each SNP removed once</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: plot LOO results</span></span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loo_res, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(SNP, <span class="sc">-</span>b), <span class="at">y =</span> b)) <span class="sc">+</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width =</span> <span class="fl">0.1</span>) <span class="sc">+</span></span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"SNP removed"</span>, <span class="at">y =</span> <span class="st">"Causal estimate (IVW, leave-one-out)"</span>) <span class="sc">+</span></span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>() <span class="sc">+</span></span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">4</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/calcium-mr-loo-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.”</p>
+</section>
 </section>
 <section id="session-information" class="level2">
 <h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)
@@ -354,9 +1043,10 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] knitr_1.50         TwoSampleMR_0.6.22 lubridate_1.9.4    forcats_1.0.0     
- [5] stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0        readr_2.1.5       
- [9] tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0      tidyverse_2.0.0   
+ [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
+ [5] forcats_1.0.0      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
+ [9] readr_2.1.5        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0     
+[13] tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
  [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
@@ -366,11 +1056,11 @@ loaded via a namespace (and not attached):
 [17] rlang_1.1.6        crayon_1.5.3       bit64_4.6.0-1      withr_3.0.2       
 [21] yaml_2.3.10        tools_4.5.1        parallel_4.5.1     tzdb_0.5.0        
 [25] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4 
-[29] bit_4.6.0          vroom_1.6.5        psych_2.5.6        pkgconfig_2.0.3   
+[29] bit_4.6.0          psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3   
 [33] pillar_1.11.0      gtable_0.3.6       glue_1.8.0         data.table_1.17.8 
 [37] Rcpp_1.1.0         xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1 
-[41] farver_2.1.2       nlme_3.1-168       htmltools_0.5.8.1  labeling_0.4.3    
-[45] rmarkdown_2.29     compiler_4.5.1     S7_0.2.0          </code></pre>
+[41] farver_2.1.2       nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29    
+[45] labeling_0.4.3     compiler_4.5.1     S7_0.2.0          </code></pre>
 </div>
 </div>
 </section>

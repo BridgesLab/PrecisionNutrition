@@ -147,21 +147,16 @@ plink2 \
   --threads 8 \
   --out biomarkers-30690-both_sexes-irnt-results-clumped-snps
 
-# For all-snps for 30680
-awk 'NR>1 {print $3; gsub(/,/, "\n", $14); print $14}' biomarkers-30680-both_sexes-irnt-results.clumps \
-  | sed '/^\s*$/d' \
+# For all-snps for each file
+awk 'NR>1 {print $1}' biomarkers-30680-both_sexes-irnt.tsv \
   | sort -u \
   > biomarkers-30680-all-snps.txt
 
-# For all snps for 30780
-awk 'NR>1 {print $3; gsub(/,/, "\n", $14); print $14}' biomarkers-30780-both_sexes-irnt-results.clumps \
-  | sed '/^\s*$/d' \
+  awk 'NR>1 {print $1}' biomarkers-30780-both_sexes-irnt.tsv \
   | sort -u \
   > biomarkers-30780-all-snps.txt
 
-  # For all snps for 30690
-awk 'NR>1 {print $3; gsub(/,/, "\n", $14); print $14}' biomarkers-30690-both_sexes-irnt-results.clumps \
-  | sed '/^\s*$/d' \
+awk 'NR>1 {print $1}' biomarkers-30690-both_sexes-irnt.tsv \
   | sort -u \
   > biomarkers-30690-all-snps.txt
 

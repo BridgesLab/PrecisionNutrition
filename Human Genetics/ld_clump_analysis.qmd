@@ -53,9 +53,15 @@ ldlc.sumstats.file <- 'biomarkers-30780-both_sexes-irnt.tsv'
 tc.sumstats.file <- 'biomarkers-30690-both_sexes-irnt.tsv'
 
 calcium.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-Ca.tsv.gz'
+ldlc.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-LDL.tsv.gz'
+tc.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-Chol.tsv.gz'
 ```
 
-The calcium summary stats is in `r calcium.sumstats.file`, the total cholesterol in `r tc.sumstats.file` and the LDL-C summary stats file is in `r ldlc.sumstats.file`.  The clumps were generated using the following plink2 options:
+
+The calcium summary stats is in `r calcium.sumstats.file`, the total cholesterol in `r tc.sumstats.file` and the LDL-C summary stats file is in `r ldlc.sumstats.file`. 
+## LD Clumping
+
+The clumps were generated using the following plink2 options:
 
 ```
 # or 30780 for LDL-C 
@@ -159,7 +165,7 @@ calcium.summary_metrics <-
     overall_F = (cumulative_R2 * (n.calcium - num_snps - 1)) / ((1 - cumulative_R2) * num_snps)
   )
 
-kable(calcium.summary_metrics, caption="Summary of calcium instruments")
+kable(calcium.summary_metrics, caption="Summary of calcium instruments prior to harmonization")
 
 calcium.instruments |> 
   rename(EA = alt, ,
@@ -181,6 +187,100 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 $$
 Where $MAF$ is the allele frequency from 1000 Genomes, EUR subset, $\beta$ is the effect size of the allele from UK Biobank, $N$ is the sample size of that trait in UK BioBank, and $k$ is the number of instruments (SNPs).  The $F$ statistic is used to assess instrument strength, with values above 10 indicating strong instruments.
 
+## Total Cholesterol SNPs
+
+```{r tc-snps}
+# Read clumped SNPs and expand out clumped SNPs
+tc.clumps <- read_tsv(tc.clumps.datafile, col_types = cols()) |>
+  rename(P_clumping = P) 
+
+# Read in the outcome GWAS summary statitiscis
+tc.outcome <- read_tsv(tc.outcome.gwas.file, col_types = cols()) |>
+  mutate(ID=paste(chrom, pos, ref,alt, sep=":"))
+
+# First identify the lead SNPs that are in both the clumped SNPs and the outcome GWAS
+lead.snps.in.outcome <- intersect(tc.clumps$ID, tc.outcome$ID)
+
+# Expanded out clumps from the SP2 column, this is to find SNPs that are buried in the clumps
+tc.clumps.expanded <- tc.clumps %>%
+  separate_rows(SP2, sep = ",")
+
+# Read frequency file (from PLINK --freq output)
+tc.freqs <- read_tsv(tc.freq.file, col_types = cols())
+
+# Read full summary stats (with BETA)
+tc.sumstats <- read_tsv(tc.sumstats.file, col_types = cols())
+
+# Found SNPs that matched between clumped SNPs and outcome GWAS
+tc.merged.snps.provisional <-
+  left_join(tc.clumps.expanded, tc.outcome,
+          by = c("SP2"="ID")) |>
+  left_join(tc.freqs, by = c("SP2"="ID","#CHROM"="#CHROM")) |>
+  left_join(tc.sumstats, by = c("SP2"="VARIANT")) |>
+  mutate(present_in_outcome = SP2 %in% tc.outcome$ID) 
+
+# Strategy per clump:
+tc.best_per_clump <- 
+  tc.merged.snps.provisional %>%
+  filter(present_in_outcome==T) %>% #lose a lot here
+  group_by(ID) %>%
+  arrange(
+    # 1. prefer if SNP itself is the lead
+    desc(SP2 == ID),
+    # 2. prefer smaller p-value (stronger in exposure)
+    P
+  ) %>%
+  slice_head(n = 1) %>%   # <-- guarantees one row per group
+  ungroup()
+
+# Filter by MAF >= 0.01
+tc.instruments <- 
+  tc.best_per_clump %>%
+  filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
+```
+
+### Instrument Selection Summary for Total Cholesterol
+
+| Stage                          | SNPs                          |
+|--------------------------------|-------------------------------|
+| UKBB SNPs                      | `r nrow(tc.sumstats)`    |
+| After LD Clumping              | `r nrow(tc.clumps)`      |
+| After MAF Filtering            | `r nrow(tc.instruments)` |
+
+```{r tc-instrument-strength}
+n.tc <- 385066  
+
+#based on UKBB summary statistics
+tc.instruments <- 
+  tc.instruments %>%
+  mutate(
+    R2 = 2 * ALT_FREQS * (1 - ALT_FREQS) * BETA^2,
+    F = (R2 * (n.tc - 2)) / (1 - R2)
+  )
+
+# Calculate summary metrics
+tc.summary_metrics <- 
+  tc.instruments %>%
+  summarise(
+    num_snps = n(),
+    cumulative_R2 = sum(R2, na.rm = TRUE),
+    mean_F = mean(F, na.rm=TRUE),
+    median_F = median(F, na.rm=TRUE),
+    mean_maf = mean(ALT_FREQS, na.rm = TRUE),
+    mean_beta = mean(abs(BETA), na.rm = TRUE),
+    overall_F = (cumulative_R2 * (n.tc - num_snps - 1)) / ((1 - cumulative_R2) * num_snps)
+  )
+
+kable(tc.summary_metrics, caption="Summary of total cholesterol instruments prior to harmonization")
+
+tc.instruments |> 
+  rename(EA = alt, ,
+         OA = ref,
+         CHR = chrom) |>
+  mutate(N_exposure=n.tc) |>
+  select(SP2,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
+  write_csv("Total Cholesterol Instruments from UKBB.csv")
+```
 
 ## Session Information
 

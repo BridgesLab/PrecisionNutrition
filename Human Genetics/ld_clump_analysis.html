@@ -258,21 +258,22 @@ plink2 \
 <span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Strategy per clump:</span></span>
 <span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>calcium.best_per_clump <span class="ot">&lt;-</span> </span>
 <span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  calcium.merged.snps.provisional <span class="sc">%&gt;%</span></span>
-<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(present_in_outcome<span class="sc">==</span>T) <span class="sc">%&gt;%</span> <span class="co">#lose a lot here</span></span>
-<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
-<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
-<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. prefer if SNP itself is the lead</span></span>
-<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(SP2 <span class="sc">==</span> ID),</span>
-<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer smaller p-value (stronger in exposure)</span></span>
-<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    P</span>
-<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>   <span class="co"># &lt;-- guarantees one row per group</span></span>
-<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
-<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
-<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="ot">&lt;-</span> </span>
-<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  calcium.best_per_clump <span class="sc">%&gt;%</span></span>
-<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. prefer if SNP itself is the lead</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(SP2 <span class="sc">==</span> ID),</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer if SNP is present in outcome</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(present_in_outcome),</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer smaller p-value (stronger in exposure)</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    P</span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>   <span class="co"># &lt;-- guarantees one row per group</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>calcium.instruments <span class="ot">&lt;-</span> </span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  calcium.best_per_clump <span class="sc">%&gt;%</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="instrument-selection-summary-for-calcium" class="level3">
@@ -295,7 +296,7 @@ plink2 \
 </tr>
 <tr class="odd">
 <td>After MAF Filtering</td>
-<td>275</td>
+<td>363</td>
 </tr>
 </tbody>
 </table>
@@ -331,10 +332,10 @@ plink2 \
 <table class="caption-top table table-sm table-striped small">
 <caption>Summary of calcium instruments prior to harmonization</caption>
 <colgroup>
-<col style="width: 13%">
-<col style="width: 20%">
-<col style="width: 10%">
-<col style="width: 13%">
+<col style="width: 12%">
+<col style="width: 19%">
+<col style="width: 12%">
+<col style="width: 12%">
 <col style="width: 14%">
 <col style="width: 14%">
 <col style="width: 14%">
@@ -352,13 +353,13 @@ plink2 \
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">275</td>
-<td style="text-align: right;">0.0635624</td>
-<td style="text-align: right;">89.109</td>
-<td style="text-align: right;">54.59161</td>
-<td style="text-align: right;">0.3675692</td>
-<td style="text-align: right;">0.0260401</td>
-<td style="text-align: right;">94.97568</td>
+<td style="text-align: right;">363</td>
+<td style="text-align: right;">0.0749947</td>
+<td style="text-align: right;">79.63584</td>
+<td style="text-align: right;">49.94749</td>
+<td style="text-align: right;">0.3501635</td>
+<td style="text-align: right;">0.0275182</td>
+<td style="text-align: right;">85.92191</td>
 </tr>
 </tbody>
 </table>
@@ -420,21 +421,22 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 <span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Strategy per clump:</span></span>
 <span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>tc.best_per_clump <span class="ot">&lt;-</span> </span>
 <span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  tc.merged.snps.provisional <span class="sc">%&gt;%</span></span>
-<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(present_in_outcome<span class="sc">==</span>T) <span class="sc">%&gt;%</span> <span class="co">#lose a lot here</span></span>
-<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
-<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
-<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. prefer if SNP itself is the lead</span></span>
-<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(SP2 <span class="sc">==</span> ID),</span>
-<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer smaller p-value (stronger in exposure)</span></span>
-<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>    P</span>
-<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>   <span class="co"># &lt;-- guarantees one row per group</span></span>
-<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
-<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
-<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>tc.instruments <span class="ot">&lt;-</span> </span>
-<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>  tc.best_per_clump <span class="sc">%&gt;%</span></span>
-<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. prefer if SNP itself is the lead</span></span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(SP2 <span class="sc">==</span> ID),</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer if SNP is present in outcome</span></span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(present_in_outcome),</span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer smaller p-value (stronger in exposure)</span></span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>    P</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>   <span class="co"># &lt;-- guarantees one row per group</span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>tc.instruments <span class="ot">&lt;-</span> </span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a>  tc.best_per_clump <span class="sc">%&gt;%</span></span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="instrument-selection-summary-for-total-cholesterol" class="level3">
@@ -457,7 +459,7 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 </tr>
 <tr class="odd">
 <td>After MAF Filtering</td>
-<td>277</td>
+<td>370</td>
 </tr>
 </tbody>
 </table>
@@ -494,10 +496,10 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 <caption>Summary of total cholesterol instruments prior to harmonization</caption>
 <colgroup>
 <col style="width: 12%">
-<col style="width: 19%">
+<col style="width: 20%">
 <col style="width: 12%">
 <col style="width: 12%">
-<col style="width: 14%">
+<col style="width: 12%">
 <col style="width: 14%">
 <col style="width: 14%">
 </colgroup>
@@ -514,13 +516,13 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">277</td>
-<td style="text-align: right;">0.0954829</td>
-<td style="text-align: right;">145.2829</td>
-<td style="text-align: right;">52.68925</td>
-<td style="text-align: right;">0.3498324</td>
-<td style="text-align: right;">0.0302356</td>
-<td style="text-align: right;">160.1837</td>
+<td style="text-align: right;">370</td>
+<td style="text-align: right;">0.106064</td>
+<td style="text-align: right;">120.7957</td>
+<td style="text-align: right;">48.90981</td>
+<td style="text-align: right;">0.317084</td>
+<td style="text-align: right;">0.0308773</td>
+<td style="text-align: right;">134.7575</td>
 </tr>
 </tbody>
 </table>
@@ -575,21 +577,22 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 <span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Strategy per clump:</span></span>
 <span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>ldlc.best_per_clump <span class="ot">&lt;-</span> </span>
 <span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>  ldlc.merged.snps.provisional <span class="sc">%&gt;%</span></span>
-<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(present_in_outcome<span class="sc">==</span>T) <span class="sc">%&gt;%</span> <span class="co">#lose a lot here</span></span>
-<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
-<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
-<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. prefer if SNP itself is the lead</span></span>
-<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(SP2 <span class="sc">==</span> ID),</span>
-<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer smaller p-value (stronger in exposure)</span></span>
-<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    P</span>
-<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>   <span class="co"># &lt;-- guarantees one row per group</span></span>
-<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
-<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
-<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>ldlc.instruments <span class="ot">&lt;-</span> </span>
-<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>  ldlc.best_per_clump <span class="sc">%&gt;%</span></span>
-<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(ID) <span class="sc">%&gt;%</span></span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(</span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 1. prefer if SNP itself is the lead</span></span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(SP2 <span class="sc">==</span> ID),</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer if SNP is present in outcome</span></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a>    <span class="fu">desc</span>(present_in_outcome),</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>    <span class="co"># 2. prefer smaller p-value (stronger in exposure)</span></span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>    P</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_head</span>(<span class="at">n =</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span>   <span class="co"># &lt;-- guarantees one row per group</span></span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>()</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a><span class="co"># Filter by MAF &gt;= 0.01</span></span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>ldlc.instruments <span class="ot">&lt;-</span> </span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>  ldlc.best_per_clump <span class="sc">%&gt;%</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(ALT_FREQS <span class="sc">&gt;=</span> <span class="fl">0.01</span>, ALT_FREQS <span class="sc">&lt;=</span> <span class="fl">0.99</span>)  <span class="co"># also exclude rare alleles &gt; 0.99</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <section id="instrument-selection-summary-for-ldl-cholesterol" class="level3">
@@ -612,7 +615,7 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 </tr>
 <tr class="odd">
 <td>After MAF Filtering</td>
-<td>225</td>
+<td>324</td>
 </tr>
 </tbody>
 </table>
@@ -648,11 +651,11 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 <table class="caption-top table table-sm table-striped small">
 <caption>Summary of LDL cholesterol instruments prior to harmonization</caption>
 <colgroup>
-<col style="width: 12%">
-<col style="width: 19%">
-<col style="width: 12%">
-<col style="width: 12%">
-<col style="width: 14%">
+<col style="width: 13%">
+<col style="width: 20%">
+<col style="width: 11%">
+<col style="width: 13%">
+<col style="width: 13%">
 <col style="width: 14%">
 <col style="width: 14%">
 </colgroup>
@@ -669,13 +672,13 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: right;">225</td>
-<td style="text-align: right;">0.0813825</td>
-<td style="text-align: right;">152.4881</td>
-<td style="text-align: right;">49.95755</td>
-<td style="text-align: right;">0.3430749</td>
-<td style="text-align: right;">0.031963</td>
-<td style="text-align: right;">165.5225</td>
+<td style="text-align: right;">324</td>
+<td style="text-align: right;">0.0954224</td>
+<td style="text-align: right;">124.132</td>
+<td style="text-align: right;">47.42</td>
+<td style="text-align: right;">0.307875</td>
+<td style="text-align: right;">0.0323196</td>
+<td style="text-align: right;">136.836</td>
 </tr>
 </tbody>
 </table>

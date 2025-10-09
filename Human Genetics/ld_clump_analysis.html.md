@@ -129,11 +129,12 @@ calcium.merged.snps.provisional <-
 # Strategy per clump:
 calcium.best_per_clump <- 
   calcium.merged.snps.provisional %>%
-  filter(present_in_outcome==T) %>% #lose a lot here
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
+    # 2. prefer if SNP is present in outcome
+    desc(present_in_outcome),
     # 2. prefer smaller p-value (stronger in exposure)
     P
   ) %>%
@@ -154,7 +155,7 @@ calcium.instruments <-
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | 28987534    |
 | After LD Clumping              | 454      |
-| After MAF Filtering            | 275 |
+| After MAF Filtering            | 363 |
 
 
 ::: {.cell}
@@ -191,9 +192,9 @@ kable(calcium.summary_metrics, caption="Summary of calcium instruments prior to 
 
 Table: Summary of calcium instruments prior to harmonization
 
-| num_snps| cumulative_R2| mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|--------:|-------------:|------:|--------:|---------:|---------:|---------:|
-|      275|     0.0635624| 89.109| 54.59161| 0.3675692| 0.0260401|  94.97568|
+| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|      363|     0.0749947| 79.63584| 49.94749| 0.3501635| 0.0275182|  85.92191|
 
 
 :::
@@ -259,11 +260,12 @@ tc.merged.snps.provisional <-
 # Strategy per clump:
 tc.best_per_clump <- 
   tc.merged.snps.provisional %>%
-  filter(present_in_outcome==T) %>% #lose a lot here
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
+    # 2. prefer if SNP is present in outcome
+    desc(present_in_outcome),
     # 2. prefer smaller p-value (stronger in exposure)
     P
   ) %>%
@@ -284,7 +286,7 @@ tc.instruments <-
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | 28987534    |
 | After LD Clumping              | 542      |
-| After MAF Filtering            | 277 |
+| After MAF Filtering            | 370 |
 
 
 ::: {.cell}
@@ -321,9 +323,9 @@ kable(tc.summary_metrics, caption="Summary of total cholesterol instruments prio
 
 Table: Summary of total cholesterol instruments prior to harmonization
 
-| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|      277|     0.0954829| 145.2829| 52.68925| 0.3498324| 0.0302356|  160.1837|
+| num_snps| cumulative_R2|   mean_F| median_F| mean_maf| mean_beta| overall_F|
+|--------:|-------------:|--------:|--------:|--------:|---------:|---------:|
+|      370|      0.106064| 120.7957| 48.90981| 0.317084| 0.0308773|  134.7575|
 
 
 :::
@@ -378,11 +380,12 @@ ldlc.merged.snps.provisional <-
 # Strategy per clump:
 ldlc.best_per_clump <- 
   ldlc.merged.snps.provisional %>%
-  filter(present_in_outcome==T) %>% #lose a lot here
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
+    # 2. prefer if SNP is present in outcome
+    desc(present_in_outcome),
     # 2. prefer smaller p-value (stronger in exposure)
     P
   ) %>%
@@ -403,7 +406,7 @@ ldlc.instruments <-
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | 28987534    |
 | After LD Clumping              | 469      |
-| After MAF Filtering            | 225 |
+| After MAF Filtering            | 324 |
 
 
 ::: {.cell}
@@ -440,9 +443,9 @@ kable(ldlc.summary_metrics, caption="Summary of LDL cholesterol instruments prio
 
 Table: Summary of LDL cholesterol instruments prior to harmonization
 
-| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|      225|     0.0813825| 152.4881| 49.95755| 0.3430749|  0.031963|  165.5225|
+| num_snps| cumulative_R2|  mean_F| median_F| mean_maf| mean_beta| overall_F|
+|--------:|-------------:|-------:|--------:|--------:|---------:|---------:|
+|      324|     0.0954224| 124.132|    47.42| 0.307875| 0.0323196|   136.836|
 
 
 :::

@@ -116,11 +116,12 @@ calcium.merged.snps.provisional <-
 # Strategy per clump:
 calcium.best_per_clump <- 
   calcium.merged.snps.provisional %>%
-  filter(present_in_outcome==T) %>% #lose a lot here
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
+    # 2. prefer if SNP is present in outcome
+    desc(present_in_outcome),
     # 2. prefer smaller p-value (stronger in exposure)
     P
   ) %>%
@@ -222,11 +223,12 @@ tc.merged.snps.provisional <-
 # Strategy per clump:
 tc.best_per_clump <- 
   tc.merged.snps.provisional %>%
-  filter(present_in_outcome==T) %>% #lose a lot here
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
+    # 2. prefer if SNP is present in outcome
+    desc(present_in_outcome),
     # 2. prefer smaller p-value (stronger in exposure)
     P
   ) %>%
@@ -317,11 +319,12 @@ ldlc.merged.snps.provisional <-
 # Strategy per clump:
 ldlc.best_per_clump <- 
   ldlc.merged.snps.provisional %>%
-  filter(present_in_outcome==T) %>% #lose a lot here
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
+    # 2. prefer if SNP is present in outcome
+    desc(present_in_outcome),
     # 2. prefer smaller p-value (stronger in exposure)
     P
   ) %>%

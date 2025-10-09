@@ -5,6 +5,20 @@
 - [ ] n for BioVU
 - [ ] population details
 
+## Analysis Pipeline
+
+- [ ] Instrument QC table (pre)
+- [ ] Expand SP2 & Flow chart counts
+- [ ] Harmonise (produce harmonised table) → write harmonised SNP table (step 4)
+- [ ] Recompute per-SNP R² & F on harmonised set and write post-harmonisation QC table (step 4)
+- [ ] Scatter plot (step 5)
+- [ ] MR estimates table + forest (steps 6–7)
+- [ ] Heterogeneity + pleiotropy + funnel (steps 8–9)
+- [ ] LOO + radial / MR-PRESSO if needed (steps 10–11)
+- [ ] Steiger summary + proxies table (steps 12–13)
+- [ ] Bidirectional summary figure/table (step 14)
+- [ ] Write supplement SNP table (step 15)
+
 ## Proposed Manuscript Structure
 
 Generated via ChatGPT

@@ -290,7 +290,7 @@ tc.instruments <-
 ::: {.cell}
 
 ```{.r .cell-code}
-n.tc <- 385066  
+n.tc <- 420607  
 
 #based on UKBB summary statistics
 tc.instruments <- 
@@ -323,7 +323,7 @@ Table: Summary of total cholesterol instruments prior to harmonization
 
 | num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
 |--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|      277|     0.0954829| 133.0065| 48.23702| 0.3498324| 0.0302356|  146.6394|
+|      277|     0.0954829| 145.2829| 52.68925| 0.3498324| 0.0302356|  160.1837|
 
 
 :::
@@ -336,6 +336,125 @@ tc.instruments |>
   mutate(N_exposure=n.tc) |>
   select(SP2,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("Total Cholesterol Instruments from UKBB.csv")
+```
+:::
+
+
+## LDL Cholesterol SNPs
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Read clumped SNPs and expand out clumped SNPs
+ldlc.clumps <- read_tsv(ldlc.clumps.datafile, col_types = cols()) |>
+  rename(P_clumping = P) 
+
+# Read in the ouldlcome GWAS summary statitiscis
+ldlc.outcome <- read_tsv(ldlc.outcome.gwas.file, col_types = cols()) |>
+  mutate(ID=paste(chrom, pos, ref,alt, sep=":"))
+
+# First identify the lead SNPs that are in both the clumped SNPs and the outcome GWAS
+lead.snps.in.outcome <- intersect(ldlc.clumps$ID, ldlc.outcome$ID)
+
+# Expanded out clumps from the SP2 column, this is to find SNPs that are buried in the clumps
+ldlc.clumps.expanded <- ldlc.clumps %>%
+  separate_rows(SP2, sep = ",")
+
+# Read frequency file (from PLINK --freq output)
+ldlc.freqs <- read_tsv(ldlc.freq.file, col_types = cols())
+
+# Read full summary stats (with BETA)
+ldlc.sumstats <- read_tsv(ldlc.sumstats.file, col_types = cols())
+
+# Found SNPs that matched between clumped SNPs and outcome GWAS
+ldlc.merged.snps.provisional <-
+  left_join(ldlc.clumps.expanded, ldlc.outcome,
+          by = c("SP2"="ID")) |>
+  left_join(ldlc.freqs, by = c("SP2"="ID","#CHROM"="#CHROM")) |>
+  left_join(ldlc.sumstats, by = c("SP2"="VARIANT")) |>
+  mutate(present_in_outcome = SP2 %in% ldlc.outcome$ID) 
+
+# Strategy per clump:
+ldlc.best_per_clump <- 
+  ldlc.merged.snps.provisional %>%
+  filter(present_in_outcome==T) %>% #lose a lot here
+  group_by(ID) %>%
+  arrange(
+    # 1. prefer if SNP itself is the lead
+    desc(SP2 == ID),
+    # 2. prefer smaller p-value (stronger in exposure)
+    P
+  ) %>%
+  slice_head(n = 1) %>%   # <-- guarantees one row per group
+  ungroup()
+
+# Filter by MAF >= 0.01
+ldlc.instruments <- 
+  ldlc.best_per_clump %>%
+  filter(ALT_FREQS >= 0.01, ALT_FREQS <= 0.99)  # also exclude rare alleles > 0.99
+```
+:::
+
+
+### Instrument Selection Summary for LDL Cholesterol
+
+| Stage                          | SNPs                          |
+|--------------------------------|-------------------------------|
+| UKBB SNPs                      | 28987534    |
+| After LD Clumping              | 469      |
+| After MAF Filtering            | 225 |
+
+
+::: {.cell}
+
+```{.r .cell-code}
+n.ldlc <- 419831  
+
+#based on UKBB summary statistics
+ldlc.instruments <- 
+  ldlc.instruments %>%
+  mutate(
+    R2 = 2 * ALT_FREQS * (1 - ALT_FREQS) * BETA^2,
+    F = (R2 * (n.tc - 2)) / (1 - R2)
+  )
+
+# Calculate summary metrics
+ldlc.summary_metrics <- 
+  ldlc.instruments %>%
+  summarise(
+    num_snps = n(),
+    cumulative_R2 = sum(R2, na.rm = TRUE),
+    mean_F = mean(F, na.rm=TRUE),
+    median_F = median(F, na.rm=TRUE),
+    mean_maf = mean(ALT_FREQS, na.rm = TRUE),
+    mean_beta = mean(abs(BETA), na.rm = TRUE),
+    overall_F = (cumulative_R2 * (n.tc - num_snps - 1)) / ((1 - cumulative_R2) * num_snps)
+  )
+
+kable(ldlc.summary_metrics, caption="Summary of LDL cholesterol instruments prior to harmonization")
+```
+
+::: {.cell-output-display}
+
+
+Table: Summary of LDL cholesterol instruments prior to harmonization
+
+| num_snps| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|      225|     0.0813825| 152.4881| 49.95755| 0.3430749|  0.031963|  165.5225|
+
+
+:::
+
+```{.r .cell-code}
+ldlc.instruments |> 
+  rename(EA = alt, ,
+         OA = ref,
+         CHR = chrom) |>
+  mutate(N_exposure=n.tc) |>
+  select(SP2,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
+  write_csv("LDL Cholesterol Instruments from UKBB.csv")
 ```
 :::
 

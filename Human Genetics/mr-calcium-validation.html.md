@@ -1,7 +1,7 @@
 ---
 title: "MR Analysis and Validation of SNPs for Calcium"
 author: "Dave Bridges"
-date: "April 9, 2025"
+date: "September 9, 2025"
 format:
   html:
     toc: true
@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct  1 11:51:39 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 10 10:20:00 2025
 
 ## Data Entry
 
@@ -255,7 +255,7 @@ There were 33 discordant SNPs between the exposure and outcome datasets.  These 
 
 Harmonization results
 
-- We used 275 SNPs as instruments for calcium from UK Biobank.
+- We used 363 SNPs as instruments for calcium from UK Biobank.
 - There were 275 SNPs in common between the exposure and outcome datasets.
 - A total of 277 SNPs remained for use after harmonization
 - Removed 0 SNPs due to allele mismatches
@@ -367,8 +367,8 @@ Table: MR Results for Calcium Positive Control
 |:-----------------------|:--------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.544| 0.023| 0.000000e+00|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.033| 2.694839e-63|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.060| 5.524691e-18|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.033| 6.464737e-65|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.062| 2.545311e-17|
 
 
 :::
@@ -527,7 +527,7 @@ sessionInfo()
 ```
 R version 4.5.1 (2025-06-13)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.7
+Running under: macOS Sequoia 15.7.1
 
 Matrix products: default
 BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
@@ -544,7 +544,7 @@ attached base packages:
 
 other attached packages:
  [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.0      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
+ [5] forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
  [9] readr_2.1.5        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0     
 [13] tidyverse_2.0.0   
 
@@ -557,7 +557,7 @@ loaded via a namespace (and not attached):
 [21] yaml_2.3.10        tools_4.5.1        parallel_4.5.1     tzdb_0.5.0        
 [25] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4 
 [29] bit_4.6.0          psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3   
-[33] pillar_1.11.0      gtable_0.3.6       glue_1.8.0         data.table_1.17.8 
+[33] pillar_1.11.1      gtable_0.3.6       glue_1.8.0         data.table_1.17.8 
 [37] Rcpp_1.1.0         xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1 
 [41] farver_2.1.2       nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29    
 [45] labeling_0.4.3     compiler_4.5.1     S7_0.2.0          

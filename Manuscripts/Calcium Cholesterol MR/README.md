@@ -10,4 +10,5 @@ This document indicates where the raw data for each Figure panel can be found, a
 | Supplementary Figure/Table | Script | File |
 | ------ | ------ | ------ |
 | Supplementary Figure 1 | ld_clump_analysis.qmd | SNP_Filtering.ai |
-| Supplementary Table 1 | ld_clump_analysis.qmd | Instrument Metrics - Pre-Harmonization.csv |
+| Supplementary Table 1 | TBD | Instrument List.csv |
+| Supplementary Table 2 | ld_clump_analysis.qmd | Instrument Metrics - Pre-Harmonization.csv |

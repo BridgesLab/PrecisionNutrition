@@ -189,6 +189,19 @@ library(knitr)
 kable(calcium.exposure.summary, caption="Summary of calcium instruments after harmonisation")
 
 write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization.csv")
+
+#write out the instruments used for calcium
+data %>% filter(mr_keep==TRUE) %>% 
+  mutate(Exposure = "Calcium") |>
+  select(Exposure, CHR, POS, effect_allele.exposure, other_allele.exposure, beta.exposure, se.exposure, pval.exposure, eaf.exposure, R2, `F`, rsids, nearest_genes) |>
+  rename(effect_allele = effect_allele.exposure,
+         other_allele = other_allele.exposure,
+         beta = beta.exposure,
+         se = se.exposure,
+         p = pval.exposure,
+         eaf = eaf.exposure) |>
+  write_csv("Calcium Instruments Post-Harmonization.csv")
+  
 kable(outcome.summary_metrics, caption="Summary of outcome summary ")
 ```
 

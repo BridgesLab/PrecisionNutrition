@@ -139,6 +139,7 @@ calcium.instruments <-
 | Stage                          | SNPs                          |
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | `r nrow(calcium.sumstats)`    |
+| Significant SNPs               | `r nrow(calcium.clumps.expanded)`    |
 | After LD Clumping              | `r nrow(calcium.clumps)`      |
 | After MAF Filtering            | `r nrow(calcium.instruments)` |
 
@@ -246,6 +247,7 @@ tc.instruments <-
 | Stage                          | SNPs                          |
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | `r nrow(tc.sumstats)`    |
+| Significant SNPs               | `r nrow(tc.clumps.expanded)`    |
 | After LD Clumping              | `r nrow(tc.clumps)`      |
 | After MAF Filtering            | `r nrow(tc.instruments)` |
 
@@ -342,6 +344,7 @@ ldlc.instruments <-
 | Stage                          | SNPs                          |
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | `r nrow(ldlc.sumstats)`    |
+| Significant SNPs               | `r nrow(ldlc.clumps.expanded)`    |
 | After LD Clumping              | `r nrow(ldlc.clumps)`      |
 | After MAF Filtering            | `r nrow(ldlc.instruments)` |
 

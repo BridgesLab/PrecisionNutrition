@@ -154,6 +154,7 @@ calcium.instruments <-
 | Stage                          | SNPs                          |
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | 28987534    |
+| Significant SNPs               | 42191    |
 | After LD Clumping              | 454      |
 | After MAF Filtering            | 363 |
 
@@ -285,6 +286,7 @@ tc.instruments <-
 | Stage                          | SNPs                          |
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | 28987534    |
+| Significant SNPs               | 60706    |
 | After LD Clumping              | 542      |
 | After MAF Filtering            | 370 |
 
@@ -405,6 +407,7 @@ ldlc.instruments <-
 | Stage                          | SNPs                          |
 |--------------------------------|-------------------------------|
 | UKBB SNPs                      | 28987534    |
+| Significant SNPs               | 46347    |
 | After LD Clumping              | 469      |
 | After MAF Filtering            | 324 |
 

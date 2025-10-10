@@ -187,6 +187,8 @@ outcome.summary_metrics <- data.annot %>%
 
 library(knitr)
 kable(calcium.exposure.summary, caption="Summary of calcium instruments after harmonisation")
+
+write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization.csv")
 kable(outcome.summary_metrics, caption="Summary of outcome summary ")
 ```
 

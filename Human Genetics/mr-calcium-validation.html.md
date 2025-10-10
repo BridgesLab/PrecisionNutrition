@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 10 15:24:20 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 10 15:53:59 2025
 
 ## Data Entry
 
@@ -406,8 +406,8 @@ Table: MR Results for Calcium Positive Control
 |:-----------------------|:--------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.544| 0.023| 0.000000e+00|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.032| 1.663999e-68|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.059| 2.529196e-18|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.034| 1.181994e-61|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.059| 1.260619e-18|
 
 
 :::
@@ -494,6 +494,87 @@ Table: MR Heterogeneity Results for Calcium Positive Control
 
 This is expected with polygenic traits and does not necessarily invalidate the overall causal estimate, particularly since robust methods (weighted median, weighted mode) gave consistent results.
 
+
+::: {.cell}
+
+```{.r .cell-code}
+single_snp_results <- mr_singlesnp(data)
+mr_funnel_plot(single_snp_results) 
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+$`Calcium (UK Biobank).Calcium (Michigan GWAS)`
+```
+
+
+:::
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-funnel-plot-1.png){width=672}
+:::
+
+::: {.cell-output .cell-output-stdout}
+
+```
+
+attr(,"split_type")
+[1] "data.frame"
+attr(,"split_labels")
+           id.exposure              id.outcome
+1 Calcium (UK Biobank) Calcium (Michigan GWAS)
+```
+
+
+:::
+
+```{.r .cell-code}
+# Get overall IVW estimate for the vertical line
+ivw_result <- mr(data, method_list = "mr_ivw")
+ivw_beta <- ivw_result$b  # Overall IVW effect estimate
+
+# Determine y-range based on your data
+y_min <- 0
+y_max <- max(single_snp_results$se^{-1}) * 1.1  # 10% padding above max precision
+
+# Generate a fine grid of precision values
+precision_grid <- seq(y_min, y_max, length.out = 1000)
+
+# Compute boundaries: ivw_beta ± 1.96 / precision
+lower_bound <- ivw_beta - 1.96 / precision_grid
+upper_bound <- ivw_beta + 1.96 / precision_grid
+
+# Create data frame for boundaries
+bounds_df <- data.frame(precision = precision_grid, lower = lower_bound, upper = upper_bound)
+
+# Plot
+ggplot(single_snp_results, aes(x = b, y = 1/se)) +
+  # Scatter points for each SNP
+  geom_point(size = 1) +
+  # Vertical line at IVW estimate
+  geom_vline(xintercept = ivw_beta, linetype = "solid", color = "#ff7f0e", size = 1) +
+  # Curved pseudo-95% CI boundaries (the cone)
+  geom_line(data = bounds_df, aes(x = lower, y = precision), linetype = "dashed") +
+  geom_line(data = bounds_df, aes(x = upper, y = precision), linetype = "dashed") +
+  # Customize axes and labels
+  labs(
+    x = "Estimate (Beta-IVW)",
+    y = "Precision (1/Standard Error)",
+    title = ""
+  ) +
+  # Apply clean theme and limit y to >=0
+  theme_classic(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  coord_cartesian(ylim = c(0, y_max), xlim = c(min(single_snp_results$b), max(single_snp_results$b)))  # Adjust x-limits for visibility
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-funnel-plot-2.png){width=672}
+:::
+:::
+
+
 ### Leave-one-out Analysis
 
 Using IVW methods
@@ -539,7 +620,7 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
   geom_point(size=1) +
   geom_errorbar(aes(ymin = b - 1.96*se, ymax = b + 1.96*se), width = 0.01 ,alpha=0.5) +
   coord_flip() +
-  labs(x = "SNP Removed", y = "Estimate (IVW, leave-one-out)") +
+  labs(x = "SNP Removed", y = "Estimate (Beta-IVW; leave-one-out)") +
   geom_hline(yintercept=0, linetype="dashed", color = "red") +
   theme_classic(base_size=16) +
   theme(axis.text.y = element_text(size = 1)) 
@@ -550,7 +631,7 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 :::
 :::
 
-Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.”
+Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
 ## Session Information
 

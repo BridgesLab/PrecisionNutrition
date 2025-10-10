@@ -380,6 +380,24 @@ ldlc.instruments |>
   write_csv("LDL Cholesterol Instruments from UKBB.csv")
 ```
 
+## Pre-Harmonization Summary Metrics
+
+```{r pre-harmonization-metrics}
+bind_rows(
+  Calcium = calcium.summary_metrics,
+  `Total Cholesterol` = tc.summary_metrics,
+  `LDL Cholesterol` = ldlc.summary_metrics,
+  .id = "exposure"
+) |> 
+  mutate(across(where(is.numeric), ~ round(., 3))) -> summary.metrics.pre.harmonization
+
+summary.metrics.pre.harmonization |>
+  write_csv("Instrument Metrics - Pre-Harmonization.csv")
+
+summary.metrics.pre.harmonization |>
+  kable(caption="Summary metrics for instruments prior to harmonization")
+```
+
 ## Session Information
 
 ```{r session-information}

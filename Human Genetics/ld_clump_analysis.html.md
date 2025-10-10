@@ -462,6 +462,43 @@ ldlc.instruments |>
 :::
 
 
+## Pre-Harmonization Summary Metrics
+
+
+::: {.cell}
+
+```{.r .cell-code}
+bind_rows(
+  Calcium = calcium.summary_metrics,
+  `Total Cholesterol` = tc.summary_metrics,
+  `LDL Cholesterol` = ldlc.summary_metrics,
+  .id = "exposure"
+) |> 
+  mutate(across(where(is.numeric), ~ round(., 3))) -> summary.metrics.pre.harmonization
+
+summary.metrics.pre.harmonization |>
+  write_csv("Instrument Metrics - Pre-Harmonization.csv")
+
+summary.metrics.pre.harmonization |>
+  kable(caption="Summary metrics for instruments prior to harmonization")
+```
+
+::: {.cell-output-display}
+
+
+Table: Summary metrics for instruments prior to harmonization
+
+|exposure          | num_snps| cumulative_R2|  mean_F| median_F| mean_maf| mean_beta| overall_F|
+|:-----------------|--------:|-------------:|-------:|--------:|--------:|---------:|---------:|
+|Calcium           |      363|         0.075|  79.636|   49.947|    0.350|     0.028|    85.922|
+|Total Cholesterol |      370|         0.106| 120.796|   48.910|    0.317|     0.031|   134.757|
+|LDL Cholesterol   |      324|         0.095| 124.132|   47.420|    0.308|     0.032|   136.836|
+
+
+:::
+:::
+
+
 ## Session Information
 
 

@@ -125,6 +125,7 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#instrument-selection-summary-for-ldl-cholesterol" id="toc-instrument-selection-summary-for-ldl-cholesterol" class="nav-link" data-scroll-target="#instrument-selection-summary-for-ldl-cholesterol">Instrument Selection Summary for LDL Cholesterol</a></li>
   </ul></li>
+  <li><a href="#pre-harmonization-summary-metrics" id="toc-pre-harmonization-summary-metrics" class="nav-link" data-scroll-target="#pre-harmonization-summary-metrics">Pre-Harmonization Summary Metrics</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
 </nav>
@@ -696,12 +697,92 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 </div>
 </section>
 </section>
+<section id="pre-harmonization-summary-metrics" class="level2">
+<h2 class="anchored" data-anchor-id="pre-harmonization-summary-metrics">Pre-Harmonization Summary Metrics</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Calcium =</span> calcium.summary_metrics,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Total Cholesterol</span><span class="st">`</span> <span class="ot">=</span> tc.summary_metrics,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">LDL Cholesterol</span><span class="st">`</span> <span class="ot">=</span> ldlc.summary_metrics,</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">.id =</span> <span class="st">"exposure"</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">3</span>))) <span class="ot">-&gt;</span> summary.metrics.pre.harmonization</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>summary.metrics.pre.harmonization <span class="sc">|&gt;</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument Metrics - Pre-Harmonization.csv"</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>summary.metrics.pre.harmonization <span class="sc">|&gt;</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Summary metrics for instruments prior to harmonization"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Summary metrics for instruments prior to harmonization</caption>
+<colgroup>
+<col style="width: 20%">
+<col style="width: 10%">
+<col style="width: 16%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: right;">num_snps</th>
+<th style="text-align: right;">cumulative_R2</th>
+<th style="text-align: right;">mean_F</th>
+<th style="text-align: right;">median_F</th>
+<th style="text-align: right;">mean_maf</th>
+<th style="text-align: right;">mean_beta</th>
+<th style="text-align: right;">overall_F</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Calcium</td>
+<td style="text-align: right;">363</td>
+<td style="text-align: right;">0.075</td>
+<td style="text-align: right;">79.636</td>
+<td style="text-align: right;">49.947</td>
+<td style="text-align: right;">0.350</td>
+<td style="text-align: right;">0.028</td>
+<td style="text-align: right;">85.922</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: right;">370</td>
+<td style="text-align: right;">0.106</td>
+<td style="text-align: right;">120.796</td>
+<td style="text-align: right;">48.910</td>
+<td style="text-align: right;">0.317</td>
+<td style="text-align: right;">0.031</td>
+<td style="text-align: right;">134.757</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: right;">324</td>
+<td style="text-align: right;">0.095</td>
+<td style="text-align: right;">124.132</td>
+<td style="text-align: right;">47.420</td>
+<td style="text-align: right;">0.308</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">136.836</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
 <section id="session-information" class="level2">
 <h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)

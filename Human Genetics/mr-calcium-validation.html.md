@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 10 14:21:54 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 10 15:24:20 2025
 
 ## Data Entry
 
@@ -251,6 +251,31 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome, color = sign_match)) +
 :::
 
 
+
+::: {.cell}
+
+```{.r .cell-code}
+ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = beta.outcome - 1.96*se.outcome,
+                    ymax = beta.outcome + 1.96*se.outcome),
+                alpha=0.5) +
+  geom_errorbar(aes(xmin = beta.exposure - 1.96*se.exposure,
+                    xmax = beta.exposure + 1.96*se.exposure),
+                alpha=0.5) +
+  geom_smooth(method="lm",se=F) +
+  theme_classic(base_size=16) +
+  labs(x="Exposure Estimate", 
+       y="Outcome Estimate", 
+       title="Calcium (UK Biobank) vs Calcium (LabWAS)") 
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-scatter-1.png){width=672}
+:::
+:::
+
+
 There were 33 discordant SNPs between the exposure and outcome datasets.  These are listed above.  We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise.  These were kept in the analysis
 
 Harmonization results
@@ -381,8 +406,8 @@ Table: MR Results for Calcium Positive Control
 |:-----------------------|:--------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.544| 0.023| 0.000000e+00|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.032| 3.332231e-66|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.060| 3.312980e-18|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.032| 1.663999e-68|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.059| 2.529196e-18|
 
 
 :::
@@ -391,15 +416,15 @@ Table: MR Results for Calcium Positive Control
 ggplot(calcium.control.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-se, xmax=b+se), width=0.2) +
-  theme_classic() +
-  labs(title="Mendelian Randomization Results for Calcium",
+  theme_classic(base_size=16) +
+  labs(title="",
        y="",
        x="Effect Size (Beta)") +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```
 
 ::: {.cell-output-display}
-![](figures/calcium-mr-positive-1.png){width=672}
+![](figures/calcium-calcium-mr-1.png){width=672}
 :::
 :::
 
@@ -511,17 +536,17 @@ Table: Leave-One-Out Results for Calcium Positive Control (IVW method) for influ
 # Optional: plot LOO results
 
 ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = b - 1.96*se, ymax = b + 1.96*se), width = 0.1) +
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = b - 1.96*se, ymax = b + 1.96*se), width = 0.01 ,alpha=0.5) +
   coord_flip() +
-  labs(x = "SNP removed", y = "Causal estimate (IVW, leave-one-out)") +
+  labs(x = "SNP Removed", y = "Estimate (IVW, leave-one-out)") +
   geom_hline(yintercept=0, linetype="dashed", color = "red") +
-  theme_classic() +
-  theme(axis.text.y = element_text(size = 4)) 
+  theme_classic(base_size=16) +
+  theme(axis.text.y = element_text(size = 1)) 
 ```
 
 ::: {.cell-output-display}
-![](figures/calcium-mr-loo-1.png){width=672}
+![](figures/calcium-calcium-mr-loo-1.png){width=672}
 :::
 :::
 
@@ -565,16 +590,17 @@ other attached packages:
 loaded via a namespace (and not attached):
  [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
  [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
- [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      plyr_1.8.9        
-[13] jsonlite_2.0.0     scales_1.4.0       mnormt_2.1.1       cli_3.6.5         
-[17] rlang_1.1.6        crayon_1.5.3       bit64_4.6.0-1      withr_3.0.2       
-[21] yaml_2.3.10        tools_4.5.1        parallel_4.5.1     tzdb_0.5.0        
-[25] vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4 
-[29] bit_4.6.0          psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3   
-[33] pillar_1.11.1      gtable_0.3.6       glue_1.8.0         data.table_1.17.8 
-[37] Rcpp_1.1.0         xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1 
-[41] farver_2.1.2       nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29    
-[45] labeling_0.4.3     compiler_4.5.1     S7_0.2.0          
+ [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
+[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-3         scales_1.4.0      
+[17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
+[21] splines_4.5.1      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
+[25] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         vctrs_0.6.5       
+[29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
+[33] psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3    pillar_1.11.1     
+[37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
+[41] xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
+[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29     labeling_0.4.3    
+[49] compiler_4.5.1     S7_0.2.0          
 ```
 
 

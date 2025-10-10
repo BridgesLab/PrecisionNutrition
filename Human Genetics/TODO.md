@@ -95,13 +95,21 @@ Compact table of key causal estimates.
 
 ## SUPPLEMENTARY MATERIALS
 
-### **Supplementary Figure S1. Positive Control Analysis**
-- Forest and scatter plots showing Calcium (UKBB) → Calcium (Michigan).
-- Confirms validity of analysis pipeline.
+### **Supplementary Figure S1. Instrument selection flow diagram**
+- Summary of SNP selection and filtering
 
 ---
 
-### **Supplementary Figure S2. Full Scatter and Funnel Plots**
+### **Supplementary Figure S2. Positive Control Analysis**
+Confirms validity of analysis pipeline:
+-  A. Scatter plot showing beta coefficients
+-  B. Forest plots showing Calcium (UKBB) → Calcium (Michigan).
+-  C. Leave-one-out plot: usually unnecessary for a positive control unless a reviewer asks.
+-  D. Funnel plot / heterogeneity check: can be skipped unless you want to emphasize no pleiotropy.
+
+---
+
+### **Supplementary Figure S3. Full Scatter and Funnel Plots**
 - Scatter and funnel plots for **all four** analyses:
   1. Calcium → LDL  
   2. Calcium → TC  
@@ -110,20 +118,20 @@ Compact table of key causal estimates.
 
 ---
 
-### **Supplementary Figure S3. MR-PRESSO and Radial MR Analyses**
+### **Supplementary Figure S4. MR-PRESSO and Radial MR Analyses**
 - Radial plots identifying outlier SNPs and post-correction results.
 - Optional if using MR-PRESSO or radialMR package.
 
 ---
 
-### **Supplementary Figure S4. Heterogeneity and Pleiotropy Checks**
+### **Supplementary Figure S5. Heterogeneity and Pleiotropy Checks**
 - Barplots or small tables of:
   - Cochran’s Q (IVW and Egger)
   - MR-Egger intercept, SE, p-value
 
 ---
 
-### **Supplementary Figure S5. Influential SNPs and Annotations**
+### **Supplementary Figure S6. Influential SNPs and Annotations**
 - Leave-one-out tables/plots identifying top 10 influential SNPs per analysis.
 - Include nearest gene annotation for context.
 

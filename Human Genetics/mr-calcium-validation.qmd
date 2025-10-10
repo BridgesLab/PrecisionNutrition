@@ -145,6 +145,22 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome, color = sign_match)) +
   labs(x="beta.exposure", y="beta.outcome", title="Exposure vs Outcome betas; discordant SNPs labeled")
 ```
 
+```{r calcium-calcium-scatter}
+ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = beta.outcome - 1.96*se.outcome,
+                    ymax = beta.outcome + 1.96*se.outcome),
+                alpha=0.5) +
+  geom_errorbar(aes(xmin = beta.exposure - 1.96*se.exposure,
+                    xmax = beta.exposure + 1.96*se.exposure),
+                alpha=0.5) +
+  geom_smooth(method="lm",se=F) +
+  theme_classic(base_size=16) +
+  labs(x="Exposure Estimate", 
+       y="Outcome Estimate", 
+       title="Calcium (UK Biobank) vs Calcium (LabWAS)") 
+```
+
 There were `r nrow(discordant)` discordant SNPs between the exposure and outcome datasets.  These are listed above.  We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise.  These were kept in the analysis
 
 Harmonization results
@@ -205,7 +221,7 @@ data %>% filter(mr_keep==TRUE) %>%
 kable(outcome.summary_metrics, caption="Summary of outcome summary ")
 ```
 
-```{r calcium-mr-positive}
+```{r calcium-calcium-mr}
 calcium.control.mr <- mr(data,
                          method_list = c(
   "mr_ivw", 
@@ -224,8 +240,8 @@ calcium.control.mr |> select(-starts_with('id')) |>
 ggplot(calcium.control.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-se, xmax=b+se), width=0.2) +
-  theme_classic() +
-  labs(title="Mendelian Randomization Results for Calcium",
+  theme_classic(base_size=16) +
+  labs(title="",
        y="",
        x="Effect Size (Beta)") +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
@@ -263,7 +279,7 @@ This is expected with polygenic traits and does not necessarily invalidate the o
 
 Using IVW methods
 
-```{r calcium-mr-loo}
+```{r calcium-calcium-mr-loo}
 # LOO using IVW
 loo_res <- mr_leaveoneout(data)
 loo_res |> 
@@ -278,13 +294,13 @@ loo_res |>
 # Optional: plot LOO results
 
 ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
-  geom_point() +
-  geom_errorbar(aes(ymin = b - 1.96*se, ymax = b + 1.96*se), width = 0.1) +
+  geom_point(size=1) +
+  geom_errorbar(aes(ymin = b - 1.96*se, ymax = b + 1.96*se), width = 0.01 ,alpha=0.5) +
   coord_flip() +
-  labs(x = "SNP removed", y = "Causal estimate (IVW, leave-one-out)") +
+  labs(x = "SNP Removed", y = "Estimate (IVW, leave-one-out)") +
   geom_hline(yintercept=0, linetype="dashed", color = "red") +
-  theme_classic() +
-  theme(axis.text.y = element_text(size = 4)) 
+  theme_classic(base_size=16) +
+  theme(axis.text.y = element_text(size = 1)) 
 ```
 Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.”
 

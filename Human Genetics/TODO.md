@@ -4,6 +4,7 @@
 
 - [ ] n for BioVU
 - [ ] population details
+- [ ] Units for beta coefficients from MGI-BioVU (SD for UKBB)
 
 ## Analysis Pipeline
 

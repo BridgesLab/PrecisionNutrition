@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 10 15:53:59 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Tue Oct 14 10:32:49 2025
 
 ## Data Entry
 
@@ -278,19 +278,45 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
 
 There were 33 discordant SNPs between the exposure and outcome datasets.  These are listed above.  We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise.  These were kept in the analysis
 
-Harmonization results
-
-- We used 363 SNPs as instruments for calcium from UK Biobank.
-- There were 275 SNPs in common between the exposure and outcome datasets.
-- A total of 277 SNPs remained for use after harmonization
-- Removed 0 SNPs due to allele mismatches
-- Identified 22 palindromic SNPs 
+### Steiger Filtering
 
 
 ::: {.cell}
 
 ```{.r .cell-code}
-data.annot <- data %>%
+data_steiger <- steiger_filtering(data)
+
+table(data_steiger$steiger_direction, useNA="ifany") |>
+  kable(caption="Steiger filtering results for calcium-calcium evaluation")
+```
+
+::: {.cell-output-display}
+
+
+Table: Steiger filtering results for calcium-calcium evaluation
+
+| Freq|
+|----:|
+
+
+:::
+:::
+
+
+Harmonization results
+
+- We used 363 SNPs as instruments for calcium from UK Biobank.
+- There were 275 SNPs in common between the exposure and outcome datasets.
+- Removed 0 SNPs due to allele mismatches
+- Identified 22 palindromic SNPs 
+- A total of 277 SNPs remained for use after harmonization.  2 SNPS were removed because the palindromic SNP is ambiguous and strand alignment could not be resolved, this variant was automatically dropped from the MR analysis to avoid mis-specified effect directions.
+- After Steiger filtering, 275 SNPs were retained for analysis, indicating that all SNPs had stronger associations with the exposure (calcium in UK Biobank) than the outcome (calcium in MGI/BioVU), supporting the assumed causal direction.  0 SNPs were removed by Steiger filtering.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+data.annot <- data_steiger %>%
   mutate(
     R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
     F.exposure = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
@@ -338,7 +364,7 @@ Table: Summary of calcium instruments after harmonisation
 write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization.csv")
 
 #write out the instruments used for calcium
-data %>% filter(mr_keep==TRUE) %>% 
+data_steiger %>% filter(mr_keep==TRUE) %>% 
   mutate(Exposure = "Calcium") |>
   select(Exposure, CHR, POS, effect_allele.exposure, other_allele.exposure, beta.exposure, se.exposure, pval.exposure, eaf.exposure, R2, `F`, rsids, nearest_genes) |>
   rename(effect_allele = effect_allele.exposure,
@@ -370,7 +396,7 @@ Table: Summary of outcome summary
 ::: {.cell}
 
 ```{.r .cell-code}
-calcium.control.mr <- mr(data,
+calcium.control.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw", 
   "mr_egger_regression", 
@@ -378,20 +404,6 @@ calcium.control.mr <- mr(data,
   "mr_weighted_mode"
 ))
 
-dat_h_steiger <- steiger_filtering(data)
-table(dat_h_steiger$steiger_direction) 
-```
-
-::: {.cell-output .cell-output-stdout}
-
-```
-< table of extent 0 >
-```
-
-
-:::
-
-```{.r .cell-code}
 calcium.control.mr |> select(-starts_with('id')) |> 
   kable(caption="MR Results for Calcium Positive Control",
         digits=c(0,0,0,0,3,3,99))
@@ -406,8 +418,8 @@ Table: MR Results for Calcium Positive Control
 |:-----------------------|:--------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.544| 0.023| 0.000000e+00|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.034| 1.181994e-61|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.059| 1.260619e-18|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.033| 2.591554e-63|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.058| 4.984517e-19|
 
 
 :::
@@ -429,7 +441,7 @@ ggplot(calcium.control.mr, aes(y=method,x=b)) +
 :::
 
 
-The primary result, using the inverse variance weighted method shows a 0.5437075 $\pm$ 0.0234494 increase in calcium (Michigan GWAS) per 1 unit increase in calcium (UK Biobank).  This is statistically significant with a p-value of 6.2499238\times 10^{-119}.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the inverse variance weighted method shows a 0.5437075 $\pm$ 0.0234494 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of 6.2499238\times 10^{-119}.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
@@ -437,7 +449,7 @@ The primary result, using the inverse variance weighted method shows a 0.5437075
 ::: {.cell}
 
 ```{.r .cell-code}
-egger_intercept <- mr_pleiotropy_test(data)
+egger_intercept <- mr_pleiotropy_test(data_steiger)
 egger_intercept|>
   select(-starts_with('id')) |> 
   kable(caption="MR Pleiotropy Results for Calcium Positive Control")
@@ -465,7 +477,7 @@ The MR-Egger intercept is  with a p-value of 0.0015212, indicating some evidence
 
 ```{.r .cell-code}
 # Heterogeneity tests for IVW and MR-Egger
-heterogeneity <- mr_heterogeneity(data)
+heterogeneity <- mr_heterogeneity(data_steiger)
 heterogeneity|>
   select(-starts_with('id')) |> 
   kable(caption="MR Heterogeneity Results for Calcium Positive Control",
@@ -498,7 +510,7 @@ This is expected with polygenic traits and does not necessarily invalidate the o
 ::: {.cell}
 
 ```{.r .cell-code}
-single_snp_results <- mr_singlesnp(data)
+single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 ```
 
@@ -531,8 +543,7 @@ attr(,"split_labels")
 
 ```{.r .cell-code}
 # Get overall IVW estimate for the vertical line
-ivw_result <- mr(data, method_list = "mr_ivw")
-ivw_beta <- ivw_result$b  # Overall IVW effect estimate
+ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -584,7 +595,7 @@ Using IVW methods
 
 ```{.r .cell-code}
 # LOO using IVW
-loo_res <- mr_leaveoneout(data)
+loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
   mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted")$b) |>
   arrange(-abs(diff)) |>
@@ -632,6 +643,8 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 :::
 
 Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
+
+
 
 ## Session Information
 

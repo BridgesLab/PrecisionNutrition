@@ -163,17 +163,27 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
 
 There were `r nrow(discordant)` discordant SNPs between the exposure and outcome datasets.  These are listed above.  We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise.  These were kept in the analysis
 
+### Steiger Filtering
+
+```{r calcium-calcium-steiger}
+data_steiger <- steiger_filtering(data)
+
+table(data_steiger$steiger_direction, useNA="ifany") |>
+  kable(caption="Steiger filtering results for calcium-calcium evaluation")
+```
+
 Harmonization results
 
 - We used `r nrow(instruments.calcium)` SNPs as instruments for calcium from UK Biobank.
 - There were `r length(intersect(instruments.calcium$SNP, gwas.calcium$SNP))` SNPs in common between the exposure and outcome datasets.
-- A total of `r nrow(data)` SNPs remained for use after harmonization
 - Removed `r sum(data$remove)` SNPs due to allele mismatches
 - Identified `r sum(data$palindromic)` palindromic SNPs 
+- A total of `r nrow(data)` SNPs remained for use after harmonization.  `r data |> filter(ambiguous==T) |> nrow()` SNPS were removed because the palindromic SNP is ambiguous and strand alignment could not be resolved, this variant was automatically dropped from the MR analysis to avoid mis-specified effect directions.
+- After Steiger filtering, `r nrow(data_steiger %>% filter(mr_keep==T))` SNPs were retained for analysis, indicating that all SNPs had stronger associations with the exposure (calcium in UK Biobank) than the outcome (calcium in MGI/BioVU), supporting the assumed causal direction.  `r nrow(filter(data, mr_keep==T)) - nrow(filter(data_steiger, mr_keep==T))` SNPs were removed by Steiger filtering.
 
 ```{r calcium-strength}
 
-data.annot <- data %>%
+data.annot <- data_steiger %>%
   mutate(
     R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
     F.exposure = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
@@ -207,7 +217,7 @@ kable(calcium.exposure.summary, caption="Summary of calcium instruments after ha
 write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization.csv")
 
 #write out the instruments used for calcium
-data %>% filter(mr_keep==TRUE) %>% 
+data_steiger %>% filter(mr_keep==TRUE) %>% 
   mutate(Exposure = "Calcium") |>
   select(Exposure, CHR, POS, effect_allele.exposure, other_allele.exposure, beta.exposure, se.exposure, pval.exposure, eaf.exposure, R2, `F`, rsids, nearest_genes) |>
   rename(effect_allele = effect_allele.exposure,
@@ -222,16 +232,13 @@ kable(outcome.summary_metrics, caption="Summary of outcome summary ")
 ```
 
 ```{r calcium-calcium-mr}
-calcium.control.mr <- mr(data,
+calcium.control.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw", 
   "mr_egger_regression", 
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
-
-dat_h_steiger <- steiger_filtering(data)
-table(dat_h_steiger$steiger_direction) 
 
 calcium.control.mr |> select(-starts_with('id')) |> 
   kable(caption="MR Results for Calcium Positive Control",
@@ -247,12 +254,12 @@ ggplot(calcium.control.mr, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` increase in calcium (Michigan GWAS) per 1 unit increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the inverse variance weighted method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
 ```{r calcium-mr-pleiotropy}
-egger_intercept <- mr_pleiotropy_test(data)
+egger_intercept <- mr_pleiotropy_test(data_steiger)
 egger_intercept|>
   select(-starts_with('id')) |> 
   kable(caption="MR Pleiotropy Results for Calcium Positive Control")
@@ -264,7 +271,7 @@ The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egg
 ```{r calcium-mr-heterogeneity}
 
 # Heterogeneity tests for IVW and MR-Egger
-heterogeneity <- mr_heterogeneity(data)
+heterogeneity <- mr_heterogeneity(data_steiger)
 heterogeneity|>
   select(-starts_with('id')) |> 
   kable(caption="MR Heterogeneity Results for Calcium Positive Control",
@@ -276,12 +283,11 @@ heterogeneity|>
 This is expected with polygenic traits and does not necessarily invalidate the overall causal estimate, particularly since robust methods (weighted median, weighted mode) gave consistent results.
 
 ```{r calcium-calcium-funnel-plot}
-single_snp_results <- mr_singlesnp(data)
+single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_result <- mr(data, method_list = "mr_ivw")
-ivw_beta <- ivw_result$b  # Overall IVW effect estimate
+ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -325,7 +331,7 @@ Using IVW methods
 
 ```{r calcium-calcium-mr-loo}
 # LOO using IVW
-loo_res <- mr_leaveoneout(data)
+loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
   mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted")$b) |>
   arrange(-abs(diff)) |>
@@ -347,6 +353,8 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
   theme(axis.text.y = element_text(size = 1)) 
 ```
 Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
+
+
 
 ## Session Information
 

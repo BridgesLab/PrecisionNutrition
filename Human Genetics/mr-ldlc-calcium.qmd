@@ -145,7 +145,7 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome, color = sign_match)) +
   labs(x="beta.exposure", y="beta.outcome", title="Exposure vs Outcome betas; discordant SNPs labeled")
 ```
 
-```{r calcium-calcium-scatter}
+```{r ldlc-calcium-scatter}
 ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
   geom_point(size=1) +
   geom_errorbar(aes(ymin = beta.outcome - 1.96*se.outcome,

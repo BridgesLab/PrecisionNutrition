@@ -1,7 +1,7 @@
 ---
-title: "MR Analysis and Validation of SNPs for Calcium"
+title: "MR Analysis of SNPs for Calcium and their Effect on LDL Cholesterol"
 author: "Dave Bridges"
-date: "September 9, 2025"
+date: "October 14, 2025"
 format:
   html:
     toc: true
@@ -46,8 +46,8 @@ To validate SNPs for calcium GWAS using those identified using UK Biobank.  This
 
 ```{r data-entry}
 instruments.calcium.file <- 'Calcium Instruments from UKBB.csv'
-gwas.calcium.file <- 'PheWeb Summary Statistics/phenocode-Ca.tsv.gz'
-samplesize.outcome.calcium <- 46100
+gwas.ldlc.file <- 'PheWeb Summary Statistics/phenocode-LDL.tsv.gz'
+samplesize.outcome.ldlc <- 46100
 
 
 # loaded and renamed columns
@@ -66,7 +66,7 @@ instruments.calcium <- read_csv(instruments.calcium.file) |>
          exposure="Calcium (UK Biobank)")
 
 
-gwas.calcium <- read_tsv(gwas.calcium.file) |>
+gwas.ldlc <- read_tsv(gwas.ldlc.file) |>
   mutate(ID=paste(chrom, pos, ref,alt, sep=":")) |>
   rename(
     SNP                        = ID,            # or ID if that’s the matching ID
@@ -77,19 +77,19 @@ gwas.calcium <- read_tsv(gwas.calcium.file) |>
     pval.outcome               = pval,
     eaf.outcome                = maf,
   ) |>
-  mutate(id.outcome = "Calcium (Michigan GWAS)",
-         outcome = "Calcium (Michigan GWAS)",
-         samplesize.outcome = samplesize.outcome.calcium)  # sample size for MGI/BioVU for calcium)
+  mutate(id.outcome = "LDL Cholesterol (MGI-BioVU LabWAS)",
+         outcome = "LDL Cholesterol (MGI-BioVU LabWAS)",
+         samplesize.outcome = samplesize.outcome.ldlc)  # sample size for MGI/BioVU for calcium)
 ```
 
-This presumes the sample sizes was `r as.character(samplesize.outcome.calcium)` from Table 1 of https://doi.org/10.1371/journal.pgen.1009077.
+This presumes the sample sizes was `r as.character(samplesize.outcome.ldlc)` from Table 1 of https://doi.org/10.1371/journal.pgen.1009077.
 
-Loaded in the instruments for calcium from UK Biobank from the datafile `r instruments.calcium.file` and the GWAS summary statistics for calcium from the datafile `r gwas.calcium.file`.
+Loaded in the instruments for calcium from UK Biobank from the datafile `r instruments.calcium.file` and the GWAS summary statistics for calcium from the datafile `r gwas.ldlc.file`.
 
-```{r calcium-harmonizing-snps}
+```{r calcium-ldlc-harmonizing-snps}
 library(TwoSampleMR)
 
-data <- harmonise_data(instruments.calcium, gwas.calcium, action = 2)
+data <- harmonise_data(instruments.calcium, gwas.ldlc, action = 2)
 
 table(data$mr_keep) |>
   kable(caption="Number of SNPs kept for MR analysis")
@@ -145,7 +145,7 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome, color = sign_match)) +
   labs(x="beta.exposure", y="beta.outcome", title="Exposure vs Outcome betas; discordant SNPs labeled")
 ```
 
-```{r calcium-calcium-scatter}
+```{r calcium-ldlc-scatter}
 ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
   geom_point(size=1) +
   geom_errorbar(aes(ymin = beta.outcome - 1.96*se.outcome,
@@ -158,24 +158,24 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
   theme_classic(base_size=16) +
   labs(x="Exposure Estimate", 
        y="Outcome Estimate", 
-       title="Calcium (UK Biobank) vs Calcium (LabWAS)") 
+       title="Calcium (UK Biobank) vs LDL Cholesterol (LabWAS)") 
 ```
 
 There were `r nrow(discordant)` discordant SNPs between the exposure and outcome datasets.  These are listed above.  We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise.  These were kept in the analysis
 
 ### Steiger Filtering
 
-```{r calcium-calcium-steiger}
+```{r calcium-ldlc-steiger}
 data_steiger <- steiger_filtering(data)
 
 table(data_steiger$steiger_direction, useNA="ifany") |>
-  kable(caption="Steiger filtering results for calcium-calcium evaluation")
+  kable(caption="Steiger filtering results for calcium-LDL evaluation")
 ```
 
 Harmonization results
 
 - We used `r nrow(instruments.calcium)` SNPs as instruments for calcium from UK Biobank.
-- There were `r length(intersect(instruments.calcium$SNP, gwas.calcium$SNP))` SNPs in common between the exposure and outcome datasets.
+- There were `r length(intersect(instruments.calcium$SNP, gwas.ldlc$SNP))` SNPs in common between the exposure and outcome datasets.
 - Removed `r sum(data$remove)` SNPs due to allele mismatches
 - Identified `r sum(data$palindromic)` palindromic SNPs 
 - A total of `r nrow(data)` SNPs remained for use after harmonization.  `r data |> filter(ambiguous==T) |> nrow()` SNPS were removed because the palindromic SNP is ambiguous and strand alignment could not be resolved, this variant was automatically dropped from the MR analysis to avoid mis-specified effect directions.
@@ -214,7 +214,7 @@ outcome.summary_metrics <- data.annot %>%
 library(knitr)
 kable(calcium.exposure.summary, caption="Summary of calcium instruments after harmonisation")
 
-write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization.csv")
+write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization (Cholesterol).csv")
 
 #write out the instruments used for calcium
 data_steiger %>% filter(mr_keep==TRUE) %>% 
@@ -226,25 +226,23 @@ data_steiger %>% filter(mr_keep==TRUE) %>%
          se = se.exposure,
          p = pval.exposure,
          eaf = eaf.exposure) |>
-  write_csv("Calcium Instruments Post-Harmonization.csv")
+  write_csv("Calcium Instruments Post-Harmonization (Cholesterol).csv")
   
-kable(outcome.summary_metrics, caption="Summary of outcome summary ")
+kable(outcome.summary_metrics, caption="Summary of LDL cholesterol effects by calcium instruments after harmonisation")
 ```
 
-```{r calcium-calcium-mr}
-calcium.control.mr <- mr(data_steiger,
-                         method_list = c(
-  "mr_ivw", 
-  "mr_egger_regression", 
-  "mr_weighted_median", 
-  "mr_weighted_mode"
-))
+```{r calcium-ldlc-mr}
+calcium.ldlc.mr <- mr(data_steiger,
+                         method_list = c("mr_ivw", 
+                                         "mr_egger_regression", 
+                                         "mr_weighted_median", 
+                                         "mr_weighted_mode"))
 
-calcium.control.mr |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for Calcium Positive Control",
+calcium.ldlc.mr |> select(-starts_with('id')) |> 
+  kable(caption="MR Results for Calcium Effects on LDL Cholesterol",
         digits=c(0,0,0,0,3,3,99))
 
-ggplot(calcium.control.mr, aes(y=method,x=b)) +
+ggplot(calcium.ldlc.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
@@ -254,27 +252,27 @@ ggplot(calcium.control.mr, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the inverse variance weighted method shows a `r calcium.ldlc.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.ldlc.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in LDL cholesterol (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.ldlc.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All four MR methods (IVW, weighted mode, weighted median, MR-Egger) gave consistent, **non-significant** causal estimates, supporting the hypothesis of no causal effect of calcium on LDL-C.  
 
 ### MR-Egger Intercept
 
-```{r calcium-mr-pleiotropy}
+```{r calcium-ldlc-mr-pleiotropy}
 egger_intercept <- mr_pleiotropy_test(data_steiger)
 egger_intercept|>
   select(-starts_with('id')) |> 
-  kable(caption="MR Pleiotropy Results for Calcium Positive Control")
+  kable(caption="MR Pleiotropy Results for Calcium-Cholesterol Analysis")
 ```
-The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egger_intercept$pval`, indicating `r if(egger_intercept$pval < 0.05){"some evidence of"}else{"no evidence of"}` directional pleiotropy.  Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.
+The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egger_intercept$pval`, indicating `r if(egger_intercept$pval < 0.05){"some evidence of"}else{"no evidence of"}` directional pleiotropy.  The intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.
 
 ### Heterogeneity Statistics
 
-```{r calcium-mr-heterogeneity}
+```{r calcium-ldlc-mr-heterogeneity}
 
 # Heterogeneity tests for IVW and MR-Egger
 heterogeneity <- mr_heterogeneity(data_steiger)
 heterogeneity|>
   select(-starts_with('id')) |> 
-  kable(caption="MR Heterogeneity Results for Calcium Positive Control",
+  kable(caption="MR Heterogeneity Results for Calcium Effects on Cholesterol",
         digits=c(0,0,0,3,3,99))
 # Columns: method, Q, Q_df, Q_pval
 # Interpretation: small Q_pval (<0.05) indicates heterogeneity among SNPs
@@ -282,12 +280,12 @@ heterogeneity|>
 
 This is expected with polygenic traits and does not necessarily invalidate the overall causal estimate, particularly since robust methods (weighted median, weighted mode) gave consistent results.
 
-```{r calcium-calcium-funnel-plot}
+```{r calcium-ldlc-funnel-plot}
 single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
+ivw_beta <- calcium.ldlc.mr |> filter(method=="Inverse variance weighted") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -329,15 +327,15 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 
 Using IVW methods
 
-```{r calcium-calcium-mr-loo}
+```{r calcium-ldlc-mr-loo}
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted")$b) |>
+  mutate(diff = b - filter(calcium.ldlc.mr, method=="Inverse variance weighted")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>
-  kable(caption="Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs",
+  kable(caption="Leave-One-Out Results for Calcium-LDL Cholesterol Analysis (IVW method) for Influential SNPs",
         digits=c(0,5,5,5,5))
 # Columns: SNP, nsnp, b, se, pval — gives causal estimate with each SNP removed once
 
@@ -352,7 +350,7 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
   theme_classic(base_size=16) +
   theme(axis.text.y = element_text(size = 1)) 
 ```
-Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
+Leave-one-out analyses suggested that four SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion.
 
 
 

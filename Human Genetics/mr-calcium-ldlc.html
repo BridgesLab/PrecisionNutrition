@@ -7,9 +7,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dave Bridges">
-<meta name="dcterms.date" content="2025-09-09">
+<meta name="dcterms.date" content="2025-10-14">
 
-<title>MR Analysis and Validation of SNPs for Calcium</title>
+<title>MR Analysis of SNPs for Calcium and their Effect on LDL Cholesterol</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -60,17 +60,17 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </style>
 
 
-<script src="mr-calcium-validation_files/libs/clipboard/clipboard.min.js"></script>
-<script src="mr-calcium-validation_files/libs/quarto-html/quarto.js" type="module"></script>
-<script src="mr-calcium-validation_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
-<script src="mr-calcium-validation_files/libs/quarto-html/popper.min.js"></script>
-<script src="mr-calcium-validation_files/libs/quarto-html/tippy.umd.min.js"></script>
-<script src="mr-calcium-validation_files/libs/quarto-html/anchor.min.js"></script>
-<link href="mr-calcium-validation_files/libs/quarto-html/tippy.css" rel="stylesheet">
-<link href="mr-calcium-validation_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
-<script src="mr-calcium-validation_files/libs/bootstrap/bootstrap.min.js"></script>
-<link href="mr-calcium-validation_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="mr-calcium-validation_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<script src="mr-calcium-ldlc_files/libs/clipboard/clipboard.min.js"></script>
+<script src="mr-calcium-ldlc_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="mr-calcium-ldlc_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="mr-calcium-ldlc_files/libs/quarto-html/popper.min.js"></script>
+<script src="mr-calcium-ldlc_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="mr-calcium-ldlc_files/libs/quarto-html/anchor.min.js"></script>
+<link href="mr-calcium-ldlc_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="mr-calcium-ldlc_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="mr-calcium-ldlc_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="mr-calcium-ldlc_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="mr-calcium-ldlc_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -122,13 +122,13 @@ window.Quarto = {
   </ul></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
-<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="mr-calcium-validation.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="mr-calcium-ldlc.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
 </div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">MR Analysis and Validation of SNPs for Calcium</h1>
+<h1 class="title">MR Analysis of SNPs for Calcium and their Effect on LDL Cholesterol</h1>
 </div>
 
 
@@ -145,7 +145,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">September 9, 2025</p>
+      <p class="date">October 14, 2025</p>
     </div>
   </div>
   
@@ -179,7 +179,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Tue Oct 14 10:57:58 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Tue Oct 14 10:56:34 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -187,8 +187,8 @@ window.Quarto = {
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>instruments.calcium.file <span class="ot">&lt;-</span> <span class="st">'Calcium Instruments from UKBB.csv'</span></span>
-<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>gwas.calcium.file <span class="ot">&lt;-</span> <span class="st">'PheWeb Summary Statistics/phenocode-Ca.tsv.gz'</span></span>
-<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>samplesize.outcome.calcium <span class="ot">&lt;-</span> <span class="dv">46100</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>gwas.ldlc.file <span class="ot">&lt;-</span> <span class="st">'PheWeb Summary Statistics/phenocode-LDL.tsv.gz'</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>samplesize.outcome.ldlc <span class="ot">&lt;-</span> <span class="dv">46100</span></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># loaded and renamed columns</span></span>
@@ -207,7 +207,7 @@ window.Quarto = {
 <span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>         <span class="at">exposure=</span><span class="st">"Calcium (UK Biobank)"</span>)</span>
 <span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>gwas.calcium <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(gwas.calcium.file) <span class="sc">|&gt;</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>gwas.ldlc <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(gwas.ldlc.file) <span class="sc">|&gt;</span></span>
 <span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">ID=</span><span class="fu">paste</span>(chrom, pos, ref,alt, <span class="at">sep=</span><span class="st">":"</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
 <span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">SNP                        =</span> ID,            <span class="co"># or ID if that’s the matching ID</span></span>
@@ -218,19 +218,19 @@ window.Quarto = {
 <span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">pval.outcome               =</span> pval,</span>
 <span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf.outcome                =</span> maf,</span>
 <span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id.outcome =</span> <span class="st">"Calcium (Michigan GWAS)"</span>,</span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>         <span class="at">outcome =</span> <span class="st">"Calcium (Michigan GWAS)"</span>,</span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>         <span class="at">samplesize.outcome =</span> samplesize.outcome.calcium)  <span class="co"># sample size for MGI/BioVU for calcium)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">id.outcome =</span> <span class="st">"LDL Cholesterol (MGI-BioVU LabWAS)"</span>,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>         <span class="at">outcome =</span> <span class="st">"LDL Cholesterol (MGI-BioVU LabWAS)"</span>,</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>         <span class="at">samplesize.outcome =</span> samplesize.outcome.ldlc)  <span class="co"># sample size for MGI/BioVU for calcium)</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>This presumes the sample sizes was 46100 from Table 1 of https://doi.org/10.1371/journal.pgen.1009077.</p>
-<p>Loaded in the instruments for calcium from UK Biobank from the datafile Calcium Instruments from UKBB.csv and the GWAS summary statistics for calcium from the datafile PheWeb Summary Statistics/phenocode-Ca.tsv.gz.</p>
+<p>Loaded in the instruments for calcium from UK Biobank from the datafile Calcium Instruments from UKBB.csv and the GWAS summary statistics for calcium from the datafile PheWeb Summary Statistics/phenocode-LDL.tsv.gz.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(TwoSampleMR)</span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(instruments.calcium, gwas.calcium, <span class="at">action =</span> <span class="dv">2</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>data <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(instruments.calcium, gwas.ldlc, <span class="at">action =</span> <span class="dv">2</span>)</span>
 <span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(data<span class="sc">$</span>mr_keep) <span class="sc">|&gt;</span></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Number of SNPs kept for MR analysis"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
@@ -349,235 +349,956 @@ window.Quarto = {
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">11:126218773:C:G</td>
+<td style="text-align: right;">-0.07050</td>
+<td style="text-align: right;">0.005199</td>
+<td style="text-align: right;">0.0720</td>
+<td style="text-align: right;">0.0190</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">2:234264848:C:G</td>
 <td style="text-align: right;">-0.04882</td>
 <td style="text-align: right;">0.002709</td>
-<td style="text-align: right;">0.0400</td>
-<td style="text-align: right;">0.0070</td>
+<td style="text-align: right;">0.0071</td>
+<td style="text-align: right;">0.0099</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9:97804641:A:C</td>
+<td style="text-align: right;">-0.04572</td>
+<td style="text-align: right;">0.004387</td>
+<td style="text-align: right;">0.0250</td>
+<td style="text-align: right;">0.0170</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6:74493432:A:C</td>
+<td style="text-align: right;">-0.04406</td>
+<td style="text-align: right;">0.002516</td>
+<td style="text-align: right;">0.0150</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4:40555956:A:G</td>
+<td style="text-align: right;">-0.04045</td>
+<td style="text-align: right;">0.004049</td>
+<td style="text-align: right;">0.0370</td>
+<td style="text-align: right;">0.0150</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13:42487165:A:T</td>
+<td style="text-align: right;">-0.03960</td>
+<td style="text-align: right;">0.003880</td>
+<td style="text-align: right;">0.0110</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3:12390484:T:C</td>
+<td style="text-align: right;">-0.03952</td>
+<td style="text-align: right;">0.003841</td>
+<td style="text-align: right;">0.0250</td>
+<td style="text-align: right;">0.0140</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">10:100179851:T:C</td>
 <td style="text-align: right;">-0.03719</td>
 <td style="text-align: right;">0.004556</td>
-<td style="text-align: right;">0.0043</td>
+<td style="text-align: right;">0.0011</td>
+<td style="text-align: right;">0.0160</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">19:50028163:A:G</td>
+<td style="text-align: right;">-0.03666</td>
+<td style="text-align: right;">0.003253</td>
+<td style="text-align: right;">0.0057</td>
+<td style="text-align: right;">0.0120</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">9:80366259:T:C</td>
+<td style="text-align: right;">-0.03648</td>
+<td style="text-align: right;">0.002799</td>
+<td style="text-align: right;">0.0001</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">12:12205282:A:G</td>
+<td style="text-align: right;">-0.03404</td>
+<td style="text-align: right;">0.004502</td>
+<td style="text-align: right;">0.0008</td>
+<td style="text-align: right;">0.0170</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">14:95053849:T:C</td>
+<td style="text-align: right;">-0.03404</td>
+<td style="text-align: right;">0.004198</td>
+<td style="text-align: right;">0.0028</td>
+<td style="text-align: right;">0.0150</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">11:2956166:T:C</td>
+<td style="text-align: right;">-0.03301</td>
+<td style="text-align: right;">0.002766</td>
+<td style="text-align: right;">0.0058</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">15:49278090:A:G</td>
+<td style="text-align: right;">-0.03252</td>
+<td style="text-align: right;">0.004474</td>
+<td style="text-align: right;">0.0190</td>
+<td style="text-align: right;">0.0170</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3:121364173:A:T</td>
+<td style="text-align: right;">-0.03141</td>
+<td style="text-align: right;">0.004461</td>
+<td style="text-align: right;">0.0078</td>
+<td style="text-align: right;">0.0170</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:43458250:T:C</td>
+<td style="text-align: right;">-0.03045</td>
+<td style="text-align: right;">0.002791</td>
+<td style="text-align: right;">0.0064</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:61368532:T:G</td>
+<td style="text-align: right;">-0.03039</td>
+<td style="text-align: right;">0.002531</td>
+<td style="text-align: right;">0.0021</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7:65326821:A:G</td>
+<td style="text-align: right;">-0.02975</td>
+<td style="text-align: right;">0.002522</td>
+<td style="text-align: right;">0.0210</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:51659401:A:C</td>
+<td style="text-align: right;">-0.02900</td>
+<td style="text-align: right;">0.005431</td>
+<td style="text-align: right;">0.0047</td>
+<td style="text-align: right;">0.0200</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:59450441:T:C</td>
+<td style="text-align: right;">-0.02881</td>
+<td style="text-align: right;">0.003364</td>
+<td style="text-align: right;">0.0170</td>
 <td style="text-align: right;">0.0120</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">16:47980267:T:C</td>
-<td style="text-align: right;">-0.03655</td>
-<td style="text-align: right;">0.005844</td>
-<td style="text-align: right;">0.0051</td>
-<td style="text-align: right;">0.0160</td>
+<td style="text-align: left;">14:92279983:T:G</td>
+<td style="text-align: right;">-0.02856</td>
+<td style="text-align: right;">0.003357</td>
+<td style="text-align: right;">0.0210</td>
+<td style="text-align: right;">0.0120</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">14:24862936:T:C</td>
+<td style="text-align: right;">-0.02854</td>
+<td style="text-align: right;">0.005228</td>
+<td style="text-align: right;">0.0072</td>
+<td style="text-align: right;">0.0200</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10:8108592:T:C</td>
+<td style="text-align: right;">-0.02730</td>
+<td style="text-align: right;">0.003026</td>
+<td style="text-align: right;">0.0200</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8:106583124:A:G</td>
+<td style="text-align: right;">-0.02619</td>
+<td style="text-align: right;">0.002810</td>
+<td style="text-align: right;">0.0130</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8:8283706:A:G</td>
+<td style="text-align: right;">-0.02600</td>
+<td style="text-align: right;">0.003840</td>
+<td style="text-align: right;">0.0061</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:37387413:A:G</td>
+<td style="text-align: right;">-0.02579</td>
+<td style="text-align: right;">0.002984</td>
+<td style="text-align: right;">0.0280</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">5:131329591:T:C</td>
 <td style="text-align: right;">-0.02572</td>
 <td style="text-align: right;">0.003741</td>
-<td style="text-align: right;">0.0005</td>
-<td style="text-align: right;">0.0096</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">12:4004752:T:C</td>
-<td style="text-align: right;">-0.02562</td>
-<td style="text-align: right;">0.003298</td>
-<td style="text-align: right;">0.0012</td>
-<td style="text-align: right;">0.0085</td>
+<td style="text-align: right;">0.0130</td>
+<td style="text-align: right;">0.0140</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">17:67290356:A:G</td>
+<td style="text-align: right;">-0.02541</td>
+<td style="text-align: right;">0.004384</td>
+<td style="text-align: right;">0.0460</td>
+<td style="text-align: right;">0.0160</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">1:1095130:T:C</td>
 <td style="text-align: right;">-0.02524</td>
 <td style="text-align: right;">0.002786</td>
-<td style="text-align: right;">0.0010</td>
-<td style="text-align: right;">0.0081</td>
+<td style="text-align: right;">0.0094</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">14:94844843:T:G</td>
+<td style="text-align: right;">-0.02446</td>
+<td style="text-align: right;">0.002868</td>
+<td style="text-align: right;">0.0120</td>
+<td style="text-align: right;">0.0110</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">7:77433484:A:C</td>
+<td style="text-align: right;">-0.02410</td>
+<td style="text-align: right;">0.002561</td>
+<td style="text-align: right;">0.0036</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7:16042596:T:C</td>
+<td style="text-align: right;">-0.02389</td>
+<td style="text-align: right;">0.003055</td>
+<td style="text-align: right;">0.0210</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:155186729:T:C</td>
+<td style="text-align: right;">-0.02375</td>
+<td style="text-align: right;">0.002510</td>
+<td style="text-align: right;">0.0190</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2:114032767:T:C</td>
+<td style="text-align: right;">-0.02338</td>
+<td style="text-align: right;">0.002536</td>
+<td style="text-align: right;">0.0014</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:21680008:A:G</td>
+<td style="text-align: right;">-0.02306</td>
+<td style="text-align: right;">0.004535</td>
+<td style="text-align: right;">0.0110</td>
+<td style="text-align: right;">0.0170</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">14:105992183:A:C</td>
+<td style="text-align: right;">-0.02300</td>
+<td style="text-align: right;">0.002945</td>
+<td style="text-align: right;">0.0033</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">19:37395697:A:C</td>
+<td style="text-align: right;">-0.02241</td>
+<td style="text-align: right;">0.004269</td>
+<td style="text-align: right;">0.0078</td>
+<td style="text-align: right;">0.0160</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">7:92252203:C:G</td>
+<td style="text-align: right;">-0.02231</td>
+<td style="text-align: right;">0.002848</td>
+<td style="text-align: right;">0.0094</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7:107202502:A:C</td>
+<td style="text-align: right;">-0.02224</td>
+<td style="text-align: right;">0.002785</td>
+<td style="text-align: right;">0.0180</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">10:96035980:T:C</td>
 <td style="text-align: right;">-0.02221</td>
 <td style="text-align: right;">0.004032</td>
-<td style="text-align: right;">0.0055</td>
-<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0200</td>
+<td style="text-align: right;">0.0150</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:78325229:T:C</td>
+<td style="text-align: right;">-0.02204</td>
+<td style="text-align: right;">0.003103</td>
+<td style="text-align: right;">0.0007</td>
+<td style="text-align: right;">0.0120</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">3:121323008:C:G</td>
 <td style="text-align: right;">-0.02193</td>
 <td style="text-align: right;">0.003964</td>
-<td style="text-align: right;">0.0099</td>
-<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0110</td>
+<td style="text-align: right;">0.0140</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">10:52881906:T:C</td>
+<td style="text-align: right;">-0.02148</td>
+<td style="text-align: right;">0.003597</td>
+<td style="text-align: right;">0.0060</td>
+<td style="text-align: right;">0.0130</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:47863368:T:C</td>
+<td style="text-align: right;">-0.02146</td>
+<td style="text-align: right;">0.003021</td>
+<td style="text-align: right;">0.0460</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10:22337752:A:G</td>
+<td style="text-align: right;">-0.02115</td>
+<td style="text-align: right;">0.002880</td>
+<td style="text-align: right;">0.0019</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">20:5532853:T:C</td>
+<td style="text-align: right;">-0.02072</td>
+<td style="text-align: right;">0.003083</td>
+<td style="text-align: right;">0.0094</td>
+<td style="text-align: right;">0.0120</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6:137264165:A:G</td>
+<td style="text-align: right;">-0.02070</td>
+<td style="text-align: right;">0.002519</td>
+<td style="text-align: right;">0.0079</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">2:111989372:T:G</td>
 <td style="text-align: right;">-0.02055</td>
 <td style="text-align: right;">0.004040</td>
-<td style="text-align: right;">0.0015</td>
-<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0097</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">14:60617639:A:G</td>
+<td style="text-align: right;">-0.02018</td>
+<td style="text-align: right;">0.003536</td>
+<td style="text-align: right;">0.0093</td>
+<td style="text-align: right;">0.0130</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">4:27016468:T:C</td>
+<td style="text-align: right;">-0.01980</td>
+<td style="text-align: right;">0.002844</td>
+<td style="text-align: right;">0.0130</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">2:133188106:T:G</td>
+<td style="text-align: right;">-0.01979</td>
+<td style="text-align: right;">0.003106</td>
+<td style="text-align: right;">0.0230</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:226917898:A:G</td>
+<td style="text-align: right;">-0.01971</td>
+<td style="text-align: right;">0.002520</td>
+<td style="text-align: right;">0.0100</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">6:25745243:A:T</td>
 <td style="text-align: right;">-0.01892</td>
 <td style="text-align: right;">0.002773</td>
-<td style="text-align: right;">0.0020</td>
-<td style="text-align: right;">0.0072</td>
+<td style="text-align: right;">0.0270</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">21:35893737:T:C</td>
+<td style="text-align: right;">-0.01874</td>
+<td style="text-align: right;">0.002560</td>
+<td style="text-align: right;">0.0060</td>
+<td style="text-align: right;">0.0093</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">15:51524292:A:G</td>
-<td style="text-align: right;">-0.01865</td>
-<td style="text-align: right;">0.002634</td>
+<td style="text-align: left;">13:110501545:A:C</td>
+<td style="text-align: right;">-0.01869</td>
+<td style="text-align: right;">0.002598</td>
+<td style="text-align: right;">0.0054</td>
+<td style="text-align: right;">0.0094</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:1982952:A:G</td>
+<td style="text-align: right;">-0.01868</td>
+<td style="text-align: right;">0.002601</td>
+<td style="text-align: right;">0.0065</td>
+<td style="text-align: right;">0.0095</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">6:134509254:T:C</td>
+<td style="text-align: right;">-0.01851</td>
+<td style="text-align: right;">0.002664</td>
+<td style="text-align: right;">0.0310</td>
 <td style="text-align: right;">0.0098</td>
-<td style="text-align: right;">0.0068</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">14:70000399:A:C</td>
 <td style="text-align: right;">-0.01821</td>
 <td style="text-align: right;">0.003351</td>
-<td style="text-align: right;">0.0028</td>
-<td style="text-align: right;">0.0085</td>
+<td style="text-align: right;">0.0014</td>
+<td style="text-align: right;">0.0120</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">19:3369753:C:G</td>
-<td style="text-align: right;">-0.01767</td>
-<td style="text-align: right;">0.003447</td>
+<td style="text-align: left;">9:136154168:T:C</td>
+<td style="text-align: right;">-0.01818</td>
+<td style="text-align: right;">0.003106</td>
+<td style="text-align: right;">0.0540</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10:94436851:T:C</td>
+<td style="text-align: right;">-0.01808</td>
+<td style="text-align: right;">0.002518</td>
+<td style="text-align: right;">0.0044</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:96648537:T:C</td>
+<td style="text-align: right;">-0.01808</td>
+<td style="text-align: right;">0.002716</td>
+<td style="text-align: right;">0.0150</td>
+<td style="text-align: right;">0.0098</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">19:11979164:T:C</td>
+<td style="text-align: right;">-0.01803</td>
+<td style="text-align: right;">0.002814</td>
+<td style="text-align: right;">0.0052</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">9:116128568:A:C</td>
+<td style="text-align: right;">-0.01762</td>
+<td style="text-align: right;">0.003277</td>
+<td style="text-align: right;">0.0110</td>
 <td style="text-align: right;">0.0120</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:17783748:A:G</td>
+<td style="text-align: right;">-0.01743</td>
+<td style="text-align: right;">0.002608</td>
+<td style="text-align: right;">0.0120</td>
+<td style="text-align: right;">0.0094</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3:56865776:A:G</td>
+<td style="text-align: right;">-0.01714</td>
+<td style="text-align: right;">0.002595</td>
+<td style="text-align: right;">0.0086</td>
 <td style="text-align: right;">0.0095</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">2:165539661:T:C</td>
-<td style="text-align: right;">-0.01696</td>
-<td style="text-align: right;">0.002570</td>
-<td style="text-align: right;">0.0037</td>
-<td style="text-align: right;">0.0066</td>
+<td style="text-align: left;">6:129827116:T:C</td>
+<td style="text-align: right;">-0.01691</td>
+<td style="text-align: right;">0.002776</td>
+<td style="text-align: right;">0.0120</td>
+<td style="text-align: right;">0.0100</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">6:44097472:T:C</td>
 <td style="text-align: right;">-0.01666</td>
 <td style="text-align: right;">0.003138</td>
-<td style="text-align: right;">0.0063</td>
 <td style="text-align: right;">0.0079</td>
+<td style="text-align: right;">0.0110</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">17:66820449:T:C</td>
-<td style="text-align: right;">-0.01576</td>
-<td style="text-align: right;">0.002533</td>
-<td style="text-align: right;">0.0041</td>
-<td style="text-align: right;">0.0065</td>
+<td style="text-align: left;">7:150614934:T:C</td>
+<td style="text-align: right;">-0.01631</td>
+<td style="text-align: right;">0.002912</td>
+<td style="text-align: right;">0.0120</td>
+<td style="text-align: right;">0.0110</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">19:35370305:A:G</td>
-<td style="text-align: right;">-0.01430</td>
-<td style="text-align: right;">0.002619</td>
-<td style="text-align: right;">0.0014</td>
-<td style="text-align: right;">0.0068</td>
+<td style="text-align: left;">17:35860964:T:C</td>
+<td style="text-align: right;">-0.01609</td>
+<td style="text-align: right;">0.002611</td>
+<td style="text-align: right;">0.0091</td>
+<td style="text-align: right;">0.0095</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">14:30364061:C:G</td>
-<td style="text-align: right;">-0.01397</td>
-<td style="text-align: right;">0.002769</td>
-<td style="text-align: right;">0.0130</td>
-<td style="text-align: right;">0.0075</td>
+<td style="text-align: left;">2:190984523:A:T</td>
+<td style="text-align: right;">-0.01569</td>
+<td style="text-align: right;">0.002790</td>
+<td style="text-align: right;">0.0008</td>
+<td style="text-align: right;">0.0100</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">2:202207993:T:C</td>
-<td style="text-align: right;">0.01268</td>
-<td style="text-align: right;">0.002512</td>
-<td style="text-align: right;">0.0000</td>
-<td style="text-align: right;">0.0065</td>
+<td style="text-align: left;">11:65363958:A:G</td>
+<td style="text-align: right;">-0.01556</td>
+<td style="text-align: right;">0.002862</td>
+<td style="text-align: right;">0.0006</td>
+<td style="text-align: right;">0.0100</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">20:62586262:T:C</td>
-<td style="text-align: right;">0.01384</td>
-<td style="text-align: right;">0.002572</td>
-<td style="text-align: right;">-0.0034</td>
-<td style="text-align: right;">0.0067</td>
+<td style="text-align: left;">2:25492467:A:G</td>
+<td style="text-align: right;">-0.01555</td>
+<td style="text-align: right;">0.002718</td>
+<td style="text-align: right;">0.0098</td>
+<td style="text-align: right;">0.0098</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">16:54573024:A:G</td>
-<td style="text-align: right;">0.01404</td>
-<td style="text-align: right;">0.002640</td>
-<td style="text-align: right;">-0.0027</td>
-<td style="text-align: right;">0.0071</td>
+<td style="text-align: left;">6:139834012:T:G</td>
+<td style="text-align: right;">-0.01443</td>
+<td style="text-align: right;">0.002601</td>
+<td style="text-align: right;">0.0180</td>
+<td style="text-align: right;">0.0095</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">22:39131727:T:G</td>
-<td style="text-align: right;">0.01406</td>
-<td style="text-align: right;">0.002635</td>
+<td style="text-align: left;">10:96305329:T:C</td>
+<td style="text-align: right;">-0.01295</td>
+<td style="text-align: right;">0.002527</td>
+<td style="text-align: right;">0.0082</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">11:8252853:A:G</td>
+<td style="text-align: right;">-0.01279</td>
+<td style="text-align: right;">0.002444</td>
+<td style="text-align: right;">0.0057</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">19:14170423:A:G</td>
+<td style="text-align: right;">0.01308</td>
+<td style="text-align: right;">0.002552</td>
+<td style="text-align: right;">-0.0051</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">7:25997536:A:G</td>
+<td style="text-align: right;">0.01348</td>
+<td style="text-align: right;">0.002555</td>
+<td style="text-align: right;">-0.0200</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:153606851:A:G</td>
+<td style="text-align: right;">0.01397</td>
+<td style="text-align: right;">0.002528</td>
+<td style="text-align: right;">-0.0059</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:60895636:A:G</td>
+<td style="text-align: right;">0.01462</td>
+<td style="text-align: right;">0.002569</td>
 <td style="text-align: right;">-0.0110</td>
-<td style="text-align: right;">0.0068</td>
+<td style="text-align: right;">0.0094</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:116804727:A:C</td>
+<td style="text-align: right;">0.01493</td>
+<td style="text-align: right;">0.002574</td>
+<td style="text-align: right;">-0.0057</td>
+<td style="text-align: right;">0.0093</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">13:110955187:T:C</td>
-<td style="text-align: right;">0.01500</td>
-<td style="text-align: right;">0.002756</td>
-<td style="text-align: right;">-0.0063</td>
-<td style="text-align: right;">0.0073</td>
+<td style="text-align: left;">22:30800338:T:G</td>
+<td style="text-align: right;">0.01512</td>
+<td style="text-align: right;">0.002527</td>
+<td style="text-align: right;">-0.0091</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">6:43299058:T:G</td>
+<td style="text-align: right;">0.01538</td>
+<td style="text-align: right;">0.002799</td>
+<td style="text-align: right;">-0.0290</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8:98812563:A:G</td>
+<td style="text-align: right;">0.01540</td>
+<td style="text-align: right;">0.002523</td>
+<td style="text-align: right;">-0.0140</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10:126477406:A:G</td>
+<td style="text-align: right;">0.01587</td>
+<td style="text-align: right;">0.002857</td>
+<td style="text-align: right;">-0.0036</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:60762779:T:C</td>
+<td style="text-align: right;">0.01602</td>
+<td style="text-align: right;">0.002763</td>
+<td style="text-align: right;">-0.0150</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2:191318776:T:C</td>
+<td style="text-align: right;">0.01605</td>
+<td style="text-align: right;">0.002540</td>
+<td style="text-align: right;">-0.0057</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:200457488:A:G</td>
+<td style="text-align: right;">0.01617</td>
+<td style="text-align: right;">0.002624</td>
+<td style="text-align: right;">-0.0035</td>
+<td style="text-align: right;">0.0096</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">21:37835347:A:T</td>
 <td style="text-align: right;">0.01630</td>
 <td style="text-align: right;">0.002865</td>
-<td style="text-align: right;">-0.0014</td>
-<td style="text-align: right;">0.0075</td>
+<td style="text-align: right;">-0.0028</td>
+<td style="text-align: right;">0.0110</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">2:10213497:A:G</td>
-<td style="text-align: right;">0.01634</td>
-<td style="text-align: right;">0.003023</td>
-<td style="text-align: right;">-0.0002</td>
-<td style="text-align: right;">0.0078</td>
+<td style="text-align: left;">2:69573029:T:C</td>
+<td style="text-align: right;">0.01637</td>
+<td style="text-align: right;">0.002546</td>
+<td style="text-align: right;">-0.0052</td>
+<td style="text-align: right;">0.0092</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">19:30304483:T:C</td>
+<td style="text-align: right;">0.01662</td>
+<td style="text-align: right;">0.002567</td>
+<td style="text-align: right;">-0.0014</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">12:4057955:T:C</td>
 <td style="text-align: right;">0.01683</td>
 <td style="text-align: right;">0.002947</td>
-<td style="text-align: right;">-0.0023</td>
-<td style="text-align: right;">0.0078</td>
+<td style="text-align: right;">-0.0110</td>
+<td style="text-align: right;">0.0110</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">2:131089135:T:C</td>
 <td style="text-align: right;">0.01689</td>
 <td style="text-align: right;">0.003111</td>
-<td style="text-align: right;">-0.0029</td>
-<td style="text-align: right;">0.0081</td>
+<td style="text-align: right;">-0.0082</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5:55816081:A:C</td>
+<td style="text-align: right;">0.01745</td>
+<td style="text-align: right;">0.002946</td>
+<td style="text-align: right;">-0.0190</td>
+<td style="text-align: right;">0.0110</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">10:65393613:A:G</td>
-<td style="text-align: right;">0.01743</td>
-<td style="text-align: right;">0.002640</td>
-<td style="text-align: right;">-0.0016</td>
-<td style="text-align: right;">0.0069</td>
+<td style="text-align: left;">10:64914467:A:G</td>
+<td style="text-align: right;">0.01789</td>
+<td style="text-align: right;">0.002722</td>
+<td style="text-align: right;">-0.0055</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">22:25000229:A:T</td>
+<td style="text-align: right;">0.01793</td>
+<td style="text-align: right;">0.002635</td>
+<td style="text-align: right;">-0.0041</td>
+<td style="text-align: right;">0.0096</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10:104654211:A:G</td>
+<td style="text-align: right;">0.01805</td>
+<td style="text-align: right;">0.003067</td>
+<td style="text-align: right;">-0.0150</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5:174050806:T:C</td>
+<td style="text-align: right;">0.01836</td>
+<td style="text-align: right;">0.002641</td>
+<td style="text-align: right;">-0.0020</td>
+<td style="text-align: right;">0.0097</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">16:81566182:C:G</td>
+<td style="text-align: right;">0.01848</td>
+<td style="text-align: right;">0.002533</td>
+<td style="text-align: right;">-0.0018</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">19:3133853:T:C</td>
+<td style="text-align: right;">0.01856</td>
+<td style="text-align: right;">0.002842</td>
+<td style="text-align: right;">-0.0160</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8:72414019:T:C</td>
+<td style="text-align: right;">0.01856</td>
+<td style="text-align: right;">0.002832</td>
+<td style="text-align: right;">-0.0049</td>
+<td style="text-align: right;">0.0100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:52856934:A:C</td>
+<td style="text-align: right;">0.01930</td>
+<td style="text-align: right;">0.003840</td>
+<td style="text-align: right;">-0.0041</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:220009078:A:C</td>
+<td style="text-align: right;">0.01973</td>
+<td style="text-align: right;">0.003802</td>
+<td style="text-align: right;">-0.0049</td>
+<td style="text-align: right;">0.0130</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">2:103151136:A:G</td>
 <td style="text-align: right;">0.01981</td>
 <td style="text-align: right;">0.003588</td>
-<td style="text-align: right;">-0.0210</td>
-<td style="text-align: right;">0.0096</td>
+<td style="text-align: right;">-0.0014</td>
+<td style="text-align: right;">0.0130</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">20:52786406:T:C</td>
-<td style="text-align: right;">0.02285</td>
-<td style="text-align: right;">0.003207</td>
-<td style="text-align: right;">-0.0008</td>
-<td style="text-align: right;">0.0083</td>
+<td style="text-align: left;">7:143095378:T:C</td>
+<td style="text-align: right;">0.01994</td>
+<td style="text-align: right;">0.003956</td>
+<td style="text-align: right;">-0.0052</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:217456447:T:G</td>
+<td style="text-align: right;">0.02116</td>
+<td style="text-align: right;">0.002513</td>
+<td style="text-align: right;">-0.0130</td>
+<td style="text-align: right;">0.0092</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">11:116924978:A:C</td>
+<td style="text-align: right;">0.02162</td>
+<td style="text-align: right;">0.003519</td>
+<td style="text-align: right;">-0.0120</td>
+<td style="text-align: right;">0.0130</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13:20436598:T:G</td>
+<td style="text-align: right;">0.02175</td>
+<td style="text-align: right;">0.003751</td>
+<td style="text-align: right;">-0.0180</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">3:113275624:A:C</td>
+<td style="text-align: right;">0.02178</td>
+<td style="text-align: right;">0.002569</td>
+<td style="text-align: right;">-0.0075</td>
+<td style="text-align: right;">0.0093</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">20:33335657:A:G</td>
+<td style="text-align: right;">0.02189</td>
+<td style="text-align: right;">0.003229</td>
+<td style="text-align: right;">-0.0062</td>
+<td style="text-align: right;">0.0120</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">12:4573791:T:G</td>
+<td style="text-align: right;">0.02200</td>
+<td style="text-align: right;">0.003770</td>
+<td style="text-align: right;">-0.0091</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">4:17809538:A:G</td>
+<td style="text-align: right;">0.02218</td>
+<td style="text-align: right;">0.003766</td>
+<td style="text-align: right;">-0.0240</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">8:21944962:T:G</td>
+<td style="text-align: right;">0.02279</td>
+<td style="text-align: right;">0.002913</td>
+<td style="text-align: right;">-0.0044</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8:101703522:A:T</td>
+<td style="text-align: right;">0.02295</td>
+<td style="text-align: right;">0.003722</td>
+<td style="text-align: right;">-0.0110</td>
+<td style="text-align: right;">0.0140</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">9:903352:A:T</td>
+<td style="text-align: right;">0.02411</td>
+<td style="text-align: right;">0.004078</td>
+<td style="text-align: right;">-0.0076</td>
+<td style="text-align: right;">0.0150</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5:72385914:A:G</td>
+<td style="text-align: right;">0.02412</td>
+<td style="text-align: right;">0.002674</td>
+<td style="text-align: right;">-0.0170</td>
+<td style="text-align: right;">0.0099</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:156754465:T:C</td>
+<td style="text-align: right;">0.02422</td>
+<td style="text-align: right;">0.002874</td>
+<td style="text-align: right;">-0.0055</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">17:73497415:T:C</td>
+<td style="text-align: right;">0.02491</td>
+<td style="text-align: right;">0.004268</td>
+<td style="text-align: right;">-0.0072</td>
+<td style="text-align: right;">0.0160</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">14:21944174:A:G</td>
+<td style="text-align: right;">0.02525</td>
+<td style="text-align: right;">0.004435</td>
+<td style="text-align: right;">-0.0022</td>
+<td style="text-align: right;">0.0170</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">12:90171438:T:G</td>
+<td style="text-align: right;">0.02538</td>
+<td style="text-align: right;">0.003466</td>
+<td style="text-align: right;">-0.0130</td>
+<td style="text-align: right;">0.0130</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1:21821757:A:G</td>
+<td style="text-align: right;">0.02544</td>
+<td style="text-align: right;">0.002519</td>
+<td style="text-align: right;">-0.0017</td>
+<td style="text-align: right;">0.0092</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">2:54846400:A:G</td>
 <td style="text-align: right;">0.02574</td>
 <td style="text-align: right;">0.003572</td>
-<td style="text-align: right;">-0.0063</td>
-<td style="text-align: right;">0.0090</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">20:52813216:T:C</td>
-<td style="text-align: right;">0.03049</td>
-<td style="text-align: right;">0.004855</td>
-<td style="text-align: right;">-0.0044</td>
+<td style="text-align: right;">-0.0004</td>
 <td style="text-align: right;">0.0130</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;">6:32152387:A:T</td>
+<td style="text-align: right;">0.02656</td>
+<td style="text-align: right;">0.003157</td>
+<td style="text-align: right;">-0.0110</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
 <tr class="odd">
-<td style="text-align: left;">2:96061242:C:G</td>
-<td style="text-align: right;">0.05118</td>
-<td style="text-align: right;">0.006802</td>
-<td style="text-align: right;">-0.0011</td>
+<td style="text-align: left;">19:3128748:T:C</td>
+<td style="text-align: right;">0.02663</td>
+<td style="text-align: right;">0.003585</td>
+<td style="text-align: right;">-0.0041</td>
+<td style="text-align: right;">0.0130</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:7731764:T:C</td>
+<td style="text-align: right;">0.02673</td>
+<td style="text-align: right;">0.005343</td>
+<td style="text-align: right;">-0.0016</td>
+<td style="text-align: right;">0.0200</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">14:94796184:A:T</td>
+<td style="text-align: right;">0.03391</td>
+<td style="text-align: right;">0.003120</td>
+<td style="text-align: right;">-0.0084</td>
+<td style="text-align: right;">0.0110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">19:19717056:A:G</td>
+<td style="text-align: right;">0.03700</td>
+<td style="text-align: right;">0.004983</td>
+<td style="text-align: right;">-0.0730</td>
 <td style="text-align: right;">0.0180</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3:186337713:T:C</td>
+<td style="text-align: right;">0.04188</td>
+<td style="text-align: right;">0.002626</td>
+<td style="text-align: right;">-0.0110</td>
+<td style="text-align: right;">0.0096</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">17:55301369:A:G</td>
+<td style="text-align: right;">0.04350</td>
+<td style="text-align: right;">0.004778</td>
+<td style="text-align: right;">-0.0250</td>
+<td style="text-align: right;">0.0180</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">20:5572957:T:C</td>
+<td style="text-align: right;">0.04480</td>
+<td style="text-align: right;">0.006937</td>
+<td style="text-align: right;">-0.0150</td>
+<td style="text-align: right;">0.0270</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">3:122069056:T:C</td>
+<td style="text-align: right;">0.05004</td>
+<td style="text-align: right;">0.008926</td>
+<td style="text-align: right;">-0.0170</td>
+<td style="text-align: right;">0.0340</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15:44244523:T:C</td>
+<td style="text-align: right;">0.05713</td>
+<td style="text-align: right;">0.006127</td>
+<td style="text-align: right;">-0.0250</td>
+<td style="text-align: right;">0.0220</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">19:35559474:T:C</td>
+<td style="text-align: right;">0.05815</td>
+<td style="text-align: right;">0.003271</td>
+<td style="text-align: right;">-0.0043</td>
+<td style="text-align: right;">0.0120</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">3:120753198:T:C</td>
+<td style="text-align: right;">0.06249</td>
+<td style="text-align: right;">0.010840</td>
+<td style="text-align: right;">-0.0036</td>
+<td style="text-align: right;">0.0430</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">12:113527940:A:C</td>
+<td style="text-align: right;">0.07225</td>
+<td style="text-align: right;">0.011770</td>
+<td style="text-align: right;">-0.0170</td>
+<td style="text-align: right;">0.0430</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">1:52787887:T:C</td>
+<td style="text-align: right;">0.08565</td>
+<td style="text-align: right;">0.008950</td>
+<td style="text-align: right;">-0.0910</td>
+<td style="text-align: right;">0.0360</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">3:121993247:A:G</td>
+<td style="text-align: right;">0.17270</td>
+<td style="text-align: right;">0.003739</td>
+<td style="text-align: right;">-0.0120</td>
+<td style="text-align: right;">0.0130</td>
 </tr>
 </tbody>
 </table>
@@ -595,7 +1316,7 @@ window.Quarto = {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-harmonizing-snps-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/calcium-ldlc-harmonizing-snps-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -615,17 +1336,17 @@ window.Quarto = {
 <span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
 <span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x=</span><span class="st">"Exposure Estimate"</span>, </span>
 <span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">y=</span><span class="st">"Outcome Estimate"</span>, </span>
-<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"Calcium (UK Biobank) vs Calcium (LabWAS)"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"Calcium (UK Biobank) vs LDL Cholesterol (LabWAS)"</span>) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-scatter-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/calcium-ldlc-scatter-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>There were 33 discordant SNPs between the exposure and outcome datasets. These are listed above. We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise. These were kept in the analysis</p>
+<p>There were 136 discordant SNPs between the exposure and outcome datasets. These are listed above. We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise. These were kept in the analysis</p>
 <section id="steiger-filtering" class="level3">
 <h3 class="anchored" data-anchor-id="steiger-filtering">Steiger Filtering</h3>
 <div class="cell">
@@ -634,11 +1355,11 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>data_steiger <span class="ot">&lt;-</span> <span class="fu">steiger_filtering</span>(data)</span>
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="fu">table</span>(data_steiger<span class="sc">$</span>steiger_direction, <span class="at">useNA=</span><span class="st">"ifany"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Steiger filtering results for calcium-calcium evaluation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Steiger filtering results for calcium-LDL evaluation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top">
-<caption>Steiger filtering results for calcium-calcium evaluation</caption>
+<caption>Steiger filtering results for calcium-LDL evaluation</caption>
 <thead>
 <tr class="header">
 <th style="text-align: right;">Freq</th>
@@ -733,7 +1454,7 @@ window.Quarto = {
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(outcome.summary_metrics, <span class="st">"Instrument Metrics - Calcium - Post-Harmonization.csv"</span>)</span>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(outcome.summary_metrics, <span class="st">"Instrument Metrics - Calcium - Post-Harmonization (Cholesterol).csv"</span>)</span>
 <span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a><span class="co">#write out the instruments used for calcium</span></span>
 <span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>data_steiger <span class="sc">%&gt;%</span> <span class="fu">filter</span>(mr_keep<span class="sc">==</span><span class="cn">TRUE</span>) <span class="sc">%&gt;%</span> </span>
@@ -745,13 +1466,13 @@ window.Quarto = {
 <span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">se =</span> se.exposure,</span>
 <span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">p =</span> pval.exposure,</span>
 <span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>         <span class="at">eaf =</span> eaf.exposure) <span class="sc">|&gt;</span></span>
-<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Calcium Instruments Post-Harmonization.csv"</span>)</span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Calcium Instruments Post-Harmonization (Cholesterol).csv"</span>)</span>
 <span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(outcome.summary_metrics, <span class="at">caption=</span><span class="st">"Summary of outcome summary "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(outcome.summary_metrics, <span class="at">caption=</span><span class="st">"Summary of LDL cholesterol effects by calcium instruments after harmonisation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Summary of outcome summary</caption>
+<caption>Summary of LDL cholesterol effects by calcium instruments after harmonisation</caption>
 <thead>
 <tr class="header">
 <th style="text-align: right;">num_snps</th>
@@ -763,8 +1484,8 @@ window.Quarto = {
 <tbody>
 <tr class="odd">
 <td style="text-align: right;">277</td>
-<td style="text-align: right;">0.0146729</td>
-<td style="text-align: right;">0.0089444</td>
+<td style="text-align: right;">0.0121996</td>
+<td style="text-align: right;">0.012583</td>
 <td style="text-align: right;">0.2610072</td>
 </tr>
 </tbody>
@@ -774,29 +1495,27 @@ window.Quarto = {
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(data_steiger,</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(</span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_ivw"</span>, </span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_egger_regression"</span>, </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_median"</span>, </span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_mode"</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Positive Control"</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>calcium.ldlc.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(data_steiger,</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(<span class="st">"mr_ivw"</span>, </span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_egger_regression"</span>, </span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_median"</span>, </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_mode"</span>))</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>calcium.ldlc.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Effects on LDL Cholesterol"</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>MR Results for Calcium Positive Control</caption>
+<caption>MR Results for Calcium Effects on LDL Cholesterol</caption>
 <colgroup>
+<col style="width: 31%">
+<col style="width: 19%">
 <col style="width: 23%">
-<col style="width: 20%">
-<col style="width: 25%">
 <col style="width: 4%">
+<col style="width: 6%">
 <col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 12%">
+<col style="width: 9%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -811,47 +1530,47 @@ window.Quarto = {
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Inverse variance weighted</td>
 <td style="text-align: right;">275</td>
-<td style="text-align: right;">0.544</td>
-<td style="text-align: right;">0.023</td>
-<td style="text-align: right;">0.000000e+00</td>
+<td style="text-align: right;">-0.001</td>
+<td style="text-align: right;">0.038</td>
+<td style="text-align: right;">0.9773529</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">MR Egger</td>
 <td style="text-align: right;">275</td>
-<td style="text-align: right;">0.681</td>
-<td style="text-align: right;">0.049</td>
-<td style="text-align: right;">5.752555e-34</td>
+<td style="text-align: right;">-0.066</td>
+<td style="text-align: right;">0.081</td>
+<td style="text-align: right;">0.4141755</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">275</td>
-<td style="text-align: right;">0.558</td>
-<td style="text-align: right;">0.033</td>
-<td style="text-align: right;">6.763679e-63</td>
+<td style="text-align: right;">-0.060</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.2468106</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">275</td>
-<td style="text-align: right;">0.557</td>
-<td style="text-align: right;">0.063</td>
-<td style="text-align: right;">1.149689e-16</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.059</td>
+<td style="text-align: right;">0.9948578</td>
 </tr>
 </tbody>
 </table>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(calcium.control.mr, <span class="fu">aes</span>(<span class="at">y=</span>method,<span class="at">x=</span>b)) <span class="sc">+</span></span>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(calcium.ldlc.mr, <span class="fu">aes</span>(<span class="at">y=</span>method,<span class="at">x=</span>b)) <span class="sc">+</span></span>
 <span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin=</span>b<span class="fl">-1.96</span><span class="sc">*</span>se, <span class="at">xmax=</span>b<span class="fl">+1.96</span><span class="sc">*</span>se), <span class="at">width=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
 <span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
@@ -863,12 +1582,12 @@ window.Quarto = {
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-mr-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/calcium-ldlc-mr-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>The primary result, using the inverse variance weighted method shows a 0.5437075 <span class="math inline">\(\pm\)</span> 0.0234494 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank). This is statistically significant with a p-value of 6.2499238^{-119}. All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.</p>
+<p>The primary result, using the inverse variance weighted method shows a -0.0010879 <span class="math inline">\(\pm\)</span> 0.0383213 SD increase in LDL cholesterol (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank). This is statistically significant with a p-value of 0.9773529. All four MR methods (IVW, weighted mode, weighted median, MR-Egger) gave consistent, <strong>non-significant</strong> causal estimates, supporting the hypothesis of no causal effect of calcium on LDL-C.</p>
 </section>
 <section id="mr-egger-intercept" class="level3">
 <h3 class="anchored" data-anchor-id="mr-egger-intercept">MR-Egger Intercept</h3>
@@ -878,17 +1597,17 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>egger_intercept <span class="ot">&lt;-</span> <span class="fu">mr_pleiotropy_test</span>(data_steiger)</span>
 <span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>egger_intercept<span class="sc">|&gt;</span></span>
 <span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Pleiotropy Results for Calcium Positive Control"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Pleiotropy Results for Calcium-Cholesterol Analysis"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>MR Pleiotropy Results for Calcium Positive Control</caption>
+<caption>MR Pleiotropy Results for Calcium-Cholesterol Analysis</caption>
 <colgroup>
-<col style="width: 29%">
-<col style="width: 25%">
-<col style="width: 19%">
-<col style="width: 12%">
-<col style="width: 12%">
+<col style="width: 38%">
+<col style="width: 22%">
+<col style="width: 17%">
+<col style="width: 10%">
+<col style="width: 10%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -901,17 +1620,17 @@ window.Quarto = {
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
-<td style="text-align: right;">-0.0040361</td>
-<td style="text-align: right;">0.0012601</td>
-<td style="text-align: right;">0.0015212</td>
+<td style="text-align: right;">0.0019154</td>
+<td style="text-align: right;">0.0020949</td>
+<td style="text-align: right;">0.3613545</td>
 </tr>
 </tbody>
 </table>
 </div>
 </div>
-<p>The MR-Egger intercept is with a p-value of 0.0015212, indicating some evidence of directional pleiotropy. Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.</p>
+<p>The MR-Egger intercept is with a p-value of 0.3613545, indicating no evidence of directional pleiotropy. The intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.</p>
 </section>
 <section id="heterogeneity-statistics" class="level3">
 <h3 class="anchored" data-anchor-id="heterogeneity-statistics">Heterogeneity Statistics</h3>
@@ -922,19 +1641,19 @@ window.Quarto = {
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>heterogeneity <span class="ot">&lt;-</span> <span class="fu">mr_heterogeneity</span>(data_steiger)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>heterogeneity<span class="sc">|&gt;</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Heterogeneity Results for Calcium Positive Control"</span>,</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Heterogeneity Results for Calcium Effects on Cholesterol"</span>,</span>
 <span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>MR Heterogeneity Results for Calcium Positive Control</caption>
+<caption>MR Heterogeneity Results for Calcium Effects on Cholesterol</caption>
 <colgroup>
+<col style="width: 32%">
+<col style="width: 19%">
 <col style="width: 24%">
-<col style="width: 21%">
-<col style="width: 26%">
-<col style="width: 8%">
-<col style="width: 5%">
-<col style="width: 13%">
+<col style="width: 7%">
+<col style="width: 4%">
+<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -948,20 +1667,20 @@ window.Quarto = {
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">MR Egger</td>
-<td style="text-align: right;">433.461</td>
+<td style="text-align: right;">604.623</td>
 <td style="text-align: right;">273</td>
-<td style="text-align: right;">2.060484e-09</td>
+<td style="text-align: right;">3.710043e-27</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">LDL Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Inverse variance weighted</td>
-<td style="text-align: right;">449.751</td>
+<td style="text-align: right;">606.474</td>
 <td style="text-align: right;">274</td>
-<td style="text-align: right;">1.083278e-10</td>
+<td style="text-align: right;">3.320526e-27</td>
 </tr>
 </tbody>
 </table>
@@ -980,12 +1699,12 @@ window.Quarto = {
 <span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a><span class="fu">mr_funnel_plot</span>(single_snp_results) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>$`Calcium (UK Biobank).Calcium (Michigan GWAS)`</code></pre>
+<pre><code>$`Calcium (UK Biobank).LDL Cholesterol (MGI-BioVU LabWAS)`</code></pre>
 </div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-funnel-plot-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/calcium-ldlc-funnel-plot-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -994,13 +1713,13 @@ window.Quarto = {
 attr(,"split_type")
 [1] "data.frame"
 attr(,"split_labels")
-           id.exposure              id.outcome
-1 Calcium (UK Biobank) Calcium (Michigan GWAS)</code></pre>
+           id.exposure                         id.outcome
+1 Calcium (UK Biobank) LDL Cholesterol (MGI-BioVU LabWAS)</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get overall IVW estimate for the vertical line</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ivw_beta <span class="ot">&lt;-</span> calcium.control.mr <span class="sc">|&gt;</span> <span class="fu">filter</span>(method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">|&gt;</span> <span class="fu">pull</span>(b)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ivw_beta <span class="ot">&lt;-</span> calcium.ldlc.mr <span class="sc">|&gt;</span> <span class="fu">filter</span>(method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">|&gt;</span> <span class="fu">pull</span>(b)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine y-range based on your data</span></span>
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>y_min <span class="ot">&lt;-</span> <span class="dv">0</span></span>
@@ -1039,7 +1758,7 @@ attr(,"split_labels")
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-funnel-plot-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/calcium-ldlc-funnel-plot-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1054,16 +1773,16 @@ attr(,"split_labels")
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data_steiger)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.control.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.ldlc.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
 <span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
 <span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
 <span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs"</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Calcium-LDL Cholesterol Analysis (IVW method) for Influential SNPs"</span>,</span>
 <span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs</caption>
+<caption>Leave-One-Out Results for Calcium-LDL Cholesterol Analysis (IVW method) for Influential SNPs</caption>
 <thead>
 <tr class="header">
 <th style="text-align: left;">SNP</th>
@@ -1075,46 +1794,46 @@ attr(,"split_labels")
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">1:109817192:A:G</td>
+<td style="text-align: right;">-0.01386</td>
+<td style="text-align: right;">-0.01495</td>
+<td style="text-align: right;">0.03198</td>
+<td style="text-align: right;">0.64027</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2:27742603:T:C</td>
+<td style="text-align: right;">-0.01153</td>
+<td style="text-align: right;">-0.01261</td>
+<td style="text-align: right;">0.03847</td>
+<td style="text-align: right;">0.74298</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">8:9183358:A:G</td>
+<td style="text-align: right;">-0.00957</td>
+<td style="text-align: right;">-0.01065</td>
+<td style="text-align: right;">0.03834</td>
+<td style="text-align: right;">0.78112</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">11:126218773:C:G</td>
+<td style="text-align: right;">0.00940</td>
+<td style="text-align: right;">0.00832</td>
+<td style="text-align: right;">0.03811</td>
+<td style="text-align: right;">0.82722</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">3:121993247:A:G</td>
-<td style="text-align: right;">-0.03487</td>
-<td style="text-align: right;">0.50884</td>
-<td style="text-align: right;">0.02420</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.00907</td>
+<td style="text-align: right;">0.00798</td>
+<td style="text-align: right;">0.04083</td>
+<td style="text-align: right;">0.84498</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">2:234264848:C:G</td>
-<td style="text-align: right;">0.02258</td>
-<td style="text-align: right;">0.56629</td>
-<td style="text-align: right;">0.02113</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">2:97400324:A:G</td>
-<td style="text-align: right;">-0.00581</td>
-<td style="text-align: right;">0.53789</td>
-<td style="text-align: right;">0.02351</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">9:80366259:T:C</td>
-<td style="text-align: right;">-0.00503</td>
-<td style="text-align: right;">0.53867</td>
-<td style="text-align: right;">0.02336</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">1:43458250:T:C</td>
-<td style="text-align: right;">-0.00365</td>
-<td style="text-align: right;">0.54006</td>
-<td style="text-align: right;">0.02339</td>
-<td style="text-align: right;">0</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">20:52720530:A:G</td>
-<td style="text-align: right;">-0.00347</td>
-<td style="text-align: right;">0.54024</td>
-<td style="text-align: right;">0.02349</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: left;">19:19717056:A:G</td>
+<td style="text-align: right;">0.00554</td>
+<td style="text-align: right;">0.00446</td>
+<td style="text-align: right;">0.03792</td>
+<td style="text-align: right;">0.90646</td>
 </tr>
 </tbody>
 </table>
@@ -1137,12 +1856,12 @@ attr(,"split_labels")
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-mr-loo-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/calcium-ldlc-mr-loo-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.</p>
+<p>Leave-one-out analyses suggested that four SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion.</p>
 </section>
 </section>
 <section id="session-information" class="level2">

@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Tue Oct 14 10:47:37 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Tue Oct 14 10:59:03 2025
 
 ## Data Entry
 
@@ -464,7 +464,7 @@ Table: Summary of calcium instruments after harmonisation
 :::
 
 ```{.r .cell-code}
-write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization (Cholesterol).csv")
+write_csv(outcome.summary_metrics, "Instrument Metrics - Calcium - Post-Harmonization (Total Cholesterol).csv")
 
 #write out the instruments used for calcium
 data_steiger %>% filter(mr_keep==TRUE) %>% 
@@ -476,7 +476,7 @@ data_steiger %>% filter(mr_keep==TRUE) %>%
          se = se.exposure,
          p = pval.exposure,
          eaf = eaf.exposure) |>
-  write_csv("Calcium Instruments Post-Harmonization (Cholesterol).csv")
+  write_csv("Calcium Instruments Post-Harmonization (Total Cholesterol).csv")
   
 kable(outcome.summary_metrics, caption="Summary of total cholesterol effects by calcium instruments after harmonisation")
 ```
@@ -519,8 +519,8 @@ Table: MR Results for Calcium Effects on Total Cholesterol
 |:------------------------------------|:--------------------|:-------------------------|----:|-----:|-----:|---------:|
 |Total Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.032| 0.038| 0.3945054|
 |Total Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.012| 0.081| 0.8776367|
-|Total Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.011| 0.055| 0.8427169|
-|Total Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.018| 0.055| 0.7422963|
+|Total Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.011| 0.057| 0.8478306|
+|Total Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.018| 0.059| 0.7565062|
 
 
 :::
@@ -528,7 +528,7 @@ Table: MR Results for Calcium Effects on Total Cholesterol
 ```{.r .cell-code}
 ggplot(calcium.tc.mr, aes(y=method,x=b)) +
   geom_point() +
-  geom_errorbar(aes(xmin=b-se, xmax=b+se), width=0.2) +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
   labs(title="",
        y="",

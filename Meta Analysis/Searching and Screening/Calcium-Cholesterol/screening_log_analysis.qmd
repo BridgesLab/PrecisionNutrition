@@ -1,0 +1,85 @@
+---
+title: "Analysis of Screening Logs"
+author: "Kai-Lin Jen and Dave Bridges"
+date: "October 14, 2025"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]  # Remove !expr, just use array syntax
+    fig.keep: "all"
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+To quantify screening efforts for the calcium-cholesterol meta-analysis
+
+## Data Entry
+
+```{r data-entry}
+log.file <- 'Screening Log - Screening Log.csv'
+screening.log <- read_csv(log.file,
+                          col_types = cols(
+  Key = col_character(),
+  Title = col_character(),
+  DOI = col_character(),
+  `Abstract Note` = col_character(),
+  DateScreened = col_date(format = "%m/%d/%y"),
+  Screener = col_factor(),
+  Decision = col_character(),
+  FullTextView = col_factor(),
+  ExclusionReason = col_factor(),
+  Notes = col_character()
+))
+```
+
+## Analysis
+
+To this point we have screened 
+
+We have decided to review the full text of `r nrow(filter(screening.log, FullTextView == "Yes"))` articles and not to review the full text of `r nrow(filter(screening.log, FullTextView == "No"))` articles.  `r nrow(filter(screening.log, is.na(FullTextView)))` articles have not yet been screened.
+
+### Exclusion Reasons
+
+```{r exclusion-reasons}
+screening.log |>
+  filter(FullTextView == "No") |>
+  group_by(ExclusionReason) |>
+  summarize(n = n()) |>
+  arrange(desc(n)) |>
+  kable()
+```
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

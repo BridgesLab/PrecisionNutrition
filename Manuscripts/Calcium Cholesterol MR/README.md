@@ -4,7 +4,8 @@ This document indicates where the raw data for each Figure panel can be found, a
 
 | Figure/Table | Script | File |
 | ------ | ------ | ------ |
-| Table 1 | TBD | Instrument Metrics - Post-Harmonization.csv |
+| Figure 1 | No Script | |
+| Table 1 | summary-tables.qmd | Instrument Metrics - Post-Harmonization.csv |
 
 
 | Supplementary Figure/Table | Script | File |

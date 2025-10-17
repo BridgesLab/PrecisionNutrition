@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Tue Oct 14 11:32:48 2025
+To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 17 10:54:36 2025
 
 ## Data Entry
 
@@ -441,7 +441,8 @@ Table: Summary of total cholesterol instruments after harmonisation
 :::
 
 ```{.r .cell-code}
-write_csv(outcome.summary_metrics, "Instrument Metrics - Total Cholesterol - Post-Harmonization.csv")
+write_csv(calcium.exposure.summary, "Instrument Metrics - Total Cholesterol - Post-Harmonization.csv")
+write_csv(outcome.summary_metrics, "Outcome Metrics - Total Cholesterol - Post-Harmonization.csv")
 
 #write out the instruments used for calcium
 data_steiger %>% filter(mr_keep==TRUE) %>% 
@@ -498,8 +499,8 @@ Table: MR Results for Total Cholesterol - Calcium Control
 |:--------------------------|:------------------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  280| 0.065| 0.019| 0.0005780089|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  |  280| 0.038| 0.030| 0.2173225364|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| 0.054| 0.027| 0.0475685947|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| 0.055| 0.026| 0.0362381505|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| 0.054| 0.028| 0.0517713799|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| 0.055| 0.026| 0.0364797222|
 
 
 :::

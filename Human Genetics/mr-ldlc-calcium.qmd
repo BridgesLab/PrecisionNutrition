@@ -214,7 +214,8 @@ outcome.summary_metrics <- data.annot %>%
 library(knitr)
 kable(calcium.exposure.summary, caption="Summary of LDL cholesterol instruments after harmonisation")
 
-write_csv(outcome.summary_metrics, "Instrument Metrics - LDL Cholesterol - Post-Harmonization.csv")
+write_csv(calcium.exposure.summary, "Instrument Metrics - LDL Cholesterol - Post-Harmonization.csv")
+write_csv(outcome.summary_metrics, "Outcome Metrics - LDL Cholesterol - Post-Harmonization.csv")
 
 #write out the instruments used for calcium
 data_steiger %>% filter(mr_keep==TRUE) %>% 

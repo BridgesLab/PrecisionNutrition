@@ -1,0 +1,67 @@
+---
+title: "Summary Tables and Figures from MR Analyses"
+author: "Dave Bridges"
+date: "October 17, 2025"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]  # Remove !expr, just use array syntax
+    fig.keep: "all"
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+To generate summary tables and figures from individual analyses for publicaiton
+
+## Data Entry
+
+```{r data-entry}
+calcium.instrument.summary.file <- 'Instrument Metrics - Calcium - Post-Harmonization (Total Cholesterol).csv' #identical instruments for LDL-Cholesterol outcomes after harmonisation
+ldl.instrument.summary.file <- 'Instrument Metrics - LDL Cholesterol - Post-Harmonization.csv'
+tc.instrument.summary.file <- 'Instrument Metrics - Total Cholesterol - Post-Harmonization.csv'
+
+bind_rows(read_csv(calcium.instrument.summary.file) |> mutate(Instrument = "Serum Calcium"),
+      read_csv(ldl.instrument.summary.file) |> mutate(Instrument = "LDL-Cholesterol"),
+      read_csv(tc.instrument.summary.file) |> mutate(Instrument = "Total Cholesterol")) |>
+  relocate(Instrument, .before = everything()) |>
+  rename(N=samplesize.exposure) -> instrument.summary
+
+instrument.summary |> kable(caption="Instrument summary after harmonisation")
+
+write_csv(instrument.summary, "Instrument Metrics - Post-Harmonization.csv")
+```
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

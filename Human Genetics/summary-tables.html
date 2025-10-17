@@ -159,35 +159,44 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(ldl.instrument.summary.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"LDL-Cholesterol"</span>),</span>
 <span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(tc.instrument.summary.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Total Cholesterol"</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Instrument, <span class="at">.before =</span> <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">N=</span>samplesize.exposure) <span class="ot">-&gt;</span> instrument.summary</span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>instrument.summary <span class="sc">|&gt;</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Instrument summary after harmonisation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(overall_F, <span class="at">.before=</span> mean_maf) <span class="sc">|&gt;</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">N=</span>samplesize.exposure,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>         <span class="at">SNPs =</span> num_snps,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Cumulative R2</span><span class="st">`</span><span class="ot">=</span>cumulative_R2,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Mean F Statistic</span><span class="st">`</span> <span class="ot">=</span> mean_F,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Median F Statistic</span><span class="st">`</span><span class="ot">=</span>median_F,</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Overall F Statistic</span><span class="st">`</span><span class="ot">=</span>overall_F,</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Mean MAF</span><span class="st">`</span><span class="ot">=</span>mean_maf,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Mean Beta Coefficient</span><span class="st">`</span><span class="ot">=</span>mean_beta) <span class="ot">-&gt;</span> instrument.summary</span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>instrument.summary <span class="sc">|&gt;</span> </span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Instrument summary after harmonisation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Instrument summary after harmonisation</caption>
 <colgroup>
-<col style="width: 18%">
-<col style="width: 9%">
-<col style="width: 7%">
+<col style="width: 13%">
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 10%">
+<col style="width: 12%">
 <col style="width: 14%">
-<col style="width: 9%">
-<col style="width: 9%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 10%">
+<col style="width: 15%">
+<col style="width: 7%">
+<col style="width: 16%">
 </colgroup>
 <thead>
 <tr class="header">
 <th style="text-align: left;">Instrument</th>
-<th style="text-align: right;">num_snps</th>
+<th style="text-align: right;">SNPs</th>
 <th style="text-align: right;">N</th>
-<th style="text-align: right;">cumulative_R2</th>
-<th style="text-align: right;">mean_F</th>
-<th style="text-align: right;">median_F</th>
-<th style="text-align: right;">mean_maf</th>
-<th style="text-align: right;">mean_beta</th>
-<th style="text-align: right;">overall_F</th>
+<th style="text-align: right;">Cumulative R2</th>
+<th style="text-align: right;">Mean F Statistic</th>
+<th style="text-align: right;">Median F Statistic</th>
+<th style="text-align: right;">Overall F Statistic</th>
+<th style="text-align: right;">Mean MAF</th>
+<th style="text-align: right;">Mean Beta Coefficient</th>
 </tr>
 </thead>
 <tbody>
@@ -198,9 +207,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">0.0638365</td>
 <td style="text-align: right;">88.8467</td>
 <td style="text-align: right;">54.59161</td>
+<td style="text-align: right;">94.72378</td>
 <td style="text-align: right;">0.3670863</td>
 <td style="text-align: right;">0.0259874</td>
-<td style="text-align: right;">94.72378</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">LDL-Cholesterol</td>
@@ -209,9 +218,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">0.0886163</td>
 <td style="text-align: right;">158.3176</td>
 <td style="text-align: right;">51.14021</td>
+<td style="text-align: right;">173.19372</td>
 <td style="text-align: right;">0.3428665</td>
 <td style="text-align: right;">0.0321334</td>
-<td style="text-align: right;">173.19372</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Total Cholesterol</td>
@@ -220,16 +229,20 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <td style="text-align: right;">0.0972188</td>
 <td style="text-align: right;">143.7673</td>
 <td style="text-align: right;">53.49250</td>
+<td style="text-align: right;">158.81963</td>
 <td style="text-align: right;">0.3497576</td>
 <td style="text-align: right;">0.0301266</td>
-<td style="text-align: right;">158.81963</td>
 </tr>
 </tbody>
 </table>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(instrument.summary, <span class="st">"Instrument Metrics - Post-Harmonization.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>instrument.summary <span class="sc">|&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"R2"</span>) <span class="sc">|</span> <span class="fu">ends_with</span>(<span class="st">"Coefficient"</span>) <span class="sc">|</span> <span class="fu">ends_with</span>(<span class="st">'MAF'</span>), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">3</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Statistic"</span>), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">1</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># SNPs and N are left unrounded (no action needed) |&gt;</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument Metrics - Post-Harmonization.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 </section>

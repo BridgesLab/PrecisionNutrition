@@ -61,9 +61,18 @@ bind_rows(read_csv(calcium.instrument.summary.file) |> mutate(Instrument = "Seru
       read_csv(ldl.instrument.summary.file) |> mutate(Instrument = "LDL-Cholesterol"),
       read_csv(tc.instrument.summary.file) |> mutate(Instrument = "Total Cholesterol")) |>
   relocate(Instrument, .before = everything()) |>
-  rename(N=samplesize.exposure) -> instrument.summary
+  relocate(overall_F, .before= mean_maf) |>
+  rename(N=samplesize.exposure,
+         SNPs = num_snps,
+         `Cumulative R2`=cumulative_R2,
+         `Mean F Statistic` = mean_F,
+         `Median F Statistic`=median_F,
+         `Overall F Statistic`=overall_F,
+         `Mean MAF`=mean_maf,
+         `Mean Beta Coefficient`=mean_beta) -> instrument.summary
 
-instrument.summary |> kable(caption="Instrument summary after harmonisation")
+instrument.summary |> 
+  kable(caption="Instrument summary after harmonisation")
 ```
 
 ::: {.cell-output-display}
@@ -71,17 +80,21 @@ instrument.summary |> kable(caption="Instrument summary after harmonisation")
 
 Table: Instrument summary after harmonisation
 
-|Instrument        | num_snps|      N| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
-|:-----------------|--------:|------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|Serum Calcium     |      277| 385066|     0.0638365|  88.8467| 54.59161| 0.3670863| 0.0259874|  94.72378|
-|LDL-Cholesterol   |      236| 420607|     0.0886163| 158.3176| 51.14021| 0.3428665| 0.0321334| 173.19372|
-|Total Cholesterol |      285| 420607|     0.0972188| 143.7673| 53.49250| 0.3497576| 0.0301266| 158.81963|
+|Instrument        | SNPs|      N| Cumulative R2| Mean F Statistic| Median F Statistic| Overall F Statistic|  Mean MAF| Mean Beta Coefficient|
+|:-----------------|----:|------:|-------------:|----------------:|------------------:|-------------------:|---------:|---------------------:|
+|Serum Calcium     |  277| 385066|     0.0638365|          88.8467|           54.59161|            94.72378| 0.3670863|             0.0259874|
+|LDL-Cholesterol   |  236| 420607|     0.0886163|         158.3176|           51.14021|           173.19372| 0.3428665|             0.0321334|
+|Total Cholesterol |  285| 420607|     0.0972188|         143.7673|           53.49250|           158.81963| 0.3497576|             0.0301266|
 
 
 :::
 
 ```{.r .cell-code}
-write_csv(instrument.summary, "Instrument Metrics - Post-Harmonization.csv")
+instrument.summary |>
+  mutate(across(ends_with("R2") | ends_with("Coefficient") | ends_with('MAF'), ~ round(., 3))) %>%
+  mutate(across(ends_with("Statistic"), ~ round(., 1))) %>%
+  # SNPs and N are left unrounded (no action needed) |>
+  write_csv("Instrument Metrics - Post-Harmonization.csv")
 ```
 :::
 

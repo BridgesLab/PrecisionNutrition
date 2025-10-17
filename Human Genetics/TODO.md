@@ -2,8 +2,8 @@
 
 ## Missing Data
 
-- [ ] n for BioVU
-- [ ] population details
+- [ ] n for MGI-BioVU (add to scripts/manuscript/Figure 1A)
+- [x] population details
 - [ ] Units for beta coefficients from MGI-BioVU (SD for UKBB)
 
 ## Analysis Pipeline

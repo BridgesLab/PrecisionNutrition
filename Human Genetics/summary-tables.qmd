@@ -53,11 +53,24 @@ bind_rows(read_csv(calcium.instrument.summary.file) |> mutate(Instrument = "Seru
       read_csv(ldl.instrument.summary.file) |> mutate(Instrument = "LDL-Cholesterol"),
       read_csv(tc.instrument.summary.file) |> mutate(Instrument = "Total Cholesterol")) |>
   relocate(Instrument, .before = everything()) |>
-  rename(N=samplesize.exposure) -> instrument.summary
+  relocate(overall_F, .before= mean_maf) |>
+  rename(N=samplesize.exposure,
+         SNPs = num_snps,
+         `Cumulative R2`=cumulative_R2,
+         `Mean F Statistic` = mean_F,
+         `Median F Statistic`=median_F,
+         `Overall F Statistic`=overall_F,
+         `Mean MAF`=mean_maf,
+         `Mean Beta Coefficient`=mean_beta) -> instrument.summary
 
-instrument.summary |> kable(caption="Instrument summary after harmonisation")
+instrument.summary |> 
+  kable(caption="Instrument summary after harmonisation")
 
-write_csv(instrument.summary, "Instrument Metrics - Post-Harmonization.csv")
+instrument.summary |>
+  mutate(across(ends_with("R2") | ends_with("Coefficient") | ends_with('MAF'), ~ round(., 3))) %>%
+  mutate(across(ends_with("Statistic"), ~ round(., 1))) %>%
+  # SNPs and N are left unrounded (no action needed) |>
+  write_csv("Instrument Metrics - Post-Harmonization.csv")
 ```
 
 ## Session Information

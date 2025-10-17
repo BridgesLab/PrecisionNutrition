@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 17 10:54:27 2025
+To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Oct 17 15:49:09 2025
 
 ## Data Entry
 
@@ -423,7 +423,7 @@ Table: Summary of LDL cholesterol instruments after harmonisation
 
 | num_snps| samplesize.exposure| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
 |--------:|-------------------:|-------------:|--------:|--------:|---------:|---------:|---------:|
-|      236|              420607|     0.0886163| 158.3176| 51.14021| 0.3428665| 0.0321334|  173.1937|
+|      236|              419831|     0.0886163| 158.0255| 51.04586| 0.3428665| 0.0321334|   172.874|
 
 
 :::
@@ -487,8 +487,8 @@ Table: MR Results for LDL Cholesterol - Calcium Control
 |:--------------------------|:----------------------------|:-------------------------|----:|-----:|-----:|-----------:|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Inverse variance weighted |  232| 0.053| 0.019| 0.005941743|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |MR Egger                  |  232| 0.050| 0.029| 0.083444518|
-|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted median           |  232| 0.055| 0.026| 0.033034345|
-|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted mode             |  232| 0.055| 0.024| 0.021824986|
+|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted median           |  232| 0.055| 0.026| 0.036741042|
+|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted mode             |  232| 0.055| 0.023| 0.015664219|
 
 
 :::

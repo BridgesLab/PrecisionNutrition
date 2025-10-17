@@ -378,7 +378,7 @@ ldlc.instruments |>
   rename(EA = alt, ,
          OA = ref,
          CHR = chrom) |>
-  mutate(N_exposure=n.tc) |>
+  mutate(N_exposure=n.ldlc) |>
   select(SP2,CHR,POS, EA,OA,BETA,SE,P,ALT_FREQS,N_exposure,R2, `F`) |>
   write_csv("LDL Cholesterol Instruments from UKBB.csv")
 ```

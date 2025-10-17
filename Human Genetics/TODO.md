@@ -177,3 +177,20 @@ Confirms validity of analysis pipeline:
 - Pleiotropy and heterogeneity results should be cross-referenced in main text as quality checks.
 - Positive control (Calcium→Calcium) included in Supplement for validation.
 
+## Potential Downstream Analyses
+- Fracture Risk -- https://pheweb.org/MGI/pheno/X800.1, https://pheweb.org/MGI/pheno/X743.22, https://pheweb.org/MGI/pheno/X743.21
+- BMD (total, lumbar spine, femoral neck) -- not in MGI-BioVU or MGI
+- Osteoporosis (via dexa or ICD) -- https://pheweb.org/MGI/pheno/X743
+- Urinary calcium excretion/Nephrolithiasis -- not in MGI-BioVU or MGI
+- CKD/eGFR -- https://pheweb.org/MGI-BioVU/pheno/Creat
+- Bone turnover markers (osteocalcin, BSAP, P1NP CTX or NTX telopeptides) -- not in MGI-BioVU
+- Cognitive decline/Alzheimer's disease -- https://pheweb.org/MGI/pheno/X290.11 (only a weak rationale)
+- Vacular calficication, coronary artery calcium score, heart disease -- too much horizontal pleiotropy
+- Iscemic > hemmorrhagic stroke
+
+
+### Mechanistic insights
+ - 25-hydroxyvitamin D -- https://pheweb.org/MGI-BioVU/pheno/Vit-D
+ - FGF23 -- not in MGI-BioVU
+ - PTH -- not in MGI-BioVU
+ - Estrogen, SHBG, testosterone -- not in MGI-BioVU

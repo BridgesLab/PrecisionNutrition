@@ -108,7 +108,6 @@ instrument.summary |>
 calcium.instruments.file <- 'Calcium Instruments Post-Harmonization (Total Cholesterol).csv'
 ldl.instruments.file <- 'LDL Cholesterol Instruments Post-Harmonization.csv'
 tc.instruments.file <- 'Total Cholesterol Instruments Post-Harmonization.csv'
-ldl.instruments.file <- 'LDL Cholesterol Instruments Post-Harmonization.csv'
 
 bind_rows(read_csv(calcium.instruments.file) |> mutate(Instrument = "Serum Calcium"),
       read_csv(ldl.instruments.file) |> mutate(Instrument = "LDL-Cholesterol"),
@@ -119,6 +118,84 @@ bind_rows(read_csv(calcium.instruments.file) |> mutate(Instrument = "Serum Calci
 instrument.list |>
   write_csv("Instrument SNP Lists - Post-Harmonization.csv")
 ```
+:::
+
+
+## MR Results Summary Table
+
+
+::: {.cell}
+
+```{.r .cell-code}
+calcium.tc.mr.file <- 'MR Results - Calcium - Total Cholesterol.csv'
+calcium.ldl.mr.file <- 'MR Results - Calcium - LDL Cholesterol.csv'
+tc.calcium.mr.file <- 'MR Results - Total Cholesterol - Calcium.csv'
+ldl.calcium.instruments.file <- 'MR Results - LDL Cholesterol - Calcium.csv'
+
+bind_rows(read_csv(calcium.tc.mr.file) |> mutate(Analysis = "Calcium -> Total Cholesterol"),
+      read_csv(calcium.ldl.mr.file) |> mutate(Analysis = "Calcium -> LDL Cholesterol"),
+      read_csv(tc.calcium.mr.file) |> mutate(Analysis = "Total Cholesterol -> Calcium"),
+      read_csv(ldl.calcium.instruments.file) |> mutate(Analysis = "LDL Cholesterol -> Calcium")) |>
+  relocate(Analysis, .before = everything()) |>
+  select(-nsnp,-outcome,-exposure) -> mr.results.summary
+
+mr.results.summary |> kable(caption="Mendelian Randomization Results Summary")
+```
+
+::: {.cell-output-display}
+
+
+Table: Mendelian Randomization Results Summary
+
+|Analysis                     |method                    |          b|        se|      pval|
+|:----------------------------|:-------------------------|----------:|---------:|---------:|
+|Calcium -> Total Cholesterol |Inverse variance weighted |  0.0323096| 0.0379454| 0.3945054|
+|Calcium -> Total Cholesterol |MR Egger                  |  0.0124277| 0.0806417| 0.8776367|
+|Calcium -> Total Cholesterol |Weighted median           |  0.0109517| 0.0552326| 0.8428227|
+|Calcium -> Total Cholesterol |Weighted mode             |  0.0182577| 0.0568915| 0.7485148|
+|Calcium -> LDL Cholesterol   |Inverse variance weighted | -0.0010879| 0.0383213| 0.9773529|
+|Calcium -> LDL Cholesterol   |MR Egger                  | -0.0659224| 0.0806079| 0.4141755|
+|Calcium -> LDL Cholesterol   |Weighted median           | -0.0598648| 0.0489683| 0.2215104|
+|Calcium -> LDL Cholesterol   |Weighted mode             | -0.0003838| 0.0580152| 0.9947265|
+|Total Cholesterol -> Calcium |Inverse variance weighted |  0.0645110| 0.0187438| 0.0005780|
+|Total Cholesterol -> Calcium |MR Egger                  |  0.0375814| 0.0303938| 0.2173225|
+|Total Cholesterol -> Calcium |Weighted median           |  0.0537301| 0.0262090| 0.0403582|
+|Total Cholesterol -> Calcium |Weighted mode             |  0.0551629| 0.0275275| 0.0460454|
+|LDL Cholesterol -> Calcium   |Inverse variance weighted |  0.0532824| 0.0193685| 0.0059417|
+|LDL Cholesterol -> Calcium   |MR Egger                  |  0.0501729| 0.0288584| 0.0834445|
+|LDL Cholesterol -> Calcium   |Weighted median           |  0.0549073| 0.0243212| 0.0239710|
+|LDL Cholesterol -> Calcium   |Weighted mode             |  0.0552770| 0.0242920| 0.0237913|
+
+
+:::
+
+```{.r .cell-code}
+mr.results.summary |>
+  filter(method=="Inverse variance weighted") |>
+  mutate(across(c(b, se), ~ round(., 4))) %>%
+  mutate(across(c(pval), ~ signif(., 3))) %>%
+  select(-method) %>%
+  rename(`Beta Coefficient`=b,
+         `Standard Error`=se,
+         `P-value`=pval) %>%
+  # Analysis and Method are left unrounded (no action needed) |>
+  write_csv("MR Results Summary.csv")
+
+mr.results.summary |>
+  filter(method=="Inverse variance weighted") |>
+  ggplot(aes(x=Analysis, y=b)) +
+  geom_point(stat="identity") +
+  geom_errorbar(aes(ymin=b - 1.96*se, ymax=b + 1.96*se), width=.2) +
+  coord_flip() +
+  geom_hline(yintercept=0, linetype="dashed", color="red") +
+  theme_classic(base_size=14)+
+  labs(title="", y="Beta Coefficient", x="") +
+  theme(axis.text.y = element_text(size = 8))
+```
+
+::: {.cell-output-display}
+![](figures/mr-results-summary-1.png){width=672}
+:::
 :::
 
 
@@ -159,14 +236,14 @@ other attached packages:
 loaded via a namespace (and not attached):
  [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
  [5] compiler_4.5.1     tidyselect_1.2.1   parallel_4.5.1     scales_1.4.0      
- [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           generics_0.1.4    
-[13] htmlwidgets_1.6.4  pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0        
-[17] rlang_1.1.6        stringi_1.8.7      xfun_0.53          S7_0.2.0          
-[21] bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5          withr_3.0.2       
-[25] magrittr_2.0.4     digest_0.6.37      grid_4.5.1         vroom_1.6.5       
-[29] rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5       
-[33] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       rmarkdown_2.29    
-[37] tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 
+ [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           labeling_0.4.3    
+[13] generics_0.1.4     htmlwidgets_1.6.4  pillar_1.11.1      RColorBrewer_1.1-3
+[17] tzdb_0.5.0         rlang_1.1.6        stringi_1.8.7      xfun_0.53         
+[21] S7_0.2.0           bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5         
+[25] withr_3.0.2        magrittr_2.0.4     digest_0.6.37      grid_4.5.1        
+[29] vroom_1.6.5        rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4   
+[33] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      
+[37] rmarkdown_2.29     tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 
 ```
 
 

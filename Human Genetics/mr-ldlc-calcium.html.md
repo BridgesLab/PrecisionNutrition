@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:14:37 2025
+To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:46:10 2025
 
 ## Data Entry
 
@@ -487,13 +487,16 @@ Table: MR Results for LDL Cholesterol - Calcium Control
 |:--------------------------|:----------------------------|:-------------------------|----:|-----:|-----:|-----------:|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Inverse variance weighted |  232| 0.053| 0.019| 0.005941743|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |MR Egger                  |  232| 0.050| 0.029| 0.083444518|
-|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted median           |  232| 0.055| 0.026| 0.033045043|
-|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted mode             |  232| 0.055| 0.021| 0.010223582|
+|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted median           |  232| 0.055| 0.024| 0.023971004|
+|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted mode             |  232| 0.055| 0.024| 0.023791338|
 
 
 :::
 
 ```{.r .cell-code}
+ldlc.control.mr |> select(-starts_with('id')) |> 
+  write_csv("MR Results - LDL Cholesterol - Calcium.csv")
+
 ggplot(ldlc.control.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +

@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:15:38 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:43:17 2025
 
 ## Data Entry
 
@@ -418,13 +418,16 @@ Table: MR Results for Calcium Positive Control
 |:-----------------------|:--------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.544| 0.023| 0.000000e+00|
 |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.032| 1.113286e-66|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.059| 1.859114e-18|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.035| 9.858427e-59|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.058| 3.467823e-19|
 
 
 :::
 
 ```{.r .cell-code}
+calcium.control.mr |> select(-starts_with('id')) |> 
+  write_csv("MR Results - Calcium Postive Control.csv")
+
 ggplot(calcium.control.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +

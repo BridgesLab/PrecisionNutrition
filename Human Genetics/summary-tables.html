@@ -86,6 +86,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
   <li><a href="#post-harmonization-instrument-summary-statistics-table" id="toc-post-harmonization-instrument-summary-statistics-table" class="nav-link" data-scroll-target="#post-harmonization-instrument-summary-statistics-table">Post-Harmonization Instrument Summary Statistics Table</a></li>
   <li><a href="#instrument-lists" id="toc-instrument-lists" class="nav-link" data-scroll-target="#instrument-lists">Instrument Lists</a></li>
+  <li><a href="#mr-results-summary-table" id="toc-mr-results-summary-table" class="nav-link" data-scroll-target="#mr-results-summary-table">MR Results Summary Table</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="summary-tables.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
@@ -255,17 +256,203 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>calcium.instruments.file <span class="ot">&lt;-</span> <span class="st">'Calcium Instruments Post-Harmonization (Total Cholesterol).csv'</span></span>
 <span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ldl.instruments.file <span class="ot">&lt;-</span> <span class="st">'LDL Cholesterol Instruments Post-Harmonization.csv'</span></span>
 <span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>tc.instruments.file <span class="ot">&lt;-</span> <span class="st">'Total Cholesterol Instruments Post-Harmonization.csv'</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>ldl.instruments.file <span class="ot">&lt;-</span> <span class="st">'LDL Cholesterol Instruments Post-Harmonization.csv'</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(<span class="fu">read_csv</span>(calcium.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Serum Calcium"</span>),</span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(ldl.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"LDL-Cholesterol"</span>),</span>
-<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(tc.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Total Cholesterol"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Instrument, <span class="at">.before =</span> <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Exposure) <span class="ot">-&gt;</span> instrument.list</span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>instrument.list <span class="sc">|&gt;</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument SNP Lists - Post-Harmonization.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(<span class="fu">read_csv</span>(calcium.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Serum Calcium"</span>),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(ldl.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"LDL-Cholesterol"</span>),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(tc.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Total Cholesterol"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Instrument, <span class="at">.before =</span> <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Exposure) <span class="ot">-&gt;</span> instrument.list</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>instrument.list <span class="sc">|&gt;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument SNP Lists - Post-Harmonization.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
+</div>
+</section>
+<section id="mr-results-summary-table" class="level2">
+<h2 class="anchored" data-anchor-id="mr-results-summary-table">MR Results Summary Table</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>calcium.tc.mr.file <span class="ot">&lt;-</span> <span class="st">'MR Results - Calcium - Total Cholesterol.csv'</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>calcium.ldl.mr.file <span class="ot">&lt;-</span> <span class="st">'MR Results - Calcium - LDL Cholesterol.csv'</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>tc.calcium.mr.file <span class="ot">&lt;-</span> <span class="st">'MR Results - Total Cholesterol - Calcium.csv'</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>ldl.calcium.instruments.file <span class="ot">&lt;-</span> <span class="st">'MR Results - LDL Cholesterol - Calcium.csv'</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(<span class="fu">read_csv</span>(calcium.tc.mr.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Analysis =</span> <span class="st">"Calcium -&gt; Total Cholesterol"</span>),</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(calcium.ldl.mr.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Analysis =</span> <span class="st">"Calcium -&gt; LDL Cholesterol"</span>),</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(tc.calcium.mr.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Analysis =</span> <span class="st">"Total Cholesterol -&gt; Calcium"</span>),</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(ldl.calcium.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Analysis =</span> <span class="st">"LDL Cholesterol -&gt; Calcium"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Analysis, <span class="at">.before =</span> <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>nsnp,<span class="sc">-</span>outcome,<span class="sc">-</span>exposure) <span class="ot">-&gt;</span> mr.results.summary</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>mr.results.summary <span class="sc">|&gt;</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Mendelian Randomization Results Summary"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Mendelian Randomization Results Summary</caption>
+<colgroup>
+<col style="width: 33%">
+<col style="width: 30%">
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Analysis</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">pval</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Calcium -&gt; Total Cholesterol</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0323096</td>
+<td style="text-align: right;">0.0379454</td>
+<td style="text-align: right;">0.3945054</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium -&gt; Total Cholesterol</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">0.0124277</td>
+<td style="text-align: right;">0.0806417</td>
+<td style="text-align: right;">0.8776367</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Calcium -&gt; Total Cholesterol</td>
+<td style="text-align: left;">Weighted median</td>
+<td style="text-align: right;">0.0109517</td>
+<td style="text-align: right;">0.0552326</td>
+<td style="text-align: right;">0.8428227</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium -&gt; Total Cholesterol</td>
+<td style="text-align: left;">Weighted mode</td>
+<td style="text-align: right;">0.0182577</td>
+<td style="text-align: right;">0.0568915</td>
+<td style="text-align: right;">0.7485148</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Calcium -&gt; LDL Cholesterol</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0010879</td>
+<td style="text-align: right;">0.0383213</td>
+<td style="text-align: right;">0.9773529</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium -&gt; LDL Cholesterol</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">-0.0659224</td>
+<td style="text-align: right;">0.0806079</td>
+<td style="text-align: right;">0.4141755</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Calcium -&gt; LDL Cholesterol</td>
+<td style="text-align: left;">Weighted median</td>
+<td style="text-align: right;">-0.0598648</td>
+<td style="text-align: right;">0.0489683</td>
+<td style="text-align: right;">0.2215104</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium -&gt; LDL Cholesterol</td>
+<td style="text-align: left;">Weighted mode</td>
+<td style="text-align: right;">-0.0003838</td>
+<td style="text-align: right;">0.0580152</td>
+<td style="text-align: right;">0.9947265</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0645110</td>
+<td style="text-align: right;">0.0187438</td>
+<td style="text-align: right;">0.0005780</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">0.0375814</td>
+<td style="text-align: right;">0.0303938</td>
+<td style="text-align: right;">0.2173225</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">Weighted median</td>
+<td style="text-align: right;">0.0537301</td>
+<td style="text-align: right;">0.0262090</td>
+<td style="text-align: right;">0.0403582</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">Weighted mode</td>
+<td style="text-align: right;">0.0551629</td>
+<td style="text-align: right;">0.0275275</td>
+<td style="text-align: right;">0.0460454</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0532824</td>
+<td style="text-align: right;">0.0193685</td>
+<td style="text-align: right;">0.0059417</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">0.0501729</td>
+<td style="text-align: right;">0.0288584</td>
+<td style="text-align: right;">0.0834445</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">Weighted median</td>
+<td style="text-align: right;">0.0549073</td>
+<td style="text-align: right;">0.0243212</td>
+<td style="text-align: right;">0.0239710</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL Cholesterol -&gt; Calcium</td>
+<td style="text-align: left;">Weighted mode</td>
+<td style="text-align: right;">0.0552770</td>
+<td style="text-align: right;">0.0242920</td>
+<td style="text-align: right;">0.0237913</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>mr.results.summary <span class="sc">|&gt;</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(b, se), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">4</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(pval), <span class="sc">~</span> <span class="fu">signif</span>(., <span class="dv">3</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>method) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">`</span><span class="at">Beta Coefficient</span><span class="st">`</span><span class="ot">=</span>b,</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Standard Error</span><span class="st">`</span><span class="ot">=</span>se,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">P-value</span><span class="st">`</span><span class="ot">=</span>pval) <span class="sc">%&gt;%</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Analysis and Method are left unrounded (no action needed) |&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"MR Results Summary.csv"</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>mr.results.summary <span class="sc">|&gt;</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x=</span>Analysis, <span class="at">y=</span>b)) <span class="sc">+</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">stat=</span><span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin=</span>b <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se, <span class="at">ymax=</span>b <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width=</span>.<span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color=</span><span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">14</span>)<span class="sc">+</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">""</span>, <span class="at">y=</span><span class="st">"Beta Coefficient"</span>, <span class="at">x=</span><span class="st">""</span>) <span class="sc">+</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">8</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/mr-results-summary-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
 </div>
 </section>
 <section id="session-information" class="level2">
@@ -273,7 +460,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)
@@ -301,14 +488,14 @@ other attached packages:
 loaded via a namespace (and not attached):
  [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
  [5] compiler_4.5.1     tidyselect_1.2.1   parallel_4.5.1     scales_1.4.0      
- [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           generics_0.1.4    
-[13] htmlwidgets_1.6.4  pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0        
-[17] rlang_1.1.6        stringi_1.8.7      xfun_0.53          S7_0.2.0          
-[21] bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5          withr_3.0.2       
-[25] magrittr_2.0.4     digest_0.6.37      grid_4.5.1         vroom_1.6.5       
-[29] rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5       
-[33] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       rmarkdown_2.29    
-[37] tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 </code></pre>
+ [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           labeling_0.4.3    
+[13] generics_0.1.4     htmlwidgets_1.6.4  pillar_1.11.1      RColorBrewer_1.1-3
+[17] tzdb_0.5.0         rlang_1.1.6        stringi_1.8.7      xfun_0.53         
+[21] S7_0.2.0           bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5         
+[25] withr_3.0.2        magrittr_2.0.4     digest_0.6.37      grid_4.5.1        
+[29] vroom_1.6.5        rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4   
+[33] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      
+[37] rmarkdown_2.29     tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 </code></pre>
 </div>
 </div>
 </section>

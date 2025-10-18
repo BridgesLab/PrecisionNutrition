@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:15:16 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:43:51 2025
 
 ## Data Entry
 
@@ -520,13 +520,16 @@ Table: MR Results for Calcium Effects on LDL Cholesterol
 |:----------------------------------|:--------------------|:-------------------------|----:|------:|-----:|---------:|
 |LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| -0.001| 0.038| 0.9773529|
 |LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger                  |  275| -0.066| 0.081| 0.4141755|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median           |  275| -0.060| 0.049| 0.2226707|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode             |  275|  0.000| 0.060| 0.9948599|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median           |  275| -0.060| 0.049| 0.2215104|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode             |  275|  0.000| 0.058| 0.9947265|
 
 
 :::
 
 ```{.r .cell-code}
+calcium.ldlc.mr |> select(-starts_with('id')) |> 
+  write_csv("MR Results - Calcium - LDL Cholesterol.csv")
+
 ggplot(calcium.ldlc.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +

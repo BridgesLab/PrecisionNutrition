@@ -245,6 +245,9 @@ tc.control.mr |> select(-starts_with('id')) |>
   kable(caption="MR Results for Total Cholesterol - Calcium Control",
         digits=c(0,0,0,0,3,3,99))
 
+tc.control.mr |> select(-starts_with('id')) |> 
+  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+
 ggplot(tc.control.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +

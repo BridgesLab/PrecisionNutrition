@@ -79,7 +79,6 @@ instrument.summary |>
 calcium.instruments.file <- 'Calcium Instruments Post-Harmonization (Total Cholesterol).csv'
 ldl.instruments.file <- 'LDL Cholesterol Instruments Post-Harmonization.csv'
 tc.instruments.file <- 'Total Cholesterol Instruments Post-Harmonization.csv'
-ldl.instruments.file <- 'LDL Cholesterol Instruments Post-Harmonization.csv'
 
 bind_rows(read_csv(calcium.instruments.file) |> mutate(Instrument = "Serum Calcium"),
       read_csv(ldl.instruments.file) |> mutate(Instrument = "LDL-Cholesterol"),
@@ -89,6 +88,46 @@ bind_rows(read_csv(calcium.instruments.file) |> mutate(Instrument = "Serum Calci
 
 instrument.list |>
   write_csv("Instrument SNP Lists - Post-Harmonization.csv")
+```
+
+## MR Results Summary Table
+
+```{r mr-results-summary}
+calcium.tc.mr.file <- 'MR Results - Calcium - Total Cholesterol.csv'
+calcium.ldl.mr.file <- 'MR Results - Calcium - LDL Cholesterol.csv'
+tc.calcium.mr.file <- 'MR Results - Total Cholesterol - Calcium.csv'
+ldl.calcium.instruments.file <- 'MR Results - LDL Cholesterol - Calcium.csv'
+
+bind_rows(read_csv(calcium.tc.mr.file) |> mutate(Analysis = "Calcium -> Total Cholesterol"),
+      read_csv(calcium.ldl.mr.file) |> mutate(Analysis = "Calcium -> LDL Cholesterol"),
+      read_csv(tc.calcium.mr.file) |> mutate(Analysis = "Total Cholesterol -> Calcium"),
+      read_csv(ldl.calcium.instruments.file) |> mutate(Analysis = "LDL Cholesterol -> Calcium")) |>
+  relocate(Analysis, .before = everything()) |>
+  select(-nsnp,-outcome,-exposure) -> mr.results.summary
+
+mr.results.summary |> kable(caption="Mendelian Randomization Results Summary")
+
+mr.results.summary |>
+  filter(method=="Inverse variance weighted") |>
+  mutate(across(c(b, se), ~ round(., 4))) %>%
+  mutate(across(c(pval), ~ signif(., 3))) %>%
+  select(-method) %>%
+  rename(`Beta Coefficient`=b,
+         `Standard Error`=se,
+         `P-value`=pval) %>%
+  # Analysis and Method are left unrounded (no action needed) |>
+  write_csv("MR Results Summary.csv")
+
+mr.results.summary |>
+  filter(method=="Inverse variance weighted") |>
+  ggplot(aes(x=Analysis, y=b)) +
+  geom_point(stat="identity") +
+  geom_errorbar(aes(ymin=b - 1.96*se, ymax=b + 1.96*se), width=.2) +
+  coord_flip() +
+  geom_hline(yintercept=0, linetype="dashed", color="red") +
+  theme_classic(base_size=14)+
+  labs(title="", y="Beta Coefficient", x="") +
+  theme(axis.text.y = element_text(size = 8))
 ```
 
 ## Session Information

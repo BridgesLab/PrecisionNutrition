@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:11:37 2025
+To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:45:52 2025
 
 ## Data Entry
 
@@ -499,13 +499,16 @@ Table: MR Results for Total Cholesterol - Calcium Control
 |:--------------------------|:------------------------------|:-------------------------|----:|-----:|-----:|------------:|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  280| 0.065| 0.019| 0.0005780089|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  |  280| 0.038| 0.030| 0.2173225364|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| 0.054| 0.026| 0.0411823745|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| 0.055| 0.028| 0.0492737410|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| 0.054| 0.026| 0.0403582361|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| 0.055| 0.028| 0.0460454146|
 
 
 :::
 
 ```{.r .cell-code}
+tc.control.mr |> select(-starts_with('id')) |> 
+  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+
 ggplot(tc.control.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +

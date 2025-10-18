@@ -6,79 +6,12 @@
 - [x] population details
 - [ ] Units for beta coefficients from MGI-BioVU (SD for UKBB)
 
-## Analysis Pipeline
-
-- [ ] Instrument QC table (pre)
-- [ ] Expand SP2 & Flow chart counts
-- [ ] Harmonise (produce harmonised table) → write harmonised SNP table (step 4)
-- [ ] Recompute per-SNP R² & F on harmonised set and write post-harmonisation QC table (step 4)
-- [ ] Scatter plot (step 5)
-- [ ] MR estimates table + forest (steps 6–7)
-- [ ] Heterogeneity + pleiotropy + funnel (steps 8–9)
-- [ ] LOO + radial / MR-PRESSO if needed (steps 10–11)
-- [ ] Steiger summary + proxies table (steps 12–13)
-- [ ] Bidirectional summary figure/table (step 14)
-- [ ] Write supplement SNP table (step 15)
-
 ## Proposed Manuscript Structure
 
 Generated via ChatGPT
 
 This plan summarizes the figures and tables to include in the main manuscript and supplementary materials for the bidirectional MR analysis of calcium and cholesterol (LDL and total cholesterol).  
 It follows STROBE-MR reporting principles and emphasizes clarity, reproducibility, and visual balance between main and supplementary materials.
-
-### **Figure 1. Study Design and Instrument Quality**
-**Panel A – Study schematic**
-- Diagram showing bidirectional MR design:
-  - Calcium → LDL & TC
-  - LDL & TC → Calcium
-- Include positive control analysis (Calcium UK Biobank → Calcium Michigan)
-- Indicate data sources, sample sizes, and harmonization steps.
-
-**Panel B – Instrument summary**
-- Compact table (or inset) summarizing instrument strength:
-  | Exposure | N SNPs | Cumulative R² | Mean F | Median F | Mean MAF |
-  |-----------|--------|---------------|---------|-----------|-----------|
-  | Calcium (UKBB) |   |   |   |   |   |
-  | LDL |   |   |   |   |   |
-  | Total Cholesterol |   |   |   |   |   |
-
-> **Purpose:** Orient reader; demonstrate adequate instrument strength and data independence.
-
----
-
-### **Figure 2. Primary Bidirectional MR Results**
-Four panels arranged as a 2×2 grid:
-
-|               | LDL Outcome | TC Outcome |
-|----------------|--------------|-------------|
-| **Calcium Exposure** | (A) Forest plot: IVW, Egger, Weighted Median, Mode | (B) Forest plot: same methods |
-| **Reverse Direction (LDL/TC Exposure)** | (C) Forest plot: LDL → Calcium | (D) Forest plot: TC → Calcium |
-
-Each panel:
-- Shows β estimates ± 95% CI for each MR method.
-- Highlights IVW as the primary estimate (bold or color-coded).
-
-> **Purpose:** Compare causal direction and consistency across MR estimators.
-
----
-
-### **Figure 3. Sensitivity and Robustness Diagnostics**
-Three panels for the primary direction (Calcium → LDL):
-
-**Panel A – Scatter plot**
-- SNP-level β_exposure vs β_outcome.
-- Overlay IVW and MR-Egger regression lines.
-
-**Panel B – Leave-One-Out (LOO) influence plot**
-- Each SNP omitted in turn; show shifts in IVW estimate.
-
-**Panel C – Funnel plot**
-- Symmetry check for heterogeneity / directional pleiotropy.
-
-> **Purpose:** Demonstrate overall robustness, absence of single-SNP dominance, and evaluate pleiotropy visually.
-
----
 
 ### **Table 1. Summary of Main MR Results**
 Compact table of key causal estimates.

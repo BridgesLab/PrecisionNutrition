@@ -47,7 +47,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 To generate summary tables and figures from individual analyses for publicaiton
 
-## Data Entry
+## Post-Harmonization Instrument Summary Statistics Table
 
 
 ::: {.cell}
@@ -95,6 +95,29 @@ instrument.summary |>
   mutate(across(ends_with("Statistic"), ~ round(., 1))) %>%
   # SNPs and N are left unrounded (no action needed) |>
   write_csv("Instrument Metrics - Post-Harmonization.csv")
+```
+:::
+
+
+## Instrument Lists
+
+
+::: {.cell}
+
+```{.r .cell-code}
+calcium.instruments.file <- 'Calcium Instruments Post-Harmonization (Total Cholesterol).csv'
+ldl.instruments.file <- 'LDL Cholesterol Instruments Post-Harmonization.csv'
+tc.instruments.file <- 'Total Cholesterol Instruments Post-Harmonization.csv'
+ldl.instruments.file <- 'LDL Cholesterol Instruments Post-Harmonization.csv'
+
+bind_rows(read_csv(calcium.instruments.file) |> mutate(Instrument = "Serum Calcium"),
+      read_csv(ldl.instruments.file) |> mutate(Instrument = "LDL-Cholesterol"),
+      read_csv(tc.instruments.file) |> mutate(Instrument = "Total Cholesterol")) |>
+  relocate(Instrument, .before = everything()) |>
+  select(-Exposure) -> instrument.list
+
+instrument.list |>
+  write_csv("Instrument SNP Lists - Post-Harmonization.csv")
 ```
 :::
 

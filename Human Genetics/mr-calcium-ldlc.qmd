@@ -158,7 +158,7 @@ ggplot(data, aes(x=beta.exposure, y=beta.outcome)) +
   theme_classic(base_size=16) +
   labs(x="Exposure Estimate", 
        y="Outcome Estimate", 
-       title="Calcium (UK Biobank) vs LDL Cholesterol (LabWAS)") 
+       title="") 
 ```
 
 There were `r nrow(discordant)` discordant SNPs between the exposure and outcome datasets.  These are listed above.  We can see that some of these SNPs have very small effect sizes in the outcome dataset, suggesting that the discordance may be due to noise.  These were kept in the analysis

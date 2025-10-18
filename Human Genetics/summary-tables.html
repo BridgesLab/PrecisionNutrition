@@ -84,7 +84,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
    
   <ul>
   <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
-  <li><a href="#data-entry" id="toc-data-entry" class="nav-link" data-scroll-target="#data-entry">Data Entry</a></li>
+  <li><a href="#post-harmonization-instrument-summary-statistics-table" id="toc-post-harmonization-instrument-summary-statistics-table" class="nav-link" data-scroll-target="#post-harmonization-instrument-summary-statistics-table">Post-Harmonization Instrument Summary Statistics Table</a></li>
+  <li><a href="#instrument-lists" id="toc-instrument-lists" class="nav-link" data-scroll-target="#instrument-lists">Instrument Lists</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
 <div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="summary-tables.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
@@ -146,8 +147,8 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
 <p>To generate summary tables and figures from individual analyses for publicaiton</p>
 </section>
-<section id="data-entry" class="level2">
-<h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
+<section id="post-harmonization-instrument-summary-statistics-table" class="level2">
+<h2 class="anchored" data-anchor-id="post-harmonization-instrument-summary-statistics-table">Post-Harmonization Instrument Summary Statistics Table</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
@@ -246,12 +247,33 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 </details>
 </div>
 </section>
+<section id="instrument-lists" class="level2">
+<h2 class="anchored" data-anchor-id="instrument-lists">Instrument Lists</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>calcium.instruments.file <span class="ot">&lt;-</span> <span class="st">'Calcium Instruments Post-Harmonization (Total Cholesterol).csv'</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ldl.instruments.file <span class="ot">&lt;-</span> <span class="st">'LDL Cholesterol Instruments Post-Harmonization.csv'</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>tc.instruments.file <span class="ot">&lt;-</span> <span class="st">'Total Cholesterol Instruments Post-Harmonization.csv'</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>ldl.instruments.file <span class="ot">&lt;-</span> <span class="st">'LDL Cholesterol Instruments Post-Harmonization.csv'</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(<span class="fu">read_csv</span>(calcium.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Serum Calcium"</span>),</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(ldl.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"LDL-Cholesterol"</span>),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>      <span class="fu">read_csv</span>(tc.instruments.file) <span class="sc">|&gt;</span> <span class="fu">mutate</span>(<span class="at">Instrument =</span> <span class="st">"Total Cholesterol"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(Instrument, <span class="at">.before =</span> <span class="fu">everything</span>()) <span class="sc">|&gt;</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Exposure) <span class="ot">-&gt;</span> instrument.list</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>instrument.list <span class="sc">|&gt;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument SNP Lists - Post-Harmonization.csv"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
 <section id="session-information" class="level2">
 <h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)

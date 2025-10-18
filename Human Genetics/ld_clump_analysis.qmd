@@ -390,11 +390,21 @@ bind_rows(
   Calcium = calcium.summary_metrics,
   `Total Cholesterol` = tc.summary_metrics,
   `LDL Cholesterol` = ldlc.summary_metrics,
-  .id = "exposure"
+  .id = "Instrument"
 ) |> 
-  mutate(across(where(is.numeric), ~ round(., 3))) -> summary.metrics.pre.harmonization
+  relocate(overall_F, .before= mean_maf) |>
+  rename(SNPs = num_snps,
+         `Cumulative R2`=cumulative_R2,
+         `Mean F Statistic` = mean_F,
+         `Median F Statistic`=median_F,
+         `Overall F Statistic`=overall_F,
+         `Mean MAF`=mean_maf,
+         `Mean Beta Coefficient`=mean_beta) -> instrument.summary-> summary.metrics.pre.harmonization
 
 summary.metrics.pre.harmonization |>
+  mutate(across(ends_with("R2") | ends_with("Coefficient") | ends_with('MAF'), ~ round(., 3))) %>%
+  mutate(across(ends_with("Statistic"), ~ round(., 1))) %>%
+  # SNPs and N are left unrounded (no action needed) |>
   write_csv("Instrument Metrics - Pre-Harmonization.csv")
 
 summary.metrics.pre.harmonization |>

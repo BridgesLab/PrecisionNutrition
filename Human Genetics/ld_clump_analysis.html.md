@@ -475,11 +475,21 @@ bind_rows(
   Calcium = calcium.summary_metrics,
   `Total Cholesterol` = tc.summary_metrics,
   `LDL Cholesterol` = ldlc.summary_metrics,
-  .id = "exposure"
+  .id = "Instrument"
 ) |> 
-  mutate(across(where(is.numeric), ~ round(., 3))) -> summary.metrics.pre.harmonization
+  relocate(overall_F, .before= mean_maf) |>
+  rename(SNPs = num_snps,
+         `Cumulative R2`=cumulative_R2,
+         `Mean F Statistic` = mean_F,
+         `Median F Statistic`=median_F,
+         `Overall F Statistic`=overall_F,
+         `Mean MAF`=mean_maf,
+         `Mean Beta Coefficient`=mean_beta) -> instrument.summary-> summary.metrics.pre.harmonization
 
 summary.metrics.pre.harmonization |>
+  mutate(across(ends_with("R2") | ends_with("Coefficient") | ends_with('MAF'), ~ round(., 3))) %>%
+  mutate(across(ends_with("Statistic"), ~ round(., 1))) %>%
+  # SNPs and N are left unrounded (no action needed) |>
   write_csv("Instrument Metrics - Pre-Harmonization.csv")
 
 summary.metrics.pre.harmonization |>
@@ -491,11 +501,11 @@ summary.metrics.pre.harmonization |>
 
 Table: Summary metrics for instruments prior to harmonization
 
-|exposure          | num_snps| cumulative_R2|  mean_F| median_F| mean_maf| mean_beta| overall_F|
-|:-----------------|--------:|-------------:|-------:|--------:|--------:|---------:|---------:|
-|Calcium           |      363|         0.075|  79.636|   49.947|    0.350|     0.028|    85.922|
-|Total Cholesterol |      370|         0.106| 120.796|   48.910|    0.317|     0.031|   134.757|
-|LDL Cholesterol   |      324|         0.095| 124.132|   47.420|    0.308|     0.032|   136.836|
+|Instrument        | SNPs| Cumulative R2| Mean F Statistic| Median F Statistic| Overall F Statistic|  Mean MAF| Mean Beta Coefficient|
+|:-----------------|----:|-------------:|----------------:|------------------:|-------------------:|---------:|---------------------:|
+|Calcium           |  363|     0.0749947|         79.63584|           49.94749|            85.92191| 0.3501635|             0.0275182|
+|Total Cholesterol |  370|     0.1060640|        120.79572|           48.90981|           134.75749| 0.3170840|             0.0308773|
+|LDL Cholesterol   |  324|     0.0954224|        124.13201|           47.42000|           136.83597| 0.3078750|             0.0323196|
 
 
 :::

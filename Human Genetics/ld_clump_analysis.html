@@ -718,71 +718,81 @@ F = \frac{R^2 \times (N - k - 1)}{(1 - R^2) \times k}
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Calcium =</span> calcium.summary_metrics,</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Total Cholesterol</span><span class="st">`</span> <span class="ot">=</span> tc.summary_metrics,</span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">LDL Cholesterol</span><span class="st">`</span> <span class="ot">=</span> ldlc.summary_metrics,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">.id =</span> <span class="st">"exposure"</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">.id =</span> <span class="st">"Instrument"</span></span>
 <span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span> </span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">3</span>))) <span class="ot">-&gt;</span> summary.metrics.pre.harmonization</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>summary.metrics.pre.harmonization <span class="sc">|&gt;</span></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument Metrics - Pre-Harmonization.csv"</span>)</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>summary.metrics.pre.harmonization <span class="sc">|&gt;</span></span>
-<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Summary metrics for instruments prior to harmonization"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(overall_F, <span class="at">.before=</span> mean_maf) <span class="sc">|&gt;</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">SNPs =</span> num_snps,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Cumulative R2</span><span class="st">`</span><span class="ot">=</span>cumulative_R2,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Mean F Statistic</span><span class="st">`</span> <span class="ot">=</span> mean_F,</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Median F Statistic</span><span class="st">`</span><span class="ot">=</span>median_F,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Overall F Statistic</span><span class="st">`</span><span class="ot">=</span>overall_F,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Mean MAF</span><span class="st">`</span><span class="ot">=</span>mean_maf,</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">Mean Beta Coefficient</span><span class="st">`</span><span class="ot">=</span>mean_beta) <span class="ot">-&gt;</span> instrument.summary<span class="ot">-&gt;</span> summary.metrics.pre.harmonization</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>summary.metrics.pre.harmonization <span class="sc">|&gt;</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"R2"</span>) <span class="sc">|</span> <span class="fu">ends_with</span>(<span class="st">"Coefficient"</span>) <span class="sc">|</span> <span class="fu">ends_with</span>(<span class="st">'MAF'</span>), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">3</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">ends_with</span>(<span class="st">"Statistic"</span>), <span class="sc">~</span> <span class="fu">round</span>(., <span class="dv">1</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="co"># SNPs and N are left unrounded (no action needed) |&gt;</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"Instrument Metrics - Pre-Harmonization.csv"</span>)</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>summary.metrics.pre.harmonization <span class="sc">|&gt;</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Summary metrics for instruments prior to harmonization"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Summary metrics for instruments prior to harmonization</caption>
 <colgroup>
-<col style="width: 20%">
-<col style="width: 10%">
+<col style="width: 14%">
+<col style="width: 4%">
+<col style="width: 11%">
+<col style="width: 13%">
+<col style="width: 15%">
 <col style="width: 16%">
-<col style="width: 9%">
-<col style="width: 10%">
-<col style="width: 10%">
-<col style="width: 11%">
-<col style="width: 11%">
+<col style="width: 8%">
+<col style="width: 17%">
 </colgroup>
 <thead>
 <tr class="header">
-<th style="text-align: left;">exposure</th>
-<th style="text-align: right;">num_snps</th>
-<th style="text-align: right;">cumulative_R2</th>
-<th style="text-align: right;">mean_F</th>
-<th style="text-align: right;">median_F</th>
-<th style="text-align: right;">mean_maf</th>
-<th style="text-align: right;">mean_beta</th>
-<th style="text-align: right;">overall_F</th>
+<th style="text-align: left;">Instrument</th>
+<th style="text-align: right;">SNPs</th>
+<th style="text-align: right;">Cumulative R2</th>
+<th style="text-align: right;">Mean F Statistic</th>
+<th style="text-align: right;">Median F Statistic</th>
+<th style="text-align: right;">Overall F Statistic</th>
+<th style="text-align: right;">Mean MAF</th>
+<th style="text-align: right;">Mean Beta Coefficient</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Calcium</td>
 <td style="text-align: right;">363</td>
-<td style="text-align: right;">0.075</td>
-<td style="text-align: right;">79.636</td>
-<td style="text-align: right;">49.947</td>
-<td style="text-align: right;">0.350</td>
-<td style="text-align: right;">0.028</td>
-<td style="text-align: right;">85.922</td>
+<td style="text-align: right;">0.0749947</td>
+<td style="text-align: right;">79.63584</td>
+<td style="text-align: right;">49.94749</td>
+<td style="text-align: right;">85.92191</td>
+<td style="text-align: right;">0.3501635</td>
+<td style="text-align: right;">0.0275182</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Total Cholesterol</td>
 <td style="text-align: right;">370</td>
-<td style="text-align: right;">0.106</td>
-<td style="text-align: right;">120.796</td>
-<td style="text-align: right;">48.910</td>
-<td style="text-align: right;">0.317</td>
-<td style="text-align: right;">0.031</td>
-<td style="text-align: right;">134.757</td>
+<td style="text-align: right;">0.1060640</td>
+<td style="text-align: right;">120.79572</td>
+<td style="text-align: right;">48.90981</td>
+<td style="text-align: right;">134.75749</td>
+<td style="text-align: right;">0.3170840</td>
+<td style="text-align: right;">0.0308773</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">LDL Cholesterol</td>
 <td style="text-align: right;">324</td>
-<td style="text-align: right;">0.095</td>
-<td style="text-align: right;">124.132</td>
-<td style="text-align: right;">47.420</td>
-<td style="text-align: right;">0.308</td>
-<td style="text-align: right;">0.032</td>
-<td style="text-align: right;">136.836</td>
+<td style="text-align: right;">0.0954224</td>
+<td style="text-align: right;">124.13201</td>
+<td style="text-align: right;">47.42000</td>
+<td style="text-align: right;">136.83597</td>
+<td style="text-align: right;">0.3078750</td>
+<td style="text-align: right;">0.0323196</td>
 </tr>
 </tbody>
 </table>

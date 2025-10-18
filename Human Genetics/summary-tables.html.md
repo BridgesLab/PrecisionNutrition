@@ -196,6 +196,48 @@ mr.results.summary |>
 ::: {.cell-output-display}
 ![](figures/mr-results-summary-1.png){width=672}
 :::
+
+```{.r .cell-code}
+# Calculate x-axis limits (for beta coefficients, which will be the x-axis after coord_flip)
+mr.results.summary |>
+  summarize(xmin = min(b) - max(se), xmax = max(b) + max(se)) -> grid.xlims
+
+# Create the first plot (Calcium -> Cholesterol)
+calcium.mr.plot <- mr.results.summary |>
+  filter(method == "Inverse variance weighted") |>
+  filter(Analysis %in% c("Calcium -> Total Cholesterol", "Calcium -> LDL Cholesterol")) |>
+  ggplot(aes(x = Analysis, y = b)) +
+  geom_point(stat = "identity") +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se), width = 0.2) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 14) +
+  labs(title = "Calcium Effects", y = "Beta Coefficient", x = "") +
+  # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
+  scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
+
+# Create the second plot (Cholesterol -> Calcium)
+cholesterol.mr.plot <- mr.results.summary |>
+  filter(method == "Inverse variance weighted") |>
+  filter(Analysis %in% c("Total Cholesterol -> Calcium", "LDL Cholesterol -> Calcium")) |>
+  ggplot(aes(x = Analysis, y = b)) +
+  geom_point(stat = "identity") +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se), width = 0.2) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 14) +
+  labs(title = "Cholesterol Effects", y = "Beta Coefficient", x = "") +
+  # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
+  scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
+
+# Arrange plots vertically with aligned axes
+library(cowplot)
+plot_grid(calcium.mr.plot, cholesterol.mr.plot, ncol = 1, align = "hv")
+```
+
+::: {.cell-output-display}
+![](figures/mr-results-summary-2.png){width=672}
+:::
 :::
 
 
@@ -229,9 +271,9 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] knitr_1.50      lubridate_1.9.4 forcats_1.0.1   stringr_1.5.2  
- [5] dplyr_1.1.4     purrr_1.1.0     readr_2.1.5     tidyr_1.3.1    
- [9] tibble_3.3.0    ggplot2_4.0.0   tidyverse_2.0.0
+ [1] cowplot_1.2.0   knitr_1.50      lubridate_1.9.4 forcats_1.0.1  
+ [5] stringr_1.5.2   dplyr_1.1.4     purrr_1.1.0     readr_2.1.5    
+ [9] tidyr_1.3.1     tibble_3.3.0    ggplot2_4.0.0   tidyverse_2.0.0
 
 loaded via a namespace (and not attached):
  [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      

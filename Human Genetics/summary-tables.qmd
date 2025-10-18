@@ -128,6 +128,43 @@ mr.results.summary |>
   theme_classic(base_size=14)+
   labs(title="", y="Beta Coefficient", x="") +
   theme(axis.text.y = element_text(size = 8))
+
+# Calculate x-axis limits (for beta coefficients, which will be the x-axis after coord_flip)
+mr.results.summary |>
+  summarize(xmin = min(b) - max(se), xmax = max(b) + max(se)) -> grid.xlims
+
+# Create the first plot (Calcium -> Cholesterol)
+calcium.mr.plot <- mr.results.summary |>
+  filter(method == "Inverse variance weighted") |>
+  filter(Analysis %in% c("Calcium -> Total Cholesterol", "Calcium -> LDL Cholesterol")) |>
+  ggplot(aes(x = Analysis, y = b)) +
+  geom_point(stat = "identity") +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se), width = 0.2) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 14) +
+  labs(title = "Calcium Effects", y = "Beta Coefficient", x = "") +
+  # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
+  scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
+
+# Create the second plot (Cholesterol -> Calcium)
+cholesterol.mr.plot <- mr.results.summary |>
+  filter(method == "Inverse variance weighted") |>
+  filter(Analysis %in% c("Total Cholesterol -> Calcium", "LDL Cholesterol -> Calcium")) |>
+  ggplot(aes(x = Analysis, y = b)) +
+  geom_point(stat = "identity") +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se), width = 0.2) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 14) +
+  labs(title = "Cholesterol Effects", y = "Beta Coefficient", x = "") +
+  # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
+  scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
+
+# Arrange plots vertically with aligned axes
+library(cowplot)
+plot_grid(calcium.mr.plot, cholesterol.mr.plot, ncol = 1, align = "hv")
+
 ```
 
 ## Session Information

@@ -18,6 +18,7 @@ knitr:
 execute:
   echo: true
   warning: false
+bibliography: references.bib
 ---
 
 ```{r global_options}
@@ -69,7 +70,7 @@ We used `r nrow(instruments.tc)` SNPs as instruments for total cholesterol from 
 
 ### Vitamin D Levels
 
-This analysis is to test the hypothesis that total cholesterol impacts 25-hydroxyvitamin D levels, as cholesterol is a precursor for vitamin D synthesis in the skin.  This could positively impact calcium levels indirectly via increased vitamin D.  This was from MGI-BioVU LabWAS data @goldsteinLabWASNovelFindings2020.
+This analysis is to test the hypothesis that total cholesterol impacts 25-hydroxyvitamin D levels, as cholesterol is a precursor for vitamin D synthesis in the skin.  This could positively impact calcium levels indirectly via increased vitamin D.  This was from MGI-BioVU LabWAS data [@goldsteinLabWASNovelFindings2020].
 
 ```{r mr-vitd}
 gwas.vitd.file <- 'PheWeb Summary Statistics/phenocode-Vit-D.tsv.gz'
@@ -119,9 +120,113 @@ ggplot(vitd.mr, aes(y=method,x=b)) +
 
 #### GEFOS Consortium Lumbar Spine BMD
 
-Lumbar spine tends to reflect trabecular bone, which is metabolically active, hormonally responsive, and more sensitive to lipid and endocrine perturbations. Multiple epidemiologic studies report inverse associations between total cholesterol and LS-BMD, particularly among older adults and postmenopausal women @huAssociationsSerumTotal2023 and @fangNegativeAssociationTotal2022.  We used the pooled (not sex-specific) estimates from the GEFOS consortium's pooled meta-analysis @estradaGenomewideMetaanalysisIdentifies2012.
+Lumbar spine tends to reflect trabecular bone, which is metabolically active, hormonally responsive, and more sensitive to lipid and endocrine perturbations. Multiple epidemiologic studies report inverse associations between total cholesterol and LS-BMD, particularly among older adults and postmenopausal women [@huAssociationsSerumTotal2023;@fangNegativeAssociationTotal2022].  We used the pooled (not sex-specific) estimates from the GEFOS consortium's pooled meta-analysis [@estradaGenomewideMetaanalysisIdentifies2012].
+
+
+```{r mr-bmd-2012}
+gwas.bmd.file <- 'PheWeb Summary Statistics/GEFOS2_LSBMD_POOLED_GC.txt.gz'
+samplesize.outcome.bmd <- 32961  # sample size from estradaGenomewideMetaanalysisIdentifies2012
+
+gwas.bmd <- read_tsv(gwas.bmd.file) |>
+  rename(
+    beta.outcome               = Effect,
+    se.outcome                 = StdErr,
+    pval.outcome               = `P-value`,
+    eaf.outcome                = Freq1,
+  ) |>
+  mutate(id.outcome = "bmd",
+         outcome = "LS-BMD (GEFOS)",
+         effect_allele.outcome = toupper(Allele1),   # whichever is effect allele
+         other_allele.outcome = toupper(Allele2),   # whichever is other allele
+         samplesize.outcome = samplesize.outcome.bmd)  # sample size for MGI/BioVU for vitamin D)
+
+#runs very slow so commented out after saving the SNP file 
+library(biomaRt)
+#snp.mart <- useEnsembl(biomart="snp", dataset="hsapiens_snp")
+#snp.data <- getBM(attributes=c("refsnp_id", "chr_name", "chrom_start", "allele"),
+#                  filters="snp_filter",
+#                  values=gwas.bmd$MarkerName,
+#                  mart=snp.mart)
+gefos.snp.datafile <- "GEFOS-2012 SNP ID File.csv"
+#write_csv(snp.data, gefos.snp.datafile)
+bmd.snp.data <- read_csv(gefos.snp.datafile) |>
+  mutate(SNP=paste(chr_name, chrom_start,
+                        substr(allele, 1, 1), sep=":")) #just picked hte first alt allele
+
+gwas.bmd.combined <- 
+  left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
+  
+#no harmonised SNPs
+bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
+bmd.data_steiger <- steiger_filtering(bmd.data)
+bmd.mr <- mr(bmd.data_steiger,
+                         method_list = c("mr_ivw", 
+                                         "mr_egger_regression",
+                                         "mr_weighted_median", 
+                                         "mr_weighted_mode"))
+
+bmd.mr |> dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",
+        digits=c(0,0,0,0,3,3,99))
+
+# ggplot(bmd.mr, aes(y=method,x=b)) +
+#   geom_point() +
+#   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+#   theme_classic(base_size=16) +
+#   labs(title="Bone Minderal Density (GEFOS)",
+#        y="",
+#        x="Effect Size (Beta)") +
+#   geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```  
+This second analysis is from lumbar spine data from the GEFOS 2015 release ([@zhengWholegenomeSequencingIdentifies2015])
+
+```{r mr-bmd-2015}
+gwas.bmd.file.2015 <- 'PheWeb Summary Statistics/ls2stu.MAF0_.005.pos_.out_.gz'
+samplesize.outcome.bmd.2015 <- 53236  # sample size from zhengWholegenomeSequencingIdentifies2015
+
+gwas.bmd.2015 <- read_tsv(gwas.bmd.file.2015) |>
+  rename(
+    beta.outcome               = beta,
+    se.outcome                 = se,
+    effect_allele.outcome      = reference_allele,   # whichever is effect allele
+    other_allele.outcome       = other_allele,   # whichever is other allele
+    pval.outcome               = `p-value`,
+    eaf.outcome                = eaf,
+  ) |>
+  mutate(SNP=paste(chromosome,position,effect_allele.outcome,other_allele.outcome,sep=":"),
+         id.outcome = "bmd",
+         outcome = "LS-BMD (GEFOS)",
+         samplesize.outcome = samplesize.outcome.bmd.2015)  # sample size for MGI/BioVU for vitamin D)
+
+bmd.data.2015 <- harmonise_data(instruments.tc, gwas.bmd.2015, action = 2)
+bmd.data_steiger.2015 <- steiger_filtering(bmd.data.2015)
+bmd.mr.2015 <- mr(bmd.data_steiger.2015,
+                         method_list = c("mr_ivw", 
+                                         "mr_egger_regression",
+                                         "mr_weighted_median", 
+                                         "mr_weighted_mode"))
+
+bmd.mr.2015 |> 
+  dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)",
+        digits=c(0,0,0,0,3,3,99))
+
+ggplot(bmd.mr.2015, aes(y=method,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="Bone Mineral Density (GEFOS)",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```  
 
 ### Fracture Risk
+
+## References
+
+::: {#refs}
+:::
 
 ## Session Information
 

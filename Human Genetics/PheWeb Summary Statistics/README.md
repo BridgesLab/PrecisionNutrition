@@ -11,3 +11,8 @@ There are files for each of the lipid and calcium traits.
 - phenocode-HDL.tsv.gz for HDL: High density lipoprotein cholesterol
 - phenocode-LDL.tsv.gz for LDL: Low density lipoprotein cholesterol
 - phenocode-Trigs.tsv.gz for Trigs: Triglycerides, tested as part of cholesterol panels
+
+For secondary analyses 
+- phenocode-Vit-D.tsv.gz for 25-OH Vitamin D from MGI-BioVU LabWAS
+- GEFOS2_LSBMD_POOLED_GC.txt.gz Lumbar spine and femoral neck bone mineral density from the 2012 GEFOS meta-analyses http://www.gefos.org/?q=content/data-release-2012
+- GEFOS2_LSBMD_POOLED_GC.txt.gz Lumbar spine bone mineral density from the 2015 GEFOS meta-analyses http://www.gefos.org/?q=content/data-release-2015

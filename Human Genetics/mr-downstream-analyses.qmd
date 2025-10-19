@@ -108,7 +108,7 @@ ggplot(vitd.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
-  labs(title="25-Hydroxyvitamin D Levels (LabWAS)",
+  labs(title="25-OH Vitamin D (LabWAS)",
        y="",
        x="Effect Size (Beta)") +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
@@ -150,24 +150,28 @@ library(biomaRt)
 gefos.snp.datafile <- "GEFOS-2012 SNP ID File.csv"
 #write_csv(snp.data, gefos.snp.datafile)
 bmd.snp.data <- read_csv(gefos.snp.datafile) |>
-  mutate(SNP=paste(chr_name, chrom_start,
-                        substr(allele, 1, 1), sep=":")) #just picked hte first alt allele
+  mutate(SNP=paste(chr_name, 
+                   chrom_start,
+                   substr(allele, 1, 1), #first allele in naming
+                   substr(allele, 3, 3), #second allele (third position) in naming
+                   sep=":")) #just picked hte first alt allele
 
 gwas.bmd.combined <- 
   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
-  
-#no harmonised SNPs
-bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
-bmd.data_steiger <- steiger_filtering(bmd.data)
-bmd.mr <- mr(bmd.data_steiger,
-                         method_list = c("mr_ivw", 
-                                         "mr_egger_regression",
-                                         "mr_weighted_median", 
-                                         "mr_weighted_mode"))
+  #169542882
+table(instruments.tc$SNP %in% gwas.bmd.combined$SNP)
+#only one harmonised SNPs
+#bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
+#bmd.data_steiger <- steiger_filtering(bmd.data)
+#bmd.mr <- mr(bmd.data_steiger,
+#                         method_list = c("mr_ivw", 
+#                                         "mr_egger_regression",
+#                                         "mr_weighted_median", 
+#                                         "mr_weighted_mode"))
 
-bmd.mr |> dplyr::select(-starts_with('id')) |> 
-  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",
-        digits=c(0,0,0,0,3,3,99))
+#bmd.mr |> dplyr::select(-starts_with('id')) |> 
+#  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",
+#        digits=c(0,0,0,0,3,3,99))
 
 # ggplot(bmd.mr, aes(y=method,x=b)) +
 #   geom_point() +
@@ -178,7 +182,7 @@ bmd.mr |> dplyr::select(-starts_with('id')) |>
 #        x="Effect Size (Beta)") +
 #   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```  
-This second analysis is from lumbar spine data from the GEFOS 2015 release ([@zhengWholegenomeSequencingIdentifies2015])
+This second analysis is from lumbar spine data from the GEFOS 2015 release [@zhengWholegenomeSequencingIdentifies2015].
 
 ```{r mr-bmd-2015}
 gwas.bmd.file.2015 <- 'PheWeb Summary Statistics/ls2stu.MAF0_.005.pos_.out_.gz'
@@ -219,6 +223,54 @@ ggplot(bmd.mr.2015, aes(y=method,x=b)) +
        y="",
        x="Effect Size (Beta)") +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```  
+
+### Fracture Risk
+
+Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholesterol SNPs related to fracture risk [@trajanoskaAssessmentGeneticClinical2018].
+
+```{r mr-fractures}
+gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
+samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
+
+gwas.fractures <- read_tsv(gwas.fractures.file)  |>
+  rename(
+    beta.outcome               = Effect,
+    se.outcome                 = StdErr,
+    pval.outcome               = `P-value`,
+    eaf.outcome                = Freq1,
+  ) |>
+  mutate(id.outcome = "fractures",
+         effect_allele.outcome = toupper(Allele1),
+         other_allele.outcome = toupper(Allele2),
+         outcome = "Fracture Risk (GEFOS)",
+         samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
+  
+gwas.fractures<-  
+  left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
+# no overlapping SNPs, though both are in GRCh38
+table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
+#fracture.data <- harmonise_data(instruments.tc, gwas.fractures, action = 2)
+#fracture.data_steiger <- steiger_filtering(fracture.data)
+#fracture.mr <- mr(fracture.data_steiger,
+#                         method_list = c("mr_ivw", 
+#                                         "mr_egger_regression",
+#                                         "mr_weighted_median", 
+#                                         "mr_weighted_mode"))
+
+#fracture.mr |> 
+#  dplyr::select(-starts_with('id')) |> 
+#  kable(caption="MR Results for Total Cholesterol - Fracture Risk (GEFOS)",
+#        digits=c(0,0,0,0,3,3,99))
+
+#ggplot(fracture.mr, aes(y=method,x=b)) +
+#  geom_point() +
+#  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+#  theme_classic(base_size=16) +
+#  labs(title="Bone Mineral Density (GEFOS)",
+#       y="",
+#       x="Effect Size (Beta)") +
+#  geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```  
 
 ## Hypothesis Testing

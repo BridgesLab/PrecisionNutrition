@@ -16,3 +16,4 @@ For secondary analyses
 - phenocode-Vit-D.tsv.gz for 25-OH Vitamin D from MGI-BioVU LabWAS
 - GEFOS2_LSBMD_POOLED_GC.txt.gz Lumbar spine and femoral neck bone mineral density from the 2012 GEFOS meta-analyses http://www.gefos.org/?q=content/data-release-2012
 - GEFOS2_LSBMD_POOLED_GC.txt.gz Lumbar spine bone mineral density from the 2015 GEFOS meta-analyses http://www.gefos.org/?q=content/data-release-2015
+- ALLFX_GWAS_build37.txt.gz Fracture risk GWAS from 2018 GEFOS meta-analysis http://www.gefos.org/?q=content/fracture-gwas-2018-release

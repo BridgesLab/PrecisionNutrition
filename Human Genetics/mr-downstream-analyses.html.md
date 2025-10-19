@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 18:04:15 2025
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 19:17:18 2025
 
 ## Data Entry
 
@@ -127,8 +127,8 @@ Table: MR Results for Total Cholesterol - Vitamin D Analysis
 |:----------------------------|:------------------------------|:-------------------------|----:|------:|-----:|----------:|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  280| -0.063| 0.033| 0.05362791|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| -0.005| 0.051| 0.92034889|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| -0.012| 0.054| 0.82989834|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| -0.005| 0.048| 0.91596341|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| -0.012| 0.053| 0.82742157|
 
 
 :::
@@ -138,7 +138,7 @@ ggplot(vitd.mr, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
-  labs(title="25-Hydroxyvitamin D Levels (LabWAS)",
+  labs(title="25-OH Vitamin D (LabWAS)",
        y="",
        x="Effect Size (Beta)") +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
@@ -189,38 +189,43 @@ library(biomaRt)
 gefos.snp.datafile <- "GEFOS-2012 SNP ID File.csv"
 #write_csv(snp.data, gefos.snp.datafile)
 bmd.snp.data <- read_csv(gefos.snp.datafile) |>
-  mutate(SNP=paste(chr_name, chrom_start,
-                        substr(allele, 1, 1), sep=":")) #just picked hte first alt allele
+  mutate(SNP=paste(chr_name, 
+                   chrom_start,
+                   substr(allele, 1, 1), #first allele in naming
+                   substr(allele, 3, 3), #second allele (third position) in naming
+                   sep=":")) #just picked hte first alt allele
 
 gwas.bmd.combined <- 
   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
-  
-#no harmonised SNPs
-bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
-bmd.data_steiger <- steiger_filtering(bmd.data)
-bmd.mr <- mr(bmd.data_steiger,
-                         method_list = c("mr_ivw", 
-                                         "mr_egger_regression",
-                                         "mr_weighted_median", 
-                                         "mr_weighted_mode"))
-
-bmd.mr |> dplyr::select(-starts_with('id')) |> 
-  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",
-        digits=c(0,0,0,0,3,3,99))
+  #169542882
+table(instruments.tc$SNP %in% gwas.bmd.combined$SNP)
 ```
 
-::: {.cell-output-display}
+::: {.cell-output .cell-output-stdout}
 
+```
 
-Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)
-
-|SNP |MarkerName |Allele1 |Allele2 | eaf.outcome| FreqSE| beta.outcome| se.outcome| pval.outcome|Direction |outcome |effect_allele.outcome |other_allele.outcome | samplesize.outcome|chr_name | chrom_start|allele | CHR| POS|effect_allele.exposure |other_allele.exposure | beta.exposure| se.exposure| pval.exposure| eaf.exposure| samplesize.exposure| R2|  F|exposure |
-|:---|:----------|:-------|:-------|-----------:|------:|------------:|----------:|------------:|:---------|:-------|:---------------------|:--------------------|------------------:|:--------|-----------:|:------|---:|---:|:----------------------|:---------------------|-------------:|-----------:|-------------:|------------:|-------------------:|--:|--:|:--------|
+FALSE  TRUE 
+  369     1 
+```
 
 
 :::
 
 ```{.r .cell-code}
+#only one harmonised SNPs
+#bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
+#bmd.data_steiger <- steiger_filtering(bmd.data)
+#bmd.mr <- mr(bmd.data_steiger,
+#                         method_list = c("mr_ivw", 
+#                                         "mr_egger_regression",
+#                                         "mr_weighted_median", 
+#                                         "mr_weighted_mode"))
+
+#bmd.mr |> dplyr::select(-starts_with('id')) |> 
+#  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",
+#        digits=c(0,0,0,0,3,3,99))
+
 # ggplot(bmd.mr, aes(y=method,x=b)) +
 #   geom_point() +
 #   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
@@ -232,7 +237,7 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)
 ```
 :::
 
-This second analysis is from lumbar spine data from the GEFOS 2015 release ([@zhengWholegenomeSequencingIdentifies2015])
+This second analysis is from lumbar spine data from the GEFOS 2015 release [@zhengWholegenomeSequencingIdentifies2015].
 
 
 ::: {.cell}
@@ -278,8 +283,8 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 |:--------------|:------------------------------|:-------------------------|----:|------:|-----:|---------:|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |   84| -0.061| 0.045| 0.1744722|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  |   84| -0.060| 0.071| 0.4029161|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |   84|  0.042| 0.062| 0.5030125|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |   84|  0.009| 0.064| 0.8915693|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |   84|  0.042| 0.061| 0.4910583|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |   84|  0.009| 0.057| 0.8783794|
 
 
 :::
@@ -298,6 +303,74 @@ ggplot(bmd.mr.2015, aes(y=method,x=b)) +
 ::: {.cell-output-display}
 ![](figures/mr-bmd-2015-1.png){width=672}
 :::
+:::
+
+
+### Fracture Risk
+
+Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholesterol SNPs related to fracture risk [@trajanoskaAssessmentGeneticClinical2018].
+
+
+::: {.cell}
+
+```{.r .cell-code}
+gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
+samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
+
+gwas.fractures <- read_tsv(gwas.fractures.file)  |>
+  rename(
+    beta.outcome               = Effect,
+    se.outcome                 = StdErr,
+    pval.outcome               = `P-value`,
+    eaf.outcome                = Freq1,
+  ) |>
+  mutate(id.outcome = "fractures",
+         effect_allele.outcome = toupper(Allele1),
+         other_allele.outcome = toupper(Allele2),
+         outcome = "Fracture Risk (GEFOS)",
+         samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
+  
+gwas.fractures<-  
+  left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
+# no overlapping SNPs, though both are in GRCh38
+table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
+```
+
+::: {.cell-output-display}
+
+
+Table: Overlap of TC SNPs with GEFOS Fracture SNPs
+
+|Var1  | Freq|
+|:-----|----:|
+|FALSE |  370|
+
+
+:::
+
+```{.r .cell-code}
+#fracture.data <- harmonise_data(instruments.tc, gwas.fractures, action = 2)
+#fracture.data_steiger <- steiger_filtering(fracture.data)
+#fracture.mr <- mr(fracture.data_steiger,
+#                         method_list = c("mr_ivw", 
+#                                         "mr_egger_regression",
+#                                         "mr_weighted_median", 
+#                                         "mr_weighted_mode"))
+
+#fracture.mr |> 
+#  dplyr::select(-starts_with('id')) |> 
+#  kable(caption="MR Results for Total Cholesterol - Fracture Risk (GEFOS)",
+#        digits=c(0,0,0,0,3,3,99))
+
+#ggplot(fracture.mr, aes(y=method,x=b)) +
+#  geom_point() +
+#  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+#  theme_classic(base_size=16) +
+#  labs(title="Bone Mineral Density (GEFOS)",
+#       y="",
+#       x="Effect Size (Beta)") +
+#  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
 :::
 
 

@@ -1,0 +1,130 @@
+---
+title: "MR Analyses of Secondary Outcomes for Total Cholesterol on Calcium Homeostasis"
+author: "Dave Bridges"
+date: "October 16, 2025"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]  # Remove !expr, just use array syntax
+    fig.keep: "all"
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in `r getwd()` and was most recently run on `r date()`
+
+## Data Entry
+
+```{r data-entry-exposure}
+instruments.tc.file <- 'Total Cholesterol Instruments from UKBB.csv'
+
+# loaded and renamed columns
+instruments.tc <- read_csv(instruments.tc.file) |>
+  rename(
+    SNP                       = SP2,
+    beta.exposure             = BETA,
+    se.exposure               = SE,
+    effect_allele.exposure    = EA,
+    other_allele.exposure     = OA,
+    pval.exposure             = P,
+    eaf.exposure              = ALT_FREQS,
+    samplesize.exposure       = N_exposure
+  ) |>
+  mutate(id.exposure="Total Cholesterol (UK Biobank)",
+         exposure="Total Cholesterol (UK Biobank)")
+```
+
+We used `r nrow(instruments.tc)` SNPs as instruments for total cholesterol from UK Biobank.  These are found in the `r instruments.tc.file` datafile.
+
+## Mechanistic Outcomes
+
+### Vitamin D Levels
+
+This analysis is to test the hypothesis that total cholesterol impacts 25-hydroxyvitamin D levels, as cholesterol is a precursor for vitamin D synthesis in the skin.  This could positively impact calcium levels indirectly via increased vitamin D.  This was from MGI-BioVU LabWAS data @goldsteinLabWASNovelFindings2020.
+
+```{r mr-vitd}
+gwas.vitd.file <- 'PheWeb Summary Statistics/phenocode-Vit-D.tsv.gz'
+samplesize.outcome.vitd <- 12250  # sample size for MGI/BioVU for calcium from 
+
+gwas.vitd <- read_tsv(gwas.vitd.file) |>
+  mutate(ID=paste(chrom, pos, ref,alt, sep=":")) |>
+  rename(
+    SNP                        = ID,            # or ID if that’s the matching ID
+    beta.outcome               = beta,
+    se.outcome                 = sebeta,
+    effect_allele.outcome      = alt,   # whichever is effect allele
+    other_allele.outcome       = ref,   # whichever is other allele
+    pval.outcome               = pval,
+    eaf.outcome                = maf,
+  ) |>
+  mutate(id.outcome = "Vitamin D (MGI-BioVU LabWAS)",
+         outcome = "Vitamin D (MGI-BioVU LabWAS)",
+         samplesize.outcome = samplesize.outcome.vitd)  # sample size for MGI/BioVU for vitamin D)
+library(TwoSampleMR)
+
+vitd.data <- harmonise_data(instruments.tc, gwas.vitd, action = 2)
+vitd.data_steiger <- steiger_filtering(vitd.data)
+vitd.mr <- mr(vitd.data_steiger,
+                         method_list = c("mr_ivw", 
+                                         "mr_egger_regression",
+                                         "mr_weighted_median", 
+                                         "mr_weighted_mode"))
+
+vitd.mr |> select(-starts_with('id')) |> 
+  kable(caption="MR Results for Total Cholesterol - Vitamin D Analysis",
+        digits=c(0,0,0,0,3,3,99))
+
+ggplot(vitd.mr, aes(y=method,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="25-Hydroxyvitamin D Levels (LabWAS)",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```   
+
+## Pathological Outcomes
+
+### Bone Mineral Density
+
+#### GEFOS Consortium Lumbar Spine BMD
+
+Lumbar spine tends to reflect trabecular bone, which is metabolically active, hormonally responsive, and more sensitive to lipid and endocrine perturbations. Multiple epidemiologic studies report inverse associations between total cholesterol and LS-BMD, particularly among older adults and postmenopausal women @huAssociationsSerumTotal2023 and @fangNegativeAssociationTotal2022.  We used the pooled (not sex-specific) estimates from the GEFOS consortium's pooled meta-analysis @estradaGenomewideMetaanalysisIdentifies2012.
+
+### Fracture Risk
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

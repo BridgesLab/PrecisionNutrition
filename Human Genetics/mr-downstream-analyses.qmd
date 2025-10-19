@@ -221,7 +221,103 @@ ggplot(bmd.mr.2015, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```  
 
-### Fracture Risk
+## Hypothesis Testing
+
+Given that we have two hypotheses:
+
+- Cholesterol increases calcium by increasing vitamin D
+- Cholesterol increases calcium by decreasing bone mineral density
+
+We performed a Bayesian analysis to determine the posterior probabilities of four possible outcomes:
+
+```{r calcium-hypothesis-testing}
+# Function to compute posterior probability for a directional hypothesis
+# - beta_hat: point estimate
+# - se: standard error
+# - direction: "less" for P(beta < 0), "greater" for P(beta > 0)
+posterior_prob_direction <- function(beta_hat, se, direction = c("less", "greater")) {
+  direction <- match.arg(direction)
+  z <- (0 - beta_hat) / se  # z-score for the boundary at 0
+  if (direction == "less") {
+    return(pnorm(z))  # P(beta < 0) = CDF(z)
+  } else {
+    return(1 - pnorm(z))  # P(beta > 0) = 1 - CDF(z)
+  }
+}
+
+# Input MR point estimates and standard errors
+beta_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(b)  # Point estimate for BMD effect on calcium
+se_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(se)     # Standard error for BMD
+beta_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(b) # Point estimate for Vitamin D effect on calcium
+se_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(se)    # Standard error for Vitamin D
+
+# Compute individual posterior probabilities
+p_h1_true <- posterior_prob_direction(beta_bmd, se_bmd, "less")      # P(β_BMD < 0) ~ supports H1 (lower BMD)
+p_h1_false <- 1 - p_h1_true                                          # P(β_BMD >= 0) ~ opposes H1
+p_h2_true <- posterior_prob_direction(beta_vitd, se_vitd, "greater") # P(β_VitD > 0) ~ supports H2 (higher Vit D)
+p_h2_false <- 1 - p_h2_true                                          # P(β_VitD <= 0) ~ opposes H2
+
+# Compute joint probabilities (assuming independence)
+p_both_true <- p_h1_true * p_h2_true
+p_only_h1_true <- p_h1_true * p_h2_false
+p_only_h2_true <- p_h1_false * p_h2_true
+p_neither_true <- p_h1_false * p_h2_false
+
+# Create a data frame for the table
+outcomes_df <- data.frame(
+  Outcome = c("Both True", "Only H1 True", "Only H2 True", "Neither True"),
+  Description = c(
+    "H1 true (β_BMD < 0) and H2 true (β_VitD > 0)",
+    "H1 true (β_BMD < 0) and H2 false (β_VitD <= 0)",
+    "H1 false (β_BMD >= 0) and H2 true (β_VitD > 0)",
+    "H1 false (β_BMD >= 0) and H2 false (β_VitD <= 0)"
+  ),
+  Posterior_Probability = c(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true),
+  Percentage = sprintf("%.2f%%", c(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true) * 100)
+)
+
+# Output the table using kable
+kable(outcomes_df, format = "simple", digits = 4, caption = "Joint Posterior Probabilities for the Four Outcomes")
+```
+
+To evaluate the two hypotheses regarding elevated calcium levels: 
+
+- H1: lower bone mineral density (BMD, supported by $\beta_{BMD} < 0$)
+- H2: higher vitamin D levels (supported by $\beta_{VitD} > 0$)
+
+We applied Bayesian inference using Mendelian randomization (MR) point estimates and standard errors. The analysis assumed flat (non-informative) priors on the effect sizes and independence between the effects of BMD and vitamin D on calcium levels. Below, we summarize the mathematical approach.
+
+### Individual Posterior Probabilities
+
+For each hypothesis, we modeled the effect size $\beta$ (representing the causal effect on calcium levels) with a flat prior, $(p(\beta) \propto 1$. Given the MR point estimate ($\hat{\beta}$) and standard error $SE$), and assuming that the posterior distribution for $\beta$ is Normal:
+
+$$p(\beta | \text{data}) \sim \mathcal{N}(\hat{\beta}, \text{SE}^2)$$
+
+- **H1 (Lower BMD explains high cholesterol)**: The MR estimate is $\hat{\beta}_{\text{BMD}}$ = `r beta_bmd`, $SE_{BMD}$ = `r se_bmd`. The posterior probability that $\beta_{BMD} < 0$ (supporting H1) is `r p_h1_true` as calculated by the following equation where $\Phi$ is the cumulative distribution function of the standard normal distribution:
+
+$$P(\beta_{\text{BMD}} < 0 | \text{data}) = \Phi\left(\frac{0 - \hat{\beta}_{\text{BMD}}}{\text{SE}_{\text{BMD}}}\right)$$
+
+
+
+- **H2 (Higher Vitamin D)**: The MR estimate is $\hat{\beta}_{VitD}$ = `r beta_vitd`, $SE_{VitD}$ = `r se_vitd` ). The posterior probability that $\beta_{\text{VitD}} > 0$ (supporting H2) is therefore `r p_h2_true` calculated as:
+
+$$
+P(\beta_{\text{VitD}} > 0 | \text{data}) = 1 - \Phi\left(\frac{0 - \hat{\beta}_{\text{VitD}}}{\text{SE}_{\text{VitD}}}\right)
+$$
+
+
+Thus, the posterior probabilities are estimated at `r p_h1_true*100`% for H1 ($\beta_{\text{BMD}} < 0$) and `r p_h2_true*100`% for H2 ($\beta_{VitD} > 0$).
+
+### Joint Posterior Probabilities
+
+Assuming independence between the effects of BMD and vitamin D, we calculated the joint probabilities for the four possible outcomes:
+
+- **Both True**: $P(\beta_{\text{BMD}} < 0, \beta_{\text{VitD}} > 0) = P(\beta_{\text{BMD}} < 0) \times P(\beta_{\text{VitD}} > 0)$ = `r p_h1_true` $\times$` `r p_h2_true` $\approx$ `r p_both_true`(`r p_both_true*100`%).
+- **Only H1 True**: $P(\beta_{\text{BMD}} < 0, \beta_{\text{VitD}} \leq 0) = P(\beta_{\text{BMD}} < 0) \times P(\beta_{\text{VitD}} \leq 0)$ where $P(\beta_{\text{VitD}} \leq 0) = 1 - P(\beta_{\text{VitD}} > 0)$ = 1 - `r p_h2_true` = `r p_h2_false` so `r p_h1_true` $\times$ `r p_h2_false` $\approx$ `r p_only_h1_true`(`r p_only_h1_true*100`%).
+- **Only H2 True**: $P(\beta_{\text{BMD}} \geq 0, \beta_{\text{VitD}} > 0) = P(\beta_{\text{BMD}} \geq 0) \times P(\beta_{\text{VitD}} > 0)$ where $P(\beta_{\text{BMD}} \geq 0) = 1 - P(\beta_{\text{BMD}} < 0)$ = 1 - `r p_h1_true` = `r p_h1_false` and `r p_h1_false` $\times$ `r p_h2_true` (`r p_only_h2_true*100`%).
+- **Neither True**: $P(\beta_{\text{BMD}} \geq 0, \beta_{\text{VitD}} \leq 0) = P(\beta_{\text{BMD}} \geq 0) \times P(\beta_{\text{VitD}} \leq 0)$ so `r p_h1_false` $\times$ `r p_h2_false` (`r p_neither_true*100`%).
+
+These probabilities sum to 1, confirming the calculations. The results strongly support H1 (lower BMD) as the most likely explanation for elevated calcium levels (`r p_only_h1_true*100`% for Only H1 True), with minimal support for the alternate hypotheses.
 
 ## References
 

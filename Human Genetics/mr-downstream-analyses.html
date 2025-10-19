@@ -92,6 +92,35 @@ div.csl-indent {
 <link href="mr-downstream-analyses_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="mr-downstream-analyses_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN") {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
 
 </head>
 
@@ -112,7 +141,11 @@ div.csl-indent {
   <li><a href="#pathological-outcomes" id="toc-pathological-outcomes" class="nav-link" data-scroll-target="#pathological-outcomes">Pathological Outcomes</a>
   <ul class="collapse">
   <li><a href="#bone-mineral-density" id="toc-bone-mineral-density" class="nav-link" data-scroll-target="#bone-mineral-density">Bone Mineral Density</a></li>
-  <li><a href="#fracture-risk" id="toc-fracture-risk" class="nav-link" data-scroll-target="#fracture-risk">Fracture Risk</a></li>
+  </ul></li>
+  <li><a href="#hypothesis-testing" id="toc-hypothesis-testing" class="nav-link" data-scroll-target="#hypothesis-testing">Hypothesis Testing</a>
+  <ul class="collapse">
+  <li><a href="#individual-posterior-probabilities" id="toc-individual-posterior-probabilities" class="nav-link" data-scroll-target="#individual-posterior-probabilities">Individual Posterior Probabilities</a></li>
+  <li><a href="#joint-posterior-probabilities" id="toc-joint-posterior-probabilities" class="nav-link" data-scroll-target="#joint-posterior-probabilities">Joint Posterior Probabilities</a></li>
   </ul></li>
   <li><a href="#references" id="toc-references" class="nav-link" data-scroll-target="#references">References</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
@@ -174,7 +207,7 @@ div.csl-indent {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 13:05:56 2025</p>
+<p>To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 18:04:15 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -288,8 +321,8 @@ div.csl-indent {
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">280</td>
 <td style="text-align: right;">-0.005</td>
-<td style="text-align: right;">0.052</td>
-<td style="text-align: right;">0.92221486</td>
+<td style="text-align: right;">0.051</td>
+<td style="text-align: right;">0.92034889</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Vitamin D (MGI-BioVU LabWAS)</td>
@@ -297,8 +330,8 @@ div.csl-indent {
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">280</td>
 <td style="text-align: right;">-0.012</td>
-<td style="text-align: right;">0.051</td>
-<td style="text-align: right;">0.82052248</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">0.82989834</td>
 </tr>
 </tbody>
 </table>
@@ -544,8 +577,8 @@ div.csl-indent {
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">84</td>
 <td style="text-align: right;">0.042</td>
-<td style="text-align: right;">0.063</td>
-<td style="text-align: right;">0.5056823</td>
+<td style="text-align: right;">0.062</td>
+<td style="text-align: right;">0.5030125</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">LS-BMD (GEFOS)</td>
@@ -553,8 +586,8 @@ div.csl-indent {
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">84</td>
 <td style="text-align: right;">0.009</td>
-<td style="text-align: right;">0.061</td>
-<td style="text-align: right;">0.8871697</td>
+<td style="text-align: right;">0.064</td>
+<td style="text-align: right;">0.8915693</td>
 </tr>
 </tbody>
 </table>
@@ -580,8 +613,138 @@ div.csl-indent {
 </div>
 </section>
 </section>
-<section id="fracture-risk" class="level3">
-<h3 class="anchored" data-anchor-id="fracture-risk">Fracture Risk</h3>
+</section>
+<section id="hypothesis-testing" class="level2">
+<h2 class="anchored" data-anchor-id="hypothesis-testing">Hypothesis Testing</h2>
+<p>Given that we have two hypotheses:</p>
+<ul>
+<li>Cholesterol increases calcium by increasing vitamin D</li>
+<li>Cholesterol increases calcium by decreasing bone mineral density</li>
+</ul>
+<p>We performed a Bayesian analysis to determine the posterior probabilities of four possible outcomes:</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to compute posterior probability for a directional hypothesis</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># - beta_hat: point estimate</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="co"># - se: standard error</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a><span class="co"># - direction: "less" for P(beta &lt; 0), "greater" for P(beta &gt; 0)</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>posterior_prob_direction <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_hat, se, <span class="at">direction =</span> <span class="fu">c</span>(<span class="st">"less"</span>, <span class="st">"greater"</span>)) {</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  direction <span class="ot">&lt;-</span> <span class="fu">match.arg</span>(direction)</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> (<span class="dv">0</span> <span class="sc">-</span> beta_hat) <span class="sc">/</span> se  <span class="co"># z-score for the boundary at 0</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (direction <span class="sc">==</span> <span class="st">"less"</span>) {</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">pnorm</span>(z))  <span class="co"># P(beta &lt; 0) = CDF(z)</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pnorm</span>(z))  <span class="co"># P(beta &gt; 0) = 1 - CDF(z)</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Input MR point estimates and standard errors</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>beta_bmd <span class="ot">&lt;-</span> <span class="fu">filter</span>(bmd.mr<span class="fl">.2015</span>,method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(b)  <span class="co"># Point estimate for BMD effect on calcium</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>se_bmd <span class="ot">&lt;-</span> <span class="fu">filter</span>(bmd.mr<span class="fl">.2015</span>,method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(se)     <span class="co"># Standard error for BMD</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>beta_vitd <span class="ot">&lt;-</span> <span class="fu">filter</span>(vitd.mr,method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(b) <span class="co"># Point estimate for Vitamin D effect on calcium</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>se_vitd <span class="ot">&lt;-</span> <span class="fu">filter</span>(vitd.mr,method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(se)    <span class="co"># Standard error for Vitamin D</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute individual posterior probabilities</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>p_h1_true <span class="ot">&lt;-</span> <span class="fu">posterior_prob_direction</span>(beta_bmd, se_bmd, <span class="st">"less"</span>)      <span class="co"># P(β_BMD &lt; 0) ~ supports H1 (lower BMD)</span></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>p_h1_false <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_h1_true                                          <span class="co"># P(β_BMD &gt;= 0) ~ opposes H1</span></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>p_h2_true <span class="ot">&lt;-</span> <span class="fu">posterior_prob_direction</span>(beta_vitd, se_vitd, <span class="st">"greater"</span>) <span class="co"># P(β_VitD &gt; 0) ~ supports H2 (higher Vit D)</span></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>p_h2_false <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_h2_true                                          <span class="co"># P(β_VitD &lt;= 0) ~ opposes H2</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute joint probabilities (assuming independence)</span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>p_both_true <span class="ot">&lt;-</span> p_h1_true <span class="sc">*</span> p_h2_true</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>p_only_h1_true <span class="ot">&lt;-</span> p_h1_true <span class="sc">*</span> p_h2_false</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>p_only_h2_true <span class="ot">&lt;-</span> p_h1_false <span class="sc">*</span> p_h2_true</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>p_neither_true <span class="ot">&lt;-</span> p_h1_false <span class="sc">*</span> p_h2_false</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a data frame for the table</span></span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>outcomes_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">Outcome =</span> <span class="fu">c</span>(<span class="st">"Both True"</span>, <span class="st">"Only H1 True"</span>, <span class="st">"Only H2 True"</span>, <span class="st">"Neither True"</span>),</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">Description =</span> <span class="fu">c</span>(</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 true (β_BMD &lt; 0) and H2 true (β_VitD &gt; 0)"</span>,</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 true (β_BMD &lt; 0) and H2 false (β_VitD &lt;= 0)"</span>,</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 false (β_BMD &gt;= 0) and H2 true (β_VitD &gt; 0)"</span>,</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 false (β_BMD &gt;= 0) and H2 false (β_VitD &lt;= 0)"</span></span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">Posterior_Probability =</span> <span class="fu">c</span>(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true),</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">Percentage =</span> <span class="fu">sprintf</span>(<span class="st">"%.2f%%"</span>, <span class="fu">c</span>(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true) <span class="sc">*</span> <span class="dv">100</span>)</span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Output the table using kable</span></span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(outcomes_df, <span class="at">format =</span> <span class="st">"simple"</span>, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">"Joint Posterior Probabilities for the Four Outcomes"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Joint Posterior Probabilities for the Four Outcomes</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Outcome</th>
+<th style="text-align: left;">Description</th>
+<th style="text-align: right;">Posterior_Probability</th>
+<th style="text-align: left;">Percentage</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Both True</td>
+<td style="text-align: left;">H1 true (β_BMD &lt; 0) and H2 true (β_VitD &gt; 0)</td>
+<td style="text-align: right;">0.0245</td>
+<td style="text-align: left;">2.45%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Only H1 True</td>
+<td style="text-align: left;">H1 true (β_BMD &lt; 0) and H2 false (β_VitD &lt;= 0)</td>
+<td style="text-align: right;">0.8883</td>
+<td style="text-align: left;">88.83%</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Only H2 True</td>
+<td style="text-align: left;">H1 false (β_BMD &gt;= 0) and H2 true (β_VitD &gt; 0)</td>
+<td style="text-align: right;">0.0023</td>
+<td style="text-align: left;">0.23%</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Neither True</td>
+<td style="text-align: left;">H1 false (β_BMD &gt;= 0) and H2 false (β_VitD &lt;= 0)</td>
+<td style="text-align: right;">0.0849</td>
+<td style="text-align: left;">8.49%</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>To evaluate the two hypotheses regarding elevated calcium levels:</p>
+<ul>
+<li>H1: lower bone mineral density (BMD, supported by <span class="math inline">\(\beta_{BMD} &lt; 0\)</span>)</li>
+<li>H2: higher vitamin D levels (supported by <span class="math inline">\(\beta_{VitD} &gt; 0\)</span>)</li>
+</ul>
+<p>We applied Bayesian inference using Mendelian randomization (MR) point estimates and standard errors. The analysis assumed flat (non-informative) priors on the effect sizes and independence between the effects of BMD and vitamin D on calcium levels. Below, we summarize the mathematical approach.</p>
+<section id="individual-posterior-probabilities" class="level3">
+<h3 class="anchored" data-anchor-id="individual-posterior-probabilities">Individual Posterior Probabilities</h3>
+<p>For each hypothesis, we modeled the effect size <span class="math inline">\(\beta\)</span> (representing the causal effect on calcium levels) with a flat prior, <span class="math inline">\((p(\beta) \propto 1\)</span>. Given the MR point estimate (<span class="math inline">\(\hat{\beta}\)</span>) and standard error <span class="math inline">\(SE\)</span>), and assuming that the posterior distribution for <span class="math inline">\(\beta\)</span> is Normal:</p>
+<p><span class="math display">\[p(\beta | \text{data}) \sim \mathcal{N}(\hat{\beta}, \text{SE}^2)\]</span></p>
+<ul>
+<li><strong>H1 (Lower BMD explains high cholesterol)</strong>: The MR estimate is <span class="math inline">\(\hat{\beta}_{\text{BMD}}\)</span> = -0.0613143, <span class="math inline">\(SE_{BMD}\)</span> = 0.0451513. The posterior probability that <span class="math inline">\(\beta_{BMD} &lt; 0\)</span> (supporting H1) is 0.9127639 as calculated by the following equation where <span class="math inline">\(\Phi\)</span> is the cumulative distribution function of the standard normal distribution:</li>
+</ul>
+<p><span class="math display">\[P(\beta_{\text{BMD}} &lt; 0 | \text{data}) = \Phi\left(\frac{0 - \hat{\beta}_{\text{BMD}}}{\text{SE}_{\text{BMD}}}\right)\]</span></p>
+<ul>
+<li><strong>H2 (Higher Vitamin D)</strong>: The MR estimate is <span class="math inline">\(\hat{\beta}_{VitD}\)</span> = -0.062997, <span class="math inline">\(SE_{VitD}\)</span> = 0.0326438 ). The posterior probability that <span class="math inline">\(\beta_{\text{VitD}} &gt; 0\)</span> (supporting H2) is therefore 0.026814 calculated as:</li>
+</ul>
+<p><span class="math display">\[
+P(\beta_{\text{VitD}} &gt; 0 | \text{data}) = 1 - \Phi\left(\frac{0 - \hat{\beta}_{\text{VitD}}}{\text{SE}_{\text{VitD}}}\right)
+\]</span></p>
+<p>Thus, the posterior probabilities are estimated at 91.2763903% for H1 (<span class="math inline">\(\beta_{\text{BMD}} &lt; 0\)</span>) and 2.6813955% for H2 (<span class="math inline">\(\beta_{VitD} &gt; 0\)</span>).</p>
+</section>
+<section id="joint-posterior-probabilities" class="level3">
+<h3 class="anchored" data-anchor-id="joint-posterior-probabilities">Joint Posterior Probabilities</h3>
+<p>Assuming independence between the effects of BMD and vitamin D, we calculated the joint probabilities for the four possible outcomes:</p>
+<ul>
+<li><strong>Both True</strong>: <span class="math inline">\(P(\beta_{\text{BMD}} &lt; 0, \beta_{\text{VitD}} &gt; 0) = P(\beta_{\text{BMD}} &lt; 0) \times P(\beta_{\text{VitD}} &gt; 0)\)</span> = 0.9127639 <span class="math inline">\(\times\)</span>` 0.026814 <span class="math inline">\(\approx\)</span> 0.0244748(2.447481%).</li>
+<li><strong>Only H1 True</strong>: <span class="math inline">\(P(\beta_{\text{BMD}} &lt; 0, \beta_{\text{VitD}} \leq 0) = P(\beta_{\text{BMD}} &lt; 0) \times P(\beta_{\text{VitD}} \leq 0)\)</span> where <span class="math inline">\(P(\beta_{\text{VitD}} \leq 0) = 1 - P(\beta_{\text{VitD}} &gt; 0)\)</span> = 1 - 0.026814 = 0.973186 so 0.9127639 <span class="math inline">\(\times\)</span> 0.973186 <span class="math inline">\(\approx\)</span> 0.8882891(88.8289093%).</li>
+<li><strong>Only H2 True</strong>: <span class="math inline">\(P(\beta_{\text{BMD}} \geq 0, \beta_{\text{VitD}} &gt; 0) = P(\beta_{\text{BMD}} \geq 0) \times P(\beta_{\text{VitD}} &gt; 0)\)</span> where <span class="math inline">\(P(\beta_{\text{BMD}} \geq 0) = 1 - P(\beta_{\text{BMD}} &lt; 0)\)</span> = 1 - 0.9127639 = 0.0872361 and 0.0872361 <span class="math inline">\(\times\)</span> 0.026814 (0.2339145%).</li>
+<li><strong>Neither True</strong>: <span class="math inline">\(P(\beta_{\text{BMD}} \geq 0, \beta_{\text{VitD}} \leq 0) = P(\beta_{\text{BMD}} \geq 0) \times P(\beta_{\text{VitD}} \leq 0)\)</span> so 0.0872361 <span class="math inline">\(\times\)</span> 0.973186 (8.4896953%).</li>
+</ul>
+<p>These probabilities sum to 1, confirming the calculations. The results strongly support H1 (lower BMD) as the most likely explanation for elevated calcium levels (88.8289093% for Only H1 True), with minimal support for the alternate hypotheses.</p>
 </section>
 </section>
 <section id="references" class="level2">
@@ -609,7 +772,7 @@ Zheng, Hou-Feng, Vincenzo Forgetta, Yi-Hsiang Hsu, Karol Estrada, Alberto Rosell
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)

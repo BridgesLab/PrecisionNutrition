@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 13:05:56 2025
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 18:04:15 2025
 
 ## Data Entry
 
@@ -127,8 +127,8 @@ Table: MR Results for Total Cholesterol - Vitamin D Analysis
 |:----------------------------|:------------------------------|:-------------------------|----:|------:|-----:|----------:|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  280| -0.063| 0.033| 0.05362791|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| -0.005| 0.052| 0.92221486|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| -0.012| 0.051| 0.82052248|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| -0.005| 0.051| 0.92034889|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| -0.012| 0.054| 0.82989834|
 
 
 :::
@@ -278,8 +278,8 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 |:--------------|:------------------------------|:-------------------------|----:|------:|-----:|---------:|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |   84| -0.061| 0.045| 0.1744722|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  |   84| -0.060| 0.071| 0.4029161|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |   84|  0.042| 0.063| 0.5056823|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |   84|  0.009| 0.061| 0.8871697|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |   84|  0.042| 0.062| 0.5030125|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |   84|  0.009| 0.064| 0.8915693|
 
 
 :::
@@ -301,7 +301,123 @@ ggplot(bmd.mr.2015, aes(y=method,x=b)) +
 :::
 
 
-### Fracture Risk
+## Hypothesis Testing
+
+Given that we have two hypotheses:
+
+- Cholesterol increases calcium by increasing vitamin D
+- Cholesterol increases calcium by decreasing bone mineral density
+
+We performed a Bayesian analysis to determine the posterior probabilities of four possible outcomes:
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Function to compute posterior probability for a directional hypothesis
+# - beta_hat: point estimate
+# - se: standard error
+# - direction: "less" for P(beta < 0), "greater" for P(beta > 0)
+posterior_prob_direction <- function(beta_hat, se, direction = c("less", "greater")) {
+  direction <- match.arg(direction)
+  z <- (0 - beta_hat) / se  # z-score for the boundary at 0
+  if (direction == "less") {
+    return(pnorm(z))  # P(beta < 0) = CDF(z)
+  } else {
+    return(1 - pnorm(z))  # P(beta > 0) = 1 - CDF(z)
+  }
+}
+
+# Input MR point estimates and standard errors
+beta_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(b)  # Point estimate for BMD effect on calcium
+se_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(se)     # Standard error for BMD
+beta_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(b) # Point estimate for Vitamin D effect on calcium
+se_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(se)    # Standard error for Vitamin D
+
+# Compute individual posterior probabilities
+p_h1_true <- posterior_prob_direction(beta_bmd, se_bmd, "less")      # P(β_BMD < 0) ~ supports H1 (lower BMD)
+p_h1_false <- 1 - p_h1_true                                          # P(β_BMD >= 0) ~ opposes H1
+p_h2_true <- posterior_prob_direction(beta_vitd, se_vitd, "greater") # P(β_VitD > 0) ~ supports H2 (higher Vit D)
+p_h2_false <- 1 - p_h2_true                                          # P(β_VitD <= 0) ~ opposes H2
+
+# Compute joint probabilities (assuming independence)
+p_both_true <- p_h1_true * p_h2_true
+p_only_h1_true <- p_h1_true * p_h2_false
+p_only_h2_true <- p_h1_false * p_h2_true
+p_neither_true <- p_h1_false * p_h2_false
+
+# Create a data frame for the table
+outcomes_df <- data.frame(
+  Outcome = c("Both True", "Only H1 True", "Only H2 True", "Neither True"),
+  Description = c(
+    "H1 true (β_BMD < 0) and H2 true (β_VitD > 0)",
+    "H1 true (β_BMD < 0) and H2 false (β_VitD <= 0)",
+    "H1 false (β_BMD >= 0) and H2 true (β_VitD > 0)",
+    "H1 false (β_BMD >= 0) and H2 false (β_VitD <= 0)"
+  ),
+  Posterior_Probability = c(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true),
+  Percentage = sprintf("%.2f%%", c(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true) * 100)
+)
+
+# Output the table using kable
+kable(outcomes_df, format = "simple", digits = 4, caption = "Joint Posterior Probabilities for the Four Outcomes")
+```
+
+::: {.cell-output-display}
+
+
+Table: Joint Posterior Probabilities for the Four Outcomes
+
+Outcome        Description                                         Posterior_Probability  Percentage 
+-------------  -------------------------------------------------  ----------------------  -----------
+Both True      H1 true (β_BMD < 0) and H2 true (β_VitD > 0)                       0.0245  2.45%      
+Only H1 True   H1 true (β_BMD < 0) and H2 false (β_VitD <= 0)                     0.8883  88.83%     
+Only H2 True   H1 false (β_BMD >= 0) and H2 true (β_VitD > 0)                     0.0023  0.23%      
+Neither True   H1 false (β_BMD >= 0) and H2 false (β_VitD <= 0)                   0.0849  8.49%      
+
+
+:::
+:::
+
+
+To evaluate the two hypotheses regarding elevated calcium levels: 
+
+- H1: lower bone mineral density (BMD, supported by $\beta_{BMD} < 0$)
+- H2: higher vitamin D levels (supported by $\beta_{VitD} > 0$)
+
+We applied Bayesian inference using Mendelian randomization (MR) point estimates and standard errors. The analysis assumed flat (non-informative) priors on the effect sizes and independence between the effects of BMD and vitamin D on calcium levels. Below, we summarize the mathematical approach.
+
+### Individual Posterior Probabilities
+
+For each hypothesis, we modeled the effect size $\beta$ (representing the causal effect on calcium levels) with a flat prior, $(p(\beta) \propto 1$. Given the MR point estimate ($\hat{\beta}$) and standard error $SE$), and assuming that the posterior distribution for $\beta$ is Normal:
+
+$$p(\beta | \text{data}) \sim \mathcal{N}(\hat{\beta}, \text{SE}^2)$$
+
+- **H1 (Lower BMD explains high cholesterol)**: The MR estimate is $\hat{\beta}_{\text{BMD}}$ = -0.0613143, $SE_{BMD}$ = 0.0451513. The posterior probability that $\beta_{BMD} < 0$ (supporting H1) is 0.9127639 as calculated by the following equation where $\Phi$ is the cumulative distribution function of the standard normal distribution:
+
+$$P(\beta_{\text{BMD}} < 0 | \text{data}) = \Phi\left(\frac{0 - \hat{\beta}_{\text{BMD}}}{\text{SE}_{\text{BMD}}}\right)$$
+
+
+
+- **H2 (Higher Vitamin D)**: The MR estimate is $\hat{\beta}_{VitD}$ = -0.062997, $SE_{VitD}$ = 0.0326438 ). The posterior probability that $\beta_{\text{VitD}} > 0$ (supporting H2) is therefore 0.026814 calculated as:
+
+$$
+P(\beta_{\text{VitD}} > 0 | \text{data}) = 1 - \Phi\left(\frac{0 - \hat{\beta}_{\text{VitD}}}{\text{SE}_{\text{VitD}}}\right)
+$$
+
+
+Thus, the posterior probabilities are estimated at 91.2763903% for H1 ($\beta_{\text{BMD}} < 0$) and 2.6813955% for H2 ($\beta_{VitD} > 0$).
+
+### Joint Posterior Probabilities
+
+Assuming independence between the effects of BMD and vitamin D, we calculated the joint probabilities for the four possible outcomes:
+
+- **Both True**: $P(\beta_{\text{BMD}} < 0, \beta_{\text{VitD}} > 0) = P(\beta_{\text{BMD}} < 0) \times P(\beta_{\text{VitD}} > 0)$ = 0.9127639 $\times$` 0.026814 $\approx$ 0.0244748(2.447481%).
+- **Only H1 True**: $P(\beta_{\text{BMD}} < 0, \beta_{\text{VitD}} \leq 0) = P(\beta_{\text{BMD}} < 0) \times P(\beta_{\text{VitD}} \leq 0)$ where $P(\beta_{\text{VitD}} \leq 0) = 1 - P(\beta_{\text{VitD}} > 0)$ = 1 - 0.026814 = 0.973186 so 0.9127639 $\times$ 0.973186 $\approx$ 0.8882891(88.8289093%).
+- **Only H2 True**: $P(\beta_{\text{BMD}} \geq 0, \beta_{\text{VitD}} > 0) = P(\beta_{\text{BMD}} \geq 0) \times P(\beta_{\text{VitD}} > 0)$ where $P(\beta_{\text{BMD}} \geq 0) = 1 - P(\beta_{\text{BMD}} < 0)$ = 1 - 0.9127639 = 0.0872361 and 0.0872361 $\times$ 0.026814 (0.2339145%).
+- **Neither True**: $P(\beta_{\text{BMD}} \geq 0, \beta_{\text{VitD}} \leq 0) = P(\beta_{\text{BMD}} \geq 0) \times P(\beta_{\text{VitD}} \leq 0)$ so 0.0872361 $\times$ 0.973186 (8.4896953%).
+
+These probabilities sum to 1, confirming the calculations. The results strongly support H1 (lower BMD) as the most likely explanation for elevated calcium levels (88.8289093% for Only H1 True), with minimal support for the alternate hypotheses.
 
 ## References
 

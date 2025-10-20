@@ -1,109 +1,49 @@
-#
+## TODO For Manuscript
 
-## Missing Data
+### Missing Data
 
 - [ ] n for MGI-BioVU (add to scripts/manuscript/Figure 1A)
 - [x] population details
 - [ ] Units for beta coefficients from MGI-BioVU (SD for UKBB)
 
-## Proposed Manuscript Structure
+### Mising Analsyes
 
-Generated via ChatGPT
+- [ ] Regenerate SNP lists for Total Cholesterol on Fracture Risk and BMD
+- [ ] Add CAUSE analyses for models to test for correlated pleiotropy
+- [ ] Add MR-PRESSO analyses 
+- [ ] Add MR-RAPS analyses 
+- [ ] Use phenoscanner to identify potential confounders
 
-This plan summarizes the figures and tables to include in the main manuscript and supplementary materials for the bidirectional MR analysis of calcium and cholesterol (LDL and total cholesterol).  
-It follows STROBE-MR reporting principles and emphasizes clarity, reproducibility, and visual balance between main and supplementary materials.
 
-### **Table 1. Summary of Main MR Results**
-Compact table of key causal estimates.
+## Limtations Notes
 
-| Direction | Exposure | Outcome | nsnp | Method | Beta | SE | 95% CI | p | Steiger direction |
-|------------|-----------|----------|------|---------|------|----|--------|---|-------------------|
-| 1 | Calcium | LDL | | IVW | | | | | |
-| 2 | Calcium | TC | | IVW | | | | | |
-| 3 | LDL | Calcium | | IVW | | | | | |
-| 4 | TC | Calcium | | IVW | | | | | |
+### MR Assumptions
 
-> **Purpose:** Single summary table showing directionality, effect sizes, and significance.
+- **Relevance assumption**: that genetic variants are strongly associated with the exposure of interest, test 
+- **Independence assumption**: variants should not be associated with confounders of the relatoinship.  Test using `phenoscanner` or similar tools
+- **Exclusion restriction assumption**: Test that MR-Egger intercept tests do not detect directional pleiotropy.
 
----
+### Pleiotropy 
 
-## SUPPLEMENTARY MATERIALS
+SNPs affecting two or more seemingly unrelated phenotypes, because genes can participate in multiple biological pathways
 
-### **Supplementary Figure S1. Instrument selection flow diagram**
-- Summary of SNP selection and filtering
+#### Vertical Plieotropy
 
----
+Variant is related to the exposure, this is what we are evaluating.
 
-### **Supplementary Figure S2. Positive Control Analysis**
-Confirms validity of analysis pipeline:
--  A. Scatter plot showing beta coefficients
--  B. Forest plots showing Calcium (UKBB) → Calcium (Michigan).
--  C. Leave-one-out plot: usually unnecessary for a positive control unless a reviewer asks.
--  D. Funnel plot / heterogeneity check: can be skipped unless you want to emphasize no pleiotropy.
+#### Directional Uncorrelated Horizontal Pleiotropy
 
----
+SNPs have effects independent of the effects on the exposure.  Creates an average directional effect on the outcome.  Assess by Egger's intercept != 0 (if the InSIDE assumption holds)
 
-### **Supplementary Figure S3. Full Scatter and Funnel Plots**
-- Scatter and funnel plots for **all four** analyses:
-  1. Calcium → LDL  
-  2. Calcium → TC  
-  3. LDL → Calcium  
-  4. TC → Calcium
+#### Correlated (Coordinated) Pleiotropy
 
----
+SNPS influence the exposure and outcome through a shared mechanism or confounder.  Can produce a false positive causal effect.  Can fit using CAUSE models (Causal Analysis Using Summary Effect Estimates https://github.com/jean997/cause)
 
-### **Supplementary Figure S4. MR-PRESSO and Radial MR Analyses**
-- Radial plots identifying outlier SNPs and post-correction results.
-- Optional if using MR-PRESSO or radialMR package.
+#### Balanced Horizontal Pleiotropy
 
----
+Genes have multidirectional effects, but they cancel each other out.  Increases heterogeneity, but no directional bias.  Can use MR-PRESSO (Pleiotropy RESidual Sum and Outlier) analyses to detect outlier driven and balanced pleiotropy.  A significant global test, or multiple outliers supports average pleiotropy.  Also if MR-RAPS causal estiamte remain stable relative to IVW, pleiotropy is likely balanced rather than directional.
 
-### **Supplementary Figure S5. Heterogeneity and Pleiotropy Checks**
-- Barplots or small tables of:
-  - Cochran’s Q (IVW and Egger)
-  - MR-Egger intercept, SE, p-value
-
----
-
-### **Supplementary Figure S6. Influential SNPs and Annotations**
-- Leave-one-out tables/plots identifying top 10 influential SNPs per analysis.
-- Include nearest gene annotation for context.
-
----
-
-### **Supplementary Table S1. Full Instrument List**
-- SNP-level data for each exposure:
-  - CHR, POS, REF, ALT, effect_allele, other_allele,
-    beta.exposure, se.exposure, p.exposure, eaf.exposure, R², F, clump_lead.
-
----
-
-### **Supplementary Table S2. Harmonisation Summary**
-- Counts of SNPs at each filtering stage:
-  - Candidate → Harmonised → Palindromic dropped → Steiger filtered → Final N.
-
----
-
-### **Supplementary Table S3. Complete MR Output**
-- Full results for all MR methods:
-  - IVW, MR-Egger, Weighted Median, Weighted Mode, MR-RAPS, MR-PRESSO (if used)
-  - For each direction and outcome.
-
----
-
-### **Supplementary Methods**
-- Detailed pipeline description:
-  - Clumping parameters (r², window)
-  - Reference panel
-  - Harmonisation strategy
-  - Proxy SNP handling
-  - Software and package versions
-  - Exact GWAS summary statistic sources and sample sizes
-  - Code availability (GitHub/Zenodo)
-
----
-
-## Notes
+## Other Notes
 - IVW random-effects will serve as the **primary estimator**.
 - All other MR methods reported for sensitivity.
 - Same harmonisation and filtering pipeline applied in both directions.

@@ -367,6 +367,240 @@ summary(lm.calcium.chol.sex.bw)
 
 ```
 
+## Diagnostic Plots for Calcium - Cholesterol Models
+
+Based this analysis on [Bridges Lab Website - Linar Models](https://bridgeslab.github.io/Lab-Documents/Experimental%20Policies/correlations-linear-models.html#testing-the-assumptions-of-the-model)
+
+```{r calcium-chol-diagnostics}
+chol.ca.lm <- lm(chol2~calcium2+sex+diet, data=cholesterol.data)
+par(mfrow = c(2, 2))
+plot(chol.ca.lm)
+
+#checking for model curvature
+# Get the data actually used in the model (no NAs)
+model_data <- model.frame(chol.ca.lm)
+
+# Add residuals to that data
+model_data$resid <- residuals(chol.ca.lm)
+
+# Now plot residuals vs calcium2
+ggplot(model_data, aes(x=calcium2,y=resid)) +
+  geom_point() +
+  geom_abline(slope=0, intercept=0, color="red") +
+  geom_smooth(color="blue",se=FALSE) +
+  labs(y="Residuals",
+       x="Calcium (mg/dL)") +
+  theme_classic(base_size = 16)
+
+#checking for colinearity between covariates
+library(car)
+vif(chol.ca.lm) |> kable(caption="Variance inflation factors for calcium model, a value under 5 suggests a lack of colinearity")
+
+table(cholesterol.data$sex, cholesterol.data$diet) |> 
+  kable(caption="Balance counts for model")
+
+#group differences for residuals
+ggplot(model_data, aes(x=sex, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+
+ggplot(model_data, aes(x=diet, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+
+leveneTest(resid ~ sex,data =model_data) |> 
+  kable(caption="Test for equal variance of residuals by sex")
+leveneTest(resid ~ diet,data=model_data)|> 
+  kable(caption="Test for equal variance of residuals by diet", digits=c(1,2,99))
+
+#since diet residuals had unequal variance tried using robust standard errors
+library(sandwich)
+library(lmtest)
+
+# Calculate robust standard errors
+robust_se <- vcovHC(chol.ca.lm, type = "HC3")
+
+# Use coeftest for inference with robust SE
+coeftest(chol.ca.lm, vcov = robust_se) |> 
+  tidy() |>
+  kable(caption="Results using robust standard errors for calcium model", digits=c(0,2,2,3,99))
+```
+Looking at these visualizations:
+
+* From the Residuals vs Fitted plot, the points seem approximately evenly scattered, with mild non-linearity.  There is no strong funnel shape
+* The QQ plot shows moderately normal distribution of the residuals, with some outliers.  Suggests some non-normality in these residuals.
+* The Scale-Location plot shows a slight funnel shape, suggesting some non-constant variance (non homoscedasticity).  This is not a strong funnel shape, so it is not a major concern.
+* Residuals vs Leverage shows few influential outliers.
+* The plot of residuals vs fitted valus suggests some nonlinearity with the best fit line curving up at both ends.
+
+### Non-Linear Analysis of Cholsterol-Calcium
+
+```{r chol-calcium-nonlinear}
+#nonlinear quadratic
+chol.ca.poly <- lm(chol2 ~ calcium2 + I(calcium2^2) + sex + diet, data = cholesterol.data)
+
+#flexible splines
+library(splines)
+chol.ca.spline <- lm(chol2 ~ ns(calcium2, df = 4) + sex + diet, data = cholesterol.data)
+
+#generalized additive model
+library(mgcv)
+chol.ca.gam <- gam(chol2 ~ s(calcium2) + sex + diet, data = cholesterol.data)
+
+#comparing models
+AIC(chol.ca.lm, chol.ca.poly, chol.ca.spline, chol.ca.gam) |> kable(caption="AIC for nonlinear model fits")
+#summary(chol.ca.gam)  # look at edf for s(calcium2)
+```
+
+This suggests that the models all perform similarly (higher AIC is bad), in this case its probably best to stick with the linear model.  The linear model is easier to interpret and understand, and is likely sufficient for this analysis.
+
+## Bayesian Approach to Understanding Calcium-Cholesterol Relationship
+
+We employed a Bayesian approach to understanding the calcium-cholesterol relationship because it enables a continuous probability interpretation of the hypotheses under investigation, facilitates the incorporation of prior knowledge when available, and provides a direct and transparent quantification of uncertainty. Bayesian methods also offer substantial flexibility for modeling complex relationships and adjusting for confounding variables. This framework supports more intuitive and informative inferences regarding associations and potential causal effects, particularly when accounting for multiple confounders or integrating prior data.
+
+Our **goal** is to understand, in mice, the relationship between calcium and cholesterol, since it was nominated by our rergression tree approach.  We are **modeling** this in the form of a linear regression with sex and diet of the mice as non-interacting covariates.  
+
+```{r bayesian-calcium-cholesterol}
+# Load required packages
+library(brms)
+library(dplyr)
+
+# Define informative priors (adjust based on your epidemiological context)
+priors <- c(
+  # Prior for intercept - adjust mean/sd based on domain knowledge
+  prior(normal(80, 10), class = "Intercept"),
+  
+  # Priors for your covariates - adjusted to mak them slightly less informative
+  prior(normal(30, 45), class = "b", coef = "diethf"),
+  prior(normal(10, 30), class = "b", coef = "sexM"),
+  prior(normal(0, 30), class = "b", coef = "calcium2")
+)
+```
+
+```{r calcium-chol-model-running}
+#| results: "hide"
+# For sampling priors
+chol.ca.brms.priors <- brm(
+  chol2 ~ calcium2 + sex + diet,
+  data = cholesterol.data,
+  family = student(), # fits to the more robust t-distribution, based on posterior checks
+  prior = priors,
+  sample_prior = "only",
+  chains = 4,
+  iter = 2000
+)
+
+# Fit the Bayesian linear regression model
+chol.ca.brms <- brm(
+  formula = chol2 ~ calcium2 + sex + diet,
+  data = cholesterol.data,
+  family = student(),  # fits to the more robust t-distribution, based on posterior checks
+  prior = priors,
+  sample_prior = TRUE,  # For prior predictive checks
+  chains = 4,
+  iter = 4000,
+  warmup = 1000,
+  cores = 4,
+  control = list(adapt_delta = 0.95) # Helps prevent divergent transitions
+)
+```
+
+#### Prior Predictive Checks
+
+```{r calcium-chol-prior-predictive}
+prior_summary(chol.ca.brms) |>
+  kable(caption="Summary of priors information provided to brms")
+
+pp_check(chol.ca.brms.priors, type = "dens_overlay", ndraws = 100)  
+pp_check(chol.ca.brms.priors, type = "boxplot", group = "diet")
+pp_check(chol.ca.brms.priors, type = "boxplot", group = "sex")
+```
+
+### Checking for Model Convergence
+
+```{r calcium-chol-convergence}
+kable(data.frame(
+  Parameter = names(rhat(chol.ca.brms)),
+  Rhat = format(rhat(chol.ca.brms), nsmall = 5)),
+caption="Rhat values for model testing the association between weight and transmission (should b between 0.99 and 1.01 for convergence).",
+row.names = F)
+
+library(broom.mixed)
+tidy(chol.ca.brms, ess = TRUE) %>% kable(caption="Model random effects, including ESS")
+```
+
+The effective sample size was >`r tidy(chol.ca.brms, ess = TRUE)$ess |> min()` and Rhat ranged between `r format(rhat(chol.ca.brms), nsmall = 5) |> min()` and `r format(rhat(chol.ca.brms), nsmall = 5) |> max()`, indicating that the model converged well.
+
+### Posterior Prediction Checks
+
+```{r calcium-chol-posterior-predictive}
+pp_check(chol.ca.brms, type = "dens_overlay",ndraws=100)
+pp_check(chol.ca.brms, type = "stat", stat = "mean")
+pp_check(chol.ca.brms, type = "stat", stat = "sd")
+pp_check(chol.ca.brms, type = "boxplot", group = "diet")
+pp_check(chol.ca.brms, type = "boxplot", group = "sex")
+```
+
+### Posterior Summaries
+
+```{r calcium-chol-posterior-summaries}
+plot(chol.ca.brms)
+
+library(ggplot2)
+library(cowplot)
+b_calcium2_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_calcium2)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Calcium (beta)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+b_diet_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_diethf)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Diet (HF)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+b_sex_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_sexM)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Sex (M)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+# Align plots on the bottom axis
+aligned_plots <- align_plots(b_calcium2_plot, b_diet_plot, b_sex_plot, align = "v", axis = "b")
+
+# Draw the aligned plots in a grid
+plot_grid(plotlist = aligned_plots, ncol = 1)
+
+fixef(chol.ca.brms) %>% kable(caption="Posterior estimates", digits=3)
+
+hypothesis(chol.ca.brms, "calcium2>0")$hypothesis %>%
+  kable(caption="Hypothesis test that calcium effect is >0", digits=3)
+
+hypothesis(chol.ca.brms, "calcium2>10")$hypothesis %>%
+  kable(caption="Hypothesis test that calcium effect is >10", digits=3)
+```
+
+
 ## Effects of Diet and Sex on Calcium
 
 ```{r calcium-stratification}
@@ -391,6 +625,14 @@ cholesterol.data %>%
   filter(!is.na(calcium2)) %>%
   count %>%
   kable(caption="Total calcium values for complete DO dataset")
+
+cholesterol.data %>%
+  group_by(sex,diet) %>%
+  filter(!is.na(calcium2)) %>%
+  summarize(mean = mean(calcium2),
+            sd = sd(calcium2),
+            se = se(calcium2)) %>%
+  kable(caption="Summary statistics for calcium levels from complete DO dataset")
 
 cholesterol.data %>%
   ggplot(aes(y=calcium2,x=sex,
@@ -934,8 +1176,8 @@ left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
   arrange(-abs(estimate)) -> cor.data.combined
 
 cor.data.combined %>%
-  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
-        digits=c(0,3,0,99,99,3,3,99,99))
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter with cholesterol at 19 weeks",
+        digits=c(0,3,3,99,99,3,3,99,99))
 
 write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")
 

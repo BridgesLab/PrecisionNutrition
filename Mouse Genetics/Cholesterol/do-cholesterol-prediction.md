@@ -28,13 +28,13 @@ This analysis uses the complete dataset (F01-F425 and M01-M425).
 # Raw Data
 
 
-```r
+``` r
 phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
 ```
 
 
 
-```r
+``` r
 library(readr) #loads the readr package
 
 
@@ -58,7 +58,7 @@ The total number of mice with cholesterol levels in this dataset is 840
  mice, broken down as follows:
  
 
-```r
+``` r
 cholesterol.data %>%
   group_by(Diet,sex) %>%
   count() %>%
@@ -79,7 +79,7 @@ Table: Number of mice in each group
 ## Cholesterol Levels for NCD Annimals
 
 
-```r
+``` r
 cholesterol.data %>%
   group_by(sex,diet) %>%
   summarize_at(.vars=vars(chol1,chol2,chol.avg), .funs=list(~shapiro.test(.)$p.value)) %>%
@@ -97,7 +97,7 @@ Table: Groupwise Shapiro-Wilk normality tests for cholesterol levels
 |M   |chow | 0.00000| 0.00071|  0.00002|
 |M   |hf   | 0.04293| 0.01883|  0.09956|
 
-```r
+``` r
 library(ggplot2)
 cholesterol.data %>%
   select(sex,Diet,starts_with('chol')) %>%
@@ -115,7 +115,7 @@ cholesterol.data %>%
 ### Similarity at Both Time Points
 
 
-```r
+``` r
 summary.data.complete <-
   cholesterol.data %>%
   group_by(sex,Diet) %>%
@@ -137,7 +137,7 @@ Table: Cholesterol levels at 11 and 18 weeks
 |M   |NCD  |       96.4|       96.5|            97|     1.47|     1.57|        1.37|     22.0|     23.5|        20.6|
 |M   |HFHS |      128.2|      129.3|           128|     2.09|     2.33|        1.92|     29.1|     32.3|        26.7|
 
-```r
+``` r
 library(broom)
 wilcox.test(cholesterol.data$chol2,
        cholesterol.data$chol1, 
@@ -153,7 +153,7 @@ Table: Pairwise t-test ofcholesterol levels week 11 and week 18
 |---------:|-------:|:----------------------------------------------------|:-----------|
 |    147377|   0.474|Wilcoxon signed rank test with continuity correction |two.sided   |
 
-```r
+``` r
 summary.data.complete %>%
   pivot_longer(cols=starts_with('chol'),
                names_sep="_",
@@ -180,7 +180,7 @@ summary.data.complete %>%
 ![](figures/cholesterol-similarity-1.png)<!-- -->
 
 
-```r
+``` r
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
@@ -205,7 +205,7 @@ Table: Global interactions between sex and diet
 |diethf      |    34.64|      2.75|    12.615|   0.000|
 |sexM:diethf |    -1.86|      3.94|    -0.474|   0.636|
 
-```r
+``` r
 lm(chol2~sex+diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global effects of sex and diet, no interaction",
@@ -222,7 +222,7 @@ Table: Global effects of sex and diet, no interaction
 |sexM        |     16.9|      1.96|      8.64| 3.03e-17|
 |diethf      |     33.7|      1.97|     17.16| 1.37e-56|
 
-```r
+``` r
 cholesterol.data %>%
   group_by(sex,diet) %>%
   filter(!is.na(chol2)) %>%
@@ -241,7 +241,7 @@ Table: Total cholesterol values at 19 weeks for the complete DO dataset
 |M   |chow | 216|
 |M   |hf   | 183|
 
-```r
+``` r
 library(ggplot2)
 cholesterol.data %>%
   ggplot(aes(y=chol2,x=sex,
@@ -269,7 +269,7 @@ There is no evidence of an interaction between sex and diet, though both covaria
 Classified elevated cholesterol as being greater than the mean for the averaged cholesterol data for all mice
 
 
-```r
+``` r
 cholesterol.data <-
   cholesterol.data %>%
   mutate(High.Chol = chol2 > mean(chol2,na.rm=T)) %>%
@@ -282,7 +282,7 @@ cholesterol.data <-
 First used only sex and diet to predict using classification trees
 
 
-```r
+``` r
 library(tree)
 
 # load libraries
@@ -298,7 +298,7 @@ fancyRpartPlot(tree.sex.diet)
 Next included fat mass as a predictor
 
 
-```r
+``` r
 tree.fat <- rpart(High.Chol~sex+diet+percfat2, data=cholesterol.data)
 log.fat <- glm(High.Chol~sex+diet+percfat2, data=cholesterol.data, family='binomial')
 log.fat %>% tidy %>% kable(caption="Logistic regression for sex and diet as predictors of above average cholesterol levels")
@@ -315,14 +315,14 @@ Table: Logistic regression for sex and diet as predictors of above average chole
 |diethf      |     1.47|     0.187|      7.88|       0|
 |percfat2    |     4.59|     1.035|      4.44|       0|
 
-```r
+``` r
 fancyRpartPlot(tree.sex.diet)
 ```
 
 ![](figures/fat-tree-1.png)<!-- -->
 
 
-```r
+``` r
 #function to figure out if all columns are na, pass to select  
 not_all_na <- function(x) any(!is.na(x))  
 
@@ -349,13 +349,13 @@ fancyRpartPlot(tree.all.cont, main="Full tree, predicting continuous cholesterol
 
 ![](figures/full-tree-1.png)<!-- -->
 
-```r
+``` r
 fancyRpartPlot(tree.all.high, main="Full tree, predicting above average cholesterol levels")
 ```
 
 ![](figures/full-tree-2.png)<!-- -->
 
-```r
+``` r
 #pruning of the continuous model, first showed the complexity parameter table
 tree.all.cont$cptable %>% kable(caption="Complexity parameter table, used to idenfiy minumum crossvalidated error rate (xerror)")
 ```
@@ -367,20 +367,20 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
 | 0.247|      0|     1.000|  1.003| 0.059|
-| 0.064|      1|     0.753|  0.760| 0.045|
-| 0.060|      2|     0.689|  0.732| 0.045|
-| 0.036|      3|     0.629|  0.641| 0.040|
-| 0.023|      4|     0.593|  0.646| 0.045|
-| 0.022|      5|     0.569|  0.643| 0.046|
-| 0.015|      6|     0.547|  0.636| 0.045|
-| 0.015|      7|     0.532|  0.619| 0.043|
-| 0.014|      8|     0.516|  0.625| 0.043|
-| 0.011|      9|     0.502|  0.647| 0.043|
-| 0.011|     10|     0.491|  0.653| 0.045|
-| 0.010|     11|     0.481|  0.653| 0.045|
-| 0.010|     12|     0.470|  0.646| 0.041|
+| 0.064|      1|     0.753|  0.757| 0.045|
+| 0.060|      2|     0.689|  0.738| 0.045|
+| 0.036|      3|     0.629|  0.636| 0.040|
+| 0.023|      4|     0.593|  0.649| 0.043|
+| 0.022|      5|     0.569|  0.650| 0.043|
+| 0.015|      6|     0.547|  0.646| 0.043|
+| 0.015|      7|     0.532|  0.646| 0.043|
+| 0.014|      8|     0.516|  0.646| 0.043|
+| 0.011|      9|     0.502|  0.660| 0.045|
+| 0.011|     10|     0.491|  0.665| 0.045|
+| 0.010|     11|     0.481|  0.665| 0.045|
+| 0.010|     12|     0.470|  0.667| 0.045|
 
-```r
+``` r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
 
 fancyRpartPlot(tree.all.cont.pruned, uniform=TRUE, main="Pruned tree predicting continuous cholesterol levels")
@@ -388,7 +388,7 @@ fancyRpartPlot(tree.all.cont.pruned, uniform=TRUE, main="Pruned tree predicting 
 
 ![](figures/full-tree-3.png)<!-- -->
 
-```r
+``` r
 rpart.plot::prp(tree.all.cont.pruned, extra=1, 
                 main="",
                 cex=1.2) 
@@ -396,7 +396,7 @@ rpart.plot::prp(tree.all.cont.pruned, extra=1,
 
 ![](figures/full-tree-4.png)<!-- -->
 
-```r
+``` r
 tree.all.cont.pruned
 ```
 
@@ -416,7 +416,7 @@ tree.all.cont.pruned
 ```
 
 
-```r
+``` r
 log.calcium <- glm(High.Chol~sex+diet+tg2+calcium2, data=cholesterol.data, family='binomial')
 summary(log.calcium)
 ```
@@ -426,10 +426,6 @@ summary(log.calcium)
 ## Call:
 ## glm(formula = High.Chol ~ sex + diet + tg2 + calcium2, family = "binomial", 
 ##     data = cholesterol.data)
-## 
-## Deviance Residuals: 
-##    Min      1Q  Median      3Q     Max  
-## -2.811  -0.788  -0.265   0.818   2.557  
 ## 
 ## Coefficients:
 ##              Estimate Std. Error z value Pr(>|z|)    
@@ -451,7 +447,7 @@ summary(log.calcium)
 ## Number of Fisher Scoring iterations: 5
 ```
 
-```r
+``` r
 library(ggplot2)
 
 ggplot(data=cholesterol.data,
@@ -476,7 +472,7 @@ ggplot(data=cholesterol.data,
 
 ![](figures/Calcium-1.png)<!-- -->
 
-```r
+``` r
  lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of cholesterol with calcium",
@@ -494,7 +490,7 @@ Table: Diet adjusted association of cholesterol with calcium
 |sexM        |     17.7|     1.779|      9.98| 4.04e-22|
 |calcium2    |     12.6|     0.866|     14.52| 2.31e-42|
 
-```r
+``` r
   lm(chol2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    glance %>% 
    kable(caption="Diet adjusted association of cholesterol with triglycerides",
@@ -509,7 +505,7 @@ Table: Diet adjusted association of cholesterol with triglycerides
 |---------:|-------------:|-----:|---------:|-------:|--:|------:|----:|----:|--------:|-----------:|----:|
 |     0.452|          0.45|  24.6|       210|   4e-99|  3|  -3538| 7086| 7109|   460649|         762|  766|
 
-```r
+``` r
 cholesterol.data %>%
   group_by(Diet,sex) %>%
   summarize(Estimate = cor.test(chol2,calcium2, method="spearman")$estimate,
@@ -529,7 +525,7 @@ Table: Spearman's rho estimates for cholesterol and calcium for each subgroup of
 |HFHS |F   |    0.384| 2.24e-07|
 |HFHS |M   |    0.470| 1.88e-11|
 
-```r
+``` r
 lm.calcium.1 <- lm(chol2~calcium2, data=cholesterol.data)
 lm.calcium.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
 lm.calcium.3 <- lm(chol2~calcium2+sex+diet, data=cholesterol.data)
@@ -551,7 +547,7 @@ anova(lm.calcium.3,lm.calcium.4)
 ## 2    762 608722  0   -148072
 ```
 
-```r
+``` r
 lm.calcium.9 <- lm(chol2~sex+diet*calcium2, data=cholesterol.data)
 aov.calcium <- aov(chol2~sex+diet+calcium2, data=cholesterol.data)
 summary(lm.calcium.1) %>% tidy %>% kable(caption="Effects of calcium on cholesterol at 18w", digits=50)
@@ -566,7 +562,7 @@ Table: Effects of calcium on cholesterol at 18w
 |(Intercept) |    -28.2|      9.52|     -2.96| 3.12e-03|
 |calcium2    |     14.4|      1.03|     13.91| 2.17e-39|
 
-```r
+``` r
 summary(lm.calcium.2) %>% tidy %>% kable(caption="Sex adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -580,7 +576,7 @@ Table: Sex adjusted effects of calcium on cholesterol at 18w
 |calcium2    |     14.6|     0.987|     14.75| 1.75e-43|
 |sexM        |     17.6|     2.048|      8.61| 4.24e-17|
 
-```r
+``` r
 summary(lm.calcium.3) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -595,7 +591,7 @@ Table: Sex and diet adjusted effects of calcium on cholesterol at 18w
 |sexM        |     17.7|     1.779|      9.98| 4.04e-22|
 |diethf      |     28.4|     1.801|     15.80| 7.60e-49|
 
-```r
+``` r
 summary(lm.calcium.4) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -610,7 +606,7 @@ Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
 |sexM        |  16.5404|    2.1255|      7.78| 2.33e-14|
 |tg2         |   0.0346|    0.0185|      1.87| 6.13e-02|
 
-```r
+``` r
 summary(lm.calcium.5) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -625,7 +621,7 @@ Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
 |sexM        |     6.59|     2.378|      2.77| 5.70e-03|
 |bw.19       |     1.24|     0.150|      8.29| 5.12e-16|
 
-```r
+``` r
 summary(lm.calcium.6) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -640,7 +636,7 @@ Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
 |diethf      |     28.4|     1.801|     15.80| 7.60e-49|
 |calcium2    |     12.6|     0.866|     14.52| 2.31e-42|
 
-```r
+``` r
 summary(lm.calcium.7) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -656,7 +652,7 @@ Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
 |calcium2    |   10.783|    0.8767|     12.30| 7.72e-32|
 |tg2         |    0.115|    0.0162|      7.10| 2.91e-12|
 
-```r
+``` r
 summary(lm.calcium.8) %>% tidy %>% kable(caption="Sex and diet and tg adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -673,7 +669,7 @@ Table: Sex and diet and tg adjusted effects of calcium on cholesterol at 18w
 |tg2         |    0.110|    0.0162|      6.75| 2.90e-11|
 |bw.19       |    0.434|    0.1413|      3.07| 2.20e-03|
 
-```r
+``` r
 lm.calcium.chow <- lm(chol2~sex+calcium2, filter(cholesterol.data, diet == "chow"))
 summary(lm.calcium.chow) %>% glance %>% kable
 ```
@@ -684,7 +680,7 @@ summary(lm.calcium.chow) %>% glance %>% kable
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.325|         0.322|  19.9|      98.4|       0|  2|         409|  412|
 
-```r
+``` r
 lm.calcium.hf <- lm(chol2~sex+calcium2, filter(cholesterol.data, diet == "hf"))
 summary(lm.calcium.hf) %>% glance %>% kable
 ```
@@ -695,7 +691,7 @@ summary(lm.calcium.hf) %>% glance %>% kable
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.273|         0.269|  28.9|        66|       0|  2|         351|  354|
 
-```r
+``` r
 lm.calcium <- lm(chol2~sex+diet+calcium2, cholesterol.data)
 summary(lm.calcium) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and diet")
 ```
@@ -708,7 +704,7 @@ Table: Linear model of calcium on cholesterol adjusting for sex and diet
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.452|          0.45|  24.6|       210|       0|  3|         762|  766|
 
-```r
+``` r
 library(effectsize)
 eta_squared(lm.calcium, partial = TRUE) %>% kable(caption="Partial effect sizes for calcium model")
 ```
@@ -723,7 +719,7 @@ Table: Partial effect sizes for calcium model
 |diet      |        0.300| 0.95|  0.258|       1|
 |calcium2  |        0.217| 0.95|  0.176|       1|
 
-```r
+``` r
 #moderation by triglycerides
 lm.calcium.tg <- lm(chol2~sex+diet+calcium2+tg2, cholesterol.data)
 summary(lm.calcium.tg) %>% tidy %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex, diet and triglycerides")
@@ -741,7 +737,7 @@ Table: Linear model of calcium on cholesterol adjusting for sex, diet and trigly
 |calcium2    |   10.783|     0.877|     12.30|       0|
 |tg2         |    0.115|     0.016|      7.10|       0|
 
-```r
+``` r
 anova(lm.calcium,lm.calcium.tg)%>% 
   kable(caption="Comparason of models with or without triglyceride levels",
         digits=c(0,0,0,0,0,99))
@@ -756,7 +752,7 @@ Table: Comparason of models with or without triglyceride levels
 |    762| 460649| NA|        NA| NA|       NA|
 |    761| 432050|  1|     28600| 50| 2.91e-12|
 
-```r
+``` r
 lm.calcium.chol <- lm(chol2~calcium2, cholesterol.data)
 summary(lm.calcium.chol) %>% glance %>% kable(caption="Linear model of calcium on cholesterol")
 ```
@@ -769,7 +765,7 @@ Table: Linear model of calcium on cholesterol
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.202|         0.201|  29.6|       194|       0|  1|         764|  766|
 
-```r
+``` r
 lm.calcium.chol.sex <- lm(chol2~calcium2+sex, cholesterol.data)
 summary(lm.calcium.chol.sex) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex")
 ```
@@ -782,7 +778,7 @@ Table: Linear model of calcium on cholesterol adjusting for sex
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.273|         0.271|  28.3|       143|       0|  2|         763|  766|
 
-```r
+``` r
 lm.calcium.chol.sex.bw <- lm(chol2~calcium2+sex+bw.19, cholesterol.data)
 summary(lm.calcium.chol.sex.bw) %>% glance %>% kable(caption="Linear model of calcium on cholesterol adjusting for sex and bw")
 ```
@@ -795,7 +791,7 @@ Table: Linear model of calcium on cholesterol adjusting for sex and bw
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.334|         0.331|  27.1|       127|       0|  3|         761|  765|
 
-```r
+``` r
 summary(lm.calcium.chol)
 ```
 
@@ -821,7 +817,7 @@ summary(lm.calcium.chol)
 ## F-statistic:  194 on 1 and 764 DF,  p-value: <2e-16
 ```
 
-```r
+``` r
 summary(lm.calcium.chol.sex)
 ```
 
@@ -848,7 +844,7 @@ summary(lm.calcium.chol.sex)
 ## F-statistic:  143 on 2 and 763 DF,  p-value: <2e-16
 ```
 
-```r
+``` r
 summary(lm.calcium.chol.sex.bw)
 ```
 
@@ -876,10 +872,467 @@ summary(lm.calcium.chol.sex.bw)
 ## F-statistic:  127 on 3 and 761 DF,  p-value: <2e-16
 ```
 
+## Diagnostic Plots for Calcium - Cholesterol Models
+
+Based this analysis on [Bridges Lab Website - Linar Models](https://bridgeslab.github.io/Lab-Documents/Experimental%20Policies/correlations-linear-models.html#testing-the-assumptions-of-the-model)
+
+
+``` r
+chol.ca.lm <- lm(chol2~calcium2+sex+diet, data=cholesterol.data)
+par(mfrow = c(2, 2))
+plot(chol.ca.lm)
+```
+
+![](figures/calcium-chol-diagnostics-1.png)<!-- -->
+
+``` r
+#checking for model curvature
+# Get the data actually used in the model (no NAs)
+model_data <- model.frame(chol.ca.lm)
+
+# Add residuals to that data
+model_data$resid <- residuals(chol.ca.lm)
+
+# Now plot residuals vs calcium2
+ggplot(model_data, aes(x=calcium2,y=resid)) +
+  geom_point() +
+  geom_abline(slope=0, intercept=0, color="red") +
+  geom_smooth(color="blue",se=FALSE) +
+  labs(y="Residuals",
+       x="Calcium (mg/dL)") +
+  theme_classic(base_size = 16)
+```
+
+![](figures/calcium-chol-diagnostics-2.png)<!-- -->
+
+``` r
+#checking for colinearity between covariates
+library(car)
+vif(chol.ca.lm) |> kable(caption="Variance inflation factors for calcium model, a value under 5 suggests a lack of colinearity")
+```
+
+
+
+Table: Variance inflation factors for calcium model, a value under 5 suggests a lack of colinearity
+
+|         |    x|
+|:--------|----:|
+|calcium2 | 1.02|
+|sex      | 1.00|
+|diet     | 1.02|
+
+``` r
+table(cholesterol.data$sex, cholesterol.data$diet) |> 
+  kable(caption="Balance counts for model")
+```
+
+
+
+Table: Balance counts for model
+
+|   | chow|  hf|
+|:--|----:|---:|
+|F  |  225| 198|
+|M  |  224| 193|
+
+``` r
+#group differences for residuals
+ggplot(model_data, aes(x=sex, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+```
+
+![](figures/calcium-chol-diagnostics-3.png)<!-- -->
+
+``` r
+ggplot(model_data, aes(x=diet, y=resid)) + 
+  geom_boxplot(outliers = F) +
+  geom_jitter() +
+  labs(y="Residuals") +
+  theme_classic(base_size = 16)
+```
+
+![](figures/calcium-chol-diagnostics-4.png)<!-- -->
+
+``` r
+leveneTest(resid ~ sex,data =model_data) |> 
+  kable(caption="Test for equal variance of residuals by sex")
+```
+
+
+
+Table: Test for equal variance of residuals by sex
+
+|      |  Df| F value| Pr(>F)|
+|:-----|---:|-------:|------:|
+|group |   1|   0.263|  0.608|
+|      | 764|      NA|     NA|
+
+``` r
+leveneTest(resid ~ diet,data=model_data)|> 
+  kable(caption="Test for equal variance of residuals by diet", digits=c(1,2,99))
+```
+
+
+
+Table: Test for equal variance of residuals by diet
+
+|      |  Df| F value|   Pr(>F)|
+|:-----|---:|-------:|--------:|
+|group |   1|    31.1| 3.44e-08|
+|      | 764|      NA|       NA|
+
+``` r
+#since diet residuals had unequal variance tried using robust standard errors
+library(sandwich)
+library(lmtest)
+
+# Calculate robust standard errors
+robust_se <- vcovHC(chol.ca.lm, type = "HC3")
+
+# Use coeftest for inference with robust SE
+coeftest(chol.ca.lm, vcov = robust_se) |> 
+  tidy() |>
+  kable(caption="Results using robust standard errors for calcium model", digits=c(0,2,2,3,99))
+```
+
+
+
+Table: Results using robust standard errors for calcium model
+
+|term        | estimate| std.error| statistic|  p.value|
+|:-----------|--------:|---------:|---------:|--------:|
+|(Intercept) |    -34.2|      6.98|     -4.90| 1.17e-06|
+|calcium2    |     12.6|      0.78|     16.22| 4.64e-51|
+|sexM        |     17.8|      1.78|      9.96| 4.77e-22|
+|diethf      |     28.4|      1.83|     15.55| 1.50e-47|
+Looking at these visualizations:
+
+* From the Residuals vs Fitted plot, the points seem approximately evenly scattered, with mild non-linearity.  There is no strong funnel shape
+* The QQ plot shows moderately normal distribution of the residuals, with some outliers.  Suggests some non-normality in these residuals.
+* The Scale-Location plot shows a slight funnel shape, suggesting some non-constant variance (non homoscedasticity).  This is not a strong funnel shape, so it is not a major concern.
+* Residuals vs Leverage shows few influential outliers.
+* The plot of residuals vs fitted valus suggests some nonlinearity with the best fit line curving up at both ends.
+
+### Non-Linear Analysis of Cholsterol-Calcium
+
+
+``` r
+#nonlinear quadratic
+chol.ca.poly <- lm(chol2 ~ calcium2 + I(calcium2^2) + sex + diet, data = cholesterol.data)
+
+#flexible splines
+library(splines)
+chol.ca.spline <- lm(chol2 ~ ns(calcium2, df = 4) + sex + diet, data = cholesterol.data)
+
+#generalized additive model
+library(mgcv)
+chol.ca.gam <- gam(chol2 ~ s(calcium2) + sex + diet, data = cholesterol.data)
+
+#comparing models
+AIC(chol.ca.lm, chol.ca.poly, chol.ca.spline, chol.ca.gam) |> kable(caption="AIC for nonlinear model fits")
+```
+
+
+
+Table: AIC for nonlinear model fits
+
+|               | df|  AIC|
+|:--------------|--:|----:|
+|chol.ca.lm     |  5| 7086|
+|chol.ca.poly   |  6| 7086|
+|chol.ca.spline |  8| 7089|
+|chol.ca.gam    |  5| 7086|
+
+``` r
+#summary(chol.ca.gam)  # look at edf for s(calcium2)
+```
+
+This suggests that the models all perform similarly (higher AIC is bad), in this case its probably best to stick with the linear model.  The linear model is easier to interpret and understand, and is likely sufficient for this analysis.
+
+## Bayesian Approach to Understanding Calcium-Cholesterol Relationship
+
+We employed a Bayesian approach to understanding the calcium-cholesterol relationship because it enables a continuous probability interpretation of the hypotheses under investigation, facilitates the incorporation of prior knowledge when available, and provides a direct and transparent quantification of uncertainty. Bayesian methods also offer substantial flexibility for modeling complex relationships and adjusting for confounding variables. This framework supports more intuitive and informative inferences regarding associations and potential causal effects, particularly when accounting for multiple confounders or integrating prior data.
+
+Our **goal** is to understand, in mice, the relationship between calcium and cholesterol, since it was nominated by our rergression tree approach.  We are **modeling** this in the form of a linear regression with sex and diet of the mice as non-interacting covariates.  
+
+
+``` r
+# Load required packages
+library(brms)
+library(dplyr)
+
+# Define informative priors (adjust based on your epidemiological context)
+priors <- c(
+  # Prior for intercept - adjust mean/sd based on domain knowledge
+  prior(normal(80, 10), class = "Intercept"),
+  
+  # Priors for your covariates - adjusted to mak them slightly less informative
+  prior(normal(30, 45), class = "b", coef = "diethf"),
+  prior(normal(10, 30), class = "b", coef = "sexM"),
+  prior(normal(0, 30), class = "b", coef = "calcium2")
+)
+```
+
+
+``` r
+# For sampling priors
+chol.ca.brms.priors <- brm(
+  chol2 ~ calcium2 + sex + diet,
+  data = cholesterol.data,
+  family = student(), # fits to the more robust t-distribution, based on posterior checks
+  prior = priors,
+  sample_prior = "only",
+  chains = 4,
+  iter = 2000
+)
+
+# Fit the Bayesian linear regression model
+chol.ca.brms <- brm(
+  formula = chol2 ~ calcium2 + sex + diet,
+  data = cholesterol.data,
+  family = student(),  # fits to the more robust t-distribution, based on posterior checks
+  prior = priors,
+  sample_prior = TRUE,  # For prior predictive checks
+  chains = 4,
+  iter = 4000,
+  warmup = 1000,
+  cores = 4,
+  control = list(adapt_delta = 0.95) # Helps prevent divergent transitions
+)
+```
+
+#### Prior Predictive Checks
+
+
+``` r
+prior_summary(chol.ca.brms) |>
+  kable(caption="Summary of priors information provided to brms")
+```
+
+
+
+Table: Summary of priors information provided to brms
+
+|prior                 |class     |coef     |group |resp |dpar |nlpar |lb |ub |source  |
+|:---------------------|:---------|:--------|:-----|:----|:----|:-----|:--|:--|:-------|
+|                      |b         |         |      |     |     |      |   |   |default |
+|normal(0, 30)         |b         |calcium2 |      |     |     |      |   |   |user    |
+|normal(30, 45)        |b         |diethf   |      |     |     |      |   |   |user    |
+|normal(10, 30)        |b         |sexM     |      |     |     |      |   |   |user    |
+|normal(80, 10)        |Intercept |         |      |     |     |      |   |   |user    |
+|gamma(2, 0.1)         |nu        |         |      |     |     |      |1  |   |default |
+|student_t(3, 0, 31.9) |sigma     |         |      |     |     |      |0  |   |default |
+
+``` r
+pp_check(chol.ca.brms.priors, type = "dens_overlay", ndraws = 100)  
+```
+
+![](figures/calcium-chol-prior-predictive-1.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms.priors, type = "boxplot", group = "diet")
+```
+
+![](figures/calcium-chol-prior-predictive-2.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms.priors, type = "boxplot", group = "sex")
+```
+
+![](figures/calcium-chol-prior-predictive-3.png)<!-- -->
+
+### Checking for Model Convergence
+
+
+``` r
+kable(data.frame(
+  Parameter = names(rhat(chol.ca.brms)),
+  Rhat = format(rhat(chol.ca.brms), nsmall = 5)),
+caption="Rhat values for model testing the association between weight and transmission (should b between 0.99 and 1.01 for convergence).",
+row.names = F)
+```
+
+
+
+Table: Rhat values for model testing the association between weight and transmission (should b between 0.99 and 1.01 for convergence).
+
+|Parameter        |Rhat    |
+|:----------------|:-------|
+|b_Intercept      |0.99998 |
+|b_calcium2       |1.00015 |
+|b_sexM           |1.00065 |
+|b_diethf         |1.00033 |
+|sigma            |1.00068 |
+|nu               |1.00068 |
+|Intercept        |1.00047 |
+|prior_Intercept  |1.00029 |
+|prior_b_calcium2 |1.00003 |
+|prior_b_sexM     |1.00020 |
+|prior_b_diethf   |1.00028 |
+|prior_sigma      |1.00007 |
+|prior_nu         |0.99997 |
+|lprior           |1.00036 |
+|lp__             |1.00067 |
+
+``` r
+library(broom.mixed)
+tidy(chol.ca.brms, ess = TRUE) %>% kable(caption="Model random effects, including ESS")
+```
+
+
+
+Table: Model random effects, including ESS
+
+|effect   |component |group    |term                           | estimate| std.error| conf.low| conf.high|   ess|
+|:--------|:---------|:--------|:------------------------------|--------:|---------:|--------:|---------:|-----:|
+|fixed    |cond      |NA       |(Intercept)                    |  -30.381|     7.140|    -44.6|     -16.5| 12157|
+|fixed    |cond      |NA       |calcium2                       |   12.107|     0.780|     10.6|      13.6| 11815|
+|fixed    |cond      |NA       |sexM                           |   17.555|     1.672|     14.2|      20.9| 10645|
+|fixed    |cond      |NA       |diethf                         |   26.921|     1.732|     23.5|      30.3| 11119|
+|fixed    |cond      |NA       |sigma                          |   20.874|     0.875|     19.2|      22.6|  8291|
+|fixed    |cond      |NA       |priorcalcium2                  |    0.834|    30.201|    -58.7|      59.3| 11971|
+|fixed    |cond      |NA       |priorsexM                      |   10.641|    29.866|    -47.6|      69.7| 11403|
+|ran_pars |cond      |Residual |sd__Observation                |   30.346|    45.195|    -58.7|     118.9| 11738|
+|ran_pars |cond      |Residual |prior_sigma__NA.NA.prior_sigma |   35.212|    39.871|      1.1|     136.6| 11691|
+
+The effective sample size was >8290.675 and Rhat ranged between 0.99997 and 1.00068, indicating that the model converged well.
+
+### Posterior Prediction Checks
+
+
+``` r
+pp_check(chol.ca.brms, type = "dens_overlay",ndraws=100)
+```
+
+![](figures/calcium-chol-posterior-predictive-1.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "stat", stat = "mean")
+```
+
+![](figures/calcium-chol-posterior-predictive-2.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "stat", stat = "sd")
+```
+
+![](figures/calcium-chol-posterior-predictive-3.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "boxplot", group = "diet")
+```
+
+![](figures/calcium-chol-posterior-predictive-4.png)<!-- -->
+
+``` r
+pp_check(chol.ca.brms, type = "boxplot", group = "sex")
+```
+
+![](figures/calcium-chol-posterior-predictive-5.png)<!-- -->
+
+### Posterior Summaries
+
+
+``` r
+plot(chol.ca.brms)
+```
+
+![](figures/calcium-chol-posterior-summaries-1.png)<!-- -->![](figures/calcium-chol-posterior-summaries-2.png)<!-- -->
+
+``` r
+library(ggplot2)
+library(cowplot)
+b_calcium2_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_calcium2)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Calcium (beta)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+b_diet_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_diethf)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Diet (HF)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+b_sex_plot <- 
+  as_draws_df(chol.ca.brms) %>%
+  ggplot(aes(x=b_sexM)) +
+  geom_density(fill="#FFCB05") +
+  geom_vline(xintercept=0,color="#00274C",lty=2) +
+  labs(y="",
+       x="",
+       title="Sex (M)") +
+  coord_cartesian(xlim = c(0,35)) +
+  theme_classic(base_size=10)
+
+# Align plots on the bottom axis
+aligned_plots <- align_plots(b_calcium2_plot, b_diet_plot, b_sex_plot, align = "v", axis = "b")
+
+# Draw the aligned plots in a grid
+plot_grid(plotlist = aligned_plots, ncol = 1)
+```
+
+![](figures/calcium-chol-posterior-summaries-3.png)<!-- -->
+
+``` r
+fixef(chol.ca.brms) %>% kable(caption="Posterior estimates", digits=3)
+```
+
+
+
+Table: Posterior estimates
+
+|          | Estimate| Est.Error|  Q2.5| Q97.5|
+|:---------|--------:|---------:|-----:|-----:|
+|Intercept |    -30.4|      7.14| -44.6| -16.5|
+|calcium2  |     12.1|      0.78|  10.6|  13.6|
+|sexM      |     17.6|      1.67|  14.2|  20.9|
+|diethf    |     26.9|      1.73|  23.5|  30.3|
+
+``` r
+hypothesis(chol.ca.brms, "calcium2>0")$hypothesis %>%
+  kable(caption="Hypothesis test that calcium effect is >0", digits=3)
+```
+
+
+
+Table: Hypothesis test that calcium effect is >0
+
+|Hypothesis     | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
+|:--------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
+|(calcium2) > 0 |     12.1|      0.78|     10.8|     13.4|        Inf|         1|*    |
+
+``` r
+hypothesis(chol.ca.brms, "calcium2>10")$hypothesis %>%
+  kable(caption="Hypothesis test that calcium effect is >10", digits=3)
+```
+
+
+
+Table: Hypothesis test that calcium effect is >10
+
+|Hypothesis          | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
+|:-------------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
+|(calcium2)-(10) > 0 |     2.11|      0.78|    0.833|     3.41|        363|     0.997|*    |
+
+
 ## Effects of Diet and Sex on Calcium
 
 
-```r
+``` r
 summary.data <-
   cholesterol.data %>%
   group_by(sex,diet) %>%
@@ -903,7 +1356,7 @@ Table: Global interactions between sex and diet on calcium levels
 |diethf      |    0.197|     0.107|      1.84|   0.067|
 |sexM:diethf |    0.202|     0.149|      1.36|   0.174|
 
-```r
+``` r
 lm(calcium2~sex+diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Global effects of sex and diet on calcium levels, no interaction",
@@ -920,7 +1373,7 @@ Table: Global effects of sex and diet on calcium levels, no interaction
 |sexM        |    -0.04|      0.07|     -0.54| 0.5915731|
 |diethf      |     0.30|      0.07|      4.07| 0.0000511|
 
-```r
+``` r
 cholesterol.data %>%
   group_by(sex,diet) %>%
   filter(!is.na(calcium2)) %>%
@@ -939,7 +1392,28 @@ Table: Total calcium values for complete DO dataset
 |M   |chow | 216|
 |M   |hf   | 185|
 
-```r
+``` r
+cholesterol.data %>%
+  group_by(sex,diet) %>%
+  filter(!is.na(calcium2)) %>%
+  summarize(mean = mean(calcium2),
+            sd = sd(calcium2),
+            se = se(calcium2)) %>%
+  kable(caption="Summary statistics for calcium levels from complete DO dataset")
+```
+
+
+
+Table: Summary statistics for calcium levels from complete DO dataset
+
+|sex |diet | mean|    sd|    se|
+|:---|:----|----:|-----:|-----:|
+|F   |chow | 9.09| 1.070| 0.076|
+|F   |hf   | 9.29| 0.829| 0.063|
+|M   |chow | 8.96| 1.023| 0.070|
+|M   |hf   | 9.35| 1.140| 0.084|
+
+``` r
 cholesterol.data %>%
   ggplot(aes(y=calcium2,x=sex,
              fill=Diet)) +
@@ -962,7 +1436,7 @@ cholesterol.data %>%
 ## Proportions of Elevated Calcium and Cholesterol
 
 
-```r
+``` r
 cutoff.counts <- 
   cholesterol.data %>%
   mutate(High.Ca = calcium2>10.5,
@@ -986,7 +1460,7 @@ kable(cutoff.counts %>% mutate(High.Chol.pct=High.Chol/(Not.High.Chol+High.Chol)
 |FALSE |           727|         6|         0.819|
 |TRUE  |            31|         2|         6.061|
 
-```r
+``` r
 fisher.test(as.matrix(cutoff.counts)) %>% tidy(caption="Fisher Test for enrichment of high cholesterol in mice with high calcium")
 ```
 
@@ -1000,7 +1474,7 @@ fisher.test(as.matrix(cutoff.counts)) %>% tidy(caption="Fisher Test for enrichme
 # Bone Content and Density
 
 
-```r
+``` r
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=bmd2,
@@ -1022,7 +1496,7 @@ ggplot(data=cholesterol.data,
 
 ![](figures/bmd-1.png)<!-- -->
 
-```r
+``` r
  lm(chol2~Diet+sex+bmd2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of cholesterol with bone mineral density",
@@ -1041,7 +1515,7 @@ Table: Diet adjusted association of cholesterol with bone mineral density
 |bmd2        |    -1.19|      9.79|     -0.12| 9.03e-01|
 
 
-```r
+``` r
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=bmc2,
@@ -1063,7 +1537,7 @@ ggplot(data=cholesterol.data,
 
 ![](figures/bmc-1.png)<!-- -->
 
-```r
+``` r
  lm(chol2~Diet+sex+bmc2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of cholesterol with bone mineral content",
@@ -1088,7 +1562,7 @@ Looked at the associations between HDL-C and non-HDL-C on calcium levels.
 ### HDL-C
 
 
-```r
+``` r
 ggplot(data=cholesterol.data,
        aes(y=hdld2,
            x=calcium2,
@@ -1113,7 +1587,7 @@ hdlc.calcium.plot
 
 ![](figures/hdl-1.png)<!-- -->
 
-```r
+``` r
  lm(hdld2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of HDL-C with calcium",
@@ -1134,7 +1608,7 @@ Table: Diet adjusted association of HDL-C with calcium
 ### Non-HDL Cholesterol
 
 
-```r
+``` r
 cholesterol.data <-
   cholesterol.data %>%
   mutate(nonhdlc2 = chol2-hdld2,
@@ -1165,7 +1639,7 @@ nonhdlc2.calcium.plot
 
 ![](figures/non-hdl-1.png)<!-- -->
 
-```r
+``` r
  lm(nonhdlc2~Diet+sex+calcium2, data=cholesterol.data) %>% 
    tidy %>%    kable(caption="Diet adjusted association of non-HDL cholesterol with calcium",
          digits=c(0,3,3,2,99))
@@ -1185,7 +1659,7 @@ Table: Diet adjusted association of non-HDL cholesterol with calcium
 ### Both Apolipopotein Fraction Plots  
  
 
-```r
+``` r
 cholesterol.data %>%
   group_by(Diet,sex) %>%
   summarize_at(.vars=vars(chol2,hdld2,nonhdlc2)
@@ -1204,7 +1678,7 @@ cholesterol.data %>%
 ## 4 HFHS  M          129.       108.           21.3  5.07
 ```
 
-```r
+``` r
 library(gridExtra)
 grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
 ```
@@ -1214,7 +1688,7 @@ grid.arrange(hdlc.calcium.plot,nonhdlc2.calcium.plot, nrow=1)
 # Serum Triglycerides
 
 
-```r
+``` r
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=tg2,
@@ -1237,7 +1711,7 @@ ggplot(data=cholesterol.data,
 
 ![](figures/TG-1.png)<!-- -->
 
-```r
+``` r
  lm(chol2~Diet+sex+tg2, data=cholesterol.data) %>% 
    tidy %>% 
    kable(caption="Diet adjusted association of cholesterol with triglycerides",
@@ -1255,7 +1729,7 @@ Table: Diet adjusted association of cholesterol with triglycerides
 |sexM        |   11.375|     1.917|      5.93| 4.40e-09|
 |tg2         |    0.177|     0.017|     10.47| 3.77e-24|
 
-```r
+``` r
   lm(chol2~Diet+sex+tg2, data=cholesterol.data) %>% 
    glance %>% 
    kable(caption="Diet adjusted association of cholesterol with triglycerides",
@@ -1270,7 +1744,7 @@ Table: Diet adjusted association of cholesterol with triglycerides
 |---------:|-------------:|-----:|---------:|--------:|--:|------:|----:|----:|--------:|-----------:|----:|
 |         0|          0.39|  26.3|       175| 1.58e-87|  3|  -3834| 7679| 7702|   564513|         814|  818|
 
-```r
+``` r
 lm.tg.1 <- lm(chol2~sex+tg2, data=cholesterol.data)
 lm.tg.2 <- lm(chol2~sex+diet+tg2, data=cholesterol.data)
 lm.tg.3 <- lm(chol2~sex+calcium2+tg2, data=cholesterol.data)
@@ -1295,7 +1769,7 @@ Table: Sex adjusted effects of tg on cholesterol at 18w
 |sexM        |  13.6024|    2.3452|      5.80| 9.48e-09|
 |tg2         |   0.0954|    0.0201|      4.75| 2.41e-06|
 
-```r
+``` r
 summary(lm.tg.2) %>% tidy %>% kable(caption="Sex and diet adjusted effects of tg on cholesterol at 18w", digits=50)
 ```
 
@@ -1310,7 +1784,7 @@ Table: Sex and diet adjusted effects of tg on cholesterol at 18w
 |diethf      |   38.474|    1.9012|     20.24| 0.00e+00|
 |tg2         |    0.177|    0.0169|     10.47| 3.77e-24|
 
-```r
+``` r
 summary(lm.tg.3) %>% tidy %>% kable(caption="Sex and diet adjusted effects of tg on cholesterol at 18w", digits=50)
 ```
 
@@ -1325,7 +1799,7 @@ Table: Sex and diet adjusted effects of tg on cholesterol at 18w
 |calcium2    |  14.0889|    1.0160|     13.87| 3.71e-39|
 |tg2         |   0.0346|    0.0185|      1.87| 6.13e-02|
 
-```r
+``` r
 summary(lm.tg.4) %>% tidy %>% kable(caption="Sex and diet adjusted effects of tg on cholesterol at 18w", digits=50)
 ```
 
@@ -1340,7 +1814,7 @@ Table: Sex and diet adjusted effects of tg on cholesterol at 18w
 |bw.19       |   1.6579|    0.1587|    10.450| 4.53e-24|
 |tg2         |   0.0865|    0.0189|     4.582| 5.33e-06|
 
-```r
+``` r
 summary(lm.tg.5) %>% tidy %>% kable(caption="Sex and diet adjusted effects of tg on cholesterol at 18w", digits=50)
 ```
 
@@ -1356,7 +1830,7 @@ Table: Sex and diet adjusted effects of tg on cholesterol at 18w
 |tg2         |    0.115|    0.0162|      7.10| 2.91e-12|
 |calcium2    |   10.783|    0.8767|     12.30| 7.72e-32|
 
-```r
+``` r
 summary(lm.tg.6) %>% tidy %>% kable(caption="Sex and diet adjusted effects of tg on cholesterol at 18w", digits=50)
 ```
 
@@ -1373,7 +1847,7 @@ Table: Sex and diet adjusted effects of tg on cholesterol at 18w
 |calcium2    |   10.440|    0.8798|     11.87| 6.45e-30|
 |bw.19       |    0.434|    0.1413|      3.07| 2.20e-03|
 
-```r
+``` r
 summary(lm.tg.male) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w for males", digits=50)
 ```
 
@@ -1388,7 +1862,7 @@ Table: Sex and diet adjusted effects of calcium on cholesterol at 18w for males
 |tg2         |    0.194|    0.0290|      6.69| 7.53e-11|
 |diethf:tg2  |   -0.111|    0.0417|     -2.66| 8.20e-03|
 
-```r
+``` r
 summary(lm.tg.female) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w for females", digits=50)
 ```
 
@@ -1403,7 +1877,7 @@ Table: Sex and diet adjusted effects of calcium on cholesterol at 18w for female
 |tg2         |    0.202|    0.0336|      6.00| 4.31e-09|
 |diethf:tg2  |    0.152|    0.0615|      2.47| 1.38e-02|
 
-```r
+``` r
 summary(lm.tg.complicated) %>% tidy %>% kable(caption="Sex and diet adjusted effects of calcium on cholesterol at 18w", digits=50)
 ```
 
@@ -1422,7 +1896,7 @@ Table: Sex and diet adjusted effects of calcium on cholesterol at 18w
 |diethf:sexM     |  23.9069|    9.1807|     2.604| 9.38e-03|
 |diethf:sexM:tg2 |  -0.2628|    0.0746|    -3.525| 4.47e-04|
 
-```r
+``` r
 lm.tg.chow <- lm(chol2~sex+tg2, filter(cholesterol.data, diet == "chow"))
 summary(lm.tg.chow) %>% glance %>% kable
 ```
@@ -1433,7 +1907,7 @@ summary(lm.tg.chow) %>% glance %>% kable
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |      0.34|         0.337|    20|       112|       0|  2|         436|  439|
 
-```r
+``` r
 lm.tg.hf <- lm(chol2~sex+tg2, filter(cholesterol.data, diet == "hf"))
 summary(lm.tg.hf) %>% glance %>% kable
 ```
@@ -1444,7 +1918,7 @@ summary(lm.tg.hf) %>% glance %>% kable
 |---------:|-------------:|-----:|---------:|-------:|--:|-----------:|----:|
 |     0.108|         0.103|  32.2|      22.7|       0|  2|         376|  379|
 
-```r
+``` r
 library(effectsize)
 omega_squared(aov.calcium, partial = TRUE) %>%
   kable(caption="Partial effect size estimates for predictors of continuous cholesterol levels")
@@ -1460,7 +1934,7 @@ Table: Partial effect size estimates for predictors of continuous cholesterol le
 |diet      |          0.299| 0.95|  0.256|       1|
 |calcium2  |          0.215| 0.95|  0.174|       1|
 
-```r
+``` r
 cholesterol.data %>%
   group_by(Diet,sex) %>%
   summarize(Estimate = cor.test(chol2,tg2, method="spearman")$estimate,
@@ -1480,7 +1954,7 @@ Table: Spearman's rho estimates for cholesterol and calcium for each subgroup of
 |HFHS |F   |    0.276| 9.26e-05|
 |HFHS |M   |    0.190| 1.00e-02|
 
-```r
+``` r
 cholesterol.data %>% 
   group_by(Diet,sex) %>%
   do(beta=as.numeric(unlist(tidy(lm(chol2~tg2,data=.))[2,'estimate'])),
@@ -1500,7 +1974,7 @@ Table: Sensitivity analyses of diet/sex groups and the relationships between tri
 |HFHS |F   |0.354  |0.0626 |5.59e-08   |
 |HFHS |M   |0.0835 |0.0364 |0.0229     |
 
-```r
+``` r
 lm(chol2~tg2*sex*diet, data=cholesterol.data) %>%
   tidy %>%
   kable(caption="Three way interaction model for triglycerides and cholesterol",
@@ -1522,7 +1996,7 @@ Table: Three way interaction model for triglycerides and cholesterol
 |sexM:diethf     |   23.907|     9.181|      2.60| 9.38e-03|
 |tg2:sexM:diethf |   -0.263|     0.075|     -3.53| 4.47e-04|
 
-```r
+``` r
 omega_squared(lm(chol2~tg2*sex*diet, data=cholesterol.data), partial = TRUE) %>%
   kable(caption="Partial effect size estimates for triglycerides, diet and sex as predictors of cholesterol levels",
         digits = c(0,5,2,5,5))
@@ -1545,7 +2019,7 @@ Table: Partial effect size estimates for triglycerides, diet and sex as predicto
 # Mediating Effect of Body Weight
 
 
-```r
+``` r
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=bw.19,
@@ -1568,7 +2042,7 @@ ggplot(data=cholesterol.data,
 
 ![](figures/calcium-BW_19-1.png)<!-- -->
 
-```r
+``` r
 lm.bw.model.1 <- lm(chol2~sex+bw.19, data=cholesterol.data)
 
 summary(lm.bw.model.1) %>% tidy %>% kable(caption="Effects of body weight on cholesterol at 18w, ajdusting for sex", digits=50)
@@ -1584,7 +2058,7 @@ Table: Effects of body weight on cholesterol at 18w, ajdusting for sex
 |sexM        |     2.06|      2.56|     0.803| 4.22e-01|
 |bw.19       |     1.69|      0.16|    10.527| 2.19e-24|
 
-```r
+``` r
 lm.bw.model.2 <- lm(chol2~sex+diet+bw.19, data=cholesterol.data)
 
 summary(lm.bw.model.2) %>% tidy %>% kable(caption="Effects of body weight on cholesterol at 18w, ajdusting for sex and diet", digits=50)
@@ -1601,7 +2075,7 @@ Table: Effects of body weight on cholesterol at 18w, ajdusting for sex and diet
 |diethf      |   29.317|     2.093|     14.01| 4.36e-40|
 |bw.19       |    0.852|     0.156|      5.46| 6.17e-08|
 
-```r
+``` r
 # mediating effect of body weight on the calcium, cholesterol relationship
 lm.bw.1 <- lm(chol2~calcium2, data=cholesterol.data)
 lm.bw.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
@@ -1634,7 +2108,7 @@ Table: Summary of effects of body weight mediation
 Did a mediation analysis for the effects of body weight on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
 
 
-```r
+``` r
 library(mediation)
 #need a dataset that is complete with respect to calcium and cholesterol
 mediation.cholesterol.data <-
@@ -1656,10 +2130,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0160         2.37  <2e-16 ***
-## ADE             12.9034      11.3874        14.66  <2e-16 ***
-## Total Effect    14.5516      12.9955        16.29  <2e-16 ***
-## Prop. Mediated   0.1133       0.0687         0.16  <2e-16 ***
+## ACME             1.6482       1.0398         2.39  <2e-16 ***
+## ADE             12.9034      11.1252        14.58  <2e-16 ***
+## Total Effect    14.5516      12.7339        16.23  <2e-16 ***
+## Prop. Mediated   0.1133       0.0724         0.16  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1674,7 +2148,7 @@ Differences in body weight partially mediate the relationship between calcium an
 # Mediating Effect of Percent Fat Mass
 
 
-```r
+``` r
 ggplot(data=cholesterol.data,
        aes(y=chol2,
            x=percfat2*100,
@@ -1697,7 +2171,7 @@ ggplot(data=cholesterol.data,
 
 ![](figures/chol-fm_19-1.png)<!-- -->
 
-```r
+``` r
 lm.bw.model.1 <- lm(chol2~sex+percfat2, data=cholesterol.data)
 
 summary(lm.bw.model.1) %>% tidy %>% kable(caption="Effects of percent fat mass on cholesterol at 18w, ajdusting for sex", digits=50)
@@ -1713,7 +2187,7 @@ Table: Effects of percent fat mass on cholesterol at 18w, ajdusting for sex
 |sexM        |     21.8|      2.11|      10.3| 1.25e-23|
 |percfat2    |    151.5|     11.12|      13.6| 3.11e-38|
 
-```r
+``` r
 lm.bw.model.2 <- lm(chol2~sex+diet+percfat2, data=cholesterol.data)
 
 summary(lm.bw.model.2) %>% tidy %>% kable(caption="Effects of percent fat mass on cholesterol at 18w, ajdusting for sex and diet", digits=50)
@@ -1733,7 +2207,7 @@ Table: Effects of percent fat mass on cholesterol at 18w, ajdusting for sex and 
 ### Is there an effect of diet beyond the effect of fat mass?
 
 
-```r
+``` r
 # mediating effect of body weight on the calcium, cholesterol relationship
 lm.fm.1 <- lm(chol2~percfat2, data=cholesterol.data)
 lm.fm.2 <- lm(chol2~sex+percfat2, data=cholesterol.data)
@@ -1758,7 +2232,7 @@ Table: Summary of effects of diet and percent fat mass mediation
 |cholesterol~sex+fat.mass      |151.53+/-11.12    | 3.11e-38|
 |cholesterol~sex+fat.mass+diet |75.88+/-12.35     | 1.28e-09|
 
-```r
+``` r
 mediation.cholesterol.data <-
   cholesterol.data %>%
   filter(!is.na(calcium2)) %>%
@@ -1780,10 +2254,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.440        10.78  <2e-16 ***
-## ADE              24.010       19.331        29.06  <2e-16 ***
-## Total Effect     32.119       28.155        36.26  <2e-16 ***
-## Prop. Mediated    0.252        0.164         0.35  <2e-16 ***
+## ACME              8.110        5.541        10.69  <2e-16 ***
+## ADE              24.010       19.491        28.77  <2e-16 ***
+## Total Effect     32.119       28.588        36.05  <2e-16 ***
+## Prop. Mediated    0.252        0.172         0.34  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1798,7 +2272,7 @@ summary(fm.mediation.results)
 Did a mediation analysis for the effects of percent fat mass on the calcium-cholesterol relationship.  Based this on the instructions at https://data.library.virginia.edu/introduction-to-mediation-analysis/
 
 
-```r
+``` r
 # mediating effect of body weight on the calcium, cholesterol relationship
 lm.fm.1 <- lm(chol2~calcium2, data=cholesterol.data)
 lm.fm.2 <- lm(chol2~calcium2+sex, data=cholesterol.data)
@@ -1826,7 +2300,7 @@ Table: Summary of effects of percent fat mass mediation
 |cholesterol~calcium+sex+fat.mass      |12.56+/-0.93 | 1.16e-37|
 |cholesterol~calcium+sex+fat.mass+diet |12.04+/-0.87 | 2.72e-39|
 
-```r
+``` r
 #need a dataset that is complete with respect to calcium and cholesterol
 mediation.cholesterol.data <-
   cholesterol.data %>%
@@ -1847,10 +2321,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             2.0783       1.2032         2.96  <2e-16 ***
-## ADE             12.5614      10.9362        14.33  <2e-16 ***
-## Total Effect    14.6397      13.0412        16.46  <2e-16 ***
-## Prop. Mediated   0.1420       0.0828         0.20  <2e-16 ***
+## ACME              2.078        1.274         3.01  <2e-16 ***
+## ADE              12.561       10.947        14.32  <2e-16 ***
+## Total Effect     14.640       12.999        16.51  <2e-16 ***
+## Prop. Mediated    0.142        0.087         0.20  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -1866,7 +2340,7 @@ Differences in body weight partially mediate the relationship between calcium an
 # Random Forests
 
 
-```r
+``` r
 library(caret)
 library(ipred)
 
@@ -1907,7 +2381,7 @@ abline(v = 25, col = "red", lty = "dashed")
 
 ![](figures/random-forrest-1.png)<!-- -->
 
-```r
+``` r
 predict_model<-predict(bagged_cv, chol.pred.data.cont)
 
 ggplot(chol.pred.data.cont, aes(x=predict_model,y=chol2)) +
@@ -1916,7 +2390,7 @@ ggplot(chol.pred.data.cont, aes(x=predict_model,y=chol2)) +
 
 ![](figures/random-forrest-2.png)<!-- -->
 
-```r
+``` r
 library(randomForest)
 forest <- randomForest(chol2~Diet+sex+calcium2+tg2, 
              data = chol.pred.data.cont,
@@ -1926,7 +2400,7 @@ varImpPlot(forest)
 
 ![](figures/random-forrest-3.png)<!-- -->
 
-```r
+``` r
 predict_model<-predict(forest, chol.pred.data.cont)
 ```
 
@@ -1935,7 +2409,7 @@ predict_model<-predict(forest, chol.pred.data.cont)
 First estimated Spearman correlation coefficients for each parameter relative to chol2
 
 
-```r
+``` r
 cholesterol.data %>% 
   dplyr::select(-Diet,-sex,-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
   mutate_all(.funs=as.numeric) %>% 
@@ -1966,7 +2440,7 @@ chol.cor.data <-
 Next constructed diet and sex adjusted linear models for each parameter
 
 
-```r
+``` r
 cholesterol.data %>% 
   dplyr::select(-coat.color,-mouse.id,-chol.avg,-High.Chol,-diet) %>%
   dplyr::select(b.area1:percfat2,nonhdlc1,nonhdlc2,sex,Diet) %>%
@@ -1993,169 +2467,181 @@ left_join(chol.cor.data,chol.cor.lm,by=c('Parameter'='name')) %>%
   arrange(-abs(estimate)) -> cor.data.combined
 
 cor.data.combined %>%
-  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter",
-        digits=c(0,3,0,99,99,3,3,99,99))
+  kable(caption="Correlation coefficients and diet/sex adjusted estimates for each clinical parameter with cholesterol at 19 weeks",
+        digits=c(0,3,3,99,99,3,3,99,99))
 ```
 
 
 
-Table: Correlation coefficients and diet/sex adjusted estimates for each clinical parameter
+Table: Correlation coefficients and diet/sex adjusted estimates for each clinical parameter with cholesterol at 19 weeks
 
 |Parameter                                                       |   n| estimate| cor.p.value| cor.p.adj|    beta|      se| lm.p.value| lm.p.adj|
 |:---------------------------------------------------------------|---:|--------:|-----------:|---------:|-------:|-------:|----------:|--------:|
-|Cholesterol at 19 weeks                                         | 818|        1|    0.00e+00|  0.00e+00|      NA|      NA|         NA|       NA|
-|High density lipoprotein at 19 weeks                            | 814|        1|    0.00e+00|  0.00e+00|   1.188|   0.016|   0.00e+00| 0.00e+00|
-|Cholesterol at 8 weeks                                          | 789|        1|    0.00e+00|  0.00e+00|   0.673|   0.036|   9.88e-64| 9.88e-64|
-|High density lipoprotein at 8 weeks                             | 787|        1|    0.00e+00|  0.00e+00|   0.785|   0.047|   1.09e-53| 1.09e-53|
-|Non-HDL Cholesterol at 19 weeks                                 | 812|        1|    2.05e-72|  6.87e-71|   1.808|   0.067|   0.00e+00| 0.00e+00|
-|Albumin to creatinine ratio at 20 weeks                         | 192|        0|    8.81e-12|  2.79e-11|      NA|      NA|         NA|       NA|
-|Fat tissue mass at 21 weeks                                     | 818|        0|    9.23e-42|  2.15e-40|   1.275|   0.223|   1.47e-08| 1.47e-08|
-|Total tissue mass at 21 weeks                                   | 818|        0|    1.02e-41|  2.15e-40|   0.779|   0.144|   8.89e-08| 8.89e-08|
-|Weight at 21 weeks                                              | 818|        0|    8.87e-39|  1.24e-37|   0.743|   0.148|   6.13e-07| 6.13e-07|
-|Glucose at 19 weeks                                             | 815|        0|    3.46e-38|  4.14e-37|   0.116|   0.020|   9.40e-09| 9.40e-09|
-|Calcium, time 2 at 19 weeks                                     | 768|        0|    1.08e-33|  8.28e-33|  12.579|   0.866|   2.31e-42| 2.31e-42|
-|Fat tissue mass at 12 weeks                                     | 832|        0|    5.41e-34|  4.32e-33|   1.034|   0.329|   1.75e-03| 1.75e-03|
-|Non-HDL Cholesterol at 8 weeks                                  | 787|        0|    1.29e-31|  8.65e-31|   1.254|   0.108|   7.35e-29| 7.35e-29|
-|Total tissue mass at 12 weeks                                   | 832|        0|    4.53e-30|  2.72e-29|   0.611|   0.195|   1.81e-03| 1.81e-03|
-|Leptin at 8 weeks                                               | 826|        0|    8.96e-30|  5.19e-29|   0.153|   0.046|   9.99e-04| 9.99e-04|
-|Albumin to creatinine ratio at 11 weeks                         | 197|        0|    7.18e-08|  1.85e-07|      NA|      NA|         NA|       NA|
-|Weight at 12 weeks                                              | 832|        0|    3.92e-28|  1.83e-27|   0.645|   0.198|   1.20e-03| 1.20e-03|
-|Glutamate dehydrogenase at 19 weeks                             | 766|        0|    5.63e-22|  2.20e-21|   0.577|   0.077|   2.12e-13| 2.12e-13|
-|Insulin at 8 weeks                                              | 821|        0|    4.22e-22|  1.73e-21|  -0.053|   0.019|   5.66e-03| 5.66e-03|
-|Lean tissue mass at 21 weeks                                    | 818|        0|    4.67e-18|  1.74e-17|   0.966|   0.289|   8.81e-04| 8.81e-04|
-|Glucose at 8 weeks                                              | 741|        0|    7.06e-14|  2.32e-13|   0.028|   0.027|   2.93e-01| 2.93e-01|
-|Adiponectin at 8 weeks                                          | 195|        0|    2.00e-04|  4.25e-04|      NA|      NA|         NA|       NA|
-|Lean tissue mass at 12 weeks                                    | 832|        0|    1.76e-14|  5.92e-14|   0.731|   0.336|   2.98e-02| 2.98e-02|
-|Total bilirubin at 19 weeks                                     | 145|        0|    2.16e-03|  4.17e-03|   9.741|   9.893|   3.26e-01| 3.26e-01|
-|Mouse length at 21 weeks                                        | 819|        0|    9.60e-13|  3.10e-12|   5.842|   2.592|   2.45e-02| 2.45e-02|
-|Non-esterified fatty acids at 19 weeks                          | 677|        0|    3.42e-09|  9.74e-09|  16.300|   1.674|   4.81e-21| 4.81e-21|
-|Triglycericdes at 19 weeks                                      | 819|        0|    2.38e-09|  6.90e-09|   0.177|   0.017|   3.77e-24| 3.77e-24|
-|Phophorous at 19 weeks                                          | 769|        0|    1.30e-07|  3.25e-07|   3.631|   0.850|   2.17e-05| 2.17e-05|
-|Mouse length at 12 weeks                                        | 832|        0|    4.72e-08|  1.24e-07|   3.804|   2.637|   1.50e-01| 1.50e-01|
-|Mean corpuscular volume at 22 weeks                             | 601|        0|    4.89e-04|  1.01e-03|   0.501|   0.395|   2.06e-01| 2.06e-01|
-|Glutamate dehydrogenase at 8 weeks                              | 690|        0|    2.97e-04|  6.23e-04|   0.202|   0.137|   1.40e-01| 1.40e-01|
-|Calcium, time 1 at 8 weeks                                      | 644|        0|    5.39e-04|  1.10e-03|   4.385|   1.276|   6.28e-04| 6.28e-04|
-|Hear rate at 13 weeks                                           | 781|        0|    1.12e-03|  2.26e-03|   0.001|   0.022|   9.76e-01| 9.76e-01|
-|Lipase at 19 weeks                                              |  97|        0|    2.60e-01|  3.44e-01|   1.104|   0.467|   2.03e-02| 2.03e-02|
-|Total bilirubin at 8 weeks                                      | 187|        0|    1.19e-01|  1.84e-01|  -7.290|  14.121|   6.06e-01| 6.06e-01|
-|Corpuscular hemoglobin concentration, mean at 22 weeks          | 601|        0|    5.00e-03|  9.55e-03|  -0.871|   0.778|   2.63e-01| 2.63e-01|
-|ECG: R to R wave time at 13 weeks                               | 781|        0|    1.99e-03|  3.90e-03|   0.021|   0.210|   9.19e-01| 9.19e-01|
-|Ghrelin at 8 weeks                                              | 195|        0|    1.37e-01|  2.04e-01| 503.636| 140.525|   4.30e-04| 4.30e-04|
-|Mean corpuscular hemoglobin concentration at 22 weeks           | 586|        0|    9.77e-03|  1.80e-02|  -1.086|   0.765|   1.56e-01| 1.56e-01|
-|Non-esterified fatty acids at 8 weeks                           | 691|        0|    2.38e-02|  4.29e-02|   8.196|   1.783|   5.14e-06| 5.14e-06|
-|Reticulocyte counts at 22 weeks                                 | 601|        0|    6.16e-02|  1.06e-01|  -0.104|   0.654|   8.74e-01| 8.74e-01|
-|Mean corpuscular hemoglobin concentration at 10 weeks           | 627|        0|    6.61e-02|  1.09e-01|  -1.195|   0.795|   1.33e-01| 1.33e-01|
-|ECG: S ot T wave time at 13 weeks                               | 781|        0|    6.52e-02|  1.09e-01|   0.123|   0.342|   7.19e-01| 7.19e-01|
-|Blood urea nitrogen at 19 weeks                                 | 818|        0|    6.33e-02|  1.07e-01|   1.505|   0.234|   2.06e-10| 2.06e-10|
-|Bone mineal content at 21 weeks                                 | 818|        0|    6.61e-02|  1.09e-01|  -1.039|  11.192|   9.26e-01| 9.26e-01|
-|Mean corpuscular hemoglobin at 22 weeks                         | 586|        0|    1.26e-01|  1.94e-01|  -0.035|   1.309|   9.78e-01| 9.78e-01|
-|Hemoglobin distribution width at 10 weeks                       | 628|        0|    1.14e-01|  1.79e-01|  -9.422|   6.394|   1.41e-01| 1.41e-01|
-|Blood urea nitrogen at 8 weeks                                  | 787|        0|    7.88e-02|  1.29e-01|   0.508|   0.262|   5.32e-02| 5.32e-02|
-|Corpuscular hemoglobin concentration, mean at 10 weeks          | 628|        0|    1.29e-01|  1.96e-01|  -0.066|   0.911|   9.42e-01| 9.42e-01|
-|Reticulocyte counts at 10 weeks                                 | 628|        0|    1.36e-01|  2.04e-01|   0.126|   0.603|   8.35e-01| 8.35e-01|
-|Hear rate variation at 13 weeks                                 | 781|        0|    1.00e-01|  1.61e-01|   0.061|   0.045|   1.80e-01| 1.80e-01|
-|Red blood cell counts at 22 weeks                               | 601|        0|    1.59e-01|  2.30e-01|   0.564|   1.198|   6.38e-01| 6.38e-01|
-|Bone mineal density at 21 weeks                                 | 818|        0|    1.03e-01|  1.63e-01|  -1.194|   9.795|   9.03e-01| 9.03e-01|
-|Hematocrit at 22 weeks                                          | 601|        0|    1.85e-01|  2.61e-01|   0.322|   0.244|   1.87e-01| 1.87e-01|
-|Hematocrit at 10 weeks                                          | 628|        0|    1.88e-01|  2.63e-01|   0.050|   0.272|   8.53e-01| 8.53e-01|
-|ECG: root mean squared std. dev. (not sure of what) at 13 weeks | 781|        0|    1.60e-01|  2.30e-01|   0.373|   0.244|   1.27e-01| 1.27e-01|
-|ECG: corrected QT interval at 13 weeks                          | 781|        0|    1.84e-01|  2.61e-01|  -0.015|   0.369|   9.67e-01| 9.67e-01|
-|Mean corpuscular volume at 10 weeks                             | 628|        0|    2.36e-01|  3.15e-01|   0.113|   0.393|   7.75e-01| 7.75e-01|
-|White blood cell counts at 22 weeks                             | 604|        0|    2.63e-01|  3.45e-01|   0.786|   0.377|   3.75e-02| 3.75e-02|
-|Triglycericdes at 8 weeks                                       | 788|        0|    2.09e-01|  2.86e-01|   0.071|   0.017|   5.10e-05| 5.10e-05|
-|Mean platelet volume at 10 weeks                                | 628|        0|    2.92e-01|  3.77e-01|  -2.651|   1.352|   5.04e-02| 5.04e-02|
-|Calculated hemoglobin at 10 weeks                               | 628|        0|    2.98e-01|  3.79e-01|   0.145|   0.952|   8.79e-01| 8.79e-01|
-|ECG: P to R wave time at 13 weeks                               | 781|        0|    2.74e-01|  3.57e-01|  -0.387|   0.279|   1.65e-01| 1.65e-01|
-|Hemoglobin distribution width at 22 weeks                       | 601|        0|    4.50e-01|  5.53e-01| -15.301|   5.854|   9.18e-03| 9.18e-03|
-|ECG: QRS wave time at 13 weeks                                  | 781|        0|    4.51e-01|  5.53e-01|  -1.041|   0.923|   2.60e-01| 2.60e-01|
-|ECG: P to Q wave time at 13 weeks                               | 781|        0|    4.62e-01|  5.55e-01|  -0.332|   0.311|   2.87e-01| 2.87e-01|
-|White blood cell counts at 10 weeks                             | 628|        0|    5.23e-01|  6.19e-01|   0.101|   0.393|   7.98e-01| 7.98e-01|
-|Platelets at 22 weeks                                           | 601|        0|    5.47e-01|  6.38e-01|   0.002|   0.003|   6.22e-01| 6.22e-01|
-|DO outbreeding generation and litter                            | 840|        0|    4.97e-01|  5.92e-01|      NA|      NA|         NA|       NA|
-|Platelets at 10 weeks                                           | 628|        0|    6.55e-01|  7.53e-01|  -0.001|   0.004|   8.04e-01| 8.04e-01|
-|Mean platelet volume at 22 weeks                                | 601|        0|    6.97e-01|  7.81e-01|  -0.143|   1.176|   9.03e-01| 9.03e-01|
-|Red blood cell distribution width at 10 weeks                   | 628|        0|    7.12e-01|  7.87e-01|  -0.603|   0.829|   4.67e-01| 4.67e-01|
-|Bone mineal density at 12 weeks                                 | 832|        0|    6.97e-01|  7.81e-01|  -0.968|  10.125|   9.24e-01| 9.24e-01|
-|Fructoseamine at 8 weeks                                        |  93|        0|    9.01e-01|  9.46e-01|  -0.281|   0.233|   2.32e-01| 2.32e-01|
-|Calculated hemoglobin at 22 weeks                               | 601|        0|    8.33e-01|  9.01e-01|   0.457|   0.877|   6.03e-01| 6.03e-01|
-|measured hemoglobin at 22 weeks                                 | 586|        0|    8.98e-01|  9.46e-01|   0.247|   0.866|   7.76e-01| 7.76e-01|
-|Mean corpuscular hemoglobin at 10 weeks                         | 627|        0|    9.42e-01|  9.76e-01|  -1.026|   1.274|   4.21e-01| 4.21e-01|
-|Red blood cell distribution width at 22 weeks                   | 601|        0|    9.53e-01|  9.76e-01|  -1.345|   0.794|   9.08e-02| 9.08e-02|
-|Red blood cell counts at 10 weeks                               | 628|        0|    9.70e-01|  9.87e-01|  -0.058|   1.222|   9.62e-01| 9.62e-01|
-|Bone mineal content at 12 weeks                                 | 832|        0|    9.82e-01|  9.87e-01|   0.141|  11.830|   9.90e-01| 9.90e-01|
-|measured hemoglobin at 10 weeks                                 | 627|        0|    9.86e-01|  9.87e-01|  -0.653|   0.969|   5.00e-01| 5.00e-01|
-|Phophorous at 8 weeks                                           | 644|        0|    9.87e-01|  9.87e-01|   0.380|   0.967|   6.94e-01| 6.94e-01|
+|Cholesterol at 19 weeks                                         | 818|    1.000|    0.00e+00|  0.00e+00|      NA|      NA|         NA|       NA|
+|High density lipoprotein at 19 weeks                            | 814|    0.946|    0.00e+00|  0.00e+00|   1.188|   0.016|   0.00e+00| 0.00e+00|
+|Cholesterol at 8 weeks                                          | 789|    0.723|    0.00e+00|  0.00e+00|   0.673|   0.036|   9.88e-64| 9.88e-64|
+|High density lipoprotein at 8 weeks                             | 787|    0.703|    0.00e+00|  0.00e+00|   0.785|   0.047|   1.09e-53| 1.09e-53|
+|Non-HDL Cholesterol at 19 weeks                                 | 812|    0.574|    2.05e-72|  6.87e-71|   1.808|   0.067|   0.00e+00| 0.00e+00|
+|Albumin to creatinine ratio at 20 weeks                         | 192|    0.467|    8.81e-12|  2.79e-11|      NA|      NA|         NA|       NA|
+|Fat tissue mass at 21 weeks                                     | 818|    0.449|    9.23e-42|  2.15e-40|   1.275|   0.223|   1.47e-08| 1.47e-08|
+|Total tissue mass at 21 weeks                                   | 818|    0.448|    1.02e-41|  2.15e-40|   0.779|   0.144|   8.89e-08| 8.89e-08|
+|Weight at 21 weeks                                              | 818|    0.433|    8.87e-39|  1.24e-37|   0.743|   0.148|   6.13e-07| 6.13e-07|
+|Glucose at 19 weeks                                             | 815|    0.431|    3.46e-38|  4.14e-37|   0.116|   0.020|   9.40e-09| 9.40e-09|
+|Calcium, time 2 at 19 weeks                                     | 768|    0.417|    1.08e-33|  8.28e-33|  12.579|   0.866|   2.31e-42| 2.31e-42|
+|Fat tissue mass at 12 weeks                                     | 832|    0.404|    5.41e-34|  4.32e-33|   1.034|   0.329|   1.75e-03| 1.75e-03|
+|Non-HDL Cholesterol at 8 weeks                                  | 787|    0.400|    1.29e-31|  8.65e-31|   1.254|   0.108|   7.35e-29| 7.35e-29|
+|Total tissue mass at 12 weeks                                   | 832|    0.381|    4.53e-30|  2.72e-29|   0.611|   0.195|   1.81e-03| 1.81e-03|
+|Leptin at 8 weeks                                               | 826|    0.380|    8.96e-30|  5.19e-29|   0.153|   0.046|   9.99e-04| 9.99e-04|
+|Albumin to creatinine ratio at 11 weeks                         | 197|    0.372|    7.18e-08|  1.85e-07|      NA|      NA|         NA|       NA|
+|Weight at 12 weeks                                              | 832|    0.368|    3.92e-28|  1.83e-27|   0.645|   0.198|   1.20e-03| 1.20e-03|
+|Glutamate dehydrogenase at 19 weeks                             | 766|    0.338|    5.63e-22|  2.20e-21|   0.577|   0.077|   2.12e-13| 2.12e-13|
+|Insulin at 8 weeks                                              | 821|    0.328|    4.22e-22|  1.73e-21|  -0.053|   0.019|   5.66e-03| 5.66e-03|
+|Lean tissue mass at 21 weeks                                    | 818|    0.296|    4.67e-18|  1.74e-17|   0.966|   0.289|   8.81e-04| 8.81e-04|
+|Glucose at 8 weeks                                              | 741|    0.270|    7.06e-14|  2.32e-13|   0.028|   0.027|   2.93e-01| 2.93e-01|
+|Adiponectin at 8 weeks                                          | 195|    0.263|    2.00e-04|  4.25e-04|      NA|      NA|         NA|       NA|
+|Lean tissue mass at 12 weeks                                    | 832|    0.262|    1.76e-14|  5.92e-14|   0.731|   0.336|   2.98e-02| 2.98e-02|
+|Total bilirubin at 19 weeks                                     | 145|    0.253|    2.16e-03|  4.17e-03|   9.741|   9.893|   3.26e-01| 3.26e-01|
+|Mouse length at 21 weeks                                        | 819|    0.246|    9.60e-13|  3.10e-12|   5.842|   2.592|   2.45e-02| 2.45e-02|
+|Non-esterified fatty acids at 19 weeks                          | 677|    0.225|    3.42e-09|  9.74e-09|  16.300|   1.674|   4.81e-21| 4.81e-21|
+|Triglycericdes at 19 weeks                                      | 819|    0.207|    2.38e-09|  6.90e-09|   0.177|   0.017|   3.77e-24| 3.77e-24|
+|Phophorous at 19 weeks                                          | 769|    0.189|    1.30e-07|  3.25e-07|   3.631|   0.850|   2.17e-05| 2.17e-05|
+|Mouse length at 12 weeks                                        | 832|    0.188|    4.72e-08|  1.24e-07|   3.804|   2.637|   1.50e-01| 1.50e-01|
+|Mean corpuscular volume at 22 weeks                             | 601|    0.142|    4.89e-04|  1.01e-03|   0.501|   0.395|   2.06e-01| 2.06e-01|
+|Glutamate dehydrogenase at 8 weeks                              | 690|    0.137|    2.97e-04|  6.23e-04|   0.202|   0.137|   1.40e-01| 1.40e-01|
+|Calcium, time 1 at 8 weeks                                      | 644|    0.136|    5.39e-04|  1.10e-03|   4.385|   1.276|   6.28e-04| 6.28e-04|
+|Hear rate at 13 weeks                                           | 781|    0.116|    1.12e-03|  2.26e-03|   0.001|   0.022|   9.76e-01| 9.76e-01|
+|Lipase at 19 weeks                                              |  97|    0.116|    2.60e-01|  3.44e-01|   1.104|   0.467|   2.03e-02| 2.03e-02|
+|Total bilirubin at 8 weeks                                      | 187|    0.115|    1.19e-01|  1.84e-01|  -7.290|  14.121|   6.06e-01| 6.06e-01|
+|Corpuscular hemoglobin concentration, mean at 22 weeks          | 601|   -0.114|    5.00e-03|  9.55e-03|  -0.871|   0.778|   2.63e-01| 2.63e-01|
+|ECG: R to R wave time at 13 weeks                               | 781|   -0.110|    1.99e-03|  3.90e-03|   0.021|   0.210|   9.19e-01| 9.19e-01|
+|Ghrelin at 8 weeks                                              | 195|    0.107|    1.37e-01|  2.04e-01| 503.636| 140.525|   4.30e-04| 4.30e-04|
+|Mean corpuscular hemoglobin concentration at 22 weeks           | 586|   -0.107|    9.77e-03|  1.80e-02|  -1.086|   0.765|   1.56e-01| 1.56e-01|
+|Non-esterified fatty acids at 8 weeks                           | 691|    0.086|    2.38e-02|  4.29e-02|   8.196|   1.783|   5.14e-06| 5.14e-06|
+|Reticulocyte counts at 22 weeks                                 | 601|    0.076|    6.16e-02|  1.06e-01|  -0.104|   0.654|   8.74e-01| 8.74e-01|
+|Mean corpuscular hemoglobin concentration at 10 weeks           | 627|   -0.073|    6.61e-02|  1.09e-01|  -1.195|   0.795|   1.33e-01| 1.33e-01|
+|ECG: S ot T wave time at 13 weeks                               | 781|   -0.066|    6.52e-02|  1.09e-01|   0.123|   0.342|   7.19e-01| 7.19e-01|
+|Blood urea nitrogen at 19 weeks                                 | 818|    0.065|    6.33e-02|  1.07e-01|   1.505|   0.234|   2.06e-10| 2.06e-10|
+|Bone mineal content at 21 weeks                                 | 818|    0.064|    6.61e-02|  1.09e-01|  -1.039|  11.192|   9.26e-01| 9.26e-01|
+|Mean corpuscular hemoglobin at 22 weeks                         | 586|    0.063|    1.26e-01|  1.94e-01|  -0.035|   1.309|   9.78e-01| 9.78e-01|
+|Hemoglobin distribution width at 10 weeks                       | 628|    0.063|    1.14e-01|  1.79e-01|  -9.422|   6.394|   1.41e-01| 1.41e-01|
+|Blood urea nitrogen at 8 weeks                                  | 787|   -0.063|    7.88e-02|  1.29e-01|   0.508|   0.262|   5.32e-02| 5.32e-02|
+|Corpuscular hemoglobin concentration, mean at 10 weeks          | 628|   -0.061|    1.29e-01|  1.96e-01|  -0.066|   0.911|   9.42e-01| 9.42e-01|
+|Reticulocyte counts at 10 weeks                                 | 628|   -0.060|    1.36e-01|  2.04e-01|   0.126|   0.603|   8.35e-01| 8.35e-01|
+|Hear rate variation at 13 weeks                                 | 781|   -0.059|    1.00e-01|  1.61e-01|   0.061|   0.045|   1.80e-01| 1.80e-01|
+|Red blood cell counts at 22 weeks                               | 601|   -0.058|    1.59e-01|  2.30e-01|   0.564|   1.198|   6.38e-01| 6.38e-01|
+|Bone mineal density at 21 weeks                                 | 818|    0.057|    1.03e-01|  1.63e-01|  -1.194|   9.795|   9.03e-01| 9.03e-01|
+|Hematocrit at 22 weeks                                          | 601|    0.054|    1.85e-01|  2.61e-01|   0.322|   0.244|   1.87e-01| 1.87e-01|
+|Hematocrit at 10 weeks                                          | 628|    0.053|    1.88e-01|  2.63e-01|   0.050|   0.272|   8.53e-01| 8.53e-01|
+|ECG: root mean squared std. dev. (not sure of what) at 13 weeks | 781|   -0.050|    1.60e-01|  2.30e-01|   0.373|   0.244|   1.27e-01| 1.27e-01|
+|ECG: corrected QT interval at 13 weeks                          | 781|   -0.048|    1.84e-01|  2.61e-01|  -0.015|   0.369|   9.67e-01| 9.67e-01|
+|Mean corpuscular volume at 10 weeks                             | 628|    0.047|    2.36e-01|  3.15e-01|   0.113|   0.393|   7.75e-01| 7.75e-01|
+|White blood cell counts at 22 weeks                             | 604|    0.046|    2.63e-01|  3.45e-01|   0.786|   0.377|   3.75e-02| 3.75e-02|
+|Triglycericdes at 8 weeks                                       | 788|    0.045|    2.09e-01|  2.86e-01|   0.071|   0.017|   5.10e-05| 5.10e-05|
+|Mean platelet volume at 10 weeks                                | 628|   -0.042|    2.92e-01|  3.77e-01|  -2.651|   1.352|   5.04e-02| 5.04e-02|
+|Calculated hemoglobin at 10 weeks                               | 628|    0.042|    2.98e-01|  3.79e-01|   0.145|   0.952|   8.79e-01| 8.79e-01|
+|ECG: P to R wave time at 13 weeks                               | 781|   -0.039|    2.74e-01|  3.57e-01|  -0.387|   0.279|   1.65e-01| 1.65e-01|
+|Hemoglobin distribution width at 22 weeks                       | 601|   -0.031|    4.50e-01|  5.53e-01| -15.301|   5.854|   9.18e-03| 9.18e-03|
+|ECG: QRS wave time at 13 weeks                                  | 781|   -0.027|    4.51e-01|  5.53e-01|  -1.041|   0.923|   2.60e-01| 2.60e-01|
+|ECG: P to Q wave time at 13 weeks                               | 781|   -0.026|    4.62e-01|  5.55e-01|  -0.332|   0.311|   2.87e-01| 2.87e-01|
+|White blood cell counts at 10 weeks                             | 628|   -0.026|    5.23e-01|  6.19e-01|   0.101|   0.393|   7.98e-01| 7.98e-01|
+|Platelets at 22 weeks                                           | 601|    0.025|    5.47e-01|  6.38e-01|   0.002|   0.003|   6.22e-01| 6.22e-01|
+|DO outbreeding generation and litter                            | 840|    0.023|    4.97e-01|  5.92e-01|      NA|      NA|         NA|       NA|
+|Platelets at 10 weeks                                           | 628|   -0.018|    6.55e-01|  7.53e-01|  -0.001|   0.004|   8.04e-01| 8.04e-01|
+|Mean platelet volume at 22 weeks                                | 601|    0.016|    6.97e-01|  7.81e-01|  -0.143|   1.176|   9.03e-01| 9.03e-01|
+|Red blood cell distribution width at 10 weeks                   | 628|   -0.015|    7.12e-01|  7.87e-01|  -0.603|   0.829|   4.67e-01| 4.67e-01|
+|Bone mineal density at 12 weeks                                 | 832|   -0.014|    6.97e-01|  7.81e-01|  -0.968|  10.125|   9.24e-01| 9.24e-01|
+|Fructoseamine at 8 weeks                                        |  93|    0.013|    9.01e-01|  9.46e-01|  -0.281|   0.233|   2.32e-01| 2.32e-01|
+|Calculated hemoglobin at 22 weeks                               | 601|   -0.009|    8.33e-01|  9.01e-01|   0.457|   0.877|   6.03e-01| 6.03e-01|
+|measured hemoglobin at 22 weeks                                 | 586|   -0.005|    8.98e-01|  9.46e-01|   0.247|   0.866|   7.76e-01| 7.76e-01|
+|Mean corpuscular hemoglobin at 10 weeks                         | 627|    0.003|    9.42e-01|  9.76e-01|  -1.026|   1.274|   4.21e-01| 4.21e-01|
+|Red blood cell distribution width at 22 weeks                   | 601|   -0.002|    9.53e-01|  9.76e-01|  -1.345|   0.794|   9.08e-02| 9.08e-02|
+|Red blood cell counts at 10 weeks                               | 628|    0.002|    9.70e-01|  9.87e-01|  -0.058|   1.222|   9.62e-01| 9.62e-01|
+|Bone mineal content at 12 weeks                                 | 832|   -0.001|    9.82e-01|  9.87e-01|   0.141|  11.830|   9.90e-01| 9.90e-01|
+|measured hemoglobin at 10 weeks                                 | 627|    0.001|    9.86e-01|  9.87e-01|  -0.653|   0.969|   5.00e-01| 5.00e-01|
+|Phophorous at 8 weeks                                           | 644|    0.001|    9.87e-01|  9.87e-01|   0.380|   0.967|   6.94e-01| 6.94e-01|
 
-```r
+``` r
 write_csv(cor.data.combined,file="Correlation of clinical factors with cholesterol.csv")
 ```
 
 # Session Information
 
 
-```r
+``` r
 sessionInfo()
 ```
 
 ```
-## R version 4.2.2 (2022-10-31)
-## Platform: x86_64-apple-darwin17.0 (64-bit)
-## Running under: macOS Big Sur ... 10.16
+## R version 4.4.2 (2024-10-31)
+## Platform: x86_64-apple-darwin20
+## Running under: macOS Monterey 12.7.6
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRblas.0.dylib
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.2/Resources/lib/libRlapack.dylib
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
+## time zone: America/Detroit
+## tzcode source: internal
+## 
 ## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## [1] splines   stats     graphics  grDevices utils     datasets  methods  
+## [8] base     
 ## 
 ## other attached packages:
-##  [1] randomForest_4.7-1.1 ipred_0.9-14         caret_6.0-94        
-##  [4] lattice_0.21-9       mediation_4.5.0      sandwich_3.0-2      
-##  [7] mvtnorm_1.2-3        Matrix_1.5-4.1       MASS_7.3-60         
-## [10] gridExtra_2.3        effectsize_0.8.6     rattle_5.5.1        
-## [13] bitops_1.0-7         tibble_3.2.1         rpart_4.1.21        
-## [16] tree_1.0-43          broom_1.0.5          ggplot2_3.4.4       
-## [19] forcats_1.0.0        readr_2.1.4          dplyr_1.1.3         
-## [22] tidyr_1.3.0          knitr_1.44          
+##  [1] randomForest_4.7-1.2 ipred_0.9-15         caret_7.0-1         
+##  [4] lattice_0.22-6       mediation_4.5.0      mvtnorm_1.3-3       
+##  [7] Matrix_1.7-1         MASS_7.3-64          gridExtra_2.3       
+## [10] cowplot_1.1.3        broom.mixed_0.2.9.6  brms_2.22.0         
+## [13] Rcpp_1.0.14          mgcv_1.9-1           nlme_3.1-166        
+## [16] lmtest_0.9-40        zoo_1.8-13           sandwich_3.1-1      
+## [19] car_3.1-3            carData_3.0-5        effectsize_1.0.0    
+## [22] rattle_5.5.1         bitops_1.0-9         tibble_3.2.1        
+## [25] rpart_4.1.24         tree_1.0-44          broom_1.0.7         
+## [28] ggplot2_3.5.1        forcats_1.0.0        readr_2.1.5         
+## [31] dplyr_1.1.4          tidyr_1.3.1          knitr_1.49          
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] TH.data_1.1-2        minqa_1.2.6          colorspace_2.1-0    
-##   [4] class_7.3-22         estimability_1.4.1   htmlTable_2.4.1     
-##   [7] parameters_0.21.2    base64enc_0.1-3      rstudioapi_0.15.0   
-##  [10] listenv_0.9.0        farver_2.1.1         bit64_4.0.5         
-##  [13] lubridate_1.9.3      prodlim_2023.08.28   fansi_1.0.5         
-##  [16] codetools_0.2-19     splines_4.2.2        cachem_1.0.8        
-##  [19] Formula_1.2-5        jsonlite_1.8.7       nloptr_2.0.3        
-##  [22] pROC_1.18.4          cluster_2.1.4        compiler_4.2.2      
-##  [25] emmeans_1.8.8        backports_1.4.1      fastmap_1.1.1       
-##  [28] cli_3.6.1            htmltools_0.5.6.1    tools_4.2.2         
-##  [31] coda_0.19-4          gtable_0.3.4         glue_1.6.2          
-##  [34] reshape2_1.4.4       Rcpp_1.0.11          jquerylib_0.1.4     
-##  [37] vctrs_0.6.4          nlme_3.1-163         iterators_1.0.14    
-##  [40] insight_0.19.6       timeDate_4022.108    xfun_0.40           
-##  [43] gower_1.0.1          stringr_1.5.0        globals_0.16.2      
-##  [46] lme4_1.1-34          timechange_0.2.0     lpSolve_5.6.19      
-##  [49] lifecycle_1.0.3      future_1.33.0        zoo_1.8-12          
-##  [52] scales_1.2.1         vroom_1.6.4          hms_1.1.3           
-##  [55] parallel_4.2.2       RColorBrewer_1.1-3   rpart.plot_3.1.1    
-##  [58] yaml_2.3.7           sass_0.4.7           stringi_1.7.12      
-##  [61] bayestestR_0.13.1    foreach_1.5.2        checkmate_2.2.0     
-##  [64] hardhat_1.3.0        boot_1.3-28.1        lava_1.7.2.1        
-##  [67] rlang_1.1.1          pkgconfig_2.0.3      evaluate_0.22       
-##  [70] purrr_1.0.2          recipes_1.0.8        htmlwidgets_1.6.2   
-##  [73] labeling_0.4.3       bit_4.0.5            tidyselect_1.2.0    
-##  [76] parallelly_1.36.0    plyr_1.8.9           magrittr_2.0.3      
-##  [79] R6_2.5.1             generics_0.1.3       Hmisc_5.1-1         
-##  [82] multcomp_1.4-25      pillar_1.9.0         foreign_0.8-85      
-##  [85] withr_2.5.2          mgcv_1.9-0           survival_3.5-7      
-##  [88] datawizard_0.9.0     nnet_7.3-19          future.apply_1.11.0 
-##  [91] crayon_1.5.2         utf8_1.2.4           tzdb_0.4.0          
-##  [94] rmarkdown_2.25       grid_4.2.2           data.table_1.14.8   
-##  [97] ModelMetrics_1.2.2.2 digest_0.6.33        xtable_1.8-4        
-## [100] stats4_4.2.2         munsell_0.5.0        bslib_0.5.1
+##   [1] RColorBrewer_1.1-3   tensorA_0.36.2.1     rstudioapi_0.17.1   
+##   [4] jsonlite_1.8.9       datawizard_1.0.2     magrittr_2.0.3      
+##   [7] farver_2.1.2         nloptr_2.1.1         rmarkdown_2.29      
+##  [10] vctrs_0.6.5          minqa_1.2.8          base64enc_0.1-3     
+##  [13] htmltools_0.5.8.1    distributional_0.5.0 pROC_1.18.5         
+##  [16] Formula_1.2-5        sass_0.4.9           parallelly_1.41.0   
+##  [19] StanHeaders_2.32.10  bslib_0.8.0          htmlwidgets_1.6.4   
+##  [22] plyr_1.8.9           lubridate_1.9.4      cachem_1.1.0        
+##  [25] iterators_1.0.14     lifecycle_1.0.4      pkgconfig_2.0.3     
+##  [28] R6_2.5.1             fastmap_1.2.0        rbibutils_2.3       
+##  [31] future_1.34.0        digest_0.6.37        colorspace_2.1-1    
+##  [34] furrr_0.3.1          ps_1.8.1             Hmisc_5.2-2         
+##  [37] labeling_0.4.3       timechange_0.3.0     abind_1.4-8         
+##  [40] compiler_4.4.2       bit64_4.5.2          withr_3.0.2         
+##  [43] htmlTable_2.4.3      backports_1.5.0      inline_0.3.21       
+##  [46] QuickJSR_1.5.1       pkgbuild_1.4.5       lava_1.8.1          
+##  [49] loo_2.8.0            ModelMetrics_1.2.2.2 tools_4.4.2         
+##  [52] foreign_0.8-88       future.apply_1.11.3  nnet_7.3-20         
+##  [55] glue_1.8.0           callr_3.7.6          grid_4.4.2          
+##  [58] checkmate_2.3.2      cluster_2.1.8        reshape2_1.4.4      
+##  [61] recipes_1.3.0        generics_0.1.3       lpSolve_5.6.23      
+##  [64] gtable_0.3.6         tzdb_0.5.0           class_7.3-23        
+##  [67] data.table_1.16.4    hms_1.1.3            utf8_1.2.4          
+##  [70] foreach_1.5.2        pillar_1.10.1        stringr_1.5.1       
+##  [73] vroom_1.6.5          posterior_1.6.0      survival_3.8-3      
+##  [76] bit_4.5.0.1          tidyselect_1.2.1     reformulas_0.4.0    
+##  [79] stats4_4.4.2         xfun_0.50            bridgesampling_1.1-2
+##  [82] hardhat_1.4.1        timeDate_4041.110    matrixStats_1.5.0   
+##  [85] rstan_2.32.6         stringi_1.8.4        yaml_2.3.10         
+##  [88] boot_1.3-31          evaluate_1.0.3       codetools_0.2-20    
+##  [91] rpart.plot_3.1.2     archive_1.1.12       cli_3.6.5           
+##  [94] RcppParallel_5.1.9   parameters_0.25.0    Rdpack_2.6.2        
+##  [97] munsell_0.5.1        processx_3.8.5       jquerylib_0.1.4     
+## [100] globals_0.16.3       coda_0.19-4.1        parallel_4.4.2      
+## [103] rstantools_2.4.0     gower_1.0.2          bayestestR_0.16.0   
+## [106] bayesplot_1.11.1     Brobdingnag_1.2-9    lme4_1.1-36         
+## [109] listenv_0.9.1        prodlim_2025.04.28   scales_1.3.0        
+## [112] insight_1.3.0        purrr_1.0.2          crayon_1.5.3        
+## [115] rlang_1.1.6
 ```
 

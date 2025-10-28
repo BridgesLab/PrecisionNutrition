@@ -23,7 +23,11 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
+<<<<<<< Updated upstream
 Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Aug  2 15:48:31 2024.
+=======
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Tue Oct 28 09:43:20 2025.
+>>>>>>> Stashed changes
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -35,17 +39,92 @@ For all outcomes, we tested sex as a modifier and as a covariate. For outcomes w
 
 
 ``` r
+<<<<<<< Updated upstream
 filename <- 'VLCF Meta-Analysis.csv'
 #filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
 google.sheet.link <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRkVL0hHHPMJ_fI8EVc_RiFJvcnTHmBySUd3bvikUJjancG8DCsaG5k0eIFUBfov4drTr8MMNV8GLnv/pub?gid=0&single=true&output=csv'
 download.file(google.sheet.link,destfile=filename) #can commnt this out if you dont want to udpat the file
+=======
+library(readr) #loads the readr package
+filename <- 'Ketogenic Diet Meta-Analysis Data - Sheet1.csv' #make this a separate line, you can use any variable you want
+>>>>>>> Stashed changes
 
 #this loads whatever the file is into a dataframe called exp.data if it exists
 #make a new variable called break.groups, make it so c is the break.groups so that is the code
 
+<<<<<<< Updated upstream
 exp.data <- read_csv(filename)
 eval.data <- 
   exp.data %>% 
+=======
+exp.data <- read_csv(filename,col_types=cols(
+  Study = col_character(),
+  `Baseline Weight` = col_double(),
+  `Baseline Weight SD` = col_double(),
+  `Baseline Weight CI` = col_double(),
+  `Weight Change` = col_double(),
+  `Weight Change SD` = col_double(),
+  `Weight Change CI` = col_double(),
+  `Baseline BMI` = col_double(),
+  `Baseline BMI SD` = col_double(),
+  `Baseline BMI CI` = col_double(),
+  `BMI Change` = col_double(),
+  `BMI Change SD` = col_double(),
+  `BMI Change CI` = col_double(),
+  `Baseline LDL` = col_double(),
+  `Baseline LDL SD` = col_double(),
+  `Baseline LDL CI` = col_double(),
+  `Endpoint LDL` = col_double(),
+  `LDL Endpoint SD` = col_double(),
+  `LDL Endpoint CI` = col_double(),
+  `Change in LDL-C` = col_double(),
+  `Change in LDL SD` = col_double(),
+  `Change in LDL CI` = col_double(),
+  `Baseline TG` = col_double(),
+  `Baseline TG SD` = col_double(),
+  `Baseline TG CI` = col_double(),
+  `Endpoint TG` = col_double(),
+  `Endpoint TG SD` = col_double(),
+  `Endpoint TG CI` = col_double(),
+  `Change in TG` = col_double(),
+  `Change in TG SD` = col_double(),
+  `Change in TG CI` = col_double(),
+  `Baseline HOMA-IR` = col_double(),
+  `Baseline HOMA-IR SD` = col_double(),
+  `Baseline HOMA-IR CI` = col_double(),
+  `Endpoint HOMA-IR` = col_double(),
+  `Endpoint HOMA-IR SD` = col_double(),
+  `Endpoint HOMA-IR CI` = col_double(),
+  `Baseline SBP` = col_double(),
+  `Baseline SBP SD` = col_double(),
+  `Baseline SBP CI` = col_double(),
+  `Endpoint SBP` = col_double(),
+  `Endpoint SBP SD` = col_double(),
+  `Endpoint SBP CI` = col_double(),
+  `change in SBP` = col_double(),
+  `change in SBP SD` = col_double(),
+  `change in SBP CI` = col_double(),
+  `Baseline DBP` = col_double(),
+  `Baseline DBP SD` = col_double(),
+  `Baseline DBP CI` = col_double(),
+  `change in DBP` = col_double(),
+  `change in DBP SD` = col_double(),
+  `change in DBP CI` = col_double(),
+  `Endpoint DBP` = col_double(),
+  `Endpoint DBP SD` = col_double(),
+  `Endpoint DBP CI` = col_double(),
+  n = col_double(),
+  Time = col_double(),
+  `Inter CI` = col_double(),
+  `Inter SD` = col_double(),
+  Notes = col_character(),
+  Use = col_character(),
+  `Percent Male` = col_double(),
+  `Normal weight` = col_character(),
+  Link = col_character()
+))
+eval.data <- exp.data %>% 
+>>>>>>> Stashed changes
   filter(Use=='x') %>%
   mutate(across(`Baseline Weight`:n,.fns=as.numeric)) %>% #force all fields to be numeric
   mutate(Pct.Wt.Change = `Weight Change`/`Baseline Weight`*100)%>%
@@ -53,43 +132,123 @@ eval.data <-
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
+<<<<<<< Updated upstream
 These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Aug  2 15:48:34 2024**.
+=======
+These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **Ketogenic Diet Meta-Analysis Data - Sheet1.csv**.  This script was most recently updated on **Tue Oct 28 09:43:21 2025**.
+>>>>>>> Stashed changes
 
 This analysis includes 22 studies with 463 total participants.
 
 
+<<<<<<< Updated upstream
+=======
+``` r
+library(ggplot2)
+
+eval.data <-
+  eval.data %>%
+  mutate(LDL.endpoint = `Baseline LDL`+`Change in LDL-C`)
+
+eval.data %>%
+  ggplot(aes(y=LDL.endpoint,
+             ymin=LDL.endpoint-`LDL Endpoint SD`,
+             ymax=LDL.endpoint+`LDL Endpoint SD`,
+             x=reorder(Study,-`LDL.endpoint` ))) +
+  geom_point() +
+  geom_errorbar()+
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, hjust=1))
+```
+
+![](figures/ldlc-endpoint-1.png)<!-- -->
+
+``` r
+eval.data %>% 
+  summarize_at(.vars=vars(Pct.Wt.Change,`Weight Change`,`Change in LDL-C`,`BMI Change`),
+               .funs=funs(mean(.,na.rm=TRUE))) 
+```
+
+```
+## # A tibble: 1 × 4
+##   Pct.Wt.Change `Weight Change` `Change in LDL-C` `BMI Change`
+##           <dbl>           <dbl>             <dbl>        <dbl>
+## 1         -6.33           -5.95              8.00        -2.51
+```
+
+``` r
+#Above is non-weighted average
+```
+>>>>>>> Stashed changes
 
 # Meta-Analysis 
 
 
 ``` r
+<<<<<<< Updated upstream
 meta.data <-
   eval.data %>%
   filter(!is.na(`LDL Endpoint SD`)) %>%
   mutate(Pooled.LDL.SD=sqrt(`Baseline LDL SD`^2+`LDL Endpoint SD`^2)) %>%
   mutate(SMD=`Change in LDL-C`) %>%
+=======
+ldl.meta.data <-
+  eval.data %>%
+  mutate(`Baseline LDL SD` = case_when(is.na(`Baseline LDL SD`)~`Baseline LDL CI`/1.96,
+                                      TRUE~`Baseline LDL SD`)) %>%
+    mutate(`LDL Endpoint SD` = case_when(is.na(`LDL Endpoint SD`)~`LDL Endpoint CI`/1.96,
+                                      TRUE~`LDL Endpoint SD`)) %>%
+  mutate(Pooled.SD.LDL=sqrt(`Baseline LDL SD`^2+`LDL Endpoint SD`^2)) %>%
+  filter(!is.na(Pooled.SD.LDL)) %>%
+  #filter(is.na(`Change in LDL-C`)) %>%
+  mutate(MD.LDL=`Change in LDL-C`) %>%
+>>>>>>> Stashed changes
   mutate(SMD.Wt = `Weight Change`) %>%
   mutate(Pooled.Wt.SD=sqrt(`Baseline Weight SD`)) 
 
 library(meta)
+<<<<<<< Updated upstream
 ldl.c.meta <- metagen(TE = `Change in LDL-C`,
                  seTE = Pooled.LDL.SD,
+=======
+ldl.c.meta <- metagen(TE = MD.LDL,
+                 seTE = Pooled.SD.LDL,
+>>>>>>> Stashed changes
                  n.e=n,
                  n.c=n,
                  studlab = Study,
-                 data = meta.data,
-                 sm = "SMD",
-                 comb.fixed = TRUE,
-                 comb.random = FALSE,
+                 data = ldl.meta.data,
+                 sm = "MD",
+                 common=FALSE,
+                 random=TRUE,
                  #method.tau = "REML",
-                 hakn = TRUE,
+                 method.random.ci="HK",
                  title = "LDL-C Changes in Ketogenic Diet Studies")
 
+<<<<<<< Updated upstream
 plot(ldl.c.meta)
+=======
+
+
+forest(ldl.c.meta, 
+            sortvar = MD.LDL,
+            #predict = F, 
+            print.tau2 = TRUE,
+            print.I2 = TRUE,
+            #leftcols=c('Study'),
+            #rightlabs=c('Change','95% CI','Weight'),
+           layout = "RevMan5",
+          fontsize=8,
+          leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+          leftlabs = c("Study","Change","SE","95% CI","Weight"),
+          range = F,
+          digits=1,
+          digits.se=1)
+>>>>>>> Stashed changes
 ```
 
-![](figures/meta-analysis-1.png)<!-- -->
+![](figures/ldl-meta-analysis-1.png)<!-- -->
 
+<<<<<<< Updated upstream
 We evaluated 11 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 4.803 mg/dL (95% CI: -20.712 to 30.317) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.712. Across these studies, the I<sup>2</sup> is 0, the p-value for Q is 1. This is a highly consistent I^2. 
 
 ## Baysian Meta-Analysis
@@ -387,6 +546,55 @@ ggplot(aes(b_Intercept,
 ```
 
 ![](figures/ldlc-bayesian-meta-5.png)<!-- -->
+=======
+
+### Body Weight
+
+
+``` r
+weight.meta.data <-
+  eval.data %>%
+  mutate(`Weight Change SD` = case_when(is.na(`Weight Change SD`)~`Weight Change CI`/1.96,
+                                      TRUE~`Weight Change SD`)) %>% 
+  #dplyr::select(`Study`,`Weight Change SD`, `Weight Change CI`, `Weight Change`,`Baseline Weight SD`)
+  filter(!is.na(`Weight Change SD`)) %>%
+  #filter(is.na(`Change in LDL-C`)) %>%
+  mutate(MD.Wt = `Weight Change`) %>%
+  mutate(BMD=`BMI Change`)
+
+weight.change.meta <- metagen(TE = MD.Wt,
+                 seTE = `Weight Change SD`,
+                 n.e=n,
+                 n.c=n,
+                 studlab = Study,
+                 data = weight.meta.data,
+                 sm = "MD",
+                 comb.fixed = TRUE,
+                 comb.random = FALSE,
+                 #method.tau = "REML",
+                 hakn = TRUE,
+                 title = "Weight Changes in Ketogenic Diet Studies")
+
+forest(weight.change.meta, 
+            sortvar = BMD,
+            #predict = F, 
+            print.tau2 = TRUE,
+            print.I2 = TRUE,
+            #leftcols=c('Study'),
+            #rightlabs=c('Change','95% CI','Weight'),
+           layout = "RevMan5",
+          fontsize=8,
+          leftcols = c("Study",'effect',"seTE",'ci','w.fixed'),
+          leftlabs = c("Study","Change","SE","95% CI","Weight"),
+          range = F,
+          digits=1,
+          digits.se=1)
+```
+
+![](figures/weight-meta--1.png)<!-- -->
+
+We evaluated 16 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 7.667 mg/dL (95% CI: -3.932 to 19.267) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.195. Across these studies, the I<sup>2</sup> is 0, the p-value for Q is 0.997. This is a highly consistent I^2. 
+>>>>>>> Stashed changes
 
 # Average Change in LDL-C
 
@@ -963,6 +1171,7 @@ Table: Correlation betwteen BMI Change and delta-LDL of Mixed groups
 #ldl.bmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
 #ldl.bmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
 
+<<<<<<< Updated upstream
 ldl.bmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
 ldl.bmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
 ```
@@ -1058,6 +1267,33 @@ Table: Correlation betwteen BMI Change and delta-LDL of Mostly Female groups
 |(Intercept)  |     46.5|     11.91|      3.90|   0.160|
 |`BMI Change` |     18.5|      9.27|      1.99|   0.296|
 Greater BMI decreases over the study period were associated with a smaller increase in LDL-C after consumption of a ketogenic diet, though this did not reach significance (r<sup>2</sup> = 0.293, p-value = 0.132). The association with the change in LDL-C and decrease in BMI was consistent with weight, with change in weight on LDL-C reaching significance (r<sup>2</sup> = 0.194, p-value = 0.068), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet, though this was not significant (r<sup>2</sup> = 0.19, p-value = 0.24).
+=======
+# ldl.bmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
+# ldl.bmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
+# 
+# ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
+# ldl.pctbmi.change.lm %>% tidy %>% kable
+# 
+# ldl.pctbmisexinter.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change`*`Sex.Group`, data = eval.data)
+# ldl.pctbmisexinter.change.aov %>% tidy %>% kable
+# 
+# ldl.pctbmisex.change.aov <- aov(`Change in LDL-C` ~ `PCT.BMI.Change` + `Sex.Group`, data = eval.data)
+# ldl.pctbmisex.change.aov %>% tidy %>% kable
+# 
+# ldl.pctbmi.change.lm <- lm(`Change in LDL-C` ~ `PCT.BMI.Change`, data = eval.data)
+# ldl.pctbmi.change.lm %>% tidy %>% kable
+# 
+# ldl.pctbmi.change.mixed.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mixed"))
+# ldl.pctbmi.change.mixed.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mixed groups")
+# 
+# ldl.pctbmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
+# ldl.pctbmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
+# 
+# ldl.pctbmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
+# ldl.pctbmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
+```
+Greater BMI decreases over the study period were associated with a smaller increase in LDL-C after consumption of a ketogenic diet, though this did not reach significance (r<sup>2</sup> = ` ldl.bmi.change.lm %>% glance %>% pull(r.squared)`, p-value = ` ldl.bmi.change.lm %>% tidy %>% pull(p.value) %>% last`). The association with the change in LDL-C and decrease in BMI was consistent with weight, with change in weight on LDL-C reaching significance (r<sup>2</sup> = ` ldl.weight.change.lm %>% glance %>% pull(r.squared)`, p-value = ` ldl.weight.change.lm %>% tidy %>% pull(p.value) %>% last`), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet, though this was not significant (r<sup>2</sup> = ` ldl.pctbmi.change.lm %>% glance %>% pull(r.squared)`, p-value = ` ldl.pctbmi.change.lm %>% tidy %>% pull(p.value) %>% last`).
+>>>>>>> Stashed changes
 
 
 ## Relative to Baseline LDL-C
@@ -1218,6 +1454,7 @@ ldl.baseline.aov %>% tidy %>% kable
 |:--------------|--:|-----:|------:|---------:|-------:|
 |`Percent Male` |  1|   321|    321|      1.67|   0.212|
 |Residuals      | 18|  3452|    192|        NA|      NA|
+<<<<<<< Updated upstream
 
 Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = 0.001, p-value = 0.872). 
 
@@ -1286,6 +1523,10 @@ rpart.plot(tree)
 ![](figures/decision-tree-3.png)<!-- -->
 
 
+=======
+
+Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = 0.001, p-value = 0.872). 
+>>>>>>> Stashed changes
 
 # Session Information
 
@@ -1295,6 +1536,7 @@ sessionInfo()
 ```
 
 ```
+<<<<<<< Updated upstream
 ## R version 4.4.1 (2024-06-14)
 ## Platform: x86_64-apple-darwin20
 ## Running under: macOS Monterey 12.7.5
@@ -1302,6 +1544,15 @@ sessionInfo()
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
 ## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+=======
+## R version 4.5.1 (2025-06-13)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Sequoia 15.7.1
+## 
+## Matrix products: default
+## BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+>>>>>>> Stashed changes
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1313,6 +1564,7 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
+<<<<<<< Updated upstream
 ##  [1] rpart.plot_3.1.2 rattle_5.5.1     bitops_1.0-8     tibble_3.2.1    
 ##  [5] rpart_4.1.23     corrplot_0.92    broom_1.0.6      ggrepel_0.9.5   
 ##  [9] forcats_1.0.0    stringr_1.5.1    glue_1.7.0       ggridges_0.5.6  
@@ -1351,4 +1603,32 @@ sessionInfo()
 ## [82] Brobdingnag_1.2-9    gtable_0.3.5         sass_0.4.9          
 ## [85] digest_0.6.36        farver_2.1.2         htmltools_0.5.8.1   
 ## [88] lifecycle_1.0.4      bit64_4.0.5          MASS_7.3-60.2
+=======
+## [1] broom_1.0.10  ggrepel_0.9.6 meta_8.2-1    metadat_1.4-0 ggplot2_4.0.0
+## [6] readr_2.1.5   dplyr_1.1.4   tidyr_1.3.1   knitr_1.50   
+## 
+## loaded via a namespace (and not attached):
+##  [1] gtable_0.3.6        xfun_0.53           bslib_0.9.0        
+##  [4] CompQuadForm_1.4.4  lattice_0.22-7      mathjaxr_1.8-0     
+##  [7] tzdb_0.5.0          numDeriv_2016.8-1.1 vctrs_0.6.5        
+## [10] tools_4.5.1         Rdpack_2.6.4        generics_0.1.4     
+## [13] parallel_4.5.1      tibble_3.3.0        pkgconfig_2.0.3    
+## [16] Matrix_1.7-4        RColorBrewer_1.1-3  S7_0.2.0           
+## [19] lifecycle_1.0.4     compiler_4.5.1      farver_2.1.2       
+## [22] stringr_1.5.2       htmltools_0.5.8.1   sass_0.4.10        
+## [25] yaml_2.3.10         pillar_1.11.1       nloptr_2.2.1       
+## [28] crayon_1.5.3        jquerylib_0.1.4     MASS_7.3-65        
+## [31] cachem_1.1.0        reformulas_0.4.1    boot_1.3-32        
+## [34] nlme_3.1-168        tidyselect_1.2.1    digest_0.6.37      
+## [37] stringi_1.8.7       purrr_1.1.0         labeling_0.4.3     
+## [40] splines_4.5.1       fastmap_1.2.0       grid_4.5.1         
+## [43] cli_3.6.5           metafor_4.8-0       magrittr_2.0.4     
+## [46] withr_3.0.2         backports_1.5.0     scales_1.4.0       
+## [49] bit64_4.6.0-1       rmarkdown_2.30      bit_4.6.0          
+## [52] lme4_1.1-37         hms_1.1.4           evaluate_1.0.5     
+## [55] rbibutils_2.3       mgcv_1.9-3          rlang_1.1.6        
+## [58] Rcpp_1.1.0          glue_1.8.0          xml2_1.4.0         
+## [61] rstudioapi_0.17.1   vroom_1.6.6         minqa_1.2.8        
+## [64] jsonlite_2.0.0      R6_2.6.1
+>>>>>>> Stashed changes
 ```

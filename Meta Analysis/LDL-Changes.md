@@ -23,11 +23,7 @@ Evaluated studies where ketogenic diets (<25g/day of CHO) are used and weight an
 
 # Raw Data
 
-<<<<<<< Updated upstream
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Fri Aug  2 15:48:31 2024.
-=======
-Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Tue Oct 28 09:43:20 2025.
->>>>>>> Stashed changes
+Reviewed data from the Choi *et al* meta-analysis (http://dx.doi.org/10.3390/nu12072005), pulling in data on baseline weight, weight changes, LDL, LDL changes and standard deviations. A systematic literature search of PubMed was then performed to identify other randomized controlled trials (RCTs) and single-arm interventions of patients that evaluated the effects of a ketogenic diet on weight and lipid profile as primary endpoints. All studies using a KD diet that met our inclusion criteria where intake of carbohydrate was less than 25 grams per day were included. This search was most recently updated on Tue Oct 28 19:41:07 2025.
 
 We used a value 130mg/dL of LDL-C at baseline to stratify individuals as being hypercholesterolemic or not.
 
@@ -39,24 +35,14 @@ For all outcomes, we tested sex as a modifier and as a covariate. For outcomes w
 
 
 ``` r
-<<<<<<< Updated upstream
-filename <- 'VLCF Meta-Analysis.csv'
-#filename <- 'LDL Study Summary.xlsx' #make this a separate line, you can use any variable you want
-google.sheet.link <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRkVL0hHHPMJ_fI8EVc_RiFJvcnTHmBySUd3bvikUJjancG8DCsaG5k0eIFUBfov4drTr8MMNV8GLnv/pub?gid=0&single=true&output=csv'
-download.file(google.sheet.link,destfile=filename) #can commnt this out if you dont want to udpat the file
-=======
+#google.sheet.link <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRkVL0hHHPMJ_fI8EVc_RiFJvcnTHmBySUd3bvikUJjancG8DCsaG5k0eIFUBfov4drTr8MMNV8GLnv/pub?gid=0&single=true&output=csv'
+#download.file(google.sheet.link,destfile=filename) #can commnt this out if you dont want to udpat the file
 library(readr) #loads the readr package
 filename <- 'Ketogenic Diet Meta-Analysis Data - Sheet1.csv' #make this a separate line, you can use any variable you want
->>>>>>> Stashed changes
 
 #this loads whatever the file is into a dataframe called exp.data if it exists
 #make a new variable called break.groups, make it so c is the break.groups so that is the code
 
-<<<<<<< Updated upstream
-exp.data <- read_csv(filename)
-eval.data <- 
-  exp.data %>% 
-=======
 exp.data <- read_csv(filename,col_types=cols(
   Study = col_character(),
   `Baseline Weight` = col_double(),
@@ -124,7 +110,6 @@ exp.data <- read_csv(filename,col_types=cols(
   Link = col_character()
 ))
 eval.data <- exp.data %>% 
->>>>>>> Stashed changes
   filter(Use=='x') %>%
   mutate(across(`Baseline Weight`:n,.fns=as.numeric)) %>% #force all fields to be numeric
   mutate(Pct.Wt.Change = `Weight Change`/`Baseline Weight`*100)%>%
@@ -132,17 +117,11 @@ eval.data <- exp.data %>%
   mutate(Sex.Group = cut(`Percent Male`, breaks = c(0,.1,.9,1), include.lowest = TRUE, labels = c("Mostly Female", "Mixed", "Mostly Male")))
 ```
 
-<<<<<<< Updated upstream
-These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **VLCF Meta-Analysis.csv**.  This script was most recently updated on **Fri Aug  2 15:48:34 2024**.
-=======
-These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **Ketogenic Diet Meta-Analysis Data - Sheet1.csv**.  This script was most recently updated on **Tue Oct 28 09:43:21 2025**.
->>>>>>> Stashed changes
+These data can be found in **/Users/davebrid/Documents/GitHub/PrecisionNutrition/Meta Analysis** in a file named **Ketogenic Diet Meta-Analysis Data - Sheet1.csv**.  This script was most recently updated on **Tue Oct 28 19:41:08 2025**.
 
 This analysis includes 22 studies with 463 total participants.
 
 
-<<<<<<< Updated upstream
-=======
 ``` r
 library(ggplot2)
 
@@ -175,22 +154,10 @@ eval.data %>%
 ## 1         -6.33           -5.95              8.00        -2.51
 ```
 
-``` r
-#Above is non-weighted average
-```
->>>>>>> Stashed changes
-
 # Meta-Analysis 
 
 
 ``` r
-<<<<<<< Updated upstream
-meta.data <-
-  eval.data %>%
-  filter(!is.na(`LDL Endpoint SD`)) %>%
-  mutate(Pooled.LDL.SD=sqrt(`Baseline LDL SD`^2+`LDL Endpoint SD`^2)) %>%
-  mutate(SMD=`Change in LDL-C`) %>%
-=======
 ldl.meta.data <-
   eval.data %>%
   mutate(`Baseline LDL SD` = case_when(is.na(`Baseline LDL SD`)~`Baseline LDL CI`/1.96,
@@ -201,18 +168,13 @@ ldl.meta.data <-
   filter(!is.na(Pooled.SD.LDL)) %>%
   #filter(is.na(`Change in LDL-C`)) %>%
   mutate(MD.LDL=`Change in LDL-C`) %>%
->>>>>>> Stashed changes
   mutate(SMD.Wt = `Weight Change`) %>%
   mutate(Pooled.Wt.SD=sqrt(`Baseline Weight SD`)) 
 
 library(meta)
-<<<<<<< Updated upstream
-ldl.c.meta <- metagen(TE = `Change in LDL-C`,
-                 seTE = Pooled.LDL.SD,
-=======
+
 ldl.c.meta <- metagen(TE = MD.LDL,
                  seTE = Pooled.SD.LDL,
->>>>>>> Stashed changes
                  n.e=n,
                  n.c=n,
                  studlab = Study,
@@ -224,9 +186,6 @@ ldl.c.meta <- metagen(TE = MD.LDL,
                  method.random.ci="HK",
                  title = "LDL-C Changes in Ketogenic Diet Studies")
 
-<<<<<<< Updated upstream
-plot(ldl.c.meta)
-=======
 
 
 forest(ldl.c.meta, 
@@ -243,310 +202,10 @@ forest(ldl.c.meta,
           range = F,
           digits=1,
           digits.se=1)
->>>>>>> Stashed changes
 ```
 
 ![](figures/ldl-meta-analysis-1.png)<!-- -->
 
-<<<<<<< Updated upstream
-We evaluated 11 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 4.803 mg/dL (95% CI: -20.712 to 30.317) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.712. Across these studies, the I<sup>2</sup> is 0, the p-value for Q is 1. This is a highly consistent I^2. 
-
-## Baysian Meta-Analysis
-
-I wanted to try a Bayesian approach to this, so followed the examples here https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html
-
-The prior probabilities were set using these assumptions
-
-$$\hat\theta_k \sim N(\theta_k, \sigma^2_k)$$
-$$\theta_k \sim N(\mu, \tau^2) $$
-Presuming a normal distribution with a SD of 44 (the pooled SD but a mean of zero)
-
-$$\mu \sim N(0,44) $$
-$$\tau \sim HC(0,0.5)$$
-
-
-``` r
-#library(extraDistr)
-#phcauchy(0.3, sigma = 0.3)
-library(brms)
-mean.sd <- mean(meta.data$Pooled.LDL.SD,na.rm=T)
-priors <- c(prior(normal(20,5), class = Intercept), #20 mg incresae seems clinically meaningful
-            prior(cauchy(0,0.5), class = sd)) 
-
-meta.ldl.brm <- brm(SMD|se(Pooled.LDL.SD) ~ 1 + (1|Study),
-             data = meta.data,
-             prior = priors,
-             iter = 4000,
-             control=list(adapt_delta=0.9)) #to fix warning There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
-```
-
-```
-## 
-## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).
-## Chain 1: 
-## Chain 1: Gradient evaluation took 4.2e-05 seconds
-## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.42 seconds.
-## Chain 1: Adjust your expectations accordingly!
-## Chain 1: 
-## Chain 1: 
-## Chain 1: Iteration:    1 / 4000 [  0%]  (Warmup)
-## Chain 1: Iteration:  400 / 4000 [ 10%]  (Warmup)
-## Chain 1: Iteration:  800 / 4000 [ 20%]  (Warmup)
-## Chain 1: Iteration: 1200 / 4000 [ 30%]  (Warmup)
-## Chain 1: Iteration: 1600 / 4000 [ 40%]  (Warmup)
-## Chain 1: Iteration: 2000 / 4000 [ 50%]  (Warmup)
-## Chain 1: Iteration: 2001 / 4000 [ 50%]  (Sampling)
-## Chain 1: Iteration: 2400 / 4000 [ 60%]  (Sampling)
-## Chain 1: Iteration: 2800 / 4000 [ 70%]  (Sampling)
-## Chain 1: Iteration: 3200 / 4000 [ 80%]  (Sampling)
-## Chain 1: Iteration: 3600 / 4000 [ 90%]  (Sampling)
-## Chain 1: Iteration: 4000 / 4000 [100%]  (Sampling)
-## Chain 1: 
-## Chain 1:  Elapsed Time: 0.118 seconds (Warm-up)
-## Chain 1:                0.1 seconds (Sampling)
-## Chain 1:                0.218 seconds (Total)
-## Chain 1: 
-## 
-## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 2).
-## Chain 2: 
-## Chain 2: Gradient evaluation took 9e-06 seconds
-## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.09 seconds.
-## Chain 2: Adjust your expectations accordingly!
-## Chain 2: 
-## Chain 2: 
-## Chain 2: Iteration:    1 / 4000 [  0%]  (Warmup)
-## Chain 2: Iteration:  400 / 4000 [ 10%]  (Warmup)
-## Chain 2: Iteration:  800 / 4000 [ 20%]  (Warmup)
-## Chain 2: Iteration: 1200 / 4000 [ 30%]  (Warmup)
-## Chain 2: Iteration: 1600 / 4000 [ 40%]  (Warmup)
-## Chain 2: Iteration: 2000 / 4000 [ 50%]  (Warmup)
-## Chain 2: Iteration: 2001 / 4000 [ 50%]  (Sampling)
-## Chain 2: Iteration: 2400 / 4000 [ 60%]  (Sampling)
-## Chain 2: Iteration: 2800 / 4000 [ 70%]  (Sampling)
-## Chain 2: Iteration: 3200 / 4000 [ 80%]  (Sampling)
-## Chain 2: Iteration: 3600 / 4000 [ 90%]  (Sampling)
-## Chain 2: Iteration: 4000 / 4000 [100%]  (Sampling)
-## Chain 2: 
-## Chain 2:  Elapsed Time: 0.126 seconds (Warm-up)
-## Chain 2:                0.143 seconds (Sampling)
-## Chain 2:                0.269 seconds (Total)
-## Chain 2: 
-## 
-## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 3).
-## Chain 3: 
-## Chain 3: Gradient evaluation took 1e-05 seconds
-## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.1 seconds.
-## Chain 3: Adjust your expectations accordingly!
-## Chain 3: 
-## Chain 3: 
-## Chain 3: Iteration:    1 / 4000 [  0%]  (Warmup)
-## Chain 3: Iteration:  400 / 4000 [ 10%]  (Warmup)
-## Chain 3: Iteration:  800 / 4000 [ 20%]  (Warmup)
-## Chain 3: Iteration: 1200 / 4000 [ 30%]  (Warmup)
-## Chain 3: Iteration: 1600 / 4000 [ 40%]  (Warmup)
-## Chain 3: Iteration: 2000 / 4000 [ 50%]  (Warmup)
-## Chain 3: Iteration: 2001 / 4000 [ 50%]  (Sampling)
-## Chain 3: Iteration: 2400 / 4000 [ 60%]  (Sampling)
-## Chain 3: Iteration: 2800 / 4000 [ 70%]  (Sampling)
-## Chain 3: Iteration: 3200 / 4000 [ 80%]  (Sampling)
-## Chain 3: Iteration: 3600 / 4000 [ 90%]  (Sampling)
-## Chain 3: Iteration: 4000 / 4000 [100%]  (Sampling)
-## Chain 3: 
-## Chain 3:  Elapsed Time: 0.12 seconds (Warm-up)
-## Chain 3:                0.109 seconds (Sampling)
-## Chain 3:                0.229 seconds (Total)
-## Chain 3: 
-## 
-## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 4).
-## Chain 4: 
-## Chain 4: Gradient evaluation took 8e-06 seconds
-## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.08 seconds.
-## Chain 4: Adjust your expectations accordingly!
-## Chain 4: 
-## Chain 4: 
-## Chain 4: Iteration:    1 / 4000 [  0%]  (Warmup)
-## Chain 4: Iteration:  400 / 4000 [ 10%]  (Warmup)
-## Chain 4: Iteration:  800 / 4000 [ 20%]  (Warmup)
-## Chain 4: Iteration: 1200 / 4000 [ 30%]  (Warmup)
-## Chain 4: Iteration: 1600 / 4000 [ 40%]  (Warmup)
-## Chain 4: Iteration: 2000 / 4000 [ 50%]  (Warmup)
-## Chain 4: Iteration: 2001 / 4000 [ 50%]  (Sampling)
-## Chain 4: Iteration: 2400 / 4000 [ 60%]  (Sampling)
-## Chain 4: Iteration: 2800 / 4000 [ 70%]  (Sampling)
-## Chain 4: Iteration: 3200 / 4000 [ 80%]  (Sampling)
-## Chain 4: Iteration: 3600 / 4000 [ 90%]  (Sampling)
-## Chain 4: Iteration: 4000 / 4000 [100%]  (Sampling)
-## Chain 4: 
-## Chain 4:  Elapsed Time: 0.122 seconds (Warm-up)
-## Chain 4:                0.111 seconds (Sampling)
-## Chain 4:                0.233 seconds (Total)
-## Chain 4:
-```
-
-``` r
-plot(meta.ldl.brm, ask=F)
-```
-
-![](figures/ldlc-bayesian-meta-1.png)<!-- -->
-
-``` r
-summary(meta.ldl.brm)
-```
-
-```
-##  Family: gaussian 
-##   Links: mu = identity; sigma = identity 
-## Formula: SMD | se(Pooled.LDL.SD) ~ 1 + (1 | Study) 
-##    Data: meta.data (Number of observations: 11) 
-##   Draws: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
-##          total post-warmup draws = 8000
-## 
-## Multilevel Hyperparameters:
-## ~Study (Number of levels: 11) 
-##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sd(Intercept)     1.15      2.16     0.02     7.18 1.00    12545     4464
-## 
-## Regression Coefficients:
-##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## Intercept    18.05      4.59     8.89    27.10 1.00    13910     5788
-## 
-## Further Distributional Parameters:
-##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
-## sigma     0.00      0.00     0.00     0.00   NA       NA       NA
-## 
-## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
-## and Tail_ESS are effective sample size measures, and Rhat is the potential
-## scale reduction factor on split chains (at convergence, Rhat = 1).
-```
-
-``` r
-pp_check(meta.ldl.brm)
-```
-
-![](figures/ldlc-bayesian-meta-2.png)<!-- -->
-
-``` r
-ranef(meta.ldl.brm)
-```
-
-```
-## $Study
-## , , Intercept
-## 
-##               Estimate Est.Error  Q2.5 Q97.5
-## Al-Sarraj2010  -0.0341      2.31 -3.44  3.47
-## Goday2016      -0.0581      2.39 -4.17  3.46
-## Hyde2019       -0.0759      2.34 -3.91  3.39
-## Saslow2014     -0.0984      2.59 -4.23  3.44
-## Sharman2002    -0.0150      2.35 -3.79  3.49
-## Sharman2004    -0.0460      2.50 -3.93  3.50
-## Sun2019        -0.0138      2.43 -3.78  3.80
-## Urbain2017      0.0204      2.45 -3.78  3.66
-## Volek2003-4w   -0.0185      2.26 -3.51  3.66
-## Volek2009      -0.0167      2.33 -3.90  3.60
-## Volek2013      -0.0377      2.40 -3.71  3.30
-```
-
-``` r
-post.samples <- as_draws_df(meta.ldl.brm) %>%
-  select(b_Intercept,sd_Study__Intercept) %>%
-  rename(tau=sd_Study__Intercept,
-         smd=b_Intercept)
-
-# density plots of posterior distributions
-ggplot(aes(x = smd), data = post.samples) +
-  geom_density(fill = "lightblue",                # set the color
-               color = "lightblue", alpha = 0.7) +  
-  geom_point(y = 0,                               # add point at mean
-             x = mean(post.samples$smd)) +
-  labs(x = expression(italic(SMD)),
-       y = element_blank()) +
-  theme_minimal()
-```
-
-![](figures/ldlc-bayesian-meta-3.png)<!-- -->
-
-``` r
-ggplot(aes(x = tau), data = post.samples) +
-  geom_density(fill = "lightgreen",               # set the color
-               color = "lightgreen", alpha = 0.7) +  
-  geom_point(y = 0, 
-             x = mean(post.samples$tau)) +        # add point at mean
-    labs(x = expression(tau),
-       y = element_blank()) +
-  theme_minimal()
-```
-
-![](figures/ldlc-bayesian-meta-4.png)<!-- -->
-
-``` r
-#calculating exact
-smd.ecdf <- ecdf(post.samples$smd)
-smd.ecdf(0) #probability that effect is greater than zero
-```
-
-```
-## [1] 0.00025
-```
-
-``` r
-library(tidybayes)
-library(dplyr)
-library(ggplot2)
-library(ggridges)
-library(glue)
-library(stringr)
-library(forcats)
-
-study.draws <- spread_draws(meta.ldl.brm, r_Study[Study,], b_Intercept) %>% 
-  mutate(b_Intercept = r_Study + b_Intercept)
-
-pooled.effect.draws <- spread_draws(meta.ldl.brm, b_Intercept) %>% 
-  mutate(Study = "Pooled Effect")
-
-forest.data.bayes <- bind_rows(study.draws, 
-                         pooled.effect.draws) %>% 
-   ungroup() %>%
-   mutate(Study = str_replace_all(Study, "[.]", " ")) %>% 
-   mutate(Study = reorder(Study, b_Intercept))
-
-forest.data.summary <- group_by(forest.data.bayes, Study) %>% 
-  mean_qi(b_Intercept)
-
-ggplot(aes(b_Intercept, 
-           relevel(Study, "Pooled Effect", 
-                   after = Inf)), 
-       data = forest.data.bayes) +
-  
-  # Add vertical lines for pooled effect and CI
-  geom_vline(xintercept = fixef(meta.ldl.brm)[1, 1], 
-             color = "grey", size = 1) +
-  geom_vline(xintercept = fixef(meta.ldl.brm)[1, 3:4], 
-             color = "grey", linetype = 2) +
-  geom_vline(xintercept = 0, color = "black", 
-             size = 1) +
-  
-  # Add densities
-  geom_density_ridges(fill = "blue", 
-                      rel_min_height = 0.01, 
-                      col = NA, scale = 1,
-                      alpha = 0.8) +
-  geom_pointintervalh(data = forest.data.summary, 
-                      size = 1) +
-  
-  # Add text and labels
-  geom_text(data = mutate_if(forest.data.summary, 
-                             is.numeric, round, 2),
-    aes(label = glue("{b_Intercept} [{.lower}, {.upper}]"), 
-        x = Inf), hjust = "inward") +
-  labs(x = "Standardized Mean Difference", # summary measure
-       y = element_blank()) +
-  lims(x=c(-5,5)) +
-  theme_minimal()
-```
-
-![](figures/ldlc-bayesian-meta-5.png)<!-- -->
-=======
 
 ### Body Weight
 
@@ -594,7 +253,319 @@ forest(weight.change.meta,
 ![](figures/weight-meta--1.png)<!-- -->
 
 We evaluated 16 studies for this meta-analysis. Using the meta-analysis method, we found fasting blood LDL-C levels were increased 7.667 mg/dL (95% CI: -3.932 to 19.267) after the ketogenic diet intervention compared to pre-intervention levels, with a significant p-value of 0.195. Across these studies, the I<sup>2</sup> is 0, the p-value for Q is 0.997. This is a highly consistent I^2. 
->>>>>>> Stashed changes
+
+## Baysian Meta-Analysis
+
+I wanted to try a Bayesian approach to this, so followed the examples here https://bookdown.org/MathiasHarrer/Doing_Meta_Analysis_in_R/bayesian-ma.html
+
+The prior probabilities were set using these assumptions
+
+$$\hat\theta_k \sim N(\theta_k, \sigma^2_k)$$
+$$\theta_k \sim N(\mu, \tau^2) $$
+Presuming a normal distribution with a SD of 44 (the pooled SD but a mean of zero)
+
+$$\mu \sim N(0,44) $$
+$$\tau \sim HC(0,0.5)$$
+
+
+``` r
+#library(extraDistr)
+#phcauchy(0.3, sigma = 0.3)
+library(brms)
+mean.sd <- mean(ldl.meta.data$Pooled.LDL.SD,na.rm=T)
+priors <- c(prior(normal(20,5), class = Intercept), #20 mg incresae seems clinically meaningful
+            prior(cauchy(0,0.5), class = sd)) 
+
+meta.ldl.brm <- brm(MD.LDL|se(Pooled.SD.LDL) ~ 1 + (1|Study),
+             data = ldl.meta.data,
+             prior = priors,
+             iter = 4000,
+             control=list(adapt_delta=0.9)) #to fix warning There were 1 divergent transitions after warmup. Increasing adapt_delta above 0.8 may help. See http://mc-stan.org/misc/warnings.html#divergent-transitions-after-warmup
+```
+
+```
+## Running /Library/Frameworks/R.framework/Resources/bin/R CMD SHLIB foo.c
+## using C compiler: ‘Apple clang version 17.0.0 (clang-1700.3.19.1)’
+## using SDK: ‘MacOSX26.0.sdk’
+## clang -arch arm64 -std=gnu2x -I"/Library/Frameworks/R.framework/Resources/include" -DNDEBUG   -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/Rcpp/include/"  -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/RcppEigen/include/"  -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/RcppEigen/include/unsupported"  -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/BH/include" -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/StanHeaders/include/src/"  -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/StanHeaders/include/"  -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/RcppParallel/include/"  -I"/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/rstan/include" -DEIGEN_NO_DEBUG  -DBOOST_DISABLE_ASSERTS  -DBOOST_PENDING_INTEGER_LOG2_HPP  -DSTAN_THREADS  -DUSE_STANC3 -DSTRICT_R_HEADERS  -DBOOST_PHOENIX_NO_VARIADIC_EXPRESSION  -D_HAS_AUTO_PTR_ETC=0  -include '/Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp'  -D_REENTRANT -DRCPP_PARALLEL_USE_TBB=1   -I/opt/R/arm64/include    -fPIC  -falign-functions=64 -Wall -g -O2  -c foo.c -o foo.o
+## In file included from <built-in>:1:
+## In file included from /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/StanHeaders/include/stan/math/prim/fun/Eigen.hpp:22:
+## In file included from /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/RcppEigen/include/Eigen/Dense:1:
+## In file included from /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/RcppEigen/include/Eigen/Core:19:
+## /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/library/RcppEigen/include/Eigen/src/Core/util/Macros.h:679:10: fatal error: 'cmath' file not found
+##   679 | #include <cmath>
+##       |          ^~~~~~~
+## 1 error generated.
+## make: *** [foo.o] Error 1
+```
+
+```
+## 
+## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 1).
+## Chain 1: 
+## Chain 1: Gradient evaluation took 2.9e-05 seconds
+## Chain 1: 1000 transitions using 10 leapfrog steps per transition would take 0.29 seconds.
+## Chain 1: Adjust your expectations accordingly!
+## Chain 1: 
+## Chain 1: 
+## Chain 1: Iteration:    1 / 4000 [  0%]  (Warmup)
+## Chain 1: Iteration:  400 / 4000 [ 10%]  (Warmup)
+## Chain 1: Iteration:  800 / 4000 [ 20%]  (Warmup)
+## Chain 1: Iteration: 1200 / 4000 [ 30%]  (Warmup)
+## Chain 1: Iteration: 1600 / 4000 [ 40%]  (Warmup)
+## Chain 1: Iteration: 2000 / 4000 [ 50%]  (Warmup)
+## Chain 1: Iteration: 2001 / 4000 [ 50%]  (Sampling)
+## Chain 1: Iteration: 2400 / 4000 [ 60%]  (Sampling)
+## Chain 1: Iteration: 2800 / 4000 [ 70%]  (Sampling)
+## Chain 1: Iteration: 3200 / 4000 [ 80%]  (Sampling)
+## Chain 1: Iteration: 3600 / 4000 [ 90%]  (Sampling)
+## Chain 1: Iteration: 4000 / 4000 [100%]  (Sampling)
+## Chain 1: 
+## Chain 1:  Elapsed Time: 0.045 seconds (Warm-up)
+## Chain 1:                0.073 seconds (Sampling)
+## Chain 1:                0.118 seconds (Total)
+## Chain 1: 
+## 
+## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 2).
+## Chain 2: 
+## Chain 2: Gradient evaluation took 2e-06 seconds
+## Chain 2: 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds.
+## Chain 2: Adjust your expectations accordingly!
+## Chain 2: 
+## Chain 2: 
+## Chain 2: Iteration:    1 / 4000 [  0%]  (Warmup)
+## Chain 2: Iteration:  400 / 4000 [ 10%]  (Warmup)
+## Chain 2: Iteration:  800 / 4000 [ 20%]  (Warmup)
+## Chain 2: Iteration: 1200 / 4000 [ 30%]  (Warmup)
+## Chain 2: Iteration: 1600 / 4000 [ 40%]  (Warmup)
+## Chain 2: Iteration: 2000 / 4000 [ 50%]  (Warmup)
+## Chain 2: Iteration: 2001 / 4000 [ 50%]  (Sampling)
+## Chain 2: Iteration: 2400 / 4000 [ 60%]  (Sampling)
+## Chain 2: Iteration: 2800 / 4000 [ 70%]  (Sampling)
+## Chain 2: Iteration: 3200 / 4000 [ 80%]  (Sampling)
+## Chain 2: Iteration: 3600 / 4000 [ 90%]  (Sampling)
+## Chain 2: Iteration: 4000 / 4000 [100%]  (Sampling)
+## Chain 2: 
+## Chain 2:  Elapsed Time: 0.047 seconds (Warm-up)
+## Chain 2:                0.039 seconds (Sampling)
+## Chain 2:                0.086 seconds (Total)
+## Chain 2: 
+## 
+## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 3).
+## Chain 3: 
+## Chain 3: Gradient evaluation took 2e-06 seconds
+## Chain 3: 1000 transitions using 10 leapfrog steps per transition would take 0.02 seconds.
+## Chain 3: Adjust your expectations accordingly!
+## Chain 3: 
+## Chain 3: 
+## Chain 3: Iteration:    1 / 4000 [  0%]  (Warmup)
+## Chain 3: Iteration:  400 / 4000 [ 10%]  (Warmup)
+## Chain 3: Iteration:  800 / 4000 [ 20%]  (Warmup)
+## Chain 3: Iteration: 1200 / 4000 [ 30%]  (Warmup)
+## Chain 3: Iteration: 1600 / 4000 [ 40%]  (Warmup)
+## Chain 3: Iteration: 2000 / 4000 [ 50%]  (Warmup)
+## Chain 3: Iteration: 2001 / 4000 [ 50%]  (Sampling)
+## Chain 3: Iteration: 2400 / 4000 [ 60%]  (Sampling)
+## Chain 3: Iteration: 2800 / 4000 [ 70%]  (Sampling)
+## Chain 3: Iteration: 3200 / 4000 [ 80%]  (Sampling)
+## Chain 3: Iteration: 3600 / 4000 [ 90%]  (Sampling)
+## Chain 3: Iteration: 4000 / 4000 [100%]  (Sampling)
+## Chain 3: 
+## Chain 3:  Elapsed Time: 0.046 seconds (Warm-up)
+## Chain 3:                0.047 seconds (Sampling)
+## Chain 3:                0.093 seconds (Total)
+## Chain 3: 
+## 
+## SAMPLING FOR MODEL 'anon_model' NOW (CHAIN 4).
+## Chain 4: 
+## Chain 4: Gradient evaluation took 5e-06 seconds
+## Chain 4: 1000 transitions using 10 leapfrog steps per transition would take 0.05 seconds.
+## Chain 4: Adjust your expectations accordingly!
+## Chain 4: 
+## Chain 4: 
+## Chain 4: Iteration:    1 / 4000 [  0%]  (Warmup)
+## Chain 4: Iteration:  400 / 4000 [ 10%]  (Warmup)
+## Chain 4: Iteration:  800 / 4000 [ 20%]  (Warmup)
+## Chain 4: Iteration: 1200 / 4000 [ 30%]  (Warmup)
+## Chain 4: Iteration: 1600 / 4000 [ 40%]  (Warmup)
+## Chain 4: Iteration: 2000 / 4000 [ 50%]  (Warmup)
+## Chain 4: Iteration: 2001 / 4000 [ 50%]  (Sampling)
+## Chain 4: Iteration: 2400 / 4000 [ 60%]  (Sampling)
+## Chain 4: Iteration: 2800 / 4000 [ 70%]  (Sampling)
+## Chain 4: Iteration: 3200 / 4000 [ 80%]  (Sampling)
+## Chain 4: Iteration: 3600 / 4000 [ 90%]  (Sampling)
+## Chain 4: Iteration: 4000 / 4000 [100%]  (Sampling)
+## Chain 4: 
+## Chain 4:  Elapsed Time: 0.046 seconds (Warm-up)
+## Chain 4:                0.039 seconds (Sampling)
+## Chain 4:                0.085 seconds (Total)
+## Chain 4:
+```
+
+``` r
+plot(meta.ldl.brm, ask=F)
+```
+
+![](figures/ldlc-bayesian-meta-1.png)<!-- -->
+
+``` r
+summary(meta.ldl.brm)
+```
+
+```
+##  Family: gaussian 
+##   Links: mu = identity 
+## Formula: MD.LDL | se(Pooled.SD.LDL) ~ 1 + (1 | Study) 
+##    Data: ldl.meta.data (Number of observations: 16) 
+##   Draws: 4 chains, each with iter = 4000; warmup = 2000; thin = 1;
+##          total post-warmup draws = 8000
+## 
+## Multilevel Hyperparameters:
+## ~Study (Number of levels: 16) 
+##               Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sd(Intercept)     1.05      1.82     0.02     6.06 1.00     9142     4296
+## 
+## Regression Coefficients:
+##           Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## Intercept    14.84      3.74     7.47    22.28 1.00    10871     5845
+## 
+## Further Distributional Parameters:
+##       Estimate Est.Error l-95% CI u-95% CI Rhat Bulk_ESS Tail_ESS
+## sigma     0.00      0.00     0.00     0.00   NA       NA       NA
+## 
+## Draws were sampled using sampling(NUTS). For each parameter, Bulk_ESS
+## and Tail_ESS are effective sample size measures, and Rhat is the potential
+## scale reduction factor on split chains (at convergence, Rhat = 1).
+```
+
+``` r
+pp_check(meta.ldl.brm)
+```
+
+![](figures/ldlc-bayesian-meta-2.png)<!-- -->
+
+``` r
+ranef(meta.ldl.brm)
+```
+
+```
+## $Study
+## , , Intercept
+## 
+##                  Estimate Est.Error  Q2.5 Q97.5
+## Al-Sarraj2010    -0.02978      2.03 -3.47  3.45
+## Buren2021        -0.32285      2.11 -5.19  2.17
+## Goday2016         0.00168      2.14 -3.30  3.63
+## Hyde2019          0.01899      2.06 -3.30  3.50
+## Jabbek2010-10wks -0.06558      2.07 -3.76  3.13
+## Partsalaki2012   -0.08668      1.88 -3.76  2.90
+## Retterstol2018    0.17398      2.04 -2.72  3.98
+## Saslow2014        0.01645      1.95 -3.35  3.40
+## Saslow2017-12m   -0.25762      1.79 -4.97  2.22
+## Sharman2002      -0.02537      2.03 -3.50  3.31
+## Sharman2004      -0.08226      1.92 -3.66  3.09
+## Sun2019           0.04476      1.99 -3.46  3.66
+## Urbain2017        0.00938      2.08 -3.61  3.24
+## Volek2003-4w     -0.00791      1.78 -3.44  3.46
+## Volek2009        -0.02747      2.00 -3.64  3.13
+## Volek2013        -0.04325      2.08 -3.46  3.21
+```
+
+``` r
+post.samples <- as_draws_df(meta.ldl.brm) %>%
+  select(b_Intercept,sd_Study__Intercept) %>%
+  rename(tau=sd_Study__Intercept,
+         smd=b_Intercept)
+
+# density plots of posterior distributions
+ggplot(aes(x = smd), data = post.samples) +
+  geom_density(fill = "lightblue",                # set the color
+               color = "lightblue", alpha = 0.7) +  
+  geom_point(y = 0,                               # add point at mean
+             x = mean(post.samples$smd)) +
+  labs(x = expression(italic(SMD)),
+       y = element_blank()) +
+  theme_minimal()
+```
+
+![](figures/ldlc-bayesian-meta-3.png)<!-- -->
+
+``` r
+ggplot(aes(x = tau), data = post.samples) +
+  geom_density(fill = "lightgreen",               # set the color
+               color = "lightgreen", alpha = 0.7) +  
+  geom_point(y = 0, 
+             x = mean(post.samples$tau)) +        # add point at mean
+    labs(x = expression(tau),
+       y = element_blank()) +
+  theme_minimal()
+```
+
+![](figures/ldlc-bayesian-meta-4.png)<!-- -->
+
+``` r
+#calculating exact
+smd.ecdf <- ecdf(post.samples$smd)
+smd.ecdf(0) #probability that effect is greater than zero
+```
+
+```
+## [1] 0
+```
+
+``` r
+library(tidybayes)
+library(dplyr)
+library(ggplot2)
+library(ggridges)
+library(glue)
+library(stringr)
+library(forcats)
+
+study.draws <- spread_draws(meta.ldl.brm, r_Study[Study,], b_Intercept) %>% 
+  mutate(b_Intercept = r_Study + b_Intercept)
+
+pooled.effect.draws <- spread_draws(meta.ldl.brm, b_Intercept) %>% 
+  mutate(Study = "Pooled Effect")
+
+forest.data.bayes <- bind_rows(study.draws, 
+                         pooled.effect.draws) %>% 
+   ungroup() %>%
+   mutate(Study = str_replace_all(Study, "[.]", " ")) %>% 
+   mutate(Study = reorder(Study, b_Intercept))
+
+forest.data.summary <- group_by(forest.data.bayes, Study) %>% 
+  mean_qi(b_Intercept)
+
+ggplot(aes(b_Intercept, 
+           relevel(Study, "Pooled Effect", 
+                   after = Inf)), 
+       data = forest.data.bayes) +
+  
+  # Add vertical lines for pooled effect and CI
+  geom_vline(xintercept = fixef(meta.ldl.brm)[1, 1], 
+             color = "grey", size = 1) +
+  geom_vline(xintercept = fixef(meta.ldl.brm)[1, 3:4], 
+             color = "grey", linetype = 2) +
+  geom_vline(xintercept = 0, color = "black", 
+             size = 1) +
+  geom_density_ridges(fill = "blue", 
+                      rel_min_height = 0.01, 
+                      col = NA, scale = 1,
+                      alpha = 0.8) +
+  stat_halfeye(data = forest.data.summary, 
+                      size = 1) +
+  geom_text(data = mutate_if(forest.data.summary, 
+                             is.numeric, round, 2),
+    aes(label = glue("{b_Intercept} [{.lower}, {.upper}]"), 
+        x = Inf), hjust = "inward") +
+  labs(x = "Standardized Mean Difference", # summary measure
+       y = element_blank()) +
+  lims(x=c(-5,5)) +
+  theme_minimal()
+```
+
+![](figures/ldlc-bayesian-meta-5.png)<!-- -->
 
 # Average Change in LDL-C
 
@@ -1171,7 +1142,6 @@ Table: Correlation betwteen BMI Change and delta-LDL of Mixed groups
 #ldl.bmi.change.male.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Male"))
 #ldl.bmi.change.male.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Male groups")
 
-<<<<<<< Updated upstream
 ldl.bmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
 ldl.bmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
 ```
@@ -1266,8 +1236,8 @@ Table: Correlation betwteen BMI Change and delta-LDL of Mostly Female groups
 |:------------|--------:|---------:|---------:|-------:|
 |(Intercept)  |     46.5|     11.91|      3.90|   0.160|
 |`BMI Change` |     18.5|      9.27|      1.99|   0.296|
-Greater BMI decreases over the study period were associated with a smaller increase in LDL-C after consumption of a ketogenic diet, though this did not reach significance (r<sup>2</sup> = 0.293, p-value = 0.132). The association with the change in LDL-C and decrease in BMI was consistent with weight, with change in weight on LDL-C reaching significance (r<sup>2</sup> = 0.194, p-value = 0.068), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet, though this was not significant (r<sup>2</sup> = 0.19, p-value = 0.24).
-=======
+
+``` r
 # ldl.bmi.change.female.lm<- lm(`Change in LDL-C` ~ `BMI Change`, filter(eval.data, Sex.Group == "Mostly Female"))
 # ldl.bmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
 # 
@@ -1293,7 +1263,6 @@ Greater BMI decreases over the study period were associated with a smaller incre
 # ldl.pctbmi.change.female.lm %>% tidy %>% kable (caption="Correlation betwteen BMI Change and delta-LDL of Mostly Female groups")
 ```
 Greater BMI decreases over the study period were associated with a smaller increase in LDL-C after consumption of a ketogenic diet, though this did not reach significance (r<sup>2</sup> = ` ldl.bmi.change.lm %>% glance %>% pull(r.squared)`, p-value = ` ldl.bmi.change.lm %>% tidy %>% pull(p.value) %>% last`). The association with the change in LDL-C and decrease in BMI was consistent with weight, with change in weight on LDL-C reaching significance (r<sup>2</sup> = ` ldl.weight.change.lm %>% glance %>% pull(r.squared)`, p-value = ` ldl.weight.change.lm %>% tidy %>% pull(p.value) %>% last`), where greater decreases in weight were associated with lower increases in LDL-C after consumption of a ketogenic diet. Looking at percent BMI change to account for baseline BMI, greater percent change decreases were associated with a lower increase in LDL-C on a ketogenic diet, though this was not significant (r<sup>2</sup> = ` ldl.pctbmi.change.lm %>% glance %>% pull(r.squared)`, p-value = ` ldl.pctbmi.change.lm %>% tidy %>% pull(p.value) %>% last`).
->>>>>>> Stashed changes
 
 
 ## Relative to Baseline LDL-C
@@ -1454,7 +1423,6 @@ ldl.baseline.aov %>% tidy %>% kable
 |:--------------|--:|-----:|------:|---------:|-------:|
 |`Percent Male` |  1|   321|    321|      1.67|   0.212|
 |Residuals      | 18|  3452|    192|        NA|      NA|
-<<<<<<< Updated upstream
 
 Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = 0.001, p-value = 0.872). 
 
@@ -1523,10 +1491,6 @@ rpart.plot(tree)
 ![](figures/decision-tree-3.png)<!-- -->
 
 
-=======
-
-Among individuals, baseline LDL-C was not positively correlated with change in LDL-C after consumption of a ketogenic diet and the relationship was not significant (r<sup>2</sup> = 0.001, p-value = 0.872). 
->>>>>>> Stashed changes
 
 # Session Information
 
@@ -1536,15 +1500,6 @@ sessionInfo()
 ```
 
 ```
-<<<<<<< Updated upstream
-## R version 4.4.1 (2024-06-14)
-## Platform: x86_64-apple-darwin20
-## Running under: macOS Monterey 12.7.5
-## 
-## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
-=======
 ## R version 4.5.1 (2025-06-13)
 ## Platform: aarch64-apple-darwin20
 ## Running under: macOS Sequoia 15.7.1
@@ -1552,7 +1507,6 @@ sessionInfo()
 ## Matrix products: default
 ## BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
 ## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
->>>>>>> Stashed changes
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1564,71 +1518,45 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-<<<<<<< Updated upstream
-##  [1] rpart.plot_3.1.2 rattle_5.5.1     bitops_1.0-8     tibble_3.2.1    
-##  [5] rpart_4.1.23     corrplot_0.92    broom_1.0.6      ggrepel_0.9.5   
-##  [9] forcats_1.0.0    stringr_1.5.1    glue_1.7.0       ggridges_0.5.6  
-## [13] tidybayes_3.0.6  brms_2.21.0      Rcpp_1.0.13      meta_7.0-0      
-## [17] metadat_1.2-0    readr_2.1.5      ggplot2_3.5.1    dplyr_1.1.4     
-## [21] tidyr_1.3.1      knitr_1.48      
+##  [1] rpart.plot_3.1.3 rattle_5.5.1     bitops_1.0-9     tibble_3.3.0    
+##  [5] rpart_4.1.24     corrplot_0.95    broom_1.0.10     ggrepel_0.9.6   
+##  [9] forcats_1.0.1    stringr_1.5.2    glue_1.8.0       ggridges_0.5.7  
+## [13] tidybayes_3.0.7  brms_2.23.0      Rcpp_1.1.0       meta_8.2-1      
+## [17] metadat_1.4-0    readr_2.1.5      ggplot2_4.0.0    dplyr_1.1.4     
+## [21] tidyr_1.3.1      knitr_1.50      
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] gridExtra_2.3        inline_0.3.19        rlang_1.1.4         
-##  [4] magrittr_2.0.3       matrixStats_1.3.0    compiler_4.4.1      
-##  [7] mgcv_1.9-1           loo_2.8.0            callr_3.7.6         
-## [10] vctrs_0.6.5          reshape2_1.4.4       pkgconfig_2.0.3     
-## [13] arrayhelpers_1.1-0   crayon_1.5.3         fastmap_1.2.0       
-## [16] backports_1.5.0      labeling_0.4.3       utf8_1.2.4          
-## [19] rmarkdown_2.27       tzdb_0.4.0           ps_1.7.7            
-## [22] nloptr_2.1.1         purrr_1.0.2          bit_4.0.5           
-## [25] xfun_0.46            cachem_1.1.0         jsonlite_1.8.8      
-## [28] highr_0.11           parallel_4.4.1       R6_2.5.1            
-## [31] bslib_0.8.0          stringi_1.8.4        StanHeaders_2.32.10 
-## [34] boot_1.3-30          jquerylib_0.1.4      numDeriv_2016.8-1.1 
-## [37] rstan_2.32.6         bayesplot_1.11.1     Matrix_1.7-0        
-## [40] splines_4.4.1        tidyselect_1.2.1     abind_1.4-5         
-## [43] yaml_2.3.10          codetools_0.2-20     metafor_4.6-0       
-## [46] processx_3.8.4       pkgbuild_1.4.4       lattice_0.22-6      
-## [49] plyr_1.8.9           withr_3.0.0          bridgesampling_1.1-2
-## [52] posterior_1.6.0      coda_0.19-4.1        evaluate_0.24.0     
-## [55] CompQuadForm_1.4.3   RcppParallel_5.1.8   ggdist_3.3.2        
-## [58] xml2_1.3.6           pillar_1.9.0         tensorA_0.36.2.1    
-## [61] checkmate_2.3.2      stats4_4.4.1         distributional_0.4.0
-## [64] generics_0.1.3       vroom_1.6.5          mathjaxr_1.6-0      
-## [67] hms_1.1.3            rstantools_2.4.0     munsell_0.5.1       
-## [70] scales_1.3.0         minqa_1.2.7          tools_4.4.1         
-## [73] lme4_1.1-35.5        mvtnorm_1.2-5        grid_4.4.1          
-## [76] QuickJSR_1.3.1       colorspace_2.1-1     nlme_3.1-164        
-## [79] cli_3.6.3            fansi_1.0.6          svUnit_1.0.6        
-## [82] Brobdingnag_1.2-9    gtable_0.3.5         sass_0.4.9          
-## [85] digest_0.6.36        farver_2.1.2         htmltools_0.5.8.1   
-## [88] lifecycle_1.0.4      bit64_4.0.5          MASS_7.3-60.2
-=======
-## [1] broom_1.0.10  ggrepel_0.9.6 meta_8.2-1    metadat_1.4-0 ggplot2_4.0.0
-## [6] readr_2.1.5   dplyr_1.1.4   tidyr_1.3.1   knitr_1.50   
-## 
-## loaded via a namespace (and not attached):
-##  [1] gtable_0.3.6        xfun_0.53           bslib_0.9.0        
-##  [4] CompQuadForm_1.4.4  lattice_0.22-7      mathjaxr_1.8-0     
-##  [7] tzdb_0.5.0          numDeriv_2016.8-1.1 vctrs_0.6.5        
-## [10] tools_4.5.1         Rdpack_2.6.4        generics_0.1.4     
-## [13] parallel_4.5.1      tibble_3.3.0        pkgconfig_2.0.3    
-## [16] Matrix_1.7-4        RColorBrewer_1.1-3  S7_0.2.0           
-## [19] lifecycle_1.0.4     compiler_4.5.1      farver_2.1.2       
-## [22] stringr_1.5.2       htmltools_0.5.8.1   sass_0.4.10        
-## [25] yaml_2.3.10         pillar_1.11.1       nloptr_2.2.1       
-## [28] crayon_1.5.3        jquerylib_0.1.4     MASS_7.3-65        
-## [31] cachem_1.1.0        reformulas_0.4.1    boot_1.3-32        
-## [34] nlme_3.1-168        tidyselect_1.2.1    digest_0.6.37      
-## [37] stringi_1.8.7       purrr_1.1.0         labeling_0.4.3     
-## [40] splines_4.5.1       fastmap_1.2.0       grid_4.5.1         
-## [43] cli_3.6.5           metafor_4.8-0       magrittr_2.0.4     
-## [46] withr_3.0.2         backports_1.5.0     scales_1.4.0       
-## [49] bit64_4.6.0-1       rmarkdown_2.30      bit_4.6.0          
-## [52] lme4_1.1-37         hms_1.1.4           evaluate_1.0.5     
-## [55] rbibutils_2.3       mgcv_1.9-3          rlang_1.1.6        
-## [58] Rcpp_1.1.0          glue_1.8.0          xml2_1.4.0         
-## [61] rstudioapi_0.17.1   vroom_1.6.6         minqa_1.2.8        
-## [64] jsonlite_2.0.0      R6_2.6.1
->>>>>>> Stashed changes
+##  [1] Rdpack_2.6.4          gridExtra_2.3         inline_0.3.21        
+##  [4] sandwich_3.1-1        rlang_1.1.6           magrittr_2.0.4       
+##  [7] multcomp_1.4-29       matrixStats_1.5.0     compiler_4.5.1       
+## [10] mgcv_1.9-3            loo_2.8.0             callr_3.7.6          
+## [13] vctrs_0.6.5           reshape2_1.4.4        pkgconfig_2.0.3      
+## [16] arrayhelpers_1.1-0    crayon_1.5.3          fastmap_1.2.0        
+## [19] backports_1.5.0       labeling_0.4.3        rmarkdown_2.30       
+## [22] tzdb_0.5.0            ps_1.9.1              nloptr_2.2.1         
+## [25] purrr_1.1.0           bit_4.6.0             xfun_0.53            
+## [28] cachem_1.1.0          jsonlite_2.0.0        parallel_4.5.1       
+## [31] R6_2.6.1              bslib_0.9.0           stringi_1.8.7        
+## [34] RColorBrewer_1.1-3    StanHeaders_2.32.10   boot_1.3-32          
+## [37] jquerylib_0.1.4       numDeriv_2016.8-1.1   estimability_1.5.1   
+## [40] rstan_2.32.7          zoo_1.8-14            bayesplot_1.14.0     
+## [43] Matrix_1.7-4          splines_4.5.1         tidyselect_1.2.1     
+## [46] rstudioapi_0.17.1     abind_1.4-8           yaml_2.3.10          
+## [49] codetools_0.2-20      metafor_4.8-0         processx_3.8.6       
+## [52] pkgbuild_1.4.8        lattice_0.22-7        plyr_1.8.9           
+## [55] withr_3.0.2           bridgesampling_1.1-2  S7_0.2.0             
+## [58] posterior_1.6.1       coda_0.19-4.1         evaluate_1.0.5       
+## [61] survival_3.8-3        CompQuadForm_1.4.4    RcppParallel_5.1.11-1
+## [64] ggdist_3.3.3          xml2_1.4.0            pillar_1.11.1        
+## [67] tensorA_0.36.2.1      checkmate_2.3.3       stats4_4.5.1         
+## [70] reformulas_0.4.1      distributional_0.5.0  generics_0.1.4       
+## [73] vroom_1.6.6           mathjaxr_1.8-0        hms_1.1.4            
+## [76] rstantools_2.5.0      scales_1.4.0          minqa_1.2.8          
+## [79] xtable_1.8-4          emmeans_1.11.2-8      tools_4.5.1          
+## [82] lme4_1.1-37           mvtnorm_1.3-3         grid_4.5.1           
+## [85] rbibutils_2.3         QuickJSR_1.8.1        nlme_3.1-168         
+## [88] cli_3.6.5             svUnit_1.0.8          Brobdingnag_1.2-9    
+## [91] gtable_0.3.6          sass_0.4.10           digest_0.6.37        
+## [94] TH.data_1.1-4         farver_2.1.2          htmltools_0.5.8.1    
+## [97] lifecycle_1.0.4       bit64_4.6.0-1         MASS_7.3-65
 ```

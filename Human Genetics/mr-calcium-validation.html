@@ -179,7 +179,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:43:17 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 29 13:49:49 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -778,25 +778,26 @@ window.Quarto = {
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_ivw"</span>, </span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_egger_regression"</span>, </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_median"</span>, </span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_mode"</span></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Positive Control"</span>,</span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'mr_raps'</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_median"</span>, </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_mode"</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>calcium.control.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Positive Control"</span>,</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>MR Results for Calcium Positive Control</caption>
 <colgroup>
-<col style="width: 23%">
-<col style="width: 20%">
-<col style="width: 25%">
+<col style="width: 21%">
+<col style="width: 18%">
+<col style="width: 33%">
 <col style="width: 4%">
 <col style="width: 5%">
 <col style="width: 5%">
-<col style="width: 12%">
+<col style="width: 11%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -831,20 +832,29 @@ window.Quarto = {
 <tr class="odd">
 <td style="text-align: left;">Calcium (Michigan GWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">Robust adjusted profile score (RAPS)</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">0.542</td>
+<td style="text-align: right;">0.022</td>
+<td style="text-align: right;">0.000000e+00</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium (Michigan GWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.558</td>
-<td style="text-align: right;">0.035</td>
-<td style="text-align: right;">9.858427e-59</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">1.367403e-67</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Calcium (Michigan GWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.557</td>
 <td style="text-align: right;">0.058</td>
-<td style="text-align: right;">3.467823e-19</td>
+<td style="text-align: right;">3.897864e-19</td>
 </tr>
 </tbody>
 </table>
@@ -1180,19 +1190,21 @@ other attached packages:
 [13] tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
- [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
- [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-3         scales_1.4.0      
-[17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.1      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         vctrs_0.6.5       
-[29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3    pillar_1.11.1     
-[37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29     labeling_0.4.3    
-[49] compiler_4.5.1     S7_0.2.0          </code></pre>
+ [1] gtable_0.3.6       xfun_0.53          htmlwidgets_1.6.4  psych_2.5.6       
+ [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.1       
+ [9] generics_0.1.4     curl_7.0.0         parallel_4.5.1     pkgconfig_2.0.3   
+[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.0          
+[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.1     farver_2.1.2      
+[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
+[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
+[29] tidyselect_1.2.1   digest_0.6.37      nortest_1.0-4      stringi_1.8.7     
+[33] labeling_0.4.3     splines_4.5.1      fastmap_1.2.0      grid_4.5.1        
+[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
+[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
+[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
+[49] mgcv_1.9-3         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
+[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
+[57] R6_2.6.1           plyr_1.8.9        </code></pre>
 </div>
 </div>
 </section>

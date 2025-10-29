@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:43:17 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 29 13:49:49 2025
 
 ## Data Entry
 
@@ -400,6 +400,7 @@ calcium.control.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw", 
   "mr_egger_regression", 
+  'mr_raps',
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
@@ -414,12 +415,13 @@ calcium.control.mr |> select(-starts_with('id')) |>
 
 Table: MR Results for Calcium Positive Control
 
-|outcome                 |exposure             |method                    | nsnp|     b|    se|         pval|
-|:-----------------------|:--------------------|:-------------------------|----:|-----:|-----:|------------:|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted |  275| 0.544| 0.023| 0.000000e+00|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                  |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median           |  275| 0.558| 0.035| 9.858427e-59|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode             |  275| 0.557| 0.058| 3.467823e-19|
+|outcome                 |exposure             |method                               | nsnp|     b|    se|         pval|
+|:-----------------------|:--------------------|:------------------------------------|----:|-----:|-----:|------------:|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted            |  275| 0.544| 0.023| 0.000000e+00|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                             |  275| 0.681| 0.049| 5.752555e-34|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Robust adjusted profile score (RAPS) |  275| 0.542| 0.022| 0.000000e+00|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median                      |  275| 0.558| 0.032| 1.367403e-67|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode                        |  275| 0.557| 0.058| 3.897864e-19|
 
 
 :::
@@ -685,19 +687,21 @@ other attached packages:
 [13] tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
- [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
- [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-3         scales_1.4.0      
-[17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.1      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         vctrs_0.6.5       
-[29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3    pillar_1.11.1     
-[37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29     labeling_0.4.3    
-[49] compiler_4.5.1     S7_0.2.0          
+ [1] gtable_0.3.6       xfun_0.53          htmlwidgets_1.6.4  psych_2.5.6       
+ [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.1       
+ [9] generics_0.1.4     curl_7.0.0         parallel_4.5.1     pkgconfig_2.0.3   
+[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.0          
+[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.1     farver_2.1.2      
+[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
+[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
+[29] tidyselect_1.2.1   digest_0.6.37      nortest_1.0-4      stringi_1.8.7     
+[33] labeling_0.4.3     splines_4.5.1      fastmap_1.2.0      grid_4.5.1        
+[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
+[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
+[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
+[49] mgcv_1.9-3         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
+[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
+[57] R6_2.6.1           plyr_1.8.9        
 ```
 
 

@@ -236,6 +236,7 @@ calcium.control.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw", 
   "mr_egger_regression", 
+  'mr_raps',
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))

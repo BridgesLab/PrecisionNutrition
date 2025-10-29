@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 29 13:49:49 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 29 16:22:17 2025
 
 ## Data Entry
 
@@ -405,7 +405,36 @@ calcium.control.mr <- mr(data_steiger,
   "mr_weighted_mode"
 ))
 
-calcium.control.mr |> select(-starts_with('id')) |> 
+#MPRESSO has to be run separately
+library(MRPRESSO)
+
+calcium.control.mr_presso_results <- mr_presso(
+  BetaOutcome = "beta.outcome",      # Column name for outcome betas
+  BetaExposure = "beta.exposure",    # Column name for exposure betas
+  SdOutcome = "se.outcome",          # Column name for outcome SEs
+  SdExposure = "se.exposure",        # Column name for exposure SEs
+  data = data_steiger,                  # Your dataset
+  NbDistribution = 2000,              # Number of distributions (default 1000)
+  SignifThreshold = 0.05,             # Significance threshold
+  OUTLIERtest = TRUE,                 # Perform outlier test
+  DISTORTIONtest = TRUE,              # Perform distortion test
+)
+
+library(forcats)
+calcium.control.mr_presso_results$`Main MR results` |>
+  select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  rename(method = `MR Analysis`,
+         b = `Causal Estimate`,
+         se = Sd,
+         pval = `P-value`) |>
+  mutate(method = fct_recode(method,
+                             "MR-PRESSO (Raw)"="Raw",
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> calcium.control.mr_presso_df
+
+calcuim.control.mr.mrpresso <- bind_rows(as_tibble(calcium.control.mr), as_tibble(calcium.control.mr_presso_df))|>
+  fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
+
+calcuim.control.mr.mrpresso |> #select(-starts_with('id')) |> 
   kable(caption="MR Results for Calcium Positive Control",
         digits=c(0,0,0,0,3,3,99))
 ```
@@ -415,22 +444,24 @@ calcium.control.mr |> select(-starts_with('id')) |>
 
 Table: MR Results for Calcium Positive Control
 
-|outcome                 |exposure             |method                               | nsnp|     b|    se|         pval|
-|:-----------------------|:--------------------|:------------------------------------|----:|-----:|-----:|------------:|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted            |  275| 0.544| 0.023| 0.000000e+00|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                             |  275| 0.681| 0.049| 5.752555e-34|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Robust adjusted profile score (RAPS) |  275| 0.542| 0.022| 0.000000e+00|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median                      |  275| 0.558| 0.032| 1.367403e-67|
-|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode                        |  275| 0.557| 0.058| 3.897864e-19|
+|id.exposure          |id.outcome              |outcome                 |exposure             |method                               | nsnp|         b| se| pval|
+|:--------------------|:-----------------------|:-----------------------|:--------------------|:------------------------------------|----:|---------:|--:|----:|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted            |  275| 0.5437075|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                             |  275| 0.6806916|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Robust adjusted profile score (RAPS) |  275| 0.5420480|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median                      |  275| 0.5576021|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode                        |  275| 0.5572371|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Raw)                      |  275| 0.5451830|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Outlier-corrected)        |  275| 0.5355132|  0|    0|
 
 
 :::
 
 ```{.r .cell-code}
-calcium.control.mr |> select(-starts_with('id')) |> 
+calcuim.control.mr.mrpresso |> select(-starts_with('id')) |> 
   write_csv("MR Results - Calcium Postive Control.csv")
 
-ggplot(calcium.control.mr, aes(y=method,x=b)) +
+ggplot(calcuim.control.mr.mrpresso, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
@@ -446,7 +477,7 @@ ggplot(calcium.control.mr, aes(y=method,x=b)) +
 :::
 
 
-The primary result, using the inverse variance weighted method shows a 0.5437075 $\pm$ 0.0234494 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of 6.2499238\times 10^{-119}.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the inverse variance weighted method shows a 0.5437075 $\pm$ 0.0234494 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of 6.2499238\times 10^{-119}.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
@@ -510,6 +541,39 @@ Table: MR Heterogeneity Results for Calcium Positive Control
 
 
 This is expected with polygenic traits and does not necessarily invalidate the overall causal estimate, particularly since robust methods (weighted median, weighted mode) gave consistent results.
+
+### MR-PRESSO Global Test and Distortion Test
+
+
+::: {.cell}
+
+```{.r .cell-code}
+calcium.control.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
+  unlist() |> as.data.frame() |>
+  rename(`Global Test` = 1) |>
+  kable(caption="MR-PRESSO Global Test Results for Calcium Positive Control")
+```
+
+::: {.cell-output-display}
+
+
+Table: MR-PRESSO Global Test Results for Calcium Positive Control
+
+|       |Global Test      |
+|:------|:----------------|
+|RSSobs |463.917446671804 |
+|Pvalue |<5e-04           |
+
+
+:::
+
+```{.r .cell-code}
+calcium.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> calcium.distortion.test
+```
+:::
+
+
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6025, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
 
 
 ::: {.cell}
@@ -681,10 +745,10 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
- [9] readr_2.1.5        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0     
-[13] tidyverse_2.0.0   
+ [1] MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50        
+ [5] lubridate_1.9.4    forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4       
+ [9] purrr_1.1.0        readr_2.1.5        tidyr_1.3.1        tibble_3.3.0      
+[13] ggplot2_4.0.0      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
  [1] gtable_0.3.6       xfun_0.53          htmlwidgets_1.6.4  psych_2.5.6       

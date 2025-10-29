@@ -241,14 +241,43 @@ calcium.control.mr <- mr(data_steiger,
   "mr_weighted_mode"
 ))
 
-calcium.control.mr |> select(-starts_with('id')) |> 
+#MPRESSO has to be run separately
+library(MRPRESSO)
+
+calcium.control.mr_presso_results <- mr_presso(
+  BetaOutcome = "beta.outcome",      # Column name for outcome betas
+  BetaExposure = "beta.exposure",    # Column name for exposure betas
+  SdOutcome = "se.outcome",          # Column name for outcome SEs
+  SdExposure = "se.exposure",        # Column name for exposure SEs
+  data = data_steiger,                  # Your dataset
+  NbDistribution = 2000,              # Number of distributions (default 1000)
+  SignifThreshold = 0.05,             # Significance threshold
+  OUTLIERtest = TRUE,                 # Perform outlier test
+  DISTORTIONtest = TRUE,              # Perform distortion test
+)
+
+library(forcats)
+calcium.control.mr_presso_results$`Main MR results` |>
+  select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  rename(method = `MR Analysis`,
+         b = `Causal Estimate`,
+         se = Sd,
+         pval = `P-value`) |>
+  mutate(method = fct_recode(method,
+                             "MR-PRESSO (Raw)"="Raw",
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> calcium.control.mr_presso_df
+
+calcuim.control.mr.mrpresso <- bind_rows(as_tibble(calcium.control.mr), as_tibble(calcium.control.mr_presso_df))|>
+  fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
+
+calcuim.control.mr.mrpresso |> #select(-starts_with('id')) |> 
   kable(caption="MR Results for Calcium Positive Control",
         digits=c(0,0,0,0,3,3,99))
 
-calcium.control.mr |> select(-starts_with('id')) |> 
+calcuim.control.mr.mrpresso |> select(-starts_with('id')) |> 
   write_csv("MR Results - Calcium Postive Control.csv")
 
-ggplot(calcium.control.mr, aes(y=method,x=b)) +
+ggplot(calcuim.control.mr.mrpresso, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
@@ -258,7 +287,7 @@ ggplot(calcium.control.mr, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the inverse variance weighted method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
@@ -285,6 +314,19 @@ heterogeneity|>
 ```
 
 This is expected with polygenic traits and does not necessarily invalidate the overall causal estimate, particularly since robust methods (weighted median, weighted mode) gave consistent results.
+
+### MR-PRESSO Global Test and Distortion Test
+
+```{r calcium-calcium-global-test}
+calcium.control.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
+  unlist() |> as.data.frame() |>
+  rename(`Global Test` = 1) |>
+  kable(caption="MR-PRESSO Global Test Results for Calcium Positive Control")
+
+calcium.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> calcium.distortion.test
+```
+
+From MR-PRESSO there were `r length(calcium.distortion.test[[1]])` outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was `r calcium.distortion.test[[2]]`, with a p-value of `r calcium.distortion.test[[3]]`, indicating `r if(calcium.distortion.test[[3]] < 0.05){"significant"}else{"no significant"}` distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
 
 ```{r calcium-calcium-funnel-plot}
 single_snp_results <- mr_singlesnp(data_steiger)

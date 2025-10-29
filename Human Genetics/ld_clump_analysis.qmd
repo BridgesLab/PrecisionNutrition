@@ -57,7 +57,6 @@ ldlc.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-LDL.tsv.gz'
 tc.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-Chol.tsv.gz'
 ```
 
-
 The calcium summary stats is in `r calcium.sumstats.file`, the total cholesterol in `r tc.sumstats.file` and the LDL-C summary stats file is in `r ldlc.sumstats.file`. 
 ## LD Clumping
 
@@ -116,6 +115,7 @@ calcium.merged.snps.provisional <-
 # Strategy per clump:
 calcium.best_per_clump <- 
   calcium.merged.snps.provisional %>%
+  filter(SP2!=".") %>% #removed snps extracted as "."
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
@@ -225,6 +225,7 @@ tc.merged.snps.provisional <-
 tc.best_per_clump <- 
   tc.merged.snps.provisional %>%
   group_by(ID) %>%
+  filter(SP2!=".") %>% #removed snps extracted as "."
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
@@ -321,6 +322,7 @@ ldlc.merged.snps.provisional <-
 # Strategy per clump:
 ldlc.best_per_clump <- 
   ldlc.merged.snps.provisional %>%
+  filter(SP2!=".") %>% #removed snps extracted as "."
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead

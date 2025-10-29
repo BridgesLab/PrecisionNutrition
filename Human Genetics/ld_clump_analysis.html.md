@@ -67,7 +67,6 @@ tc.outcome.gwas.file <- 'PheWeb Summary Statistics/phenocode-Chol.tsv.gz'
 :::
 
 
-
 The calcium summary stats is in biomarkers-30680-both_sexes-irnt.tsv, the total cholesterol in biomarkers-30690-both_sexes-irnt.tsv and the LDL-C summary stats file is in biomarkers-30780-both_sexes-irnt.tsv. 
 ## LD Clumping
 
@@ -129,6 +128,7 @@ calcium.merged.snps.provisional <-
 # Strategy per clump:
 calcium.best_per_clump <- 
   calcium.merged.snps.provisional %>%
+  filter(SP2!=".") %>% #removed snps extracted as "."
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
@@ -262,6 +262,7 @@ tc.merged.snps.provisional <-
 tc.best_per_clump <- 
   tc.merged.snps.provisional %>%
   group_by(ID) %>%
+  filter(SP2!=".") %>% #removed snps extracted as "."
   arrange(
     # 1. prefer if SNP itself is the lead
     desc(SP2 == ID),
@@ -382,6 +383,7 @@ ldlc.merged.snps.provisional <-
 # Strategy per clump:
 ldlc.best_per_clump <- 
   ldlc.merged.snps.provisional %>%
+  filter(SP2!=".") %>% #removed snps extracted as "."
   group_by(ID) %>%
   arrange(
     # 1. prefer if SNP itself is the lead
@@ -553,9 +555,9 @@ loaded via a namespace (and not attached):
 [13] htmlwidgets_1.6.4  pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0        
 [17] rlang_1.1.6        stringi_1.8.7      xfun_0.53          S7_0.2.0          
 [21] bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5          withr_3.0.2       
-[25] magrittr_2.0.4     digest_0.6.37      grid_4.5.1         vroom_1.6.5       
-[29] rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4    vctrs_0.6.5       
-[33] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       rmarkdown_2.29    
+[25] magrittr_2.0.4     digest_0.6.37      grid_4.5.1         vroom_1.6.6       
+[29] rstudioapi_0.17.1  hms_1.1.4          lifecycle_1.0.4    vctrs_0.6.5       
+[33] evaluate_1.0.5     glue_1.8.0         farver_2.1.2       rmarkdown_2.30    
 [37] tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 
 ```
 

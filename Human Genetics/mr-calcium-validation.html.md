@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 29 16:22:17 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Thu Oct 30 10:44:44 2025
 
 ## Data Entry
 
@@ -573,7 +573,7 @@ calcium.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> calci
 :::
 
 
-From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6025, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6015, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
 
 
 ::: {.cell}
@@ -654,6 +654,111 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 :::
 :::
 
+
+### CAUSE Analysis
+
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in @morrisonMendelianRandomizationAccounting2020.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+#devtools::install_github("jean997/cause@v1.2.0")
+library(cause)
+calcium.cause.data <-
+  data_steiger |>
+  rename(
+    snp = SNP,
+    beta_hat_1 = beta.exposure,
+    beta_hat_2 = beta.outcome,
+    seb1 = se.exposure,
+    seb2 = se.outcome
+  ) |>
+  new_cause_data()
+
+calcium.params_ests <- est_cause_params(
+  X = calcium.cause.data,                    # Merged data
+  variants = calcium.cause.data$snp,
+  optmethod = "mixSQP",     # Default & recommended
+  null_wt = 10,             # Weight on null (default)
+  max_candidates = Inf      # Full grid (default)
+)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Estimating CAUSE parameters with  277  variants.
+1 0.8507359 
+2 0.01343516 
+3 0.0001838567 
+4 2.506443e-06 
+5 3.416588e-08 
+```
+
+
+:::
+
+```{.r .cell-code}
+calcium.control.cause <- cause(X=calcium.cause.data,
+                               param_ests = calcium.params_ests)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Estimating CAUSE posteriors using  277  variants.
+```
+
+
+:::
+
+```{.r .cell-code}
+calcium.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+```
+
+::: {.cell-output-display}
+
+
+Table: if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models
+
+|model1  |model2  | delta_elpd| se_delta_elpd|         z|
+|:-------|:-------|----------:|-------------:|---------:|
+|null    |sharing |  -83.38682|      9.030346| -9.234068|
+|null    |causal  |  -91.13392|     10.273388| -8.870873|
+|sharing |causal  |   -7.74710|      1.877785| -4.125659|
+
+
+:::
+
+```{.r .cell-code}
+plot(calcium.control.cause, type="data")
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-cause-1.png){width=672}
+:::
+
+```{.r .cell-code}
+summary(calcium.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+```
+
+::: {.cell-output-display}
+
+
+Table: Pathway estimates and 95% confidence interveals for estimated effect sizes, 
+
+|model   |gamma             |eta                 |q               |
+|:-------|:-----------------|:-------------------|:---------------|
+|Sharing |NA                |0.52 (0.45, 0.59)   |0.81 (0.7, 0.9) |
+|Causal  |0.48 (0.41, 0.55) |-0.05 (-1.15, 0.58) |0.03 (0, 0.24)  |
+
+
+:::
+:::
+
+
+From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic pathways; p=1.848376\times 10^{-5}).  The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was small after accounting for this causal effect. The -0.05 (-1.15, 0.58) is near zero for the causal model but is strong for the shared model 0.52 (0.45, 0.59).  This suggests strong correlated horizontal pleiotropy.  This explains 0.81 (0.7, 0.9)% of the genetic correlation between traits.
 
 ### Leave-one-out Analysis
 
@@ -745,27 +850,35 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50        
- [5] lubridate_1.9.4    forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4       
- [9] purrr_1.1.0        readr_2.1.5        tidyr_1.3.1        tibble_3.3.0      
-[13] ggplot2_4.0.0      tidyverse_2.0.0   
+ [1] cause_1.2.0        MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22
+ [5] knitr_1.50         lubridate_1.9.4    forcats_1.0.1      stringr_1.5.2     
+ [9] dplyr_1.1.4        purrr_1.1.0        readr_2.1.5        tidyr_1.3.1       
+[13] tibble_3.3.0       ggplot2_4.0.0      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] gtable_0.3.6       xfun_0.53          htmlwidgets_1.6.4  psych_2.5.6       
- [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.1       
- [9] generics_0.1.4     curl_7.0.0         parallel_4.5.1     pkgconfig_2.0.3   
-[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.0          
-[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.1     farver_2.1.2      
-[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
-[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
-[29] tidyselect_1.2.1   digest_0.6.37      nortest_1.0-4      stringi_1.8.7     
-[33] labeling_0.4.3     splines_4.5.1      fastmap_1.2.0      grid_4.5.1        
-[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
-[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
-[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
-[49] mgcv_1.9-3         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
-[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
-[57] R6_2.6.1           plyr_1.8.9        
+ [1] gtable_0.3.6          xfun_0.53             htmlwidgets_1.6.4    
+ [4] psych_2.5.6           lattice_0.22-7        tzdb_0.5.0           
+ [7] vctrs_0.6.5           tools_4.5.1           generics_0.1.4       
+[10] curl_7.0.0            parallel_4.5.1        pkgconfig_2.0.3      
+[13] Matrix_1.7-4          SQUAREM_2021.1        data.table_1.17.8    
+[16] RColorBrewer_1.1-3    S7_0.2.0              RcppParallel_5.1.11-1
+[19] truncnorm_1.0-9       lifecycle_1.0.4       rootSolve_1.8.2.4    
+[22] compiler_4.5.1        farver_2.1.2          mnormt_2.1.1         
+[25] htmltools_0.5.8.1     mr.raps_0.4.2         yaml_2.3.10          
+[28] pillar_1.11.1         crayon_1.5.3          nlme_3.1-168         
+[31] rsnps_0.6.1           tidyselect_1.2.1      digest_0.6.37        
+[34] nortest_1.0-4         stringi_1.8.7         ashr_2.2-63          
+[37] labeling_0.4.3        splines_4.5.1         fastmap_1.2.0        
+[40] grid_4.5.1            invgamma_1.2          cli_3.6.5            
+[43] magrittr_2.0.4        loo_2.8.0             crul_1.6.0           
+[46] withr_3.0.2           scales_1.4.0          bit64_4.6.0-1        
+[49] timechange_0.3.0      rmarkdown_2.30        matrixStats_1.5.0    
+[52] bit_4.6.0             gridExtra_2.3         hms_1.1.4            
+[55] evaluate_1.0.5        irlba_2.3.5.1         mgcv_1.9-3           
+[58] rlang_1.1.6           mixsqp_0.3-54         Rcpp_1.1.0           
+[61] glue_1.8.0            httpcode_0.3.0        rstudioapi_0.17.1    
+[64] vroom_1.6.6           jsonlite_2.0.0        R6_2.6.1             
+[67] plyr_1.8.9            intervals_0.15.5     
 ```
 
 

@@ -33,7 +33,11 @@ Variant is related to the exposure, this is what we are evaluating.
 
 #### Directional Uncorrelated Horizontal Pleiotropy
 
-SNPs have effects independent of the effects on the exposure.  Creates an average directional effect on the outcome.  Assess by Egger's intercept != 0 (if the InSIDE assumption holds)
+SNPs have effects independent of the effects on the exposure.  Creates an average directional effect on the outcome.  Assess by Egger's intercept != 0 (if the InSIDE assumption holds) as well as MR-PRESSO Global Test.  As a general rule, if the global test is significant and the distortion test is not, we should use the MR-PRESSO corrected estimate.  If the global test if not significant we should use the IVW estimate.  
+
+##### InSIDE Assumption
+
+The InSIDE assumption (that instrument strength is independent of any direct (pleiotropic) effect on the outcome) is a factor for MR-Egger but not MR-PRESSO or IVW methods.  As a general rule the stronger a SNP is as an instrument for the exposure, the less (or equally) likely it is to have a direct effect on the outcome that bypasses the exposure.  If using MR-Egger this can be tested via the Sanderson-Windmeijer Conditional F-statistic.  A value <10 indicates it is probably violated.
 
 #### Correlated (Coordinated) Pleiotropy
 
@@ -42,6 +46,18 @@ SNPS influence the exposure and outcome through a shared mechanism or confounder
 #### Balanced Horizontal Pleiotropy
 
 Genes have multidirectional effects, but they cancel each other out.  Increases heterogeneity, but no directional bias.  Can use MR-PRESSO (Pleiotropy RESidual Sum and Outlier) analyses to detect outlier driven and balanced pleiotropy.  A significant global test, or multiple outliers supports average pleiotropy.  Also if MR-RAPS causal estiamte remain stable relative to IVW, pleiotropy is likely balanced rather than directional.
+
+#### Assumptions of Models
+
+| Method | Pleiotropy Assumption |
+|--------|----------------------|
+| IVW | No pleiotropy |
+| MR-Egger | Uncorrelated pleiotropy |
+| Weighted Median | <50% invalid instruments |
+| Weighted Mode | Plurality of instruments valid |
+| MR-PRESSO | Outlier correction |
+| MR-RAPS | Weak instruments |
+| CAUSE | Correlated pleiotropy |
 
 ## Other Notes
 - IVW random-effects will serve as the **primary estimator**.

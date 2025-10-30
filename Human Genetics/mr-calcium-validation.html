@@ -119,6 +119,7 @@ window.Quarto = {
   <li><a href="#mr-egger-intercept" id="toc-mr-egger-intercept" class="nav-link" data-scroll-target="#mr-egger-intercept">MR-Egger Intercept</a></li>
   <li><a href="#heterogeneity-statistics" id="toc-heterogeneity-statistics" class="nav-link" data-scroll-target="#heterogeneity-statistics">Heterogeneity Statistics</a></li>
   <li><a href="#mr-presso-global-test-and-distortion-test" id="toc-mr-presso-global-test-and-distortion-test" class="nav-link" data-scroll-target="#mr-presso-global-test-and-distortion-test">MR-PRESSO Global Test and Distortion Test</a></li>
+  <li><a href="#cause-analysis" id="toc-cause-analysis" class="nav-link" data-scroll-target="#cause-analysis">CAUSE Analysis</a></li>
   <li><a href="#leave-one-out-analysis" id="toc-leave-one-out-analysis" class="nav-link" data-scroll-target="#leave-one-out-analysis">Leave-one-out Analysis</a></li>
   </ul></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
@@ -180,7 +181,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Oct 29 16:22:17 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Thu Oct 30 10:44:44 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -1089,7 +1090,7 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>calcium.control.mr_presso_results<span class="sc">$</span><span class="st">`</span><span class="at">MR-PRESSO results</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Distortion Test</span><span class="st">`</span> <span class="ot">-&gt;</span> calcium.distortion.test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>From MR-PRESSO there were 2 outliers that were removed before the distortion test. The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6025, indicating no significant distortion due to outliers. The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate. This is consistent with the evidence from the MR-Egger intercept. This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.</p>
+<p>From MR-PRESSO there were 2 outliers that were removed before the distortion test. The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6015, indicating no significant distortion due to outliers. The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate. This is consistent with the evidence from the MR-Egger intercept. This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
@@ -1162,21 +1163,150 @@ attr(,"split_labels")
 </div>
 </div>
 </section>
+<section id="cause-analysis" class="level3">
+<h3 class="anchored" data-anchor-id="cause-analysis">CAUSE Analysis</h3>
+<p>CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy. Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder. Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait. This is described in <span class="citation" data-cites="morrisonMendelianRandomizationAccounting2020">@morrisonMendelianRandomizationAccounting2020</span>.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co">#devtools::install_github("jean997/cause@v1.2.0")</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(cause)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>calcium.cause.data <span class="ot">&lt;-</span></span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  data_steiger <span class="sc">|&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">snp =</span> SNP,</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta_hat_1 =</span> beta.exposure,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta_hat_2 =</span> beta.outcome,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">seb1 =</span> se.exposure,</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">seb2 =</span> se.outcome</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">new_cause_data</span>()</span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>calcium.params_ests <span class="ot">&lt;-</span> <span class="fu">est_cause_params</span>(</span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">X =</span> calcium.cause.data,                    <span class="co"># Merged data</span></span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">variants =</span> calcium.cause.data<span class="sc">$</span>snp,</span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">optmethod =</span> <span class="st">"mixSQP"</span>,     <span class="co"># Default &amp; recommended</span></span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">null_wt =</span> <span class="dv">10</span>,             <span class="co"># Weight on null (default)</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">max_candidates =</span> <span class="cn">Inf</span>      <span class="co"># Full grid (default)</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Estimating CAUSE parameters with  277  variants.
+1 0.8507359 
+2 0.01343516 
+3 0.0001838567 
+4 2.506443e-06 
+5 3.416588e-08 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>calcium.control.cause <span class="ot">&lt;-</span> <span class="fu">cause</span>(<span class="at">X=</span>calcium.cause.data,</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>                               <span class="at">param_ests =</span> calcium.params_ests)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Estimating CAUSE posteriors using  277  variants.</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>calcium.control.cause<span class="sc">$</span>elpd <span class="sc">|&gt;</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">model1</th>
+<th style="text-align: left;">model2</th>
+<th style="text-align: right;">delta_elpd</th>
+<th style="text-align: right;">se_delta_elpd</th>
+<th style="text-align: right;">z</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">null</td>
+<td style="text-align: left;">sharing</td>
+<td style="text-align: right;">-83.38682</td>
+<td style="text-align: right;">9.030346</td>
+<td style="text-align: right;">-9.234068</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">null</td>
+<td style="text-align: left;">causal</td>
+<td style="text-align: right;">-91.13392</td>
+<td style="text-align: right;">10.273388</td>
+<td style="text-align: right;">-8.870873</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sharing</td>
+<td style="text-align: left;">causal</td>
+<td style="text-align: right;">-7.74710</td>
+<td style="text-align: right;">1.877785</td>
+<td style="text-align: right;">-4.125659</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(calcium.control.cause, <span class="at">type=</span><span class="st">"data"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/calcium-calcium-cause-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(calcium.control.cause, <span class="at">ci_size =</span> <span class="fl">0.95</span>)<span class="sc">$</span>tab <span class="sc">|&gt;</span> <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Pathway estimates and 95% confidence interveals for estimated effect sizes, "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Pathway estimates and 95% confidence interveals for estimated effect sizes,</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">model</th>
+<th style="text-align: left;">gamma</th>
+<th style="text-align: left;">eta</th>
+<th style="text-align: left;">q</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Sharing</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">0.52 (0.45, 0.59)</td>
+<td style="text-align: left;">0.81 (0.7, 0.9)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Causal</td>
+<td style="text-align: left;">0.48 (0.41, 0.55)</td>
+<td style="text-align: left;">-0.05 (-1.15, 0.58)</td>
+<td style="text-align: left;">0.03 (0, 0.24)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic pathways; p=1.848376^{-5}). The estimated causal effect (<span class="math inline">\(\gamma\)</span>) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was small after accounting for this causal effect. The -0.05 (-1.15, 0.58) is near zero for the causal model but is strong for the shared model 0.52 (0.45, 0.59). This suggests strong correlated horizontal pleiotropy. This explains 0.81 (0.7, 0.9)% of the genetic correlation between traits.</p>
+</section>
 <section id="leave-one-out-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="leave-one-out-analysis">Leave-one-out Analysis</h3>
 <p>Using IVW methods</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data_steiger)</span>
-<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
-<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.control.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
-<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
-<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
-<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
-<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs"</span>,</span>
-<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data_steiger)</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.control.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Calcium Positive Control (IVW method) for influential SNPs"</span>,</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1238,18 +1368,18 @@ attr(,"split_labels")
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns: SNP, nsnp, b, se, pval — gives causal estimate with each SNP removed once</span></span>
-<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: plot LOO results</span></span>
-<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loo_res, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(SNP, <span class="sc">-</span>b), <span class="at">y =</span> b)) <span class="sc">+</span></span>
-<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width =</span> <span class="fl">0.01</span> ,<span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"SNP Removed"</span>, <span class="at">y =</span> <span class="st">"Estimate (Beta-IVW; leave-one-out)"</span>) <span class="sc">+</span></span>
-<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">1</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns: SNP, nsnp, b, se, pval — gives causal estimate with each SNP removed once</span></span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: plot LOO results</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loo_res, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(SNP, <span class="sc">-</span>b), <span class="at">y =</span> b)) <span class="sc">+</span></span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width =</span> <span class="fl">0.01</span> ,<span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"SNP Removed"</span>, <span class="at">y =</span> <span class="st">"Estimate (Beta-IVW; leave-one-out)"</span>) <span class="sc">+</span></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">1</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1267,7 +1397,7 @@ attr(,"split_labels")
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.1 (2025-06-13)
@@ -1288,27 +1418,35 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50        
- [5] lubridate_1.9.4    forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4       
- [9] purrr_1.1.0        readr_2.1.5        tidyr_1.3.1        tibble_3.3.0      
-[13] ggplot2_4.0.0      tidyverse_2.0.0   
+ [1] cause_1.2.0        MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22
+ [5] knitr_1.50         lubridate_1.9.4    forcats_1.0.1      stringr_1.5.2     
+ [9] dplyr_1.1.4        purrr_1.1.0        readr_2.1.5        tidyr_1.3.1       
+[13] tibble_3.3.0       ggplot2_4.0.0      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] gtable_0.3.6       xfun_0.53          htmlwidgets_1.6.4  psych_2.5.6       
- [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.1       
- [9] generics_0.1.4     curl_7.0.0         parallel_4.5.1     pkgconfig_2.0.3   
-[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.0          
-[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.1     farver_2.1.2      
-[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
-[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
-[29] tidyselect_1.2.1   digest_0.6.37      nortest_1.0-4      stringi_1.8.7     
-[33] labeling_0.4.3     splines_4.5.1      fastmap_1.2.0      grid_4.5.1        
-[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
-[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
-[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
-[49] mgcv_1.9-3         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
-[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
-[57] R6_2.6.1           plyr_1.8.9        </code></pre>
+ [1] gtable_0.3.6          xfun_0.53             htmlwidgets_1.6.4    
+ [4] psych_2.5.6           lattice_0.22-7        tzdb_0.5.0           
+ [7] vctrs_0.6.5           tools_4.5.1           generics_0.1.4       
+[10] curl_7.0.0            parallel_4.5.1        pkgconfig_2.0.3      
+[13] Matrix_1.7-4          SQUAREM_2021.1        data.table_1.17.8    
+[16] RColorBrewer_1.1-3    S7_0.2.0              RcppParallel_5.1.11-1
+[19] truncnorm_1.0-9       lifecycle_1.0.4       rootSolve_1.8.2.4    
+[22] compiler_4.5.1        farver_2.1.2          mnormt_2.1.1         
+[25] htmltools_0.5.8.1     mr.raps_0.4.2         yaml_2.3.10          
+[28] pillar_1.11.1         crayon_1.5.3          nlme_3.1-168         
+[31] rsnps_0.6.1           tidyselect_1.2.1      digest_0.6.37        
+[34] nortest_1.0-4         stringi_1.8.7         ashr_2.2-63          
+[37] labeling_0.4.3        splines_4.5.1         fastmap_1.2.0        
+[40] grid_4.5.1            invgamma_1.2          cli_3.6.5            
+[43] magrittr_2.0.4        loo_2.8.0             crul_1.6.0           
+[46] withr_3.0.2           scales_1.4.0          bit64_4.6.0-1        
+[49] timechange_0.3.0      rmarkdown_2.30        matrixStats_1.5.0    
+[52] bit_4.6.0             gridExtra_2.3         hms_1.1.4            
+[55] evaluate_1.0.5        irlba_2.3.5.1         mgcv_1.9-3           
+[58] rlang_1.1.6           mixsqp_0.3-54         Rcpp_1.1.0           
+[61] glue_1.8.0            httpcode_0.3.0        rstudioapi_0.17.1    
+[64] vroom_1.6.6           jsonlite_2.0.0        R6_2.6.1             
+[67] plyr_1.8.9            intervals_0.15.5     </code></pre>
 </div>
 </div>
 </section>

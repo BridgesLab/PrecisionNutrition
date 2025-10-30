@@ -371,6 +371,43 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 
 ```
 
+### CAUSE Analysis
+
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
+
+```{r calcium-calcium-cause}
+#devtools::install_github("jean997/cause@v1.2.0")
+library(cause)
+calcium.cause.data <-
+  data_steiger |>
+  rename(
+    snp = SNP,
+    beta_hat_1 = beta.exposure,
+    beta_hat_2 = beta.outcome,
+    seb1 = se.exposure,
+    seb2 = se.outcome
+  ) |>
+  new_cause_data()
+
+calcium.params_ests <- est_cause_params(
+  X = calcium.cause.data,                    # Merged data
+  variants = calcium.cause.data$snp,
+  optmethod = "mixSQP",     # Default & recommended
+  null_wt = 10,             # Weight on null (default)
+  max_candidates = Inf      # Full grid (default)
+)
+
+calcium.control.cause <- cause(X=calcium.cause.data,
+                               param_ests = calcium.params_ests)
+
+calcium.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+
+plot(calcium.control.cause, type="data")
+summary(calcium.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+```
+
+From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(calcium.control.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is substantial for the sharing model [$\eta$=`r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'eta']`]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(calcium.control.cause, ci_size = 0.95)$tab[1,'q']`% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
+
 ### Leave-one-out Analysis
 
 Using IVW methods

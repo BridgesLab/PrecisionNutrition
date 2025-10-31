@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Thu Oct 30 10:44:44 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Thu Oct 30 11:03:38 2025
 
 ## Data Entry
 
@@ -573,7 +573,7 @@ calcium.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> calci
 :::
 
 
-From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6015, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.605, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
 
 
 ::: {.cell}
@@ -657,7 +657,7 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 
 ### CAUSE Analysis
 
-CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in @morrisonMendelianRandomizationAccounting2020.
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
 
 
 ::: {.cell}
@@ -724,9 +724,9 @@ Table: if delta_elpd is negative, model2 is a better fit, in this case means the
 
 |model1  |model2  | delta_elpd| se_delta_elpd|         z|
 |:-------|:-------|----------:|-------------:|---------:|
-|null    |sharing |  -83.38682|      9.030346| -9.234068|
-|null    |causal  |  -91.13392|     10.273388| -8.870873|
-|sharing |causal  |   -7.74710|      1.877785| -4.125659|
+|null    |sharing | -83.498745|      9.044271| -9.232225|
+|null    |causal  | -91.097344|     10.291642| -8.851585|
+|sharing |causal  |  -7.598598|      1.858503| -4.088559|
 
 
 :::
@@ -758,7 +758,7 @@ Table: Pathway estimates and 95% confidence interveals for estimated effect size
 :::
 
 
-From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic pathways; p=1.848376\times 10^{-5}).  The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was small after accounting for this causal effect. The -0.05 (-1.15, 0.58) is near zero for the causal model but is strong for the shared model 0.52 (0.45, 0.59).  This suggests strong correlated horizontal pleiotropy.  This explains 0.81 (0.7, 0.9)% of the genetic correlation between traits.
+From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=2.1703013\times 10^{-5}). The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.05 (-1.15, 0.58) is near zero for the causal model but is substantial for the sharing model [$\eta$=-0.05 (-1.15, 0.58)]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.81 (0.7, 0.9)% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
 
 ### Leave-one-out Analysis
 

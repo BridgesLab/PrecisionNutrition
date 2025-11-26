@@ -9,7 +9,7 @@
 ### Mising Analsyes
 
 - [ ] Regenerate SNP lists for Total Cholesterol on Fracture Risk and BMD
-- [ ] Add CAUSE analyses for models to test for correlated pleiotropy
+- [ ] Add MR-CAUSE analyses for models to test for correlated pleiotropy
 - [ ] Add MR-PRESSO analyses 
 - [ ] Add MR-RAPS analyses 
 - [ ] Use phenoscanner to identify potential confounders
@@ -49,15 +49,32 @@ Genes have multidirectional effects, but they cancel each other out.  Increases 
 
 #### Assumptions of Models
 
-| Method | Pleiotropy Assumption |
+| Method | Assumptions |
 |--------|----------------------|
-| IVW | No pleiotropy |
-| MR-Egger | Uncorrelated pleiotropy |
-| Weighted Median | <50% invalid instruments |
-| Weighted Mode | Plurality of instruments valid |
-| MR-PRESSO | Outlier correction |
-| MR-RAPS | Weak instruments |
-| CAUSE | Correlated pleiotropy |
+| IVW |  Assumes all variants are valid IVs or that any pleiotropic effects are balanced (mean zero); directional pleiotropy biases IVW. |
+| MR-Egger | Allows all variants to be invalid, but assumes uncorrelated (InSIDE) pleiotropy and tests for directional average pleiotropy via the intercept |
+| Weighted Median | Gives a consistent estimate if ≥50% of the weight comes from valid instruments and no single SNP dominates the weight. |
+| Weighted Mode | Consistent if the largest “cluster” (plurality) of SNPs, by weight, shares the same causal effect and is valid. |
+| MR-PRESSO | Detects global horizontal pleiotropy, identifies outlier SNPs driving it, and provides an outlier‑corrected IVW estimate plus a distortion test. |
+| MR-RAPS | Designed for many weak instruments and robust to some pleiotropy via a robust loss; also useful when there is substantial measurement error in SNP–exposure effects. |
+| MR-CAUSE | Explicitly models both uncorrelated and correlated pleiotropy and compares a causal vs sharing (pleiotropy) model using genome‑wide summary data |
+
+#### Decision Tree for Model Selection
+
+| Step | Process | Decision / Threshold | Action |
+|---|---|---|---|
+| **1. Instrument Validation** | **Analyze Genetic Instruments** | **Mean F-statistic ≥ 10** | **Strong Instruments.** Proceed to MR. |
+| | | **Mean F-statistic < 10** | **Weak Instruments.** Use **MR-RAPS** (robust to weak instruments) as primary. Interpret all results cautiously. |
+| **2. Primary Analysis & Heterogeneity** | **Fit IVW Model & Assess Heterogeneity** (Cochran's Q, I²) | **Q p ≥ 0.05 AND I² < 50-60%** | **No significant heterogeneity.** Use **IVW (Fixed Effects, FE)** as the primary estimate. |
+| | | **Q p < 0.05 OR I² > 50-60%** | **Heterogeneity present.** Suspect pleiotropy/outliers. Use **IVW (Random Effects, RE)** as the primary estimate. |
+| **3. Directional Pleiotropy** | **Check MR-Egger Intercept** | **Intercept p ≥ 0.05** (CI includes 0) | **No significant directional pleiotropy.** IVW-RE/FE is valid. Report Weighted Median/Mode and Egger slope as sensitivity analyses. |
+| | | **Intercept p < 0.05** (CI excludes 0) | **Directional pleiotropy likely.** Emphasize **Weighted Median** and **MR-Egger slope** as the most robust estimates. |
+| **4. Outlier-Driven Pleiotropy** | **Run MR-PRESSO** | **Global Test p ≥ 0.05** | **No significant outliers.** Prior choice of IVW/Median/Mode stands. |
+| | | **Global Test p < 0.05** (Outliers Present) | **Outliers Detected.** Proceed to Distortion Test. |
+| | | **Distortion Test p < 0.05** (Estimate Changed) | Use **MR-PRESSO Outlier-Corrected IVW** as the primary estimate, alongside Median/Mode. |
+| | | **Distortion Test p ≥ 0.05** (Estimate Unchanged) | **IVW-RE** is still acceptable, but acknowledge and report sensitivity due to outliers. |
+| **5. Sensitivity to Correlated Pleiotropy** | **Check for Correlated Pleiotropy** (e.g., genetic correlation, CAUSE) | **CAUSE "Causal" Model** (or no strong correlation) | **Final interpretation:** Interpret the most robust/primary MR estimates selected from Steps 2-4. |
+| | | **CAUSE "Sharing" Model** favored | **Reframed Interpretation:** Evidence for **shared genetic architecture**, not clear causality. Interpret results cautiously. |
 
 ## Other Notes
 - IVW random-effects will serve as the **primary estimator**.

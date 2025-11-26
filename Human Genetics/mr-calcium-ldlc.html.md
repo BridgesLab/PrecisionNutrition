@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:24:44 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:30:52 2025
 
 ## Data Entry
 
@@ -522,8 +522,8 @@ Table: MR Results for Calcium Effects on LDL Cholesterol
 |LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  275| -0.001| 0.038| 0.9773529|
 |LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted (fixed effects)                 |  275| -0.001| 0.026| 0.9663122|
 |LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger                                                  |  275| -0.066| 0.081| 0.4141755|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median                                           |  275| -0.060| 0.050| 0.2279274|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode                                             |  275|  0.000| 0.065| 0.9952808|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median                                           |  275| -0.060| 0.051| 0.2377560|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode                                             |  275|  0.000| 0.061| 0.9949508|
 
 
 :::
@@ -587,6 +587,9 @@ The MR-Egger intercept is  with a p-value of 0.3613545, indicating no evidence o
 heterogeneity <- mr_heterogeneity(data_steiger)
 heterogeneity|>
   select(-starts_with('id')) |> 
+  mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
   kable(caption="MR Heterogeneity Results for Calcium Effects on Cholesterol",
         digits=c(0,0,0,3,3,99))
 ```
@@ -596,10 +599,10 @@ heterogeneity|>
 
 Table: MR Heterogeneity Results for Calcium Effects on Cholesterol
 
-|outcome                            |exposure             |method                    |       Q| Q_df|       Q_pval|
-|:----------------------------------|:--------------------|:-------------------------|-------:|----:|------------:|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger                  | 604.623|  273| 3.710043e-27|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted | 606.474|  274| 3.320526e-27|
+|outcome                            |exposure             |method                    |       Q| Q_df|       Q_pval| I2|
+|:----------------------------------|:--------------------|:-------------------------|-------:|----:|------------:|--:|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger                  | 604.623|  273| 3.710043e-27| 55|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted | 606.474|  274| 3.320526e-27| 55|
 
 
 :::

@@ -179,7 +179,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:24:58 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:31:29 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -1564,8 +1564,8 @@ window.Quarto = {
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.011</td>
-<td style="text-align: right;">0.055</td>
-<td style="text-align: right;">0.8415502</td>
+<td style="text-align: right;">0.056</td>
+<td style="text-align: right;">0.8453765</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
@@ -1573,8 +1573,8 @@ window.Quarto = {
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.018</td>
-<td style="text-align: right;">0.060</td>
-<td style="text-align: right;">0.7628643</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: right;">0.7337828</td>
 </tr>
 </tbody>
 </table>
@@ -1655,19 +1655,23 @@ window.Quarto = {
 <span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>heterogeneity <span class="ot">&lt;-</span> <span class="fu">mr_heterogeneity</span>(data_steiger)</span>
 <span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>heterogeneity<span class="sc">|&gt;</span></span>
 <span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Heterogeneity Results for Calcium Effects on Cholesterol"</span>,</span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">I2 =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, (Q <span class="sc">-</span> Q_df) <span class="sc">/</span> Q) <span class="sc">*</span> <span class="dv">100</span> <span class="co"># </span></span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Heterogeneity Results for Calcium Effects on Cholesterol"</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>MR Heterogeneity Results for Calcium Effects on Cholesterol</caption>
 <colgroup>
-<col style="width: 33%">
-<col style="width: 19%">
+<col style="width: 32%">
+<col style="width: 18%">
 <col style="width: 23%">
 <col style="width: 7%">
 <col style="width: 4%">
 <col style="width: 11%">
+<col style="width: 2%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1677,6 +1681,7 @@ window.Quarto = {
 <th style="text-align: right;">Q</th>
 <th style="text-align: right;">Q_df</th>
 <th style="text-align: right;">Q_pval</th>
+<th style="text-align: right;">I2</th>
 </tr>
 </thead>
 <tbody>
@@ -1687,6 +1692,7 @@ window.Quarto = {
 <td style="text-align: right;">633.031</td>
 <td style="text-align: right;">273</td>
 <td style="text-align: right;">1.222553e-30</td>
+<td style="text-align: right;">57</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
@@ -1695,6 +1701,7 @@ window.Quarto = {
 <td style="text-align: right;">633.213</td>
 <td style="text-align: right;">274</td>
 <td style="text-align: right;">1.773972e-30</td>
+<td style="text-align: right;">57</td>
 </tr>
 </tbody>
 </table>

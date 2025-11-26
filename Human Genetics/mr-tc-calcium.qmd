@@ -278,6 +278,9 @@ The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egg
 heterogeneity <- mr_heterogeneity(data_steiger)
 heterogeneity|>
   select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
   kable(caption="MR Heterogeneity Results for Total Cholesterol - Calcium Analysis",
         digits=c(0,0,0,3,3,99))
 # Columns: method, Q, Q_df, Q_pval

@@ -366,19 +366,19 @@ Table: Complexity parameter table, used to idenfiy minumum crossvalidated error 
 
 |    CP| nsplit| rel error| xerror|  xstd|
 |-----:|------:|---------:|------:|-----:|
-| 0.247|      0|     1.000|  1.003| 0.059|
-| 0.064|      1|     0.753|  0.757| 0.045|
-| 0.060|      2|     0.689|  0.738| 0.045|
-| 0.036|      3|     0.629|  0.636| 0.040|
-| 0.023|      4|     0.593|  0.649| 0.043|
-| 0.022|      5|     0.569|  0.650| 0.043|
-| 0.015|      6|     0.547|  0.646| 0.043|
-| 0.015|      7|     0.532|  0.646| 0.043|
-| 0.014|      8|     0.516|  0.646| 0.043|
-| 0.011|      9|     0.502|  0.660| 0.045|
-| 0.011|     10|     0.491|  0.665| 0.045|
-| 0.010|     11|     0.481|  0.665| 0.045|
-| 0.010|     12|     0.470|  0.667| 0.045|
+| 0.247|      0|     1.000|  1.001| 0.059|
+| 0.064|      1|     0.753|  0.755| 0.045|
+| 0.060|      2|     0.689|  0.724| 0.045|
+| 0.036|      3|     0.629|  0.633| 0.040|
+| 0.023|      4|     0.593|  0.646| 0.045|
+| 0.022|      5|     0.569|  0.644| 0.044|
+| 0.015|      6|     0.547|  0.639| 0.044|
+| 0.015|      7|     0.532|  0.639| 0.045|
+| 0.014|      8|     0.516|  0.648| 0.045|
+| 0.011|      9|     0.502|  0.659| 0.047|
+| 0.011|     10|     0.491|  0.681| 0.047|
+| 0.010|     11|     0.481|  0.681| 0.047|
+| 0.010|     12|     0.470|  0.683| 0.049|
 
 ``` r
 prune(tree.all.cont, cp=0.0365) -> tree.all.cont.pruned
@@ -414,6 +414,304 @@ tree.all.cont.pruned
 ##     6) Ca 19w< 8.35 52  26700  90.6 *
 ##     7) Ca 19w>=8.35 327 353000 126.0 *
 ```
+
+## Bootstrapped Regression Tree
+
+I wanted to generate a tree where the bootstrapped values are listed above the node to give a sense of how commonly that node occurs
+
+
+``` r
+library(rpart)
+library(dplyr)
+library(rpart.plot)
+
+# Set number of bootstrap iterations
+n_bootstrap <- 1000
+n_obs <- nrow(chol.pred.data.cont)
+
+# Prepare data with renamed columns
+boot_data <- chol.pred.data.cont %>% 
+  rename(`TG 19w` = "tg2",
+         `Ca 19w` = "calcium2",
+         `BW 19w` = "bw.19")
+
+# Initialize storage for results
+top_split_var <- character(n_bootstrap)
+all_splits_list <- list()
+
+# Bootstrap loop
+set.seed(123)  # for reproducibility
+for(i in 1:n_bootstrap) {
+  # Sample with replacement
+  boot_sample <- boot_data[sample(1:n_obs, replace = TRUE), ]
+  
+  # Fit tree
+  boot_tree <- rpart(chol2 ~ ., data = boot_sample, method = "anova")
+  
+  # Prune with same cp
+  boot_tree_pruned <- prune(boot_tree, cp = 0.0365)
+  
+  # Extract top split information
+  if(nrow(boot_tree_pruned$frame) > 1) {  # if tree has splits
+    top_split_var[i] <- as.character(boot_tree_pruned$frame$var[1])
+  } else {
+    top_split_var[i] <- "no_split"
+  }
+  
+  # Store UNIQUE splitting variables for this bootstrap (count each variable only once)
+  splits_in_tree <- as.character(boot_tree_pruned$frame$var[boot_tree_pruned$frame$var != "<leaf>"])
+  all_splits_list[[i]] <- unique(splits_in_tree)  # Only unique variables
+}
+
+# Get variables in original pruned tree
+original_splits <- as.character(tree.all.cont.pruned$frame$var[tree.all.cont.pruned$frame$var != "<leaf>"])
+
+# Count frequencies - now each tree contributes at most 1 count per variable
+top_split_summary <- table(top_split_var)
+all_vars <- unlist(all_splits_list)
+var_frequency <- table(all_vars)
+
+# Create annotation for each node in original tree
+cat("\nBootstrap frequencies for nodes in pruned tree (counting once per tree):\n")
+```
+
+```
+## 
+## Bootstrap frequencies for nodes in pruned tree (counting once per tree):
+```
+
+``` r
+cat(paste(rep("=", 60), collapse=""), "\n")
+```
+
+```
+## ============================================================
+```
+
+``` r
+for(i in 1:length(original_splits)) {
+  var <- original_splits[i]
+  
+  # Top split percentage
+  if(i == 1) {
+    top_freq <- ifelse(var %in% names(top_split_summary), top_split_summary[var], 0)
+    top_pct <- round(100 * top_freq / n_bootstrap, 1)
+    cat(sprintf("Node %d - %s (TOP): %d/%d trees (%.1f%%) as top split\n", 
+                i, var, top_freq, n_bootstrap, top_pct))
+  }
+  
+  # Overall appearance (now will be ≤100%)
+  overall_freq <- ifelse(var %in% names(var_frequency), var_frequency[var], 0)
+  cat(sprintf("Node %d - %s (ANY): %d/%d trees (%.1f%%) appears in tree\n", 
+              i, var, overall_freq, n_bootstrap, 
+              round(100 * overall_freq / n_bootstrap, 1)))
+  cat("\n")
+}
+```
+
+```
+## Node 1 - Diet (TOP): 997/1000 trees (99.7%) as top split
+## Node 1 - Diet (ANY): 998/1000 trees (99.8%) appears in tree
+## 
+## Node 2 - TG 19w (ANY): 938/1000 trees (93.8%) appears in tree
+## 
+## Node 3 - Ca 19w (ANY): 828/1000 trees (82.8%) appears in tree
+```
+
+``` r
+# Summary of all variables
+cat("\n\nAll variable frequencies (appears in tree, once per tree):\n")
+```
+
+```
+## 
+## 
+## All variable frequencies (appears in tree, once per tree):
+```
+
+``` r
+print(sort(var_frequency, decreasing = TRUE))
+```
+
+```
+## all_vars
+##                Diet              TG 19w              Ca 19w               gldh2 
+##                 998                 938                 828                 163 
+##              BW 19w                ttm2               bw.20      urine.glucose2 
+##                  79                  69                  52                  48 
+##                ltm2               bw.18 urine.microalbumin1             weight2 
+##                  47                  43                  39                  38 
+##               nefa2   urine.creatinine2               bw.17               bw.13 
+##                  33                  30                  24                  23 
+##               bw.16                bw.5               bw.21            glucose2 
+##                  22                  21                  19                  18 
+##                ttm1               bw.22                ftm2 urine.microalbumin2 
+##                  18                  17                  17                  17 
+##         phosphorus2                  pr                 sex                  pq 
+##                  13                  13                  12                  11 
+##                 tg1                ltm1                bmc1                bun2 
+##                  10                   9                   7                   7 
+##               bw.11               bw.25             weight1               bw.15 
+##                   7                   7                   7                   6 
+##                bw.8         kidney.wt.l               bw.12             b.area2 
+##                   6                   6                   5                   4 
+##                bmd1               bw.23             length1             necr.wt 
+##                   4                   4                   4                   4 
+##                 qrs             t.area2                bmc2               bw.26 
+##                   4                   4                   3                   3 
+##                bw.4               gldh1          perc.mono1               bw.10 
+##                   3                   3                   3                   2 
+##                bw.3                bw.6                bw.7             ct.eos1 
+##                   2                   2                   2                   2 
+##              leptin                nlr1           perc.eos1                rdw1 
+##                   2                   2                   2                   2 
+##                  rr      urine.glucose1                acr1             b.area1 
+##                   2                   2                   1                   1 
+##                bun1               bw.14               bw.24                bw.9 
+##                   1                   1                   1                   1 
+##            ct.mono1            ct.mono2            ct.neut1                ftm1 
+##                   1                   1                   1                   1 
+##                 gen             ghrelin            heart.wt                  hr 
+##                   1                   1                   1                   1 
+##               nefa1    non.fast.calcium           perc.eos2           perc.fat2 
+##                   1                   1                   1                   1 
+##           perc.lym1         phosphorus1                rdw2               rmssd 
+##                   1                   1                   1                   1 
+##                  st             t.area1   urine.creatinine1 
+##                   1                   1                   1
+```
+
+``` r
+# Plot the tree
+rpart.plot::prp(tree.all.cont.pruned, extra=1, 
+                main=sprintf("Pruned Tree with Bootstrap Frequencies (n=%d)", n_bootstrap),
+                cex=1.2)
+```
+
+![](figures/bootstrapped-regression-tree-1.png)<!-- -->
+
+``` r
+# Create summary for display
+cat("\n\nSummary for annotation:\n")
+```
+
+```
+## 
+## 
+## Summary for annotation:
+```
+
+``` r
+for(var in original_splits) {
+  freq <- ifelse(var %in% names(var_frequency), var_frequency[var], 0)
+  pct <- round(100 * freq / n_bootstrap, 1)
+  
+  if(var == original_splits[1]) {
+    top_freq <- ifelse(var %in% names(top_split_summary), top_split_summary[var], 0)
+    top_pct <- round(100 * top_freq / n_bootstrap, 1)
+    cat(sprintf("%s (%d trees, %.1f%% top)\n", var, freq, top_pct))
+  } else {
+    cat(sprintf("%s (%d trees, %.1f%%)\n", var, freq, pct))
+  }
+}
+```
+
+```
+## Diet (998 trees, 99.7% top)
+## TG 19w (938 trees, 93.8%)
+## Ca 19w (828 trees, 82.8%)
+```
+
+
+``` r
+library(ggplot2)
+library(dplyr)
+
+# Extract tree structure information
+frame <- tree.all.cont.pruned$frame
+splits <- tree.all.cont.pruned$splits
+
+# Create node positions manually based on tree structure
+# For your tree: Diet at top, TG left, Ca right
+nodes <- data.frame(
+  id = c(1, 2, 3),
+  x = c(0.5, 0.25, 0.75),
+  y = c(0.85, 0.5, 0.5),
+  variable = c("Diet = NCD", "TG 19w < 129", "Ca 19w < 8.4"),
+  boot_freq = c(
+    var_frequency["Diet"],
+    var_frequency["TG 19w"],
+    var_frequency["Ca 19w"]
+  ),
+  boot_pct = c(
+    round(100 * var_frequency["Diet"] / n_bootstrap, 1),
+    round(100 * var_frequency["TG 19w"] / n_bootstrap, 1),
+    round(100 * var_frequency["Ca 19w"] / n_bootstrap, 1)
+  ),
+  top_pct = c(
+    round(100 * top_split_summary["Diet"] / n_bootstrap, 1),
+    NA,
+    NA
+  ),
+  stringsAsFactors = FALSE
+)
+
+# Create labels with bootstrap info
+nodes$label <- ifelse(
+  !is.na(nodes$top_pct),
+  sprintf("%s\n(%d trees, %.1f%% top)", nodes$variable, nodes$boot_freq, nodes$top_pct),
+  sprintf("%s\n(%d trees, %.1f%%)", nodes$variable, nodes$boot_freq, nodes$boot_pct)
+)
+
+# Terminal nodes (leaves)
+leaves <- data.frame(
+  x = c(0.125, 0.375, 0.625, 0.875),
+  y = c(0.15, 0.15, 0.15, 0.15),
+  label = c("76\nn=233", "100\nn=206", "91\nn=52", "126\nn=327"),
+  stringsAsFactors = FALSE
+)
+
+# Edges
+edges <- data.frame(
+  x = c(0.5, 0.5, 0.25, 0.25, 0.75, 0.75),
+  y = c(0.85, 0.85, 0.5, 0.5, 0.5, 0.5),
+  xend = c(0.25, 0.75, 0.125, 0.375, 0.625, 0.875),
+  yend = c(0.5, 0.5, 0.15, 0.15, 0.15, 0.15),
+  stringsAsFactors = FALSE
+)
+
+# Edge labels (yes/no)
+edge_labels <- data.frame(
+  x = c(0.375, 0.625, 0.1875, 0.3125, 0.6875, 0.8125),
+  y = c(0.675, 0.675, 0.325, 0.325, 0.325, 0.325),
+  label = c("yes", "no", "yes", "no", "yes", "no"),
+  stringsAsFactors = FALSE
+)
+
+# Create the plot
+ggplot() +
+  # Draw edges
+  geom_segment(data = edges, aes(x = x, y = y, xend = xend, yend = yend),
+               size = 1) +
+  # Draw edge labels
+  geom_text(data = edge_labels, aes(x = x, y = y, label = label),
+            size = 3.5, fontface = "italic") +
+  # Draw split nodes
+  geom_label(data = nodes, aes(x = x, y = y, label = label),
+             size = 4, fill = "white", label.padding = unit(0.35, "lines")) +
+  # Draw leaf nodes
+  geom_label(data = leaves, aes(x = x, y = y, label = label),
+             size = 3.5, fill = "lightgray", label.padding = unit(0.3, "lines")) +
+  # Styling
+  theme_void() +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  labs(title = sprintf("Pruned Regression Tree with Bootstrap Frequencies (n=%d)", n_bootstrap)) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"))
+```
+
+![](figures/ggparty-bootstrapped-tree-1.png)<!-- -->
+
+# Investigating Calcium Associations
 
 
 ``` r
@@ -1116,15 +1414,15 @@ prior_summary(chol.ca.brms) |>
 
 Table: Summary of priors information provided to brms
 
-|prior                 |class     |coef     |group |resp |dpar |nlpar |lb |ub |source  |
-|:---------------------|:---------|:--------|:-----|:----|:----|:-----|:--|:--|:-------|
-|                      |b         |         |      |     |     |      |   |   |default |
-|normal(0, 30)         |b         |calcium2 |      |     |     |      |   |   |user    |
-|normal(30, 45)        |b         |diethf   |      |     |     |      |   |   |user    |
-|normal(10, 30)        |b         |sexM     |      |     |     |      |   |   |user    |
-|normal(80, 10)        |Intercept |         |      |     |     |      |   |   |user    |
-|gamma(2, 0.1)         |nu        |         |      |     |     |      |1  |   |default |
-|student_t(3, 0, 31.9) |sigma     |         |      |     |     |      |0  |   |default |
+|prior                 |class     |coef     |group |resp |dpar |nlpar |lb |ub |tag |source  |
+|:---------------------|:---------|:--------|:-----|:----|:----|:-----|:--|:--|:---|:-------|
+|                      |b         |         |      |     |     |      |   |   |    |default |
+|normal(0, 30)         |b         |calcium2 |      |     |     |      |   |   |    |user    |
+|normal(30, 45)        |b         |diethf   |      |     |     |      |   |   |    |user    |
+|normal(10, 30)        |b         |sexM     |      |     |     |      |   |   |    |user    |
+|normal(80, 10)        |Intercept |         |      |     |     |      |   |   |    |user    |
+|gamma(2, 0.1)         |nu        |         |      |     |     |      |1  |   |    |default |
+|student_t(3, 0, 31.9) |sigma     |         |      |     |     |      |0  |   |    |default |
 
 ``` r
 pp_check(chol.ca.brms.priors, type = "dens_overlay", ndraws = 100)  
@@ -1161,21 +1459,21 @@ Table: Rhat values for model testing the association between weight and transmis
 
 |Parameter        |Rhat    |
 |:----------------|:-------|
-|b_Intercept      |0.99998 |
-|b_calcium2       |1.00015 |
-|b_sexM           |1.00065 |
-|b_diethf         |1.00033 |
-|sigma            |1.00068 |
-|nu               |1.00068 |
-|Intercept        |1.00047 |
-|prior_Intercept  |1.00029 |
-|prior_b_calcium2 |1.00003 |
-|prior_b_sexM     |1.00020 |
-|prior_b_diethf   |1.00028 |
-|prior_sigma      |1.00007 |
-|prior_nu         |0.99997 |
-|lprior           |1.00036 |
-|lp__             |1.00067 |
+|b_Intercept      |1.00016 |
+|b_calcium2       |1.00010 |
+|b_sexM           |1.00018 |
+|b_diethf         |1.00005 |
+|sigma            |1.00058 |
+|nu               |1.00020 |
+|Intercept        |0.99998 |
+|prior_Intercept  |1.00002 |
+|prior_b_calcium2 |1.00015 |
+|prior_b_sexM     |1.00026 |
+|prior_b_diethf   |1.00004 |
+|prior_sigma      |1.00030 |
+|prior_nu         |1.00022 |
+|lprior           |1.00010 |
+|lp__             |1.00035 |
 
 ``` r
 library(broom.mixed)
@@ -1188,17 +1486,17 @@ Table: Model random effects, including ESS
 
 |effect   |component |group    |term                           | estimate| std.error| conf.low| conf.high|   ess|
 |:--------|:---------|:--------|:------------------------------|--------:|---------:|--------:|---------:|-----:|
-|fixed    |cond      |NA       |(Intercept)                    |  -30.381|     7.140|    -44.6|     -16.5| 12157|
-|fixed    |cond      |NA       |calcium2                       |   12.107|     0.780|     10.6|      13.6| 11815|
-|fixed    |cond      |NA       |sexM                           |   17.555|     1.672|     14.2|      20.9| 10645|
-|fixed    |cond      |NA       |diethf                         |   26.921|     1.732|     23.5|      30.3| 11119|
-|fixed    |cond      |NA       |sigma                          |   20.874|     0.875|     19.2|      22.6|  8291|
-|fixed    |cond      |NA       |priorcalcium2                  |    0.834|    30.201|    -58.7|      59.3| 11971|
-|fixed    |cond      |NA       |priorsexM                      |   10.641|    29.866|    -47.6|      69.7| 11403|
-|ran_pars |cond      |Residual |sd__Observation                |   30.346|    45.195|    -58.7|     118.9| 11738|
-|ran_pars |cond      |Residual |prior_sigma__NA.NA.prior_sigma |   35.212|    39.871|      1.1|     136.6| 11691|
+|fixed    |cond      |NA       |(Intercept)                    |  -30.375|     7.203|   -44.41|     -16.4| 11647|
+|fixed    |cond      |NA       |calcium2                       |   12.109|     0.783|    10.59|      13.6| 11259|
+|fixed    |cond      |NA       |sexM                           |   17.520|     1.666|    14.28|      20.8| 11516|
+|fixed    |cond      |NA       |diethf                         |   26.918|     1.724|    23.55|      30.3| 12666|
+|fixed    |cond      |NA       |sigma                          |   20.894|     0.874|    19.20|      22.6|  7902|
+|fixed    |cond      |NA       |priorcalcium2                  |   -0.266|    30.311|   -59.43|      59.5| 11308|
+|fixed    |cond      |NA       |priorsexM                      |    9.439|    30.007|   -48.32|      68.6| 11715|
+|ran_pars |cond      |Residual |sd__Observation                |   29.726|    45.183|   -58.78|     117.6| 12017|
+|ran_pars |cond      |Residual |prior_sigma__NA.NA.prior_sigma |   34.643|    44.123|     1.07|     128.4| 11985|
 
-The effective sample size was >8290.675 and Rhat ranged between 0.99997 and 1.00068, indicating that the model converged well.
+The effective sample size was >7902.352 and Rhat ranged between 0.99998 and 1.00058, indicating that the model converged well.
 
 ### Posterior Prediction Checks
 
@@ -1297,10 +1595,10 @@ Table: Posterior estimates
 
 |          | Estimate| Est.Error|  Q2.5| Q97.5|
 |:---------|--------:|---------:|-----:|-----:|
-|Intercept |    -30.4|      7.14| -44.6| -16.5|
-|calcium2  |     12.1|      0.78|  10.6|  13.6|
-|sexM      |     17.6|      1.67|  14.2|  20.9|
-|diethf    |     26.9|      1.73|  23.5|  30.3|
+|Intercept |    -30.4|     7.203| -44.4| -16.4|
+|calcium2  |     12.1|     0.783|  10.6|  13.6|
+|sexM      |     17.5|     1.666|  14.3|  20.8|
+|diethf    |     26.9|     1.724|  23.5|  30.3|
 
 ``` r
 hypothesis(chol.ca.brms, "calcium2>0")$hypothesis %>%
@@ -1313,7 +1611,7 @@ Table: Hypothesis test that calcium effect is >0
 
 |Hypothesis     | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
 |:--------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
-|(calcium2) > 0 |     12.1|      0.78|     10.8|     13.4|        Inf|         1|*    |
+|(calcium2) > 0 |     12.1|     0.783|     10.8|     13.4|        Inf|         1|*    |
 
 ``` r
 hypothesis(chol.ca.brms, "calcium2>10")$hypothesis %>%
@@ -1326,7 +1624,7 @@ Table: Hypothesis test that calcium effect is >10
 
 |Hypothesis          | Estimate| Est.Error| CI.Lower| CI.Upper| Evid.Ratio| Post.Prob|Star |
 |:-------------------|--------:|---------:|--------:|--------:|----------:|---------:|:----|
-|(calcium2)-(10) > 0 |     2.11|      0.78|    0.833|     3.41|        363|     0.997|*    |
+|(calcium2)-(10) > 0 |     2.11|     0.783|    0.813|      3.4|        342|     0.997|*    |
 
 
 ## Effects of Diet and Sex on Calcium
@@ -2130,10 +2428,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME             1.6482       1.0398         2.39  <2e-16 ***
-## ADE             12.9034      11.1252        14.58  <2e-16 ***
-## Total Effect    14.5516      12.7339        16.23  <2e-16 ***
-## Prop. Mediated   0.1133       0.0724         0.16  <2e-16 ***
+## ACME              1.648        1.002        2.410  <2e-16 ***
+## ADE              12.903       11.364       14.787  <2e-16 ***
+## Total Effect     14.552       12.929       16.514  <2e-16 ***
+## Prop. Mediated    0.113        0.069        0.163  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2254,10 +2552,10 @@ summary(fm.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              8.110        5.541        10.69  <2e-16 ***
-## ADE              24.010       19.491        28.77  <2e-16 ***
-## Total Effect     32.119       28.588        36.05  <2e-16 ***
-## Prop. Mediated    0.252        0.172         0.34  <2e-16 ***
+## ACME              8.110        5.467       10.926  <2e-16 ***
+## ADE              24.010       19.189       28.930  <2e-16 ***
+## Total Effect     32.119       28.002       36.460  <2e-16 ***
+## Prop. Mediated    0.252        0.170        0.342  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2321,10 +2619,10 @@ summary(bw.mediation.results)
 ## Nonparametric Bootstrap Confidence Intervals with the Percentile Method
 ## 
 ##                Estimate 95% CI Lower 95% CI Upper p-value    
-## ACME              2.078        1.274         3.01  <2e-16 ***
-## ADE              12.561       10.947        14.32  <2e-16 ***
-## Total Effect     14.640       12.999        16.51  <2e-16 ***
-## Prop. Mediated    0.142        0.087         0.20  <2e-16 ***
+## ACME             2.0783       1.2632       2.9659  <2e-16 ***
+## ADE             12.5614      10.9495      14.3331  <2e-16 ***
+## Total Effect    14.6397      13.0510      16.2629  <2e-16 ***
+## Prop. Mediated   0.1420       0.0873       0.2042  <2e-16 ***
 ## ---
 ## Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
 ## 
@@ -2572,13 +2870,13 @@ sessionInfo()
 ```
 
 ```
-## R version 4.4.2 (2024-10-31)
-## Platform: x86_64-apple-darwin20
-## Running under: macOS Monterey 12.7.6
+## R version 4.5.2 (2025-10-31)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Tahoe 26.1
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+## BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -2592,56 +2890,58 @@ sessionInfo()
 ## 
 ## other attached packages:
 ##  [1] randomForest_4.7-1.2 ipred_0.9-15         caret_7.0-1         
-##  [4] lattice_0.22-6       mediation_4.5.0      mvtnorm_1.3-3       
-##  [7] Matrix_1.7-1         MASS_7.3-64          gridExtra_2.3       
-## [10] cowplot_1.1.3        broom.mixed_0.2.9.6  brms_2.22.0         
-## [13] Rcpp_1.0.14          mgcv_1.9-1           nlme_3.1-166        
-## [16] lmtest_0.9-40        zoo_1.8-13           sandwich_3.1-1      
-## [19] car_3.1-3            carData_3.0-5        effectsize_1.0.0    
-## [22] rattle_5.5.1         bitops_1.0-9         tibble_3.2.1        
-## [25] rpart_4.1.24         tree_1.0-44          broom_1.0.7         
-## [28] ggplot2_3.5.1        forcats_1.0.0        readr_2.1.5         
-## [31] dplyr_1.1.4          tidyr_1.3.1          knitr_1.49          
+##  [4] lattice_0.22-7       mediation_4.5.1      mvtnorm_1.3-3       
+##  [7] Matrix_1.7-4         MASS_7.3-65          gridExtra_2.3       
+## [10] cowplot_1.2.0        broom.mixed_0.2.9.6  brms_2.23.0         
+## [13] Rcpp_1.1.0           mgcv_1.9-4           nlme_3.1-168        
+## [16] lmtest_0.9-40        zoo_1.8-14           sandwich_3.1-1      
+## [19] car_3.1-3            carData_3.0-5        effectsize_1.0.1    
+## [22] rpart.plot_3.1.3     rattle_5.5.1         bitops_1.0-9        
+## [25] tibble_3.3.0         rpart_4.1.24         tree_1.0-45         
+## [28] broom_1.0.10         ggplot2_4.0.1        forcats_1.0.1       
+## [31] readr_2.1.6          dplyr_1.1.4          tidyr_1.3.1         
+## [34] knitr_1.50          
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] RColorBrewer_1.1-3   tensorA_0.36.2.1     rstudioapi_0.17.1   
-##   [4] jsonlite_1.8.9       datawizard_1.0.2     magrittr_2.0.3      
-##   [7] farver_2.1.2         nloptr_2.1.1         rmarkdown_2.29      
-##  [10] vctrs_0.6.5          minqa_1.2.8          base64enc_0.1-3     
-##  [13] htmltools_0.5.8.1    distributional_0.5.0 pROC_1.18.5         
-##  [16] Formula_1.2-5        sass_0.4.9           parallelly_1.41.0   
-##  [19] StanHeaders_2.32.10  bslib_0.8.0          htmlwidgets_1.6.4   
-##  [22] plyr_1.8.9           lubridate_1.9.4      cachem_1.1.0        
-##  [25] iterators_1.0.14     lifecycle_1.0.4      pkgconfig_2.0.3     
-##  [28] R6_2.5.1             fastmap_1.2.0        rbibutils_2.3       
-##  [31] future_1.34.0        digest_0.6.37        colorspace_2.1-1    
-##  [34] furrr_0.3.1          ps_1.8.1             Hmisc_5.2-2         
-##  [37] labeling_0.4.3       timechange_0.3.0     abind_1.4-8         
-##  [40] compiler_4.4.2       bit64_4.5.2          withr_3.0.2         
-##  [43] htmlTable_2.4.3      backports_1.5.0      inline_0.3.21       
-##  [46] QuickJSR_1.5.1       pkgbuild_1.4.5       lava_1.8.1          
-##  [49] loo_2.8.0            ModelMetrics_1.2.2.2 tools_4.4.2         
-##  [52] foreign_0.8-88       future.apply_1.11.3  nnet_7.3-20         
-##  [55] glue_1.8.0           callr_3.7.6          grid_4.4.2          
-##  [58] checkmate_2.3.2      cluster_2.1.8        reshape2_1.4.4      
-##  [61] recipes_1.3.0        generics_0.1.3       lpSolve_5.6.23      
-##  [64] gtable_0.3.6         tzdb_0.5.0           class_7.3-23        
-##  [67] data.table_1.16.4    hms_1.1.3            utf8_1.2.4          
-##  [70] foreach_1.5.2        pillar_1.10.1        stringr_1.5.1       
-##  [73] vroom_1.6.5          posterior_1.6.0      survival_3.8-3      
-##  [76] bit_4.5.0.1          tidyselect_1.2.1     reformulas_0.4.0    
-##  [79] stats4_4.4.2         xfun_0.50            bridgesampling_1.1-2
-##  [82] hardhat_1.4.1        timeDate_4041.110    matrixStats_1.5.0   
-##  [85] rstan_2.32.6         stringi_1.8.4        yaml_2.3.10         
-##  [88] boot_1.3-31          evaluate_1.0.3       codetools_0.2-20    
-##  [91] rpart.plot_3.1.2     archive_1.1.12       cli_3.6.5           
-##  [94] RcppParallel_5.1.9   parameters_0.25.0    Rdpack_2.6.2        
-##  [97] munsell_0.5.1        processx_3.8.5       jquerylib_0.1.4     
-## [100] globals_0.16.3       coda_0.19-4.1        parallel_4.4.2      
-## [103] rstantools_2.4.0     gower_1.0.2          bayestestR_0.16.0   
-## [106] bayesplot_1.11.1     Brobdingnag_1.2-9    lme4_1.1-36         
-## [109] listenv_0.9.1        prodlim_2025.04.28   scales_1.3.0        
-## [112] insight_1.3.0        purrr_1.0.2          crayon_1.5.3        
-## [115] rlang_1.1.6
+##   [1] RColorBrewer_1.1-3    tensorA_0.36.2.1      rstudioapi_0.17.1    
+##   [4] jsonlite_2.0.0        datawizard_1.3.0      magrittr_2.0.4       
+##   [7] TH.data_1.1-5         estimability_1.5.1    nloptr_2.2.1         
+##  [10] farver_2.1.2          rmarkdown_2.30        vctrs_0.6.5          
+##  [13] minqa_1.2.8           base64enc_0.1-3       htmltools_0.5.8.1    
+##  [16] distributional_0.5.0  pROC_1.19.0.1         Formula_1.2-5        
+##  [19] sass_0.4.10           parallelly_1.45.1     StanHeaders_2.32.10  
+##  [22] bslib_0.9.0           htmlwidgets_1.6.4     plyr_1.8.9           
+##  [25] lubridate_1.9.4       emmeans_2.0.0         cachem_1.1.0         
+##  [28] iterators_1.0.14      lifecycle_1.0.4       pkgconfig_2.0.3      
+##  [31] R6_2.6.1              fastmap_1.2.0         rbibutils_2.4        
+##  [34] future_1.68.0         digest_0.6.38         colorspace_2.1-2     
+##  [37] furrr_0.3.1           ps_1.9.1              Hmisc_5.2-4          
+##  [40] labeling_0.4.3        timechange_0.3.0      abind_1.4-8          
+##  [43] compiler_4.5.2        bit64_4.6.0-1         withr_3.0.2          
+##  [46] htmlTable_2.4.3       S7_0.2.1              backports_1.5.0      
+##  [49] inline_0.3.21         QuickJSR_1.8.1        pkgbuild_1.4.8       
+##  [52] lava_1.8.2            loo_2.8.0             ModelMetrics_1.2.2.2 
+##  [55] tools_4.5.2           foreign_0.8-90        future.apply_1.20.0  
+##  [58] nnet_7.3-20           glue_1.8.0            callr_3.7.6          
+##  [61] grid_4.5.2            checkmate_2.3.3       cluster_2.1.8.1      
+##  [64] reshape2_1.4.5        recipes_1.3.1         lpSolve_5.6.23       
+##  [67] generics_0.1.4        gtable_0.3.6          tzdb_0.5.0           
+##  [70] class_7.3-23          data.table_1.17.8     hms_1.1.4            
+##  [73] utf8_1.2.6            foreach_1.5.2         pillar_1.11.1        
+##  [76] stringr_1.6.0         vroom_1.6.6           posterior_1.6.1      
+##  [79] survival_3.8-3        bit_4.6.0             tidyselect_1.2.1     
+##  [82] reformulas_0.4.2      stats4_4.5.2          xfun_0.54            
+##  [85] bridgesampling_1.1-2  hardhat_1.4.2         timeDate_4051.111    
+##  [88] matrixStats_1.5.0     rstan_2.32.7          stringi_1.8.7        
+##  [91] yaml_2.3.10           boot_1.3-32           evaluate_1.0.5       
+##  [94] codetools_0.2-20      cli_3.6.5             RcppParallel_5.1.11-1
+##  [97] Rdpack_2.6.4          xtable_1.8-4          parameters_0.28.2    
+## [100] processx_3.8.6        jquerylib_0.1.4       globals_0.18.0       
+## [103] coda_0.19-4.1         parallel_4.5.2        rstantools_2.5.0     
+## [106] gower_1.0.2           bayestestR_0.17.0     bayesplot_1.14.0     
+## [109] Brobdingnag_1.2-9     lme4_1.1-37           listenv_0.10.0       
+## [112] prodlim_2025.04.28    scales_1.4.0          insight_1.4.2        
+## [115] purrr_1.2.0           crayon_1.5.3          rlang_1.1.6          
+## [118] multcomp_1.4-29
 ```
 

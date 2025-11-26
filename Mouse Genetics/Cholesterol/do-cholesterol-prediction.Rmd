@@ -272,6 +272,196 @@ tree.all.cont.pruned
 
 ```
 
+## Bootstrapped Regression Tree
+
+I wanted to generate a tree where the bootstrapped values are listed above the node to give a sense of how commonly that node occurs
+
+```{r bootstrapped-regression-tree}
+library(rpart)
+library(dplyr)
+library(rpart.plot)
+
+# Set number of bootstrap iterations
+n_bootstrap <- 1000
+n_obs <- nrow(chol.pred.data.cont)
+
+# Prepare data with renamed columns
+boot_data <- chol.pred.data.cont %>% 
+  rename(`TG 19w` = "tg2",
+         `Ca 19w` = "calcium2",
+         `BW 19w` = "bw.19")
+
+# Initialize storage for results
+top_split_var <- character(n_bootstrap)
+all_splits_list <- list()
+
+# Bootstrap loop
+set.seed(123)  # for reproducibility
+for(i in 1:n_bootstrap) {
+  # Sample with replacement
+  boot_sample <- boot_data[sample(1:n_obs, replace = TRUE), ]
+  
+  # Fit tree
+  boot_tree <- rpart(chol2 ~ ., data = boot_sample, method = "anova")
+  
+  # Prune with same cp
+  boot_tree_pruned <- prune(boot_tree, cp = 0.0365)
+  
+  # Extract top split information
+  if(nrow(boot_tree_pruned$frame) > 1) {  # if tree has splits
+    top_split_var[i] <- as.character(boot_tree_pruned$frame$var[1])
+  } else {
+    top_split_var[i] <- "no_split"
+  }
+  
+  # Store UNIQUE splitting variables for this bootstrap (count each variable only once)
+  splits_in_tree <- as.character(boot_tree_pruned$frame$var[boot_tree_pruned$frame$var != "<leaf>"])
+  all_splits_list[[i]] <- unique(splits_in_tree)  # Only unique variables
+}
+
+# Get variables in original pruned tree
+original_splits <- as.character(tree.all.cont.pruned$frame$var[tree.all.cont.pruned$frame$var != "<leaf>"])
+
+# Count frequencies - now each tree contributes at most 1 count per variable
+top_split_summary <- table(top_split_var)
+all_vars <- unlist(all_splits_list)
+var_frequency <- table(all_vars)
+
+# Create annotation for each node in original tree
+cat("\nBootstrap frequencies for nodes in pruned tree (counting once per tree):\n")
+cat(paste(rep("=", 60), collapse=""), "\n")
+for(i in 1:length(original_splits)) {
+  var <- original_splits[i]
+  
+  # Top split percentage
+  if(i == 1) {
+    top_freq <- ifelse(var %in% names(top_split_summary), top_split_summary[var], 0)
+    top_pct <- round(100 * top_freq / n_bootstrap, 1)
+    cat(sprintf("Node %d - %s (TOP): %d/%d trees (%.1f%%) as top split\n", 
+                i, var, top_freq, n_bootstrap, top_pct))
+  }
+  
+  # Overall appearance (now will be ≤100%)
+  overall_freq <- ifelse(var %in% names(var_frequency), var_frequency[var], 0)
+  cat(sprintf("Node %d - %s (ANY): %d/%d trees (%.1f%%) appears in tree\n", 
+              i, var, overall_freq, n_bootstrap, 
+              round(100 * overall_freq / n_bootstrap, 1)))
+  cat("\n")
+}
+
+# Summary of all variables
+cat("\n\nAll variable frequencies (appears in tree, once per tree):\n")
+print(sort(var_frequency, decreasing = TRUE))
+
+# Plot the tree
+rpart.plot::prp(tree.all.cont.pruned, extra=1, 
+                main=sprintf("Pruned Tree with Bootstrap Frequencies (n=%d)", n_bootstrap),
+                cex=1.2)
+
+# Create summary for display
+cat("\n\nSummary for annotation:\n")
+for(var in original_splits) {
+  freq <- ifelse(var %in% names(var_frequency), var_frequency[var], 0)
+  pct <- round(100 * freq / n_bootstrap, 1)
+  
+  if(var == original_splits[1]) {
+    top_freq <- ifelse(var %in% names(top_split_summary), top_split_summary[var], 0)
+    top_pct <- round(100 * top_freq / n_bootstrap, 1)
+    cat(sprintf("%s (%d trees, %.1f%% top)\n", var, freq, top_pct))
+  } else {
+    cat(sprintf("%s (%d trees, %.1f%%)\n", var, freq, pct))
+  }
+}
+```
+
+```{r ggparty-bootstrapped-tree}
+library(ggplot2)
+library(dplyr)
+
+# Extract tree structure information
+frame <- tree.all.cont.pruned$frame
+splits <- tree.all.cont.pruned$splits
+
+# Create node positions manually based on tree structure
+# For your tree: Diet at top, TG left, Ca right
+nodes <- data.frame(
+  id = c(1, 2, 3),
+  x = c(0.5, 0.25, 0.75),
+  y = c(0.85, 0.5, 0.5),
+  variable = c("Diet = NCD", "TG 19w < 129", "Ca 19w < 8.4"),
+  boot_freq = c(
+    var_frequency["Diet"],
+    var_frequency["TG 19w"],
+    var_frequency["Ca 19w"]
+  ),
+  boot_pct = c(
+    round(100 * var_frequency["Diet"] / n_bootstrap, 1),
+    round(100 * var_frequency["TG 19w"] / n_bootstrap, 1),
+    round(100 * var_frequency["Ca 19w"] / n_bootstrap, 1)
+  ),
+  top_pct = c(
+    round(100 * top_split_summary["Diet"] / n_bootstrap, 1),
+    NA,
+    NA
+  ),
+  stringsAsFactors = FALSE
+)
+
+# Create labels with bootstrap info
+nodes$label <- ifelse(
+  !is.na(nodes$top_pct),
+  sprintf("%s\n(%d trees, %.1f%% top)", nodes$variable, nodes$boot_freq, nodes$top_pct),
+  sprintf("%s\n(%d trees, %.1f%%)", nodes$variable, nodes$boot_freq, nodes$boot_pct)
+)
+
+# Terminal nodes (leaves)
+leaves <- data.frame(
+  x = c(0.125, 0.375, 0.625, 0.875),
+  y = c(0.15, 0.15, 0.15, 0.15),
+  label = c("76\nn=233", "100\nn=206", "91\nn=52", "126\nn=327"),
+  stringsAsFactors = FALSE
+)
+
+# Edges
+edges <- data.frame(
+  x = c(0.5, 0.5, 0.25, 0.25, 0.75, 0.75),
+  y = c(0.85, 0.85, 0.5, 0.5, 0.5, 0.5),
+  xend = c(0.25, 0.75, 0.125, 0.375, 0.625, 0.875),
+  yend = c(0.5, 0.5, 0.15, 0.15, 0.15, 0.15),
+  stringsAsFactors = FALSE
+)
+
+# Edge labels (yes/no)
+edge_labels <- data.frame(
+  x = c(0.375, 0.625, 0.1875, 0.3125, 0.6875, 0.8125),
+  y = c(0.675, 0.675, 0.325, 0.325, 0.325, 0.325),
+  label = c("yes", "no", "yes", "no", "yes", "no"),
+  stringsAsFactors = FALSE
+)
+
+# Create the plot
+ggplot() +
+  # Draw edges
+  geom_segment(data = edges, aes(x = x, y = y, xend = xend, yend = yend),
+               size = 1) +
+  # Draw edge labels
+  geom_text(data = edge_labels, aes(x = x, y = y, label = label),
+            size = 3.5, fontface = "italic") +
+  # Draw split nodes
+  geom_label(data = nodes, aes(x = x, y = y, label = label),
+             size = 4, fill = "white", label.padding = unit(0.35, "lines")) +
+  # Draw leaf nodes
+  geom_label(data = leaves, aes(x = x, y = y, label = label),
+             size = 3.5, fill = "lightgray", label.padding = unit(0.3, "lines")) +
+  # Styling
+  theme_void() +
+  coord_cartesian(xlim = c(0, 1), ylim = c(0, 1)) +
+  labs(title = sprintf("Pruned Regression Tree with Bootstrap Frequencies (n=%d)", n_bootstrap)) +
+  theme(plot.title = element_text(hjust = 0.5, size = 14, face = "bold"))
+```
+
+# Investigating Calcium Associations
+
 ```{r Calcium}
 log.calcium <- glm(High.Chol~sex+diet+tg2+calcium2, data=cholesterol.data, family='binomial')
 summary(log.calcium)

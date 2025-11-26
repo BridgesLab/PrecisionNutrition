@@ -235,7 +235,8 @@ kable(outcome.summary_metrics, caption="Summary of total cholesterol effects aft
 ```{r tc-calcium-mr}
 tc.control.mr <- mr(data_steiger,
                          method_list = c(
-  "mr_ivw", 
+  "mr_ivw_mre",
+  "mr_ivw_fe",
   "mr_egger_regression", 
   "mr_weighted_median", 
   "mr_weighted_mode"
@@ -258,7 +259,7 @@ ggplot(tc.control.mr, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted method shows a `r tc.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r tc.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of `r tc.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
 
 ### MR-Egger Intercept
 
@@ -290,7 +291,7 @@ single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_beta <- tc.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
+ivw_beta <- tc.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -336,7 +337,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(tc.control.mr, method=="Inverse variance weighted")$b) |>
+  mutate(diff = b - filter(tc.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>

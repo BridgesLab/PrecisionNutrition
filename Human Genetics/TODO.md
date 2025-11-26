@@ -76,6 +76,8 @@ Genes have multidirectional effects, but they cancel each other out.  Increases 
 | **5. Sensitivity to Correlated Pleiotropy** | **Check for Correlated Pleiotropy** (e.g., genetic correlation, CAUSE) | **CAUSE "Causal" Model** (or no strong correlation) | **Final interpretation:** Interpret the most robust/primary MR estimates selected from Steps 2-4. |
 | | | **CAUSE "Sharing" Model** favored | **Reframed Interpretation:** Evidence for **shared genetic architecture**, not clear causality. Interpret results cautiously. |
 
+![Model Selection Figure](figures/MR Model Selection.png)
+
 ## Other Notes
 - IVW random-effects will serve as the **primary estimator**.
 - All other MR methods reported for sensitivity.

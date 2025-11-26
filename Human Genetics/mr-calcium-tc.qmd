@@ -234,7 +234,8 @@ kable(outcome.summary_metrics, caption="Summary of total cholesterol effects by 
 
 ```{r calcium-tc-mr}
 calcium.tc.mr <- mr(data_steiger,
-                         method_list = c("mr_ivw", 
+                         method_list = c(  "mr_ivw_mre",
+                                           "mr_ivw_fe",
                                          "mr_egger_regression", 
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
@@ -256,7 +257,7 @@ ggplot(calcium.tc.mr, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted method shows a `r calcium.tc.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.tc.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in total cholesterol (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.tc.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, **non-significant** causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r calcium.tc.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r calcium.tc.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in total cholesterol (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.tc.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, **non-significant** causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
@@ -289,7 +290,7 @@ single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_beta <- calcium.tc.mr |> filter(method=="Inverse variance weighted") |> pull(b)
+ivw_beta <- calcium.tc.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -335,7 +336,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(calcium.tc.mr, method=="Inverse variance weighted")$b) |>
+  mutate(diff = b - filter(calcium.tc.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>

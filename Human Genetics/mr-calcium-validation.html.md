@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Thu Oct 30 11:03:38 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:14:08 2025
 
 ## Data Entry
 
@@ -398,14 +398,15 @@ Table: Summary of outcome summary
 ```{.r .cell-code}
 calcium.control.mr <- mr(data_steiger,
                          method_list = c(
-  "mr_ivw", 
+  "mr_ivw_mre",
+  "mr_ivw_fe",
   "mr_egger_regression", 
   'mr_raps',
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
 
-#MPRESSO has to be run separately
+#M-PRESSO has to be run separately
 library(MRPRESSO)
 
 calcium.control.mr_presso_results <- mr_presso(
@@ -444,15 +445,16 @@ calcuim.control.mr.mrpresso |> #select(-starts_with('id')) |>
 
 Table: MR Results for Calcium Positive Control
 
-|id.exposure          |id.outcome              |outcome                 |exposure             |method                               | nsnp|         b| se| pval|
-|:--------------------|:-----------------------|:-----------------------|:--------------------|:------------------------------------|----:|---------:|--:|----:|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted            |  275| 0.5437075|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                             |  275| 0.6806916|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Robust adjusted profile score (RAPS) |  275| 0.5420480|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median                      |  275| 0.5576021|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode                        |  275| 0.5572371|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Raw)                      |  275| 0.5451830|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Outlier-corrected)        |  275| 0.5355132|  0|    0|
+|id.exposure          |id.outcome              |outcome                 |exposure             |method                                                    | nsnp|         b| se| pval|
+|:--------------------|:-----------------------|:-----------------------|:--------------------|:---------------------------------------------------------|----:|---------:|--:|----:|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  275| 0.5437075|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted (fixed effects)                 |  275| 0.5437075|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                                                  |  275| 0.6806916|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Robust adjusted profile score (RAPS)                      |  275| 0.5420480|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median                                           |  275| 0.5576021|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode                                             |  275| 0.5572371|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Raw)                                           |  275| 0.5451830|  0|    0|
+|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Outlier-corrected)                             |  275| 0.5355132|  0|    0|
 
 
 :::
@@ -477,7 +479,7 @@ ggplot(calcuim.control.mr.mrpresso, aes(y=method,x=b)) +
 :::
 
 
-The primary result, using the inverse variance weighted method shows a 0.5437075 $\pm$ 0.0234494 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of 6.2499238\times 10^{-119}.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the Inverse variance weighted (multiplicative random effects) method shows a 0.5437075 $\pm$ 0.0234494 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of 6.2499238\times 10^{-119}.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
@@ -503,6 +505,7 @@ Table: MR Pleiotropy Results for Calcium Positive Control
 
 :::
 :::
+
 
 The MR-Egger intercept is  with a p-value of 0.0015212, indicating some evidence of directional pleiotropy.  Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.
 
@@ -561,7 +564,7 @@ Table: MR-PRESSO Global Test Results for Calcium Positive Control
 
 |       |Global Test      |
 |:------|:----------------|
-|RSSobs |463.917446671804 |
+|RSSobs |463.917446671805 |
 |Pvalue |<5e-04           |
 
 
@@ -573,7 +576,7 @@ calcium.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> calci
 :::
 
 
-From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.605, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6305, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
 
 
 ::: {.cell}
@@ -612,7 +615,7 @@ attr(,"split_labels")
 
 ```{.r .cell-code}
 # Get overall IVW estimate for the vertical line
-ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
+ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -655,7 +658,7 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 :::
 
 
-### CAUSE Analysis
+### MR-CAUSE Analysis
 
 CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
 
@@ -693,7 +696,7 @@ Estimating CAUSE parameters with  277  variants.
 2 0.01343516 
 3 0.0001838567 
 4 2.506443e-06 
-5 3.416588e-08 
+5 3.416405e-08 
 ```
 
 
@@ -724,9 +727,9 @@ Table: if delta_elpd is negative, model2 is a better fit, in this case means the
 
 |model1  |model2  | delta_elpd| se_delta_elpd|         z|
 |:-------|:-------|----------:|-------------:|---------:|
-|null    |sharing | -83.498745|      9.044271| -9.232225|
-|null    |causal  | -91.097344|     10.291642| -8.851585|
-|sharing |causal  |  -7.598598|      1.858503| -4.088559|
+|null    |sharing | -83.463413|      9.048679| -9.223823|
+|null    |causal  | -91.048117|     10.288707| -8.849325|
+|sharing |causal  |  -7.584704|      1.869789| -4.056449|
 
 
 :::
@@ -758,7 +761,7 @@ Table: Pathway estimates and 95% confidence interveals for estimated effect size
 :::
 
 
-From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=2.1703013\times 10^{-5}). The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.05 (-1.15, 0.58) is near zero for the causal model but is substantial for the sharing model [$\eta$=-0.05 (-1.15, 0.58)]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.81 (0.7, 0.9)% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
+From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=2.4912242\times 10^{-5}). The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.05 (-1.15, 0.58) is near zero for the causal model but is substantial for the sharing model [$\eta$=-0.05 (-1.15, 0.58)]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.81 (0.7, 0.9)% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
 
 ### Leave-one-out Analysis
 
@@ -771,7 +774,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted")$b) |>
+  mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>
@@ -832,12 +835,12 @@ sessionInfo()
 ::: {.cell-output .cell-output-stdout}
 
 ```
-R version 4.5.1 (2025-06-13)
+R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.7.1
+Running under: macOS Tahoe 26.1
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
@@ -851,30 +854,30 @@ attached base packages:
 
 other attached packages:
  [1] cause_1.2.0        MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22
- [5] knitr_1.50         lubridate_1.9.4    forcats_1.0.1      stringr_1.5.2     
- [9] dplyr_1.1.4        purrr_1.1.0        readr_2.1.5        tidyr_1.3.1       
-[13] tibble_3.3.0       ggplot2_4.0.0      tidyverse_2.0.0   
+ [5] knitr_1.50         lubridate_1.9.4    forcats_1.0.1      stringr_1.6.0     
+ [9] dplyr_1.1.4        purrr_1.2.0        readr_2.1.6        tidyr_1.3.1       
+[13] tibble_3.3.0       ggplot2_4.0.1      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] gtable_0.3.6          xfun_0.53             htmlwidgets_1.6.4    
+ [1] gtable_0.3.6          xfun_0.54             htmlwidgets_1.6.4    
  [4] psych_2.5.6           lattice_0.22-7        tzdb_0.5.0           
- [7] vctrs_0.6.5           tools_4.5.1           generics_0.1.4       
-[10] curl_7.0.0            parallel_4.5.1        pkgconfig_2.0.3      
+ [7] vctrs_0.6.5           tools_4.5.2           generics_0.1.4       
+[10] curl_7.0.0            parallel_4.5.2        pkgconfig_2.0.3      
 [13] Matrix_1.7-4          SQUAREM_2021.1        data.table_1.17.8    
-[16] RColorBrewer_1.1-3    S7_0.2.0              RcppParallel_5.1.11-1
+[16] RColorBrewer_1.1-3    S7_0.2.1              RcppParallel_5.1.11-1
 [19] truncnorm_1.0-9       lifecycle_1.0.4       rootSolve_1.8.2.4    
-[22] compiler_4.5.1        farver_2.1.2          mnormt_2.1.1         
+[22] compiler_4.5.2        farver_2.1.2          mnormt_2.1.1         
 [25] htmltools_0.5.8.1     mr.raps_0.4.2         yaml_2.3.10          
 [28] pillar_1.11.1         crayon_1.5.3          nlme_3.1-168         
-[31] rsnps_0.6.1           tidyselect_1.2.1      digest_0.6.37        
+[31] rsnps_0.6.1           tidyselect_1.2.1      digest_0.6.38        
 [34] nortest_1.0-4         stringi_1.8.7         ashr_2.2-63          
-[37] labeling_0.4.3        splines_4.5.1         fastmap_1.2.0        
-[40] grid_4.5.1            invgamma_1.2          cli_3.6.5            
+[37] labeling_0.4.3        splines_4.5.2         fastmap_1.2.0        
+[40] grid_4.5.2            invgamma_1.2          cli_3.6.5            
 [43] magrittr_2.0.4        loo_2.8.0             crul_1.6.0           
 [46] withr_3.0.2           scales_1.4.0          bit64_4.6.0-1        
 [49] timechange_0.3.0      rmarkdown_2.30        matrixStats_1.5.0    
 [52] bit_4.6.0             gridExtra_2.3         hms_1.1.4            
-[55] evaluate_1.0.5        irlba_2.3.5.1         mgcv_1.9-3           
+[55] evaluate_1.0.5        irlba_2.3.5.1         mgcv_1.9-4           
 [58] rlang_1.1.6           mixsqp_0.3-54         Rcpp_1.1.0           
 [61] glue_1.8.0            httpcode_0.3.0        rstudioapi_0.17.1    
 [64] vroom_1.6.6           jsonlite_2.0.0        R6_2.6.1             

@@ -234,14 +234,15 @@ kable(outcome.summary_metrics, caption="Summary of outcome summary ")
 ```{r calcium-calcium-mr}
 calcium.control.mr <- mr(data_steiger,
                          method_list = c(
-  "mr_ivw", 
+  "mr_ivw_mre",
+  "mr_ivw_fe",
   "mr_egger_regression", 
   'mr_raps',
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
 
-#MPRESSO has to be run separately
+#M-PRESSO has to be run separately
 library(MRPRESSO)
 
 calcium.control.mr_presso_results <- mr_presso(
@@ -287,7 +288,7 @@ ggplot(calcuim.control.mr.mrpresso, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted") %>% pull(pval)`.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
+The primary result, using the Inverse variance weighted (multiplicative random effects) method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
 
 ### MR-Egger Intercept
 
@@ -297,6 +298,7 @@ egger_intercept|>
   select(-starts_with('id')) |> 
   kable(caption="MR Pleiotropy Results for Calcium Positive Control")
 ```
+
 The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egger_intercept$pval`, indicating `r if(egger_intercept$pval < 0.05){"some evidence of"}else{"no evidence of"}` directional pleiotropy.  Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.
 
 ### Heterogeneity Statistics
@@ -333,7 +335,6 @@ single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -371,7 +372,7 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 
 ```
 
-### CAUSE Analysis
+### MR-CAUSE Analysis
 
 CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
 
@@ -416,7 +417,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted")$b) |>
+  mutate(diff = b - filter(calcium.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>

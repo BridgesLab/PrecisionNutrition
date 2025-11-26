@@ -179,7 +179,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:44:23 2025</p>
+<p>To validate SNPs for calcium GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:24:58 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -1497,26 +1497,27 @@ window.Quarto = {
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>calcium.tc.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(data_steiger,</span>
-<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(<span class="st">"mr_ivw"</span>, </span>
-<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_egger_regression"</span>, </span>
-<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_median"</span>, </span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_mode"</span>))</span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>calcium.tc.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Effects on Total Cholesterol"</span>,</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(  <span class="st">"mr_ivw_mre"</span>,</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>                                           <span class="st">"mr_ivw_fe"</span>,</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_egger_regression"</span>, </span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_median"</span>, </span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_mode"</span>))</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>calcium.tc.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Calcium Effects on Total Cholesterol"</span>,</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>MR Results for Calcium Effects on Total Cholesterol</caption>
 <colgroup>
-<col style="width: 33%">
-<col style="width: 18%">
-<col style="width: 23%">
+<col style="width: 25%">
+<col style="width: 14%">
+<col style="width: 40%">
+<col style="width: 3%">
 <col style="width: 4%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 9%">
+<col style="width: 4%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1533,7 +1534,7 @@ window.Quarto = {
 <tr class="odd">
 <td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
-<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: left;">Inverse variance weighted (multiplicative random effects)</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.032</td>
 <td style="text-align: right;">0.038</td>
@@ -1542,29 +1543,38 @@ window.Quarto = {
 <tr class="even">
 <td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
+<td style="text-align: left;">Inverse variance weighted (fixed effects)</td>
+<td style="text-align: right;">275</td>
+<td style="text-align: right;">0.032</td>
+<td style="text-align: right;">0.025</td>
+<td style="text-align: right;">0.1955242</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
+<td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">MR Egger</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.012</td>
 <td style="text-align: right;">0.081</td>
 <td style="text-align: right;">0.8776367</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.011</td>
 <td style="text-align: right;">0.055</td>
-<td style="text-align: right;">0.8428227</td>
+<td style="text-align: right;">0.8415502</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Total Cholesterol (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Calcium (UK Biobank)</td>
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">275</td>
 <td style="text-align: right;">0.018</td>
-<td style="text-align: right;">0.057</td>
-<td style="text-align: right;">0.7485148</td>
+<td style="text-align: right;">0.060</td>
+<td style="text-align: right;">0.7628643</td>
 </tr>
 </tbody>
 </table>
@@ -1591,7 +1601,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<p>The primary result, using the inverse variance weighted method shows a 0.0323096 <span class="math inline">\(\pm\)</span> 0.0379454 SD increase in total cholesterol (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank). This is statistically significant with a p-value of 0.3945054. All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, <strong>non-significant</strong> causal estimates, confirming instrument validity and harmonisation.</p>
+<p>The primary result, using the inverse variance weighted (multiplicative random effects) method shows a 0.0323096 <span class="math inline">\(\pm\)</span> 0.0379454 SD increase in total cholesterol (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank). This is statistically significant with a p-value of 0.3945054. All four MR methods (IVW, weighted median, weighted mode, MR-Egger) gave consistent, <strong>non-significant</strong> causal estimates, confirming instrument validity and harmonisation.</p>
 </section>
 <section id="mr-egger-intercept" class="level3">
 <h3 class="anchored" data-anchor-id="mr-egger-intercept">MR-Egger Intercept</h3>
@@ -1723,7 +1733,7 @@ attr(,"split_labels")
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Get overall IVW estimate for the vertical line</span></span>
-<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ivw_beta <span class="ot">&lt;-</span> calcium.tc.mr <span class="sc">|&gt;</span> <span class="fu">filter</span>(method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>) <span class="sc">|&gt;</span> <span class="fu">pull</span>(b)</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>ivw_beta <span class="ot">&lt;-</span> calcium.tc.mr <span class="sc">|&gt;</span> <span class="fu">filter</span>(method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">|&gt;</span> <span class="fu">pull</span>(b)</span>
 <span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Determine y-range based on your data</span></span>
 <span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>y_min <span class="ot">&lt;-</span> <span class="dv">0</span></span>
@@ -1777,7 +1787,7 @@ attr(,"split_labels")
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
 <span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data_steiger)</span>
 <span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.tc.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(calcium.tc.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
 <span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
 <span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
 <span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
@@ -1876,12 +1886,12 @@ attr(,"split_labels")
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
-<pre><code>R version 4.5.1 (2025-06-13)
+<pre><code>R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.7.1
+Running under: macOS Tahoe 26.1
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
@@ -1895,24 +1905,24 @@ attached base packages:
 
 other attached packages:
  [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
- [9] readr_2.1.5        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0     
+ [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
+ [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
 [13] tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
- [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
+ [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.4         
+ [5] digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.2        
  [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-3         scales_1.4.0      
+[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-4         scales_1.4.0      
 [17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.1      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         vctrs_0.6.5       
+[21] splines_4.5.2      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
+[25] tools_4.5.2        parallel_4.5.2     tzdb_0.5.0         vctrs_0.6.5       
 [29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3    pillar_1.11.1     
+[33] psych_2.5.6        vroom_1.6.6        pkgconfig_2.0.3    pillar_1.11.1     
 [37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29     labeling_0.4.3    
-[49] compiler_4.5.1     S7_0.2.0          </code></pre>
+[41] xfun_0.54          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
+[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.30     labeling_0.4.3    
+[49] compiler_4.5.2     S7_0.2.1          </code></pre>
 </div>
 </div>
 </section>

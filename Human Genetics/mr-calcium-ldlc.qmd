@@ -234,7 +234,8 @@ kable(outcome.summary_metrics, caption="Summary of LDL cholesterol effects by ca
 
 ```{r calcium-ldlc-mr}
 calcium.ldlc.mr <- mr(data_steiger,
-                         method_list = c("mr_ivw", 
+                         method_list = c( "mr_ivw_mre",
+                                           "mr_ivw_fe",
                                          "mr_egger_regression", 
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))

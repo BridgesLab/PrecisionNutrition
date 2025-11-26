@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sat Oct 18 09:45:52 2025
+To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:25:36 2025
 
 ## Data Entry
 
@@ -479,7 +479,8 @@ Table: Summary of total cholesterol effects after harmonisation
 ```{.r .cell-code}
 tc.control.mr <- mr(data_steiger,
                          method_list = c(
-  "mr_ivw", 
+  "mr_ivw_mre",
+  "mr_ivw_fe",
   "mr_egger_regression", 
   "mr_weighted_median", 
   "mr_weighted_mode"
@@ -495,12 +496,13 @@ tc.control.mr |> select(-starts_with('id')) |>
 
 Table: MR Results for Total Cholesterol - Calcium Control
 
-|outcome                    |exposure                       |method                    | nsnp|     b|    se|         pval|
-|:--------------------------|:------------------------------|:-------------------------|----:|-----:|-----:|------------:|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  280| 0.065| 0.019| 0.0005780089|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  |  280| 0.038| 0.030| 0.2173225364|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| 0.054| 0.026| 0.0403582361|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| 0.055| 0.028| 0.0460454146|
+|outcome                    |exposure                       |method                                                    | nsnp|     b|    se|         pval|
+|:--------------------------|:------------------------------|:---------------------------------------------------------|----:|-----:|-----:|------------:|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  280| 0.065| 0.019| 5.780089e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| 0.065| 0.015| 1.504019e-05|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| 0.038| 0.030| 2.173225e-01|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| 0.054| 0.027| 4.952359e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| 0.055| 0.028| 5.113359e-02|
 
 
 :::
@@ -525,7 +527,7 @@ ggplot(tc.control.mr, aes(y=method,x=b)) +
 :::
 
 
-The primary result, using the inverse variance weighted method shows a 0.064511 $\pm$ 0.0187438 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of 5.7800887\times 10^{-4}.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a 0.064511 $\pm$ 0.0187438 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of 5.7800887\times 10^{-4}.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
 
 ### MR-Egger Intercept
 
@@ -627,7 +629,7 @@ attr(,"split_labels")
 
 ```{.r .cell-code}
 # Get overall IVW estimate for the vertical line
-ivw_beta <- tc.control.mr |> filter(method=="Inverse variance weighted") |> pull(b)
+ivw_beta <- tc.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -681,7 +683,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(tc.control.mr, method=="Inverse variance weighted")$b) |>
+  mutate(diff = b - filter(tc.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>
@@ -742,12 +744,12 @@ sessionInfo()
 ::: {.cell-output .cell-output-stdout}
 
 ```
-R version 4.5.1 (2025-06-13)
+R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.7.1
+Running under: macOS Tahoe 26.1
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
@@ -761,24 +763,24 @@ attached base packages:
 
 other attached packages:
  [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
- [9] readr_2.1.5        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0     
+ [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
+ [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
 [13] tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.3         
- [5] digest_0.6.37      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.1        
+ [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.4         
+ [5] digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.2        
  [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-3         scales_1.4.0      
+[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-4         scales_1.4.0      
 [17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.1      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.1        parallel_4.5.1     tzdb_0.5.0         vctrs_0.6.5       
+[21] splines_4.5.2      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
+[25] tools_4.5.2        parallel_4.5.2     tzdb_0.5.0         vctrs_0.6.5       
 [29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.5        pkgconfig_2.0.3    pillar_1.11.1     
+[33] psych_2.5.6        vroom_1.6.6        pkgconfig_2.0.3    pillar_1.11.1     
 [37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.53          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.29     labeling_0.4.3    
-[49] compiler_4.5.1     S7_0.2.0          
+[41] xfun_0.54          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
+[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.30     labeling_0.4.3    
+[49] compiler_4.5.2     S7_0.2.1          
 ```
 
 

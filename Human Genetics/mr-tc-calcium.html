@@ -116,8 +116,12 @@ window.Quarto = {
   <li><a href="#data-entry" id="toc-data-entry" class="nav-link" data-scroll-target="#data-entry">Data Entry</a>
   <ul class="collapse">
   <li><a href="#steiger-filtering" id="toc-steiger-filtering" class="nav-link" data-scroll-target="#steiger-filtering">Steiger Filtering</a></li>
+  </ul></li>
+  <li><a href="#mr-analyses" id="toc-mr-analyses" class="nav-link" data-scroll-target="#mr-analyses">MR Analyses</a>
+  <ul class="collapse">
   <li><a href="#mr-egger-intercept" id="toc-mr-egger-intercept" class="nav-link" data-scroll-target="#mr-egger-intercept">MR-Egger Intercept</a></li>
   <li><a href="#heterogeneity-statistics" id="toc-heterogeneity-statistics" class="nav-link" data-scroll-target="#heterogeneity-statistics">Heterogeneity Statistics</a></li>
+  <li><a href="#global-test-and-distortion-test" id="toc-global-test-and-distortion-test" class="nav-link" data-scroll-target="#global-test-and-distortion-test">Global Test and Distortion Test</a></li>
   <li><a href="#leave-one-out-analysis" id="toc-leave-one-out-analysis" class="nav-link" data-scroll-target="#leave-one-out-analysis">Leave-one-out Analysis</a></li>
   </ul></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
@@ -179,7 +183,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for total cholesterol GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:32:09 2025</p>
+<p>To validate SNPs for total cholesterol GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Nov 28 07:45:48 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -1332,6 +1336,10 @@ window.Quarto = {
 </table>
 </div>
 </div>
+</section>
+</section>
+<section id="mr-analyses" class="level2">
+<h2 class="anchored" data-anchor-id="mr-analyses">MR Analyses</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
@@ -1339,21 +1347,51 @@ window.Quarto = {
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(</span>
 <span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_ivw_mre"</span>,</span>
 <span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_ivw_fe"</span>,</span>
-<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_egger_regression"</span>, </span>
-<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_median"</span>, </span>
-<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_mode"</span></span>
-<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>))</span>
-<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>tc.control.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Total Cholesterol - Calcium Control"</span>,</span>
-<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">'mr_raps'</span>,</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_egger_regression"</span>, </span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_median"</span>, </span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"mr_weighted_mode"</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>))</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="co">#M-PRESSO has to be run separately</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MRPRESSO)</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>tc.control.mr_presso_results <span class="ot">&lt;-</span> <span class="fu">mr_presso</span>(</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">BetaOutcome =</span> <span class="st">"beta.outcome"</span>,      <span class="co"># Column name for outcome betas</span></span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">BetaExposure =</span> <span class="st">"beta.exposure"</span>,    <span class="co"># Column name for exposure betas</span></span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">SdOutcome =</span> <span class="st">"se.outcome"</span>,          <span class="co"># Column name for outcome SEs</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">SdExposure =</span> <span class="st">"se.exposure"</span>,        <span class="co"># Column name for exposure SEs</span></span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> data_steiger,                  <span class="co"># Your dataset</span></span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">NbDistribution =</span> <span class="dv">2000</span>,              <span class="co"># Number of distributions (default 1000)</span></span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">SignifThreshold =</span> <span class="fl">0.05</span>,             <span class="co"># Significance threshold</span></span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">OUTLIERtest =</span> <span class="cn">TRUE</span>,                 <span class="co"># Perform outlier test</span></span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">DISTORTIONtest =</span> <span class="cn">TRUE</span>,              <span class="co"># Perform distortion test</span></span>
+<span id="cb13-24"><a href="#cb13-24" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb13-25"><a href="#cb13-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-26"><a href="#cb13-26" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb13-27"><a href="#cb13-27" aria-hidden="true" tabindex="-1"></a>tc.control.mr_presso_results<span class="sc">$</span><span class="st">`</span><span class="at">Main MR results</span><span class="st">`</span> <span class="sc">|&gt;</span></span>
+<span id="cb13-28"><a href="#cb13-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">MR Analysis</span><span class="st">`</span>, <span class="st">`</span><span class="at">Causal Estimate</span><span class="st">`</span>, Sd, <span class="st">`</span><span class="at">P-value</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-29"><a href="#cb13-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">method =</span> <span class="st">`</span><span class="at">MR Analysis</span><span class="st">`</span>,</span>
+<span id="cb13-30"><a href="#cb13-30" aria-hidden="true" tabindex="-1"></a>         <span class="at">b =</span> <span class="st">`</span><span class="at">Causal Estimate</span><span class="st">`</span>,</span>
+<span id="cb13-31"><a href="#cb13-31" aria-hidden="true" tabindex="-1"></a>         <span class="at">se =</span> Sd,</span>
+<span id="cb13-32"><a href="#cb13-32" aria-hidden="true" tabindex="-1"></a>         <span class="at">pval =</span> <span class="st">`</span><span class="at">P-value</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb13-33"><a href="#cb13-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">method =</span> <span class="fu">fct_recode</span>(method,</span>
+<span id="cb13-34"><a href="#cb13-34" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"MR-PRESSO (Raw)"</span><span class="ot">=</span><span class="st">"Raw"</span>,</span>
+<span id="cb13-35"><a href="#cb13-35" aria-hidden="true" tabindex="-1"></a>                             <span class="st">"MR-PRESSO (Outlier-corrected)"</span><span class="ot">=</span><span class="st">"Outlier-corrected"</span>)) <span class="ot">-&gt;</span> tc.control.mr_presso_df</span>
+<span id="cb13-36"><a href="#cb13-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-37"><a href="#cb13-37" aria-hidden="true" tabindex="-1"></a>tc.control.mr.mrpresso <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(<span class="fu">as_tibble</span>(tc.control.mr), <span class="fu">as_tibble</span>(tc.control.mr_presso_df))<span class="sc">|&gt;</span></span>
+<span id="cb13-38"><a href="#cb13-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">fill</span>(id.exposure, id.outcome, exposure, outcome,nsnp,<span class="at">.direction=</span><span class="st">"down"</span>)</span>
+<span id="cb13-39"><a href="#cb13-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-40"><a href="#cb13-40" aria-hidden="true" tabindex="-1"></a>tc.control.mr.mrpresso <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb13-41"><a href="#cb13-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Total Cholesterol on Calcium Positive Control"</span>,</span>
+<span id="cb13-42"><a href="#cb13-42" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">4</span>,<span class="dv">4</span>,<span class="dv">99</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>MR Results for Total Cholesterol - Calcium Control</caption>
+<caption>MR Results for Total Cholesterol on Calcium Positive Control</caption>
 <colgroup>
 <col style="width: 18%">
-<col style="width: 21%">
+<col style="width: 20%">
 <col style="width: 39%">
 <col style="width: 3%">
 <col style="width: 4%">
@@ -1377,8 +1415,8 @@ window.Quarto = {
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
 <td style="text-align: left;">Inverse variance weighted (multiplicative random effects)</td>
 <td style="text-align: right;">280</td>
-<td style="text-align: right;">0.065</td>
-<td style="text-align: right;">0.019</td>
+<td style="text-align: right;">0.0645</td>
+<td style="text-align: right;">0.0187</td>
 <td style="text-align: right;">5.780089e-04</td>
 </tr>
 <tr class="even">
@@ -1386,46 +1424,73 @@ window.Quarto = {
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
 <td style="text-align: left;">Inverse variance weighted (fixed effects)</td>
 <td style="text-align: right;">280</td>
-<td style="text-align: right;">0.065</td>
-<td style="text-align: right;">0.015</td>
+<td style="text-align: right;">0.0645</td>
+<td style="text-align: right;">0.0149</td>
 <td style="text-align: right;">1.504019e-05</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
-<td style="text-align: left;">MR Egger</td>
+<td style="text-align: left;">Robust adjusted profile score (RAPS)</td>
 <td style="text-align: right;">280</td>
-<td style="text-align: right;">0.038</td>
-<td style="text-align: right;">0.030</td>
-<td style="text-align: right;">2.173225e-01</td>
+<td style="text-align: right;">0.0616</td>
+<td style="text-align: right;">0.0186</td>
+<td style="text-align: right;">9.467571e-04</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
-<td style="text-align: left;">Weighted median</td>
+<td style="text-align: left;">MR Egger</td>
 <td style="text-align: right;">280</td>
-<td style="text-align: right;">0.054</td>
-<td style="text-align: right;">0.027</td>
-<td style="text-align: right;">4.779296e-02</td>
+<td style="text-align: right;">0.0376</td>
+<td style="text-align: right;">0.0304</td>
+<td style="text-align: right;">2.173225e-01</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">Weighted median</td>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">0.0537</td>
+<td style="text-align: right;">0.0267</td>
+<td style="text-align: right;">4.414392e-02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">280</td>
-<td style="text-align: right;">0.055</td>
-<td style="text-align: right;">0.026</td>
-<td style="text-align: right;">3.550457e-02</td>
+<td style="text-align: right;">0.0552</td>
+<td style="text-align: right;">0.0279</td>
+<td style="text-align: right;">4.902681e-02</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">MR-PRESSO (Raw)</td>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">0.0619</td>
+<td style="text-align: right;">0.0185</td>
+<td style="text-align: right;">9.306166e-04</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">MR-PRESSO (Outlier-corrected)</td>
+<td style="text-align: right;">280</td>
+<td style="text-align: right;">0.0623</td>
+<td style="text-align: right;">0.0183</td>
+<td style="text-align: right;">7.412864e-04</td>
 </tr>
 </tbody>
 </table>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tc.control.mr <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"MR Results - Total Cholesterol - Calcium.csv"</span>)</span>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tc.control.mr.mrpresso <span class="sc">|&gt;</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">write_csv</span>(<span class="st">"MR Results - Total Cholesterol - Calciuml.csv"</span>)</span>
 <span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(tc.control.mr, <span class="fu">aes</span>(<span class="at">y=</span>method,<span class="at">x=</span>b)) <span class="sc">+</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(tc.control.mr.mrpresso, <span class="fu">aes</span>(<span class="at">y=</span>method,<span class="at">x=</span>b)) <span class="sc">+</span></span>
 <span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
 <span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">xmin=</span>b<span class="fl">-1.96</span><span class="sc">*</span>se, <span class="at">xmax=</span>b<span class="fl">+1.96</span><span class="sc">*</span>se), <span class="at">width=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
 <span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
@@ -1442,8 +1507,7 @@ window.Quarto = {
 </div>
 </div>
 </div>
-<p>The primary result, using the inverse variance weighted (multiplicative random effects) method shows a 0.064511 <span class="math inline">\(\pm\)</span> 0.0187438 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank). This is statistically significant with a p-value of 5.7800887^{-4}. Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction. The MR-Egger estimate was not statistically significant, but this method is known to have low power.</p>
-</section>
+<p>The primary result, using the inverse variance weighted (multiplicative random effects) method shows a 0.064511 <span class="math inline">\(\pm\)</span> 0.0187438 mg/dL increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank). This is statistically significant with a p-value of 5.7800887^{-4}. Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction. The MR-Egger estimate was not statistically significant, but this method is known to have low power.</p>
 <section id="mr-egger-intercept" class="level3">
 <h3 class="anchored" data-anchor-id="mr-egger-intercept">MR-Egger Intercept</h3>
 <div class="cell">
@@ -1485,7 +1549,7 @@ window.Quarto = {
 </table>
 </div>
 </div>
-<p>The MR-Egger intercept is with a p-value of 0.2614705, indicating no evidence of directional pleiotropy. Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.</p>
+<p>The MR-Egger intercept is with a p-value of 0.2614705, indicating no evidence of average directional pleiotropy. The intercept magnitude is small and near zero, indicating that any average directional pleiotropic bias is likely minor.</p>
 </section>
 <section id="heterogeneity-statistics" class="level3">
 <h3 class="anchored" data-anchor-id="heterogeneity-statistics">Heterogeneity Statistics</h3>
@@ -1626,21 +1690,59 @@ attr(,"split_labels")
 </div>
 </div>
 </section>
+<section id="global-test-and-distortion-test" class="level3">
+<h3 class="anchored" data-anchor-id="global-test-and-distortion-test">Global Test and Distortion Test</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>tc.control.mr_presso_results<span class="sc">$</span><span class="st">`</span><span class="at">MR-PRESSO results</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Global Test</span><span class="st">`</span> <span class="sc">|&gt;</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">unlist</span>() <span class="sc">|&gt;</span> <span class="fu">as.data.frame</span>() <span class="sc">|&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="st">`</span><span class="at">Global Test</span><span class="st">`</span> <span class="ot">=</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR-PRESSO Global Test Results for Total Cholesterol on Calcium"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MR-PRESSO Global Test Results for Total Cholesterol on Calcium</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;"></th>
+<th style="text-align: left;">Global Test</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">RSSobs</td>
+<td style="text-align: left;">451.387743358603</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pvalue</td>
+<td style="text-align: left;">&lt;5e-04</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>tc.control.mr_presso_results<span class="sc">$</span><span class="st">`</span><span class="at">MR-PRESSO results</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Distortion Test</span><span class="st">`</span> <span class="ot">-&gt;</span> tc.distortion.test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>From MR-PRESSO there were 2 outliers that were removed before the distortion test. The ratio of the IVW estimate before and after their removal was -0.5413192, with a p-value of 0.985, indicating no significant distortion due to outliers. The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.985), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.</p>
+</section>
 <section id="leave-one-out-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="leave-one-out-analysis">Leave-one-out Analysis</h3>
 <p>Using IVW methods</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
-<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data_steiger)</span>
-<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
-<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(tc.control.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
-<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
-<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
-<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
-<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Total Cholesterol Analysis (IVW method) for influential SNPs"</span>,</span>
-<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="co"># LOO using IVW</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>loo_res <span class="ot">&lt;-</span> <span class="fu">mr_leaveoneout</span>(data_steiger)</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>loo_res <span class="sc">|&gt;</span> </span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diff =</span> b <span class="sc">-</span> <span class="fu">filter</span>(tc.control.mr, method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>)<span class="sc">$</span>b) <span class="sc">|&gt;</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diff)) <span class="sc">|&gt;</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>() <span class="sc">|&gt;</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,diff,b,se,p) <span class="sc">|&gt;</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Leave-One-Out Results for Total Cholesterol Analysis (IVW method) for influential SNPs"</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>,<span class="dv">5</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1702,18 +1804,18 @@ attr(,"split_labels")
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns: SNP, nsnp, b, se, pval — gives causal estimate with each SNP removed once</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: plot LOO results</span></span>
-<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loo_res, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(SNP, <span class="sc">-</span>b), <span class="at">y =</span> b)) <span class="sc">+</span></span>
-<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width =</span> <span class="fl">0.01</span> ,<span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"SNP Removed"</span>, <span class="at">y =</span> <span class="st">"Estimate (Beta-IVW; leave-one-out)"</span>) <span class="sc">+</span></span>
-<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">1</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Columns: SNP, nsnp, b, se, pval — gives causal estimate with each SNP removed once</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional: plot LOO results</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(loo_res, <span class="fu">aes</span>(<span class="at">x =</span> <span class="fu">reorder</span>(SNP, <span class="sc">-</span>b), <span class="at">y =</span> b)) <span class="sc">+</span></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span><span class="sc">*</span>se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span><span class="sc">*</span>se), <span class="at">width =</span> <span class="fl">0.01</span> ,<span class="at">alpha=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"SNP Removed"</span>, <span class="at">y =</span> <span class="st">"Estimate (Beta-IVW; leave-one-out)"</span>) <span class="sc">+</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="dv">0</span>, <span class="at">linetype=</span><span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.y =</span> <span class="fu">element_text</span>(<span class="at">size =</span> <span class="dv">1</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1731,7 +1833,7 @@ attr(,"split_labels")
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.2 (2025-10-31)
@@ -1752,25 +1854,27 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
- [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
-[13] tidyverse_2.0.0   
+ [1] MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50        
+ [5] lubridate_1.9.4    forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4       
+ [9] purrr_1.2.0        readr_2.1.6        tidyr_1.3.1        tibble_3.3.0      
+[13] ggplot2_4.0.1      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.4         
- [5] digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.2        
- [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-4         scales_1.4.0      
-[17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.2      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.2        parallel_4.5.2     tzdb_0.5.0         vctrs_0.6.5       
-[29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.6        pkgconfig_2.0.3    pillar_1.11.1     
-[37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.54          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.30     labeling_0.4.3    
-[49] compiler_4.5.2     S7_0.2.1          </code></pre>
+ [1] gtable_0.3.6       xfun_0.54          htmlwidgets_1.6.4  psych_2.5.6       
+ [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.2       
+ [9] generics_0.1.4     curl_7.0.0         parallel_4.5.2     pkgconfig_2.0.3   
+[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.1          
+[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.2     farver_2.1.2      
+[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
+[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
+[29] tidyselect_1.2.1   digest_0.6.38      nortest_1.0-4      stringi_1.8.7     
+[33] labeling_0.4.3     splines_4.5.2      fastmap_1.2.0      grid_4.5.2        
+[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
+[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
+[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
+[49] mgcv_1.9-4         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
+[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
+[57] R6_2.6.1           plyr_1.8.9        </code></pre>
 </div>
 </div>
 </section>

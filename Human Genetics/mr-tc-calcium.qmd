@@ -232,24 +232,56 @@ data_steiger %>% filter(mr_keep==TRUE) %>%
 kable(outcome.summary_metrics, caption="Summary of total cholesterol effects after harmonisation")
 ```
 
+## MR Analyses
+
 ```{r tc-calcium-mr}
 tc.control.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw_mre",
   "mr_ivw_fe",
+  'mr_raps',
   "mr_egger_regression", 
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
 
-tc.control.mr |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for Total Cholesterol - Calcium Control",
-        digits=c(0,0,0,0,3,3,99))
+#M-PRESSO has to be run separately
+library(MRPRESSO)
 
-tc.control.mr |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+tc.control.mr_presso_results <- mr_presso(
+  BetaOutcome = "beta.outcome",      # Column name for outcome betas
+  BetaExposure = "beta.exposure",    # Column name for exposure betas
+  SdOutcome = "se.outcome",          # Column name for outcome SEs
+  SdExposure = "se.exposure",        # Column name for exposure SEs
+  data = data_steiger,                  # Your dataset
+  NbDistribution = 2000,              # Number of distributions (default 1000)
+  SignifThreshold = 0.05,             # Significance threshold
+  OUTLIERtest = TRUE,                 # Perform outlier test
+  DISTORTIONtest = TRUE,              # Perform distortion test
+)
 
-ggplot(tc.control.mr, aes(y=method,x=b)) +
+library(forcats)
+tc.control.mr_presso_results$`Main MR results` |>
+  select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  rename(method = `MR Analysis`,
+         b = `Causal Estimate`,
+         se = Sd,
+         pval = `P-value`) |>
+  mutate(method = fct_recode(method,
+                             "MR-PRESSO (Raw)"="Raw",
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> tc.control.mr_presso_df
+
+tc.control.mr.mrpresso <- bind_rows(as_tibble(tc.control.mr), as_tibble(tc.control.mr_presso_df))|>
+  fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
+
+tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
+  kable(caption="MR Results for Total Cholesterol on Calcium Positive Control",
+        digits=c(0,0,0,0,4,4,99))
+
+tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
+  write_csv("MR Results - Total Cholesterol - Calciuml.csv")
+
+ggplot(tc.control.mr.mrpresso, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
@@ -259,7 +291,7 @@ ggplot(tc.control.mr, aes(y=method,x=b)) +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` mg/dL increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
 
 ### MR-Egger Intercept
 
@@ -269,7 +301,7 @@ egger_intercept|>
   select(-starts_with('id')) |> 
   kable(caption="MR Pleiotropy Results for Total Cholesterol - Calcium Analysis")
 ```
-The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egger_intercept$pval`, indicating `r if(egger_intercept$pval < 0.05){"some evidence of"}else{"no evidence of"}` directional pleiotropy.  Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.
+The MR-Egger intercept is `r egger_intercept$intercept` with a p-value of `r egger_intercept$pval`, indicating `r if(egger_intercept$pval < 0.05){"some evidence of"}else{"no evidence of"}` average directional pleiotropy.  The intercept magnitude is small and near zero, indicating that any average directional pleiotropic bias is likely minor.
 
 ### Heterogeneity Statistics
 
@@ -332,6 +364,19 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 
 ```
 
+### Global Test and Distortion Test
+
+```{r calcium-calcium-global-test}
+tc.control.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
+  unlist() |> as.data.frame() |>
+  rename(`Global Test` = 1) |>
+  kable(caption="MR-PRESSO Global Test Results for Total Cholesterol on Calcium")
+
+tc.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distortion.test
+```
+
+From MR-PRESSO there were `r length(tc.distortion.test[[1]])` outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was `r tc.distortion.test[[2]]`, with a p-value of `r tc.distortion.test[[3]]`, indicating `r if(tc.distortion.test[[3]] < 0.05){"significant"}else{"no significant"}` distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=`r tc.distortion.test[[3]]`), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
+
 ### Leave-one-out Analysis
 
 Using IVW methods
@@ -360,8 +405,6 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
   theme(axis.text.y = element_text(size = 1)) 
 ```
 Leave-one-out analyses suggested that no SNPs had a relatively large influence on the IVW estimate, because removal did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
-
-
 
 ## Session Information
 

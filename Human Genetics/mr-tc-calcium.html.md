@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:32:09 2025
+To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Nov 28 07:45:48 2025
 
 ## Data Entry
 
@@ -473,6 +473,8 @@ Table: Summary of total cholesterol effects after harmonisation
 :::
 
 
+## MR Analyses
+
 
 ::: {.cell}
 
@@ -481,37 +483,70 @@ tc.control.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw_mre",
   "mr_ivw_fe",
+  'mr_raps',
   "mr_egger_regression", 
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
 
-tc.control.mr |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for Total Cholesterol - Calcium Control",
-        digits=c(0,0,0,0,3,3,99))
+#M-PRESSO has to be run separately
+library(MRPRESSO)
+
+tc.control.mr_presso_results <- mr_presso(
+  BetaOutcome = "beta.outcome",      # Column name for outcome betas
+  BetaExposure = "beta.exposure",    # Column name for exposure betas
+  SdOutcome = "se.outcome",          # Column name for outcome SEs
+  SdExposure = "se.exposure",        # Column name for exposure SEs
+  data = data_steiger,                  # Your dataset
+  NbDistribution = 2000,              # Number of distributions (default 1000)
+  SignifThreshold = 0.05,             # Significance threshold
+  OUTLIERtest = TRUE,                 # Perform outlier test
+  DISTORTIONtest = TRUE,              # Perform distortion test
+)
+
+library(forcats)
+tc.control.mr_presso_results$`Main MR results` |>
+  select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  rename(method = `MR Analysis`,
+         b = `Causal Estimate`,
+         se = Sd,
+         pval = `P-value`) |>
+  mutate(method = fct_recode(method,
+                             "MR-PRESSO (Raw)"="Raw",
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> tc.control.mr_presso_df
+
+tc.control.mr.mrpresso <- bind_rows(as_tibble(tc.control.mr), as_tibble(tc.control.mr_presso_df))|>
+  fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
+
+tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
+  kable(caption="MR Results for Total Cholesterol on Calcium Positive Control",
+        digits=c(0,0,0,0,4,4,99))
 ```
 
 ::: {.cell-output-display}
 
 
-Table: MR Results for Total Cholesterol - Calcium Control
+Table: MR Results for Total Cholesterol on Calcium Positive Control
 
-|outcome                    |exposure                       |method                                                    | nsnp|     b|    se|         pval|
-|:--------------------------|:------------------------------|:---------------------------------------------------------|----:|-----:|-----:|------------:|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  280| 0.065| 0.019| 5.780089e-04|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| 0.065| 0.015| 1.504019e-05|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| 0.038| 0.030| 2.173225e-01|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| 0.054| 0.027| 4.779296e-02|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| 0.055| 0.026| 3.550457e-02|
+|outcome                    |exposure                       |method                                                    | nsnp|      b|     se|         pval|
+|:--------------------------|:------------------------------|:---------------------------------------------------------|----:|------:|------:|------------:|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  280| 0.0645| 0.0187| 5.780089e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| 0.0645| 0.0149| 1.504019e-05|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| 0.0616| 0.0186| 9.467571e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| 0.0376| 0.0304| 2.173225e-01|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| 0.0537| 0.0267| 4.414392e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| 0.0552| 0.0279| 4.902681e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Raw)                                           |  280| 0.0619| 0.0185| 9.306166e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Outlier-corrected)                             |  280| 0.0623| 0.0183| 7.412864e-04|
 
 
 :::
 
 ```{.r .cell-code}
-tc.control.mr |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
+  write_csv("MR Results - Total Cholesterol - Calciuml.csv")
 
-ggplot(tc.control.mr, aes(y=method,x=b)) +
+ggplot(tc.control.mr.mrpresso, aes(y=method,x=b)) +
   geom_point() +
   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
   theme_classic(base_size=16) +
@@ -527,7 +562,7 @@ ggplot(tc.control.mr, aes(y=method,x=b)) +
 :::
 
 
-The primary result, using the inverse variance weighted (multiplicative random effects) method shows a 0.064511 $\pm$ 0.0187438 SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of 5.7800887\times 10^{-4}.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a 0.064511 $\pm$ 0.0187438 mg/dL increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of 5.7800887\times 10^{-4}.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
 
 ### MR-Egger Intercept
 
@@ -554,7 +589,7 @@ Table: MR Pleiotropy Results for Total Cholesterol - Calcium Analysis
 :::
 :::
 
-The MR-Egger intercept is  with a p-value of 0.2614705, indicating no evidence of directional pleiotropy.  Although the p-value is small, the intercept magnitude is near zero, indicating that any pleiotropic bias is likely minor.
+The MR-Egger intercept is  with a p-value of 0.2614705, indicating no evidence of average directional pleiotropy.  The intercept magnitude is small and near zero, indicating that any average directional pleiotropic bias is likely minor.
 
 ### Heterogeneity Statistics
 
@@ -675,6 +710,39 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 :::
 
 
+### Global Test and Distortion Test
+
+
+::: {.cell}
+
+```{.r .cell-code}
+tc.control.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
+  unlist() |> as.data.frame() |>
+  rename(`Global Test` = 1) |>
+  kable(caption="MR-PRESSO Global Test Results for Total Cholesterol on Calcium")
+```
+
+::: {.cell-output-display}
+
+
+Table: MR-PRESSO Global Test Results for Total Cholesterol on Calcium
+
+|       |Global Test      |
+|:------|:----------------|
+|RSSobs |451.387743358603 |
+|Pvalue |<5e-04           |
+
+
+:::
+
+```{.r .cell-code}
+tc.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distortion.test
+```
+:::
+
+
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was -0.5413192, with a p-value of 0.985, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.985), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
+
 ### Leave-one-out Analysis
 
 Using IVW methods
@@ -733,8 +801,6 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 
 Leave-one-out analyses suggested that no SNPs had a relatively large influence on the IVW estimate, because removal did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
-
-
 ## Session Information
 
 
@@ -765,25 +831,27 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
- [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
-[13] tidyverse_2.0.0   
+ [1] MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50        
+ [5] lubridate_1.9.4    forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4       
+ [9] purrr_1.2.0        readr_2.1.6        tidyr_1.3.1        tibble_3.3.0      
+[13] ggplot2_4.0.1      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.4         
- [5] digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.2        
- [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-4         scales_1.4.0      
-[17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.2      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.2        parallel_4.5.2     tzdb_0.5.0         vctrs_0.6.5       
-[29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.6        pkgconfig_2.0.3    pillar_1.11.1     
-[37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.54          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.30     labeling_0.4.3    
-[49] compiler_4.5.2     S7_0.2.1          
+ [1] gtable_0.3.6       xfun_0.54          htmlwidgets_1.6.4  psych_2.5.6       
+ [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.2       
+ [9] generics_0.1.4     curl_7.0.0         parallel_4.5.2     pkgconfig_2.0.3   
+[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.1          
+[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.2     farver_2.1.2      
+[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
+[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
+[29] tidyselect_1.2.1   digest_0.6.38      nortest_1.0-4      stringi_1.8.7     
+[33] labeling_0.4.3     splines_4.5.2      fastmap_1.2.0      grid_4.5.2        
+[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
+[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
+[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
+[49] mgcv_1.9-4         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
+[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
+[57] R6_2.6.1           plyr_1.8.9        
 ```
 
 

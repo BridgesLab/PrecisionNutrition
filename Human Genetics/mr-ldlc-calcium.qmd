@@ -232,34 +232,50 @@ data_steiger %>% filter(mr_keep==TRUE) %>%
 kable(outcome.summary_metrics, caption="Summary of LDL cholesterol effects after harmonisation")
 ```
 
+## MR Analyses
+
 ```{r ldlc-calcium-mr}
-ldlc.control.mr <- mr(data_steiger,
+ldlc.calcium.mr <- mr(data_steiger,
                          method_list = c(
     "mr_ivw_mre",
   "mr_ivw_fe", 
+  "mr_raps",
   "mr_egger_regression", 
   "mr_weighted_median", 
   "mr_weighted_mode"
 ))
 
-ldlc.control.mr |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for LDL Cholesterol - Calcium Control",
-        digits=c(0,0,0,0,3,3,99))
+#M-PRESSO has to be run separately
+library(MRPRESSO)
 
-ldlc.control.mr |> select(-starts_with('id')) |> 
-  write_csv("MR Results - LDL Cholesterol - Calcium.csv")
+ldlc.calcium.mr_presso_results <- mr_presso(
+  BetaOutcome = "beta.outcome",      # Column name for outcome betas
+  BetaExposure = "beta.exposure",    # Column name for exposure betas
+  SdOutcome = "se.outcome",          # Column name for outcome SEs
+  SdExposure = "se.exposure",        # Column name for exposure SEs
+  data = data_steiger,                  # Your dataset
+  NbDistribution = 2000,              # Number of distributions (default 1000)
+  SignifThreshold = 0.05,             # Significance threshold
+  OUTLIERtest = TRUE,                 # Perform outlier test
+  DISTORTIONtest = TRUE,              # Perform distortion test
+)
 
-ggplot(ldlc.control.mr, aes(y=method,x=b)) +
-  geom_point() +
-  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-  theme_classic(base_size=16) +
-  labs(title="",
-       y="",
-       x="Effect Size (Beta)") +
-  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+library(forcats)
+ldlc.calcium.mr_presso_results$`Main MR results` |>
+  select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  rename(method = `MR Analysis`,
+         b = `Causal Estimate`,
+         se = Sd,
+         pval = `P-value`) |>
+  mutate(method = fct_recode(method,
+                             "MR-PRESSO (Raw)"="Raw",
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> ldlc.calcium.mr_presso_df
+
+ldlc.calcium.mr.mrpresso <- bind_rows(as_tibble(ldlc.calcium.mr), as_tibble(ldlc.calcium.mr_presso_df))|>
+  fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
 ```   
 
-The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r ldlc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r ldlc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in LDL cholesterol (UK Biobank).  This is statistically significant with a p-value of `r ldlc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that LDL cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r ldlc.calcium.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r ldlc.calcium.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in LDL cholesterol (UK Biobank).  This is statistically significant with a p-value of `r ldlc.calcium.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that LDL cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
 
 ### MR-Egger Intercept
 
@@ -294,7 +310,7 @@ single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_beta <- ldlc.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
+ivw_beta <- ldlc.calcium.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -340,7 +356,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(ldlc.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
+  mutate(diff = b - filter(ldlc.calcium.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>
@@ -361,7 +377,112 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 ```
 Leave-one-out analyses suggested that no SNPs had a relatively large influence on the IVW estimate, because removal did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
+### MR-CAUSE Analysis
 
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
+
+```{r calcium-calcium-cause}
+#devtools::install_github("jean997/cause@v1.2.0")
+library(cause)
+tc.cause.data <-
+  data_steiger |>
+  rename(
+    snp = SNP,
+    beta_hat_1 = beta.exposure,
+    beta_hat_2 = beta.outcome,
+    seb1 = se.exposure,
+    seb2 = se.outcome
+  ) |>
+  new_cause_data()
+
+tc.params_ests <- est_cause_params(
+  X = tc.cause.data,                    # Merged data
+  variants = tc.cause.data$snp,
+  optmethod = "mixSQP",     # Default & recommended
+  null_wt = 10,             # Weight on null (default)
+  max_candidates = Inf      # Full grid (default)
+)
+
+ldlc.calcium.cause <- cause(X=tc.cause.data,
+                               param_ests = tc.params_ests)
+
+ldlc.calcium.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+
+plot(ldlc.calcium.cause, type="data",intern=TRUE) -> tmp.plots
+tmp.plots[[1]]
+tmp.plots[[2]]
+tmp.plots[[3]]
+
+summary(ldlc.calcium.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+```
+
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(ldlc.calcium.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(ldlc.calcium.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(ldlc.calcium.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is slightly larger for the sharing model [$\eta$=`r summary(ldlc.calcium.cause, ci_size = 0.95)$tab[1,'eta']`]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(ldlc.calcium.cause, ci_size = 0.95)$tab[2,'q']`% of the SNPs would require correlated pleiotropy for the causal model, but `r summary(ldlc.calcium.cause, ci_size = 0.95)$tab[1,'q']`% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
+
+Alternate explanation with assistance from ChatGPT:
+
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of `r ldlc.calcium.cause$elpd$delta_elpd[ldlc.calcium.cause$elpd$model1=="sharing"]` with a standard error of `r ldlc.calcium.cause$elpd$se_delta_elpd[ldlc.calcium.cause$elpd$model1=="sharing"]` (z score of = `r ldlc.calcium.cause$elpd$z[ldlc.calcium.cause$elpd$model1=="sharing"]`). The causal model estimated a positive effect of LDL-C on calcium (`r summary(ldlc.calcium.cause)$tab[2,"gamma"]`), while the corresponding pleiotropic parameter $\eta$ was centered near zero (`r summary(ldlc.calcium.cause)$tab[2,"eta"]`), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (`r summary(ldlc.calcium.cause)$tab[2,"q"]`), and lower than under the sharing model (`r summary(ldlc.calcium.cause)$tab[1,"q"]`). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+
+### Summary of Analyses
+
+```{r ldlc-calcium-mr-summary}
+ldlc.calcium.cause.summary <- 
+  summary(ldlc.calcium.cause, ci_size = 0.95)$tab |> 
+  as_tibble() |>
+  filter(model=="Causal") |>
+  mutate(method=fct_recode(as.factor(model), "MR-CAUSE"="Causal")) |>
+  select(method,gamma) |>
+  separate(
+    col = gamma, into = c("b", "ci"), sep = " \\(",remove = TRUE) |>
+  mutate(
+    ci = str_remove(ci, "\\)$"),          # remove trailing ")"
+    ci = str_squish(ci)) |>              # clean any extra spaces
+  separate(ci, into=c("lower.ci","upper.ci"), sep=", ") |>
+  mutate(se = (as.numeric(upper.ci)-as.numeric(lower.ci))/2/1.96) |>
+  mutate(b=summary(ldlc.calcium.cause)$quants[[2]][1,'gamma']) |>
+  select(method,b,se)
+
+method.order <- c("IVW-RE",
+                  "IVW-FE",
+                  "Weighted median",
+                  "MR Egger",
+                  "Weighted mode",
+                  "MR-PRESSO (Raw)",
+                  "MR-PRESSO (Corrected)",
+                  "MR-RAPS",
+                  "MR-CAUSE")
+
+ldlc.calcium.summary <-
+  ldlc.calcium.mr.mrpresso |> 
+  select(-starts_with('id')) |>
+  bind_rows(ldlc.calcium.cause.summary) |>
+  mutate(method=fct_recode(as.factor(method),
+                                  "IVW-RE"="Inverse variance weighted (multiplicative random effects)",
+                                  "IVW-FE"="Inverse variance weighted (fixed effects)",
+                           "MR-RAPS"="Robust adjusted profile score (RAPS)",
+                           "MR-PRESSO (Corrected)" = "MR-PRESSO (Outlier-corrected)")) |>
+  mutate(method = factor(method, levels=method.order)) |>
+  arrange(method) |>
+  fill(outcome,exposure,nsnp) 
+  
+  
+ldlc.calcium.summary |>   
+  kable(caption="MR Results for LDL-C on Calcium",
+        digits=c(0,0,0,0,4,4,99))
+
+ldlc.calcium.summary |> 
+  write_csv("MR Results - LDL Cholesterol - Calcium.csv")
+
+ldlc.calcium.summary |>
+  mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order
+  ggplot(aes(y=method ,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
 
 ## Session Information
 

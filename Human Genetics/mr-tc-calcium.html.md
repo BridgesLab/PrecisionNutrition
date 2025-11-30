@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 07:55:47 2025
+To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 09:33:53 2025
 
 ## Data Entry
 
@@ -479,7 +479,7 @@ Table: Summary of total cholesterol effects after harmonisation
 ::: {.cell}
 
 ```{.r .cell-code}
-tc.control.mr <- mr(data_steiger,
+tc.calcium.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw_mre",
   "mr_ivw_fe",
@@ -492,7 +492,7 @@ tc.control.mr <- mr(data_steiger,
 #M-PRESSO has to be run separately
 library(MRPRESSO)
 
-tc.control.mr_presso_results <- mr_presso(
+tc.calcium.mr_presso_results <- mr_presso(
   BetaOutcome = "beta.outcome",      # Column name for outcome betas
   BetaExposure = "beta.exposure",    # Column name for exposure betas
   SdOutcome = "se.outcome",          # Column name for outcome SEs
@@ -505,7 +505,7 @@ tc.control.mr_presso_results <- mr_presso(
 )
 
 library(forcats)
-tc.control.mr_presso_results$`Main MR results` |>
+tc.calcium.mr_presso_results$`Main MR results` |>
   select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
   rename(method = `MR Analysis`,
          b = `Causal Estimate`,
@@ -513,52 +513,11 @@ tc.control.mr_presso_results$`Main MR results` |>
          pval = `P-value`) |>
   mutate(method = fct_recode(method,
                              "MR-PRESSO (Raw)"="Raw",
-                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> tc.control.mr_presso_df
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> tc.calcium.mr_presso_df
 
-tc.control.mr.mrpresso <- bind_rows(as_tibble(tc.control.mr), as_tibble(tc.control.mr_presso_df))|>
+tc.calcium.mr.mrpresso <- bind_rows(as_tibble(tc.calcium.mr), as_tibble(tc.calcium.mr_presso_df))|>
   fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
-
-tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for Total Cholesterol on Calcium Positive Control",
-        digits=c(0,0,0,0,4,4,99))
 ```
-
-::: {.cell-output-display}
-
-
-Table: MR Results for Total Cholesterol on Calcium Positive Control
-
-|outcome                    |exposure                       |method                                                    | nsnp|      b|     se|         pval|
-|:--------------------------|:------------------------------|:---------------------------------------------------------|----:|------:|------:|------------:|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  280| 0.0645| 0.0187| 5.780089e-04|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| 0.0645| 0.0149| 1.504019e-05|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| 0.0616| 0.0186| 9.467571e-04|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| 0.0376| 0.0304| 2.173225e-01|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| 0.0537| 0.0263| 4.127897e-02|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| 0.0552| 0.0258| 3.338487e-02|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Raw)                                           |  280| 0.0619| 0.0185| 9.306166e-04|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Outlier-corrected)                             |  280| 0.0565| 0.0182| 2.101856e-03|
-
-
-:::
-
-```{.r .cell-code}
-tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Total Cholesterol - Calciuml.csv")
-
-ggplot(tc.control.mr.mrpresso, aes(y=method,x=b)) +
-  geom_point() +
-  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-  theme_classic(base_size=16) +
-  labs(title="",
-       y="",
-       x="Effect Size (Beta)") +
-  geom_vline(xintercept=0, linetype="dashed", color = "red") 
-```
-
-::: {.cell-output-display}
-![](figures/tc-calcium-mr-1.png){width=672}
-:::
 :::
 
 
@@ -667,7 +626,7 @@ attr(,"split_labels")
 
 ```{.r .cell-code}
 # Get overall IVW estimate for the vertical line
-ivw_beta <- tc.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
+ivw_beta <- tc.calcium.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -716,7 +675,7 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 ::: {.cell}
 
 ```{.r .cell-code}
-tc.control.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
+tc.calcium.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
   unlist() |> as.data.frame() |>
   rename(`Global Test` = 1) |>
   kable(caption="MR-PRESSO Global Test Results for Total Cholesterol on Calcium")
@@ -736,12 +695,12 @@ Table: MR-PRESSO Global Test Results for Total Cholesterol on Calcium
 :::
 
 ```{.r .cell-code}
-tc.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distortion.test
+tc.calcium.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distortion.test
 ```
 :::
 
 
-From MR-PRESSO there were 3 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 9.5910583, with a p-value of 0.7125, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.7125), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was -0.5413192, with a p-value of 0.9825, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.9825), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
 
 ### Leave-one-out Analysis
 
@@ -754,7 +713,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(tc.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
+  mutate(diff = b - filter(tc.calcium.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>
@@ -845,7 +804,7 @@ Estimating CAUSE parameters with  285  variants.
 :::
 
 ```{.r .cell-code}
-tc.control.cause <- cause(X=tc.cause.data,
+tc.calcium.cause <- cause(X=tc.cause.data,
                                param_ests = tc.params_ests)
 ```
 
@@ -859,7 +818,7 @@ Estimating CAUSE posteriors using  285  variants.
 :::
 
 ```{.r .cell-code}
-tc.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+tc.calcium.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
 ```
 
 ::: {.cell-output-display}
@@ -869,15 +828,15 @@ Table: if delta_elpd is negative, model2 is a better fit, in this case means the
 
 |model1  |model2  | delta_elpd| se_delta_elpd|          z|
 |:-------|:-------|----------:|-------------:|----------:|
-|null    |sharing |  -1.521253|      1.619159| -0.9395330|
-|null    |causal  |  -2.722417|      2.912478| -0.9347424|
-|sharing |causal  |  -1.201164|      1.905543| -0.6303524|
+|null    |sharing |  -1.610376|      1.611465| -0.9993246|
+|null    |causal  |  -2.762846|      2.832298| -0.9754784|
+|sharing |causal  |  -1.152470|      1.837272| -0.6272723|
 
 
 :::
 
 ```{.r .cell-code}
-plot(tc.control.cause, type="data",intern=TRUE) -> tmp.plots
+plot(tc.calcium.cause, type="data",intern=TRUE) -> tmp.plots
 tmp.plots[[1]]
 ```
 
@@ -902,7 +861,7 @@ tmp.plots[[3]]
 :::
 
 ```{.r .cell-code}
-summary(tc.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+summary(tc.calcium.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
 ```
 
 ::: {.cell-output-display}
@@ -920,11 +879,104 @@ Table: Pathway estimates and 95% confidence interveals for estimated effect size
 :::
 
 
-From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.264232). The estimated causal effect ($\gamma$) is 0.05 (0.01, 0.1) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = 0.07 (-0.62, 0.63) is near zero for the causal model but is slightly larger for the sharing model [$\eta$=0.3 (-0.13, 0.59)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.05 (0, 0.24)% of the SNPs would require correlated pleiotropy for the causal model, but 0.11 (0.01, 0.32)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2652404). The estimated causal effect ($\gamma$) is 0.05 (0.01, 0.1) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = 0.07 (-0.62, 0.63) is near zero for the causal model but is slightly larger for the sharing model [$\eta$=0.3 (-0.13, 0.59)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.05 (0, 0.24)% of the SNPs would require correlated pleiotropy for the causal model, but 0.11 (0.01, 0.32)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
 
 Alternate explanation with assistance from ChatGPT:
 
-The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of -1.2011636 with a standard error of 1.9055429 (z score of = -0.6303524). The causal model estimated a positive effect of cholesterol on calcium (0.05 (0.01, 0.1)), while the corresponding pleiotropic parameter $\eta$ was centered near zero (0.07 (-0.62, 0.63)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.05 (0, 0.24)), and lower than under the sharing model (0.11 (0.01, 0.32)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of -1.1524697 with a standard error of 1.8372717 (z score of = -0.6272723). The causal model estimated a positive effect of cholesterol on calcium (0.05 (0.01, 0.1)), while the corresponding pleiotropic parameter $\eta$ was centered near zero (0.07 (-0.62, 0.63)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.05 (0, 0.24)), and lower than under the sharing model (0.11 (0.01, 0.32)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+
+### Summary of Analyses
+
+
+::: {.cell}
+
+```{.r .cell-code}
+tc.calcium.cause.summary <- 
+  summary(tc.calcium.cause, ci_size = 0.95)$tab |> 
+  as_tibble() |>
+  filter(model=="Causal") |>
+  mutate(method=fct_recode(as.factor(model), "MR-CAUSE"="Causal")) |>
+  select(method,gamma) |>
+  separate(
+    col = gamma, into = c("b", "ci"), sep = " \\(",remove = TRUE) |>
+  mutate(
+    ci = str_remove(ci, "\\)$"),          # remove trailing ")"
+    ci = str_squish(ci)) |>              # clean any extra spaces
+  separate(ci, into=c("lower.ci","upper.ci"), sep=", ") |>
+  mutate(se = (as.numeric(upper.ci)-as.numeric(lower.ci))/2/1.96) |>
+  mutate(b=summary(tc.calcium.cause)$quants[[2]][1,'gamma']) |>
+  select(method,b,se)
+
+method.order <- c("IVW-RE",
+                  "IVW-FE",
+                  "Weighted median",
+                  "MR Egger",
+                  "Weighted mode",
+                  "MR-PRESSO (Raw)",
+                  "MR-PRESSO (Corrected)",
+                  "MR-RAPS",
+                  "MR-CAUSE")
+
+tc.calcium.summary <-
+  tc.calcium.mr.mrpresso |> 
+  select(-starts_with('id')) |>
+  bind_rows(tc.calcium.cause.summary) |>
+  mutate(method=fct_recode(as.factor(method),
+                                  "IVW-RE"="Inverse variance weighted (multiplicative random effects)",
+                                  "IVW-FE"="Inverse variance weighted (fixed effects)",
+                           "MR-RAPS"="Robust adjusted profile score (RAPS)",
+                           "MR-PRESSO (Corrected)" = "MR-PRESSO (Outlier-corrected)")) |>
+  mutate(method = factor(method, levels=method.order)) |>
+  arrange(method) |>
+  fill(outcome,exposure,nsnp) 
+  
+  
+tc.calcium.summary |>   
+  kable(caption="MR Results for Total Cholesterol on Calcium",
+        digits=c(0,0,0,0,4,4,99))
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Results for Total Cholesterol on Calcium
+
+|outcome                    |exposure                       |method                | nsnp|      b|     se|         pval|
+|:--------------------------|:------------------------------|:---------------------|----:|------:|------:|------------:|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |IVW-RE                |  280| 0.0645| 0.0187| 5.780089e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |IVW-FE                |  280| 0.0645| 0.0149| 1.504019e-05|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median       |  280| 0.0537| 0.0260| 3.848337e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger              |  280| 0.0376| 0.0304| 2.173225e-01|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode         |  280| 0.0552| 0.0287| 5.534434e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Raw)       |  280| 0.0619| 0.0185| 9.306166e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Corrected) |  280| 0.0623| 0.0183| 7.412864e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-RAPS               |  280| 0.0616| 0.0186| 9.467571e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-CAUSE              |  280| 0.0505| 0.0230|           NA|
+
+
+:::
+
+```{.r .cell-code}
+tc.calcium.summary |> 
+  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+
+tc.calcium.summary |>
+  mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order
+  ggplot(aes(y=method ,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
+
+::: {.cell-output-display}
+![](figures/tc-calcium-mr-summary-1.png){width=672}
+:::
+:::
+
 
 ## Session Information
 

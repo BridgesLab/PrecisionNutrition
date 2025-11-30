@@ -235,7 +235,7 @@ kable(outcome.summary_metrics, caption="Summary of total cholesterol effects aft
 ## MR Analyses
 
 ```{r tc-calcium-mr}
-tc.control.mr <- mr(data_steiger,
+tc.calcium.mr <- mr(data_steiger,
                          method_list = c(
   "mr_ivw_mre",
   "mr_ivw_fe",
@@ -248,7 +248,7 @@ tc.control.mr <- mr(data_steiger,
 #M-PRESSO has to be run separately
 library(MRPRESSO)
 
-tc.control.mr_presso_results <- mr_presso(
+tc.calcium.mr_presso_results <- mr_presso(
   BetaOutcome = "beta.outcome",      # Column name for outcome betas
   BetaExposure = "beta.exposure",    # Column name for exposure betas
   SdOutcome = "se.outcome",          # Column name for outcome SEs
@@ -261,7 +261,7 @@ tc.control.mr_presso_results <- mr_presso(
 )
 
 library(forcats)
-tc.control.mr_presso_results$`Main MR results` |>
+tc.calcium.mr_presso_results$`Main MR results` |>
   select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
   rename(method = `MR Analysis`,
          b = `Causal Estimate`,
@@ -269,29 +269,13 @@ tc.control.mr_presso_results$`Main MR results` |>
          pval = `P-value`) |>
   mutate(method = fct_recode(method,
                              "MR-PRESSO (Raw)"="Raw",
-                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> tc.control.mr_presso_df
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> tc.calcium.mr_presso_df
 
-tc.control.mr.mrpresso <- bind_rows(as_tibble(tc.control.mr), as_tibble(tc.control.mr_presso_df))|>
+tc.calcium.mr.mrpresso <- bind_rows(as_tibble(tc.calcium.mr), as_tibble(tc.calcium.mr_presso_df))|>
   fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
-
-tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for Total Cholesterol on Calcium Positive Control",
-        digits=c(0,0,0,0,4,4,99))
-
-tc.control.mr.mrpresso |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Total Cholesterol - Calciuml.csv")
-
-ggplot(tc.control.mr.mrpresso, aes(y=method,x=b)) +
-  geom_point() +
-  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-  theme_classic(base_size=16) +
-  labs(title="",
-       y="",
-       x="Effect Size (Beta)") +
-  geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
-The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` mg/dL increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of `r tc.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
+The primary result, using the inverse variance weighted (multiplicative random effects) method shows a `r tc.calcium.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r tc.calcium.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` mg/dL increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in total cholesterol (UK Biobank).  This is statistically significant with a p-value of `r tc.calcium.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  Three of the four MR methods (IVW, weighted median, weighted mode) gave consistent, significant causal estimates, supporting the hypothesis that total cholesterol may impact serum calcium levels in a positive direction.  The MR-Egger estimate was not statistically significant, but this method is known to have low power.
 
 ### MR-Egger Intercept
 
@@ -326,7 +310,7 @@ single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
-ivw_beta <- tc.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
+ivw_beta <- tc.calcium.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -367,12 +351,12 @@ ggplot(single_snp_results, aes(x = b, y = 1/se)) +
 ### Global Test and Distortion Test
 
 ```{r calcium-calcium-global-test}
-tc.control.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
+tc.calcium.mr_presso_results$`MR-PRESSO results`$`Global Test` |>
   unlist() |> as.data.frame() |>
   rename(`Global Test` = 1) |>
   kable(caption="MR-PRESSO Global Test Results for Total Cholesterol on Calcium")
 
-tc.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distortion.test
+tc.calcium.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distortion.test
 ```
 
 From MR-PRESSO there were `r length(tc.distortion.test[[1]])` outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was `r tc.distortion.test[[2]]`, with a p-value of `r tc.distortion.test[[3]]`, indicating `r if(tc.distortion.test[[3]] < 0.05){"significant"}else{"no significant"}` distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=`r tc.distortion.test[[3]]`), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
@@ -385,7 +369,7 @@ Using IVW methods
 # LOO using IVW
 loo_res <- mr_leaveoneout(data_steiger)
 loo_res |> 
-  mutate(diff = b - filter(tc.control.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
+  mutate(diff = b - filter(tc.calcium.mr, method=="Inverse variance weighted (multiplicative random effects)")$b) |>
   arrange(-abs(diff)) |>
   head() |>
   select(SNP,diff,b,se,p) |>
@@ -432,24 +416,86 @@ tc.params_ests <- est_cause_params(
   max_candidates = Inf      # Full grid (default)
 )
 
-tc.control.cause <- cause(X=tc.cause.data,
+tc.calcium.cause <- cause(X=tc.cause.data,
                                param_ests = tc.params_ests)
 
-tc.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+tc.calcium.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
 
-plot(tc.control.cause, type="data",intern=TRUE) -> tmp.plots
+plot(tc.calcium.cause, type="data",intern=TRUE) -> tmp.plots
 tmp.plots[[1]]
 tmp.plots[[2]]
 tmp.plots[[3]]
 
-summary(tc.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+summary(tc.calcium.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
 ```
 
-From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(tc.control.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(tc.control.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(tc.control.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is slightly larger for the sharing model [$\eta$=`r summary(tc.control.cause, ci_size = 0.95)$tab[1,'eta']`]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(tc.control.cause, ci_size = 0.95)$tab[2,'q']`% of the SNPs would require correlated pleiotropy for the causal model, but `r summary(tc.control.cause, ci_size = 0.95)$tab[1,'q']`% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(tc.calcium.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(tc.calcium.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(tc.calcium.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is slightly larger for the sharing model [$\eta$=`r summary(tc.calcium.cause, ci_size = 0.95)$tab[1,'eta']`]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(tc.calcium.cause, ci_size = 0.95)$tab[2,'q']`% of the SNPs would require correlated pleiotropy for the causal model, but `r summary(tc.calcium.cause, ci_size = 0.95)$tab[1,'q']`% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
 
 Alternate explanation with assistance from ChatGPT:
 
-The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of `r tc.control.cause$elpd$delta_elpd[tc.control.cause$elpd$model1=="sharing"]` with a standard error of `r tc.control.cause$elpd$se_delta_elpd[tc.control.cause$elpd$model1=="sharing"]` (z score of = `r tc.control.cause$elpd$z[tc.control.cause$elpd$model1=="sharing"]`). The causal model estimated a positive effect of cholesterol on calcium (`r summary(tc.control.cause)$tab[2,"gamma"]`), while the corresponding pleiotropic parameter $\eta$ was centered near zero (`r summary(tc.control.cause)$tab[2,"eta"]`), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (`r summary(tc.control.cause)$tab[2,"q"]`), and lower than under the sharing model (`r summary(tc.control.cause)$tab[1,"q"]`). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of `r tc.calcium.cause$elpd$delta_elpd[tc.calcium.cause$elpd$model1=="sharing"]` with a standard error of `r tc.calcium.cause$elpd$se_delta_elpd[tc.calcium.cause$elpd$model1=="sharing"]` (z score of = `r tc.calcium.cause$elpd$z[tc.calcium.cause$elpd$model1=="sharing"]`). The causal model estimated a positive effect of cholesterol on calcium (`r summary(tc.calcium.cause)$tab[2,"gamma"]`), while the corresponding pleiotropic parameter $\eta$ was centered near zero (`r summary(tc.calcium.cause)$tab[2,"eta"]`), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (`r summary(tc.calcium.cause)$tab[2,"q"]`), and lower than under the sharing model (`r summary(tc.calcium.cause)$tab[1,"q"]`). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+
+### Summary of Analyses
+
+```{r tc-calcium-mr-summary}
+tc.calcium.cause.summary <- 
+  summary(tc.calcium.cause, ci_size = 0.95)$tab |> 
+  as_tibble() |>
+  filter(model=="Causal") |>
+  mutate(method=fct_recode(as.factor(model), "MR-CAUSE"="Causal")) |>
+  select(method,gamma) |>
+  separate(
+    col = gamma, into = c("b", "ci"), sep = " \\(",remove = TRUE) |>
+  mutate(
+    ci = str_remove(ci, "\\)$"),          # remove trailing ")"
+    ci = str_squish(ci)) |>              # clean any extra spaces
+  separate(ci, into=c("lower.ci","upper.ci"), sep=", ") |>
+  mutate(se = (as.numeric(upper.ci)-as.numeric(lower.ci))/2/1.96) |>
+  mutate(b=summary(tc.calcium.cause)$quants[[2]][1,'gamma']) |>
+  select(method,b,se)
+
+method.order <- c("IVW-RE",
+                  "IVW-FE",
+                  "Weighted median",
+                  "MR Egger",
+                  "Weighted mode",
+                  "MR-PRESSO (Raw)",
+                  "MR-PRESSO (Corrected)",
+                  "MR-RAPS",
+                  "MR-CAUSE")
+
+tc.calcium.summary <-
+  tc.calcium.mr.mrpresso |> 
+  select(-starts_with('id')) |>
+  bind_rows(tc.calcium.cause.summary) |>
+  mutate(method=fct_recode(as.factor(method),
+                                  "IVW-RE"="Inverse variance weighted (multiplicative random effects)",
+                                  "IVW-FE"="Inverse variance weighted (fixed effects)",
+                           "MR-RAPS"="Robust adjusted profile score (RAPS)",
+                           "MR-PRESSO (Corrected)" = "MR-PRESSO (Outlier-corrected)")) |>
+  mutate(method = factor(method, levels=method.order)) |>
+  arrange(method) |>
+  fill(outcome,exposure,nsnp) 
+  
+  
+tc.calcium.summary |>   
+  kable(caption="MR Results for Total Cholesterol on Calcium",
+        digits=c(0,0,0,0,4,4,99))
+
+tc.calcium.summary |> 
+  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+
+tc.calcium.summary |>
+  mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order
+  ggplot(aes(y=method ,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
 
 ## Session Information
 

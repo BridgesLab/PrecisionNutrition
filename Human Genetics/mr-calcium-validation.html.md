@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:14:08 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 09:51:12 2025
 
 ## Data Entry
 
@@ -432,50 +432,11 @@ calcium.control.mr_presso_results$`Main MR results` |>
                              "MR-PRESSO (Raw)"="Raw",
                              "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> calcium.control.mr_presso_df
 
-calcuim.control.mr.mrpresso <- bind_rows(as_tibble(calcium.control.mr), as_tibble(calcium.control.mr_presso_df))|>
+calcuim.control.mr.mrpresso <- 
+  bind_rows(as_tibble(calcium.control.mr),
+            as_tibble(calcium.control.mr_presso_df))|>
   fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
-
-calcuim.control.mr.mrpresso |> #select(-starts_with('id')) |> 
-  kable(caption="MR Results for Calcium Positive Control",
-        digits=c(0,0,0,0,3,3,99))
 ```
-
-::: {.cell-output-display}
-
-
-Table: MR Results for Calcium Positive Control
-
-|id.exposure          |id.outcome              |outcome                 |exposure             |method                                                    | nsnp|         b| se| pval|
-|:--------------------|:-----------------------|:-----------------------|:--------------------|:---------------------------------------------------------|----:|---------:|--:|----:|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  275| 0.5437075|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Inverse variance weighted (fixed effects)                 |  275| 0.5437075|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger                                                  |  275| 0.6806916|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Robust adjusted profile score (RAPS)                      |  275| 0.5420480|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median                                           |  275| 0.5576021|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode                                             |  275| 0.5572371|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Raw)                                           |  275| 0.5451830|  0|    0|
-|Calcium (UK Biobank) |Calcium (Michigan GWAS) |Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Outlier-corrected)                             |  275| 0.5355132|  0|    0|
-
-
-:::
-
-```{.r .cell-code}
-calcuim.control.mr.mrpresso |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Calcium Postive Control.csv")
-
-ggplot(calcuim.control.mr.mrpresso, aes(y=method,x=b)) +
-  geom_point() +
-  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-  theme_classic(base_size=16) +
-  labs(title="",
-       y="",
-       x="Effect Size (Beta)") +
-  geom_vline(xintercept=0, linetype="dashed", color = "red") 
-```
-
-::: {.cell-output-display}
-![](figures/calcium-calcium-mr-1.png){width=672}
-:::
 :::
 
 
@@ -576,7 +537,7 @@ calcium.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> calci
 :::
 
 
-From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.6305, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
+From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 1.8057037, with a p-value of 0.609, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of average directional horizontal pleiotropy so we should prefer the corrected estimate.  This is consistent with the evidence from the MR-Egger intercept.  This means we should prefer the MR-PRESSO pleiotropy-corrected estimate as the primary result.
 
 
 ::: {.cell}
@@ -727,19 +688,37 @@ Table: if delta_elpd is negative, model2 is a better fit, in this case means the
 
 |model1  |model2  | delta_elpd| se_delta_elpd|         z|
 |:-------|:-------|----------:|-------------:|---------:|
-|null    |sharing | -83.463413|      9.048679| -9.223823|
-|null    |causal  | -91.048117|     10.288707| -8.849325|
-|sharing |causal  |  -7.584704|      1.869789| -4.056449|
+|null    |sharing | -83.501063|      9.027537| -9.249595|
+|null    |causal  | -91.066191|     10.264965| -8.871554|
+|sharing |causal  |  -7.565129|      1.858627| -4.070278|
 
 
 :::
 
 ```{.r .cell-code}
-plot(calcium.control.cause, type="data")
+plot(calcium.control.cause, type="data",intern=TRUE) -> cause.plots
+
+cause.plots[[1]]
 ```
 
 ::: {.cell-output-display}
 ![](figures/calcium-calcium-cause-1.png){width=672}
+:::
+
+```{.r .cell-code}
+cause.plots[[2]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-cause-2.png){width=672}
+:::
+
+```{.r .cell-code}
+cause.plots[[3]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-cause-3.png){width=672}
 :::
 
 ```{.r .cell-code}
@@ -761,7 +740,7 @@ Table: Pathway estimates and 95% confidence interveals for estimated effect size
 :::
 
 
-From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=2.4912242\times 10^{-5}). The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.05 (-1.15, 0.58) is near zero for the causal model but is substantial for the sharing model [$\eta$=-0.05 (-1.15, 0.58)]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.81 (0.7, 0.9)% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
+From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=2.3478506\times 10^{-5}). The estimated causal effect ($\gamma$) is 0.48 (0.41, 0.55) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.05 (-1.15, 0.58) is near zero for the causal model but is substantial for the sharing model [$\eta$=0.52 (0.45, 0.59)]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.81 (0.7, 0.9)% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
 
 ### Leave-one-out Analysis
 
@@ -821,6 +800,97 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 
 Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
+### Summary of Analyses
+
+
+::: {.cell}
+
+```{.r .cell-code}
+calcium.control.cause.summary <- 
+  summary(calcium.control.cause, ci_size = 0.95)$tab |> 
+  as_tibble() |>
+  filter(model=="Causal") |>
+  mutate(method=fct_recode(as.factor(model), "MR-CAUSE"="Causal")) |>
+  select(method,gamma) |>
+  separate(
+    col = gamma, into = c("b", "ci"), sep = " \\(",remove = TRUE) |>
+  mutate(
+    ci = str_remove(ci, "\\)$"),          # remove trailing ")"
+    ci = str_squish(ci)) |>              # clean any extra spaces
+  separate(ci, into=c("lower.ci","upper.ci"), sep=", ") |>
+  mutate(se = (as.numeric(upper.ci)-as.numeric(lower.ci))/2/1.96) |>
+  mutate(b=summary(calcium.control.cause)$quants[[2]][1,'gamma']) |>
+  select(method,b,se)
+
+method.order <- c("IVW-RE",
+                  "IVW-FE",
+                  "Weighted median",
+                  "MR Egger",
+                  "Weighted mode",
+                  "MR-PRESSO (Raw)",
+                  "MR-PRESSO (Corrected)",
+                  "MR-RAPS",
+                  "MR-CAUSE")
+
+calcium.control.summary <-
+  calcuim.control.mr.mrpresso |> 
+  select(-starts_with('id')) |>
+  bind_rows(calcium.control.cause.summary) |>
+  mutate(method=fct_recode(as.factor(method),
+                                  "IVW-RE"="Inverse variance weighted (multiplicative random effects)",
+                                  "IVW-FE"="Inverse variance weighted (fixed effects)",
+                           "MR-RAPS"="Robust adjusted profile score (RAPS)",
+                           "MR-PRESSO (Corrected)" = "MR-PRESSO (Outlier-corrected)")) |>
+  mutate(method = factor(method, levels=method.order)) |>
+  arrange(method) |>
+  fill(outcome,exposure,nsnp) 
+  
+  
+calcium.control.summary |>   
+  kable(caption="MR Results for Calcium Positive Control",
+        digits=c(0,0,0,0,4,4,99))
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Results for Calcium Positive Control
+
+|outcome                 |exposure             |method                | nsnp|      b|     se|         pval|
+|:-----------------------|:--------------------|:---------------------|----:|------:|------:|------------:|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |IVW-RE                |  275| 0.5437| 0.0234| 0.000000e+00|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |IVW-FE                |  275| 0.5437| 0.0183| 0.000000e+00|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted median       |  275| 0.5576| 0.0338| 4.198536e-61|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR Egger              |  275| 0.6807| 0.0486| 5.752555e-34|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |Weighted mode         |  275| 0.5572| 0.0637| 2.310183e-16|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Raw)       |  275| 0.5452| 0.0234| 3.281123e-67|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-PRESSO (Corrected) |  275| 0.5355| 0.0217| 1.816146e-71|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-RAPS               |  275| 0.5420| 0.0217| 0.000000e+00|
+|Calcium (Michigan GWAS) |Calcium (UK Biobank) |MR-CAUSE              |  275| 0.4831| 0.0357|           NA|
+
+
+:::
+
+```{.r .cell-code}
+calcium.control.summary |> 
+  write_csv("MR Results - Calcium Positive Control.csv")
+
+calcium.control.summary |>
+  mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order
+  ggplot(aes(y=method ,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-mr-summary-1.png){width=672}
+:::
+:::
 
 
 ## Session Information

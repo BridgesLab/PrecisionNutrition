@@ -268,24 +268,10 @@ calcium.control.mr_presso_results$`Main MR results` |>
                              "MR-PRESSO (Raw)"="Raw",
                              "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> calcium.control.mr_presso_df
 
-calcuim.control.mr.mrpresso <- bind_rows(as_tibble(calcium.control.mr), as_tibble(calcium.control.mr_presso_df))|>
+calcuim.control.mr.mrpresso <- 
+  bind_rows(as_tibble(calcium.control.mr),
+            as_tibble(calcium.control.mr_presso_df))|>
   fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
-
-calcuim.control.mr.mrpresso |> #select(-starts_with('id')) |> 
-  kable(caption="MR Results for Calcium Positive Control",
-        digits=c(0,0,0,0,3,3,99))
-
-calcuim.control.mr.mrpresso |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Calcium Postive Control.csv")
-
-ggplot(calcuim.control.mr.mrpresso, aes(y=method,x=b)) +
-  geom_point() +
-  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-  theme_classic(base_size=16) +
-  labs(title="",
-       y="",
-       x="Effect Size (Beta)") +
-  geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```   
 
 The primary result, using the Inverse variance weighted (multiplicative random effects) method shows a `r calcium.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)` $\pm$ `r calcium.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)` SD increase in calcium (MGI-BioVU LabWAS) per 1 SD increase in calcium (UK Biobank).  This is statistically significant with a p-value of `r calcium.control.mr %>% filter(method=="Inverse variance weighted (multiplicative random effects)") %>% pull(pval)`.  All six MR methods (IVW, weighted median, weighted mode, MR-Egger, MR-PRESSO with and without outliers) gave consistent, significant causal estimates, confirming instrument validity and harmonisation.
@@ -335,6 +321,7 @@ single_snp_results <- mr_singlesnp(data_steiger)
 mr_funnel_plot(single_snp_results) 
 
 # Get overall IVW estimate for the vertical line
+ivw_beta <- calcium.control.mr |> filter(method=="Inverse variance weighted (multiplicative random effects)") |> pull(b)
 
 # Determine y-range based on your data
 y_min <- 0
@@ -403,11 +390,16 @@ calcium.control.cause <- cause(X=calcium.cause.data,
 
 calcium.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
 
-plot(calcium.control.cause, type="data")
+plot(calcium.control.cause, type="data",intern=TRUE) -> cause.plots
+
+cause.plots[[1]]
+cause.plots[[2]]
+cause.plots[[3]]
+
 summary(calcium.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
 ```
 
-From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(calcium.control.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is substantial for the sharing model [$\eta$=`r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'eta']`]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(calcium.control.cause, ci_size = 0.95)$tab[1,'q']`% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
+From the CAUSE analyses there is significant evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(calcium.control.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(calcium.control.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is substantial for the sharing model [$\eta$=`r summary(calcium.control.cause, ci_size = 0.95)$tab[1,'eta']`]]. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(calcium.control.cause, ci_size = 0.95)$tab[1,'q']`% of the genetic correlation between traits. However, the preference for the causal model indicates the observed correlation is primarily driven by the causal pathway rather than shared pleiotropy.
 
 ### Leave-one-out Analysis
 
@@ -438,7 +430,67 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 ```
 Leave-one-out analyses suggested that two SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
+### Summary of Analyses
 
+```{r calcium-calcium-mr-summary}
+calcium.control.cause.summary <- 
+  summary(calcium.control.cause, ci_size = 0.95)$tab |> 
+  as_tibble() |>
+  filter(model=="Causal") |>
+  mutate(method=fct_recode(as.factor(model), "MR-CAUSE"="Causal")) |>
+  select(method,gamma) |>
+  separate(
+    col = gamma, into = c("b", "ci"), sep = " \\(",remove = TRUE) |>
+  mutate(
+    ci = str_remove(ci, "\\)$"),          # remove trailing ")"
+    ci = str_squish(ci)) |>              # clean any extra spaces
+  separate(ci, into=c("lower.ci","upper.ci"), sep=", ") |>
+  mutate(se = (as.numeric(upper.ci)-as.numeric(lower.ci))/2/1.96) |>
+  mutate(b=summary(calcium.control.cause)$quants[[2]][1,'gamma']) |>
+  select(method,b,se)
+
+method.order <- c("IVW-RE",
+                  "IVW-FE",
+                  "Weighted median",
+                  "MR Egger",
+                  "Weighted mode",
+                  "MR-PRESSO (Raw)",
+                  "MR-PRESSO (Corrected)",
+                  "MR-RAPS",
+                  "MR-CAUSE")
+
+calcium.control.summary <-
+  calcuim.control.mr.mrpresso |> 
+  select(-starts_with('id')) |>
+  bind_rows(calcium.control.cause.summary) |>
+  mutate(method=fct_recode(as.factor(method),
+                                  "IVW-RE"="Inverse variance weighted (multiplicative random effects)",
+                                  "IVW-FE"="Inverse variance weighted (fixed effects)",
+                           "MR-RAPS"="Robust adjusted profile score (RAPS)",
+                           "MR-PRESSO (Corrected)" = "MR-PRESSO (Outlier-corrected)")) |>
+  mutate(method = factor(method, levels=method.order)) |>
+  arrange(method) |>
+  fill(outcome,exposure,nsnp) 
+  
+  
+calcium.control.summary |>   
+  kable(caption="MR Results for Calcium Positive Control",
+        digits=c(0,0,0,0,4,4,99))
+
+calcium.control.summary |> 
+  write_csv("MR Results - Calcium Positive Control.csv")
+
+calcium.control.summary |>
+  mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order
+  ggplot(aes(y=method ,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
 
 ## Session Information
 

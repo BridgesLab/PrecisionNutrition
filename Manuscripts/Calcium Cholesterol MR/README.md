@@ -17,7 +17,7 @@ This document indicates where the raw data for each Figure panel can be found, a
 | ------ | ------ | ------ |
 | Supplementary Figure 1 | ld_clump_analysis.qmd | SNP_Filtering.ai |
 | Supplementary Figure 2A | mr-calcium-validation.qmd | calcium-calcium-scatter-1.pdf |
-| Supplementary Figure 2B | mr-calcium-validation.qmd | calcium-calcium-mr-1.pdf |
+| Supplementary Figure 2B | mr-calcium-validation.qmd | calcium-calcium-mr-summary-1.pdf |
 | Supplementary Figure 2C | mr-calcium-validation.qmd | calcium-calcium-mr-loo-1.pdf |
 | Supplementary Figure 2D | mr-calcium-validation.qmd | calcium-calcium-funnel-plot-2.pdf |
 | Supplementary Figure 3A | mr-calcium-tc.qmd.qmd | calcium-tc-scatter-1.pdf |

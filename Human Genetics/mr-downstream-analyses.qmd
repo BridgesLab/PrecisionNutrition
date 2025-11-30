@@ -95,14 +95,28 @@ library(TwoSampleMR)
 vitd.data <- harmonise_data(instruments.tc, gwas.vitd, action = 2)
 vitd.data_steiger <- steiger_filtering(vitd.data)
 vitd.mr <- mr(vitd.data_steiger,
-                         method_list = c("mr_ivw", 
+                         method_list = c("mr_ivw_mre",
+                                         "mr_ivw_fe",
+                                         "mr_raps",
                                          "mr_egger_regression",
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
 
-vitd.mr |> select(-starts_with('id')) |> 
+vitd.mr |> dplyr::select(-starts_with('id')) |> 
   kable(caption="MR Results for Total Cholesterol - Vitamin D Analysis",
         digits=c(0,0,0,0,3,3,99))
+
+mr_pleiotropy_test(vitd.data_steiger) |>
+  select(-starts_with('id')) |> 
+  kable(caption="MR Pleiotropy Results for Total Cholesterol - Vitamin D Analysis")
+
+mr_heterogeneity(vitd.data_steiger) |>
+  select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
+  kable(caption="MR Heterogeneity Results for Total Cholesterol - Vitamin D Analysis",
+        digits=c(0,0,0,3,3,99))
 
 ggplot(vitd.mr, aes(y=method,x=b)) +
   geom_point() +
@@ -205,7 +219,9 @@ gwas.bmd.2015 <- read_tsv(gwas.bmd.file.2015) |>
 bmd.data.2015 <- harmonise_data(instruments.tc, gwas.bmd.2015, action = 2)
 bmd.data_steiger.2015 <- steiger_filtering(bmd.data.2015)
 bmd.mr.2015 <- mr(bmd.data_steiger.2015,
-                         method_list = c("mr_ivw", 
+                         method_list = c("mr_ivw_mre",
+                                         "mr_ivw_fe",
+                                         "mr_raps",
                                          "mr_egger_regression",
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
@@ -214,6 +230,18 @@ bmd.mr.2015 |>
   dplyr::select(-starts_with('id')) |> 
   kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)",
         digits=c(0,0,0,0,3,3,99))
+
+mr_pleiotropy_test(bmd.data_steiger.2015) |>
+  dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Pleiotropy Results for Total Cholesterol - Lumbar Spine BMD (GEFOS)")
+
+mr_heterogeneity(bmd.data_steiger.2015) |>
+  dplyr::select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
+  kable(caption="MR Heterogeneity Results for Total Cholesterol - Lumbar Spine BMD (GEFOS) Analysis",
+        digits=c(0,0,0,3,3,99))
 
 ggplot(bmd.mr.2015, aes(y=method,x=b)) +
   geom_point() +
@@ -230,26 +258,26 @@ ggplot(bmd.mr.2015, aes(y=method,x=b)) +
 Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholesterol SNPs related to fracture risk [@trajanoskaAssessmentGeneticClinical2018].
 
 ```{r mr-fractures}
-gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
-samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
+#gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
+#samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
 
-gwas.fractures <- read_tsv(gwas.fractures.file)  |>
-  rename(
-    beta.outcome               = Effect,
-    se.outcome                 = StdErr,
-    pval.outcome               = `P-value`,
-    eaf.outcome                = Freq1,
-  ) |>
-  mutate(id.outcome = "fractures",
-         effect_allele.outcome = toupper(Allele1),
-         other_allele.outcome = toupper(Allele2),
-         outcome = "Fracture Risk (GEFOS)",
-         samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
-  
-gwas.fractures<-  
-  left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
-# no overlapping SNPs, though both are in GRCh38
-table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
+# gwas.fractures <- read_tsv(gwas.fractures.file)  |>
+#   rename(
+#     beta.outcome               = Effect,
+#     se.outcome                 = StdErr,
+#     pval.outcome               = `P-value`,
+#     eaf.outcome                = Freq1,
+#   ) |>
+#   mutate(id.outcome = "fractures",
+#          effect_allele.outcome = toupper(Allele1),
+#          other_allele.outcome = toupper(Allele2),
+#          outcome = "Fracture Risk (GEFOS)",
+#          samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
+#   
+# gwas.fractures<-  
+#   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
+# # no overlapping SNPs, though both are in GRCh38
+# table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
 #fracture.data <- harmonise_data(instruments.tc, gwas.fractures, action = 2)
 #fracture.data_steiger <- steiger_filtering(fracture.data)
 #fracture.mr <- mr(fracture.data_steiger,
@@ -298,10 +326,10 @@ posterior_prob_direction <- function(beta_hat, se, direction = c("less", "greate
 }
 
 # Input MR point estimates and standard errors
-beta_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(b)  # Point estimate for BMD effect on calcium
-se_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(se)     # Standard error for BMD
-beta_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(b) # Point estimate for Vitamin D effect on calcium
-se_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(se)    # Standard error for Vitamin D
+beta_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)  # Point estimate for BMD effect on calcium
+se_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)     # Standard error for BMD
+beta_vitd <- filter(vitd.mr,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b) # Point estimate for Vitamin D effect on calcium
+se_vitd <- filter(vitd.mr,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)    # Standard error for Vitamin D
 
 # Compute individual posterior probabilities
 p_h1_true <- posterior_prob_direction(beta_bmd, se_bmd, "less")      # P(β_BMD < 0) ~ supports H1 (lower BMD)

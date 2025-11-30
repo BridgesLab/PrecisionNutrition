@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Oct 19 19:17:18 2025
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 17:27:35 2025
 
 ## Data Entry
 
@@ -108,12 +108,14 @@ library(TwoSampleMR)
 vitd.data <- harmonise_data(instruments.tc, gwas.vitd, action = 2)
 vitd.data_steiger <- steiger_filtering(vitd.data)
 vitd.mr <- mr(vitd.data_steiger,
-                         method_list = c("mr_ivw", 
+                         method_list = c("mr_ivw_mre",
+                                         "mr_ivw_fe",
+                                         "mr_raps",
                                          "mr_egger_regression",
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
 
-vitd.mr |> select(-starts_with('id')) |> 
+vitd.mr |> dplyr::select(-starts_with('id')) |> 
   kable(caption="MR Results for Total Cholesterol - Vitamin D Analysis",
         digits=c(0,0,0,0,3,3,99))
 ```
@@ -123,12 +125,55 @@ vitd.mr |> select(-starts_with('id')) |>
 
 Table: MR Results for Total Cholesterol - Vitamin D Analysis
 
-|outcome                      |exposure                       |method                    | nsnp|      b|    se|       pval|
-|:----------------------------|:------------------------------|:-------------------------|----:|------:|-----:|----------:|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  280| -0.063| 0.033| 0.05362791|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median           |  280| -0.005| 0.048| 0.91596341|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode             |  280| -0.012| 0.053| 0.82742157|
+|outcome                      |exposure                       |method                                                    | nsnp|      b|    se|       pval|
+|:----------------------------|:------------------------------|:---------------------------------------------------------|----:|------:|-----:|----------:|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  280| -0.063| 0.033| 0.05362791|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| -0.063| 0.029| 0.02795864|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| -0.067| 0.034| 0.04513899|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| -0.070| 0.053| 0.19017784|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.050| 0.91912615|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.053| 0.82693671|
+
+
+:::
+
+```{.r .cell-code}
+mr_pleiotropy_test(vitd.data_steiger) |>
+  select(-starts_with('id')) |> 
+  kable(caption="MR Pleiotropy Results for Total Cholesterol - Vitamin D Analysis")
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Pleiotropy Results for Total Cholesterol - Vitamin D Analysis
+
+|outcome                      |exposure                       | egger_intercept|        se|      pval|
+|:----------------------------|:------------------------------|---------------:|---------:|---------:|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |       0.0002851| 0.0017118| 0.8678594|
+
+
+:::
+
+```{.r .cell-code}
+mr_heterogeneity(vitd.data_steiger) |>
+  select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
+  kable(caption="MR Heterogeneity Results for Total Cholesterol - Vitamin D Analysis",
+        digits=c(0,0,0,3,3,99))
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Heterogeneity Results for Total Cholesterol - Vitamin D Analysis
+
+|outcome                      |exposure                       |method                    |       Q| Q_df|       Q_pval| I2|
+|:----------------------------|:------------------------------|:-------------------------|-------:|----:|------------:|--:|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                  | 361.847|  278| 0.0005223738| 23|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted | 361.883|  279| 0.0005999283| 23|
 
 
 :::
@@ -263,7 +308,9 @@ gwas.bmd.2015 <- read_tsv(gwas.bmd.file.2015) |>
 bmd.data.2015 <- harmonise_data(instruments.tc, gwas.bmd.2015, action = 2)
 bmd.data_steiger.2015 <- steiger_filtering(bmd.data.2015)
 bmd.mr.2015 <- mr(bmd.data_steiger.2015,
-                         method_list = c("mr_ivw", 
+                         method_list = c("mr_ivw_mre",
+                                         "mr_ivw_fe",
+                                         "mr_raps",
                                          "mr_egger_regression",
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
@@ -279,12 +326,55 @@ bmd.mr.2015 |>
 
 Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 
-|outcome        |exposure                       |method                    | nsnp|      b|    se|      pval|
-|:--------------|:------------------------------|:-------------------------|----:|------:|-----:|---------:|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |   84| -0.061| 0.045| 0.1744722|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  |   84| -0.060| 0.071| 0.4029161|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |   84|  0.042| 0.061| 0.4910583|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |   84|  0.009| 0.057| 0.8783794|
+|outcome        |exposure                       |method                                                    | nsnp|      b|    se|       pval|
+|:--------------|:------------------------------|:---------------------------------------------------------|----:|------:|-----:|----------:|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |   84| -0.061| 0.045| 0.17447219|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |   84| -0.061| 0.035| 0.07825289|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |   84| -0.041| 0.045| 0.36616562|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |   84| -0.060| 0.071| 0.40291614|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.063| 0.50944661|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.062| 0.88837242|
+
+
+:::
+
+```{.r .cell-code}
+mr_pleiotropy_test(bmd.data_steiger.2015) |>
+  dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Pleiotropy Results for Total Cholesterol - Lumbar Spine BMD (GEFOS)")
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Pleiotropy Results for Total Cholesterol - Lumbar Spine BMD (GEFOS)
+
+|outcome        |exposure                       | egger_intercept|        se|      pval|
+|:--------------|:------------------------------|---------------:|---------:|---------:|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |       -6.56e-05| 0.0024077| 0.9783216|
+
+
+:::
+
+```{.r .cell-code}
+mr_heterogeneity(bmd.data_steiger.2015) |>
+  dplyr::select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
+  kable(caption="MR Heterogeneity Results for Total Cholesterol - Lumbar Spine BMD (GEFOS) Analysis",
+        digits=c(0,0,0,3,3,99))
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Heterogeneity Results for Total Cholesterol - Lumbar Spine BMD (GEFOS) Analysis
+
+|outcome        |exposure                       |method                    |       Q| Q_df|       Q_pval| I2|
+|:--------------|:------------------------------|:-------------------------|-------:|----:|------------:|--:|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  | 139.562|   82| 7.677723e-05| 41|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted | 139.564|   83| 1.019875e-04| 41|
 
 
 :::
@@ -314,41 +404,26 @@ Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholest
 ::: {.cell}
 
 ```{.r .cell-code}
-gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
-samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
+#gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
+#samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
 
-gwas.fractures <- read_tsv(gwas.fractures.file)  |>
-  rename(
-    beta.outcome               = Effect,
-    se.outcome                 = StdErr,
-    pval.outcome               = `P-value`,
-    eaf.outcome                = Freq1,
-  ) |>
-  mutate(id.outcome = "fractures",
-         effect_allele.outcome = toupper(Allele1),
-         other_allele.outcome = toupper(Allele2),
-         outcome = "Fracture Risk (GEFOS)",
-         samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
-  
-gwas.fractures<-  
-  left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
-# no overlapping SNPs, though both are in GRCh38
-table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
-```
-
-::: {.cell-output-display}
-
-
-Table: Overlap of TC SNPs with GEFOS Fracture SNPs
-
-|Var1  | Freq|
-|:-----|----:|
-|FALSE |  370|
-
-
-:::
-
-```{.r .cell-code}
+# gwas.fractures <- read_tsv(gwas.fractures.file)  |>
+#   rename(
+#     beta.outcome               = Effect,
+#     se.outcome                 = StdErr,
+#     pval.outcome               = `P-value`,
+#     eaf.outcome                = Freq1,
+#   ) |>
+#   mutate(id.outcome = "fractures",
+#          effect_allele.outcome = toupper(Allele1),
+#          other_allele.outcome = toupper(Allele2),
+#          outcome = "Fracture Risk (GEFOS)",
+#          samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
+#   
+# gwas.fractures<-  
+#   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
+# # no overlapping SNPs, though both are in GRCh38
+# table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
 #fracture.data <- harmonise_data(instruments.tc, gwas.fractures, action = 2)
 #fracture.data_steiger <- steiger_filtering(fracture.data)
 #fracture.mr <- mr(fracture.data_steiger,
@@ -402,10 +477,10 @@ posterior_prob_direction <- function(beta_hat, se, direction = c("less", "greate
 }
 
 # Input MR point estimates and standard errors
-beta_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(b)  # Point estimate for BMD effect on calcium
-se_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted") %>% pull(se)     # Standard error for BMD
-beta_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(b) # Point estimate for Vitamin D effect on calcium
-se_vitd <- filter(vitd.mr,method=="Inverse variance weighted") %>% pull(se)    # Standard error for Vitamin D
+beta_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b)  # Point estimate for BMD effect on calcium
+se_bmd <- filter(bmd.mr.2015,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)     # Standard error for BMD
+beta_vitd <- filter(vitd.mr,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(b) # Point estimate for Vitamin D effect on calcium
+se_vitd <- filter(vitd.mr,method=="Inverse variance weighted (multiplicative random effects)") %>% pull(se)    # Standard error for Vitamin D
 
 # Compute individual posterior probabilities
 p_h1_true <- posterior_prob_direction(beta_bmd, se_bmd, "less")      # P(β_BMD < 0) ~ supports H1 (lower BMD)
@@ -509,12 +584,12 @@ sessionInfo()
 ::: {.cell-output .cell-output-stdout}
 
 ```
-R version 4.5.1 (2025-06-13)
+R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.7.1
+Running under: macOS Tahoe 26.1
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
@@ -528,36 +603,39 @@ attached base packages:
 
 other attached packages:
  [1] biomaRt_2.64.0     TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.5.2      dplyr_1.1.4        purrr_1.1.0       
- [9] readr_2.1.5        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.0     
+ [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
+ [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
 [13] tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] KEGGREST_1.48.1         gtable_0.3.6            httr2_1.2.1            
- [4] xfun_0.53               htmlwidgets_1.6.4       psych_2.5.6            
- [7] Biobase_2.68.0          lattice_0.22-7          tzdb_0.5.0             
-[10] vctrs_0.6.5             tools_4.5.1             generics_0.1.4         
-[13] curl_7.0.0              stats4_4.5.1            parallel_4.5.1         
-[16] AnnotationDbi_1.70.0    RSQLite_2.4.3           blob_1.2.4             
-[19] pkgconfig_2.0.3         data.table_1.17.8       dbplyr_2.5.1           
-[22] RColorBrewer_1.1-3      S7_0.2.0                S4Vectors_0.46.0       
-[25] GenomeInfoDbData_1.2.14 lifecycle_1.0.4         compiler_4.5.1         
-[28] farver_2.1.2            progress_1.2.3          Biostrings_2.76.0      
-[31] mnormt_2.1.1            GenomeInfoDb_1.44.3     htmltools_0.5.8.1      
-[34] yaml_2.3.10             pillar_1.11.1           crayon_1.5.3           
-[37] cachem_1.1.0            nlme_3.1-168            tidyselect_1.2.1       
-[40] digest_0.6.37           stringi_1.8.7           labeling_0.4.3         
-[43] fastmap_1.2.0           grid_4.5.1              cli_3.6.5              
-[46] magrittr_2.0.4          withr_3.0.2             filelock_1.0.3         
-[49] rappdirs_0.3.3          prettyunits_1.2.0       UCSC.utils_1.4.0       
-[52] scales_1.4.0            bit64_4.6.0-1           timechange_0.3.0       
-[55] XVector_0.48.0          httr_1.4.7              rmarkdown_2.30         
-[58] bit_4.6.0               png_0.1-8               hms_1.1.4              
-[61] memoise_2.0.1           evaluate_1.0.5          IRanges_2.42.0         
-[64] BiocFileCache_2.16.2    rlang_1.1.6             Rcpp_1.1.0             
-[67] glue_1.8.0              DBI_1.2.3               xml2_1.4.0             
-[70] BiocGenerics_0.54.1     rstudioapi_0.17.1       vroom_1.6.6            
-[73] jsonlite_2.0.0          R6_2.6.1                plyr_1.8.9             
+ [1] tidyselect_1.2.1        psych_2.5.6             rootSolve_1.8.2.4      
+ [4] farver_2.1.2            blob_1.2.4              filelock_1.0.3         
+ [7] Biostrings_2.76.0       S7_0.2.1                fastmap_1.2.0          
+[10] BiocFileCache_2.16.2    digest_0.6.38           timechange_0.3.0       
+[13] lifecycle_1.0.4         KEGGREST_1.48.1         RSQLite_2.4.4          
+[16] magrittr_2.0.4          compiler_4.5.2          rlang_1.1.6            
+[19] progress_1.2.3          tools_4.5.2             yaml_2.3.10            
+[22] data.table_1.17.8       prettyunits_1.2.0       labeling_0.4.3         
+[25] mr.raps_0.4.2           htmlwidgets_1.6.4       bit_4.6.0              
+[28] mnormt_2.1.1            curl_7.0.0              xml2_1.5.0             
+[31] plyr_1.8.9              RColorBrewer_1.1-3      httpcode_0.3.0         
+[34] withr_3.0.2             BiocGenerics_0.54.1     grid_4.5.2             
+[37] stats4_4.5.2            scales_1.4.0            crul_1.6.0             
+[40] cli_3.6.5               rmarkdown_2.30          crayon_1.5.3           
+[43] generics_0.1.4          rstudioapi_0.17.1       httr_1.4.7             
+[46] tzdb_0.5.0              rsnps_0.6.1             DBI_1.2.3              
+[49] cachem_1.1.0            splines_4.5.2           parallel_4.5.2         
+[52] AnnotationDbi_1.70.0    XVector_0.48.0          vctrs_0.6.5            
+[55] jsonlite_2.0.0          IRanges_2.42.0          hms_1.1.4              
+[58] S4Vectors_0.46.0        bit64_4.6.0-1           ggrepel_0.9.6          
+[61] nortest_1.0-4           glue_1.8.0              stringi_1.8.7          
+[64] gtable_0.3.6            GenomeInfoDb_1.44.3     UCSC.utils_1.4.0       
+[67] pillar_1.11.1           rappdirs_0.3.3          htmltools_0.5.8.1      
+[70] GenomeInfoDbData_1.2.14 dbplyr_2.5.1            httr2_1.2.1            
+[73] R6_2.6.1                vroom_1.6.6             evaluate_1.0.5         
+[76] lattice_0.22-7          Biobase_2.68.0          png_0.1-8              
+[79] memoise_2.0.1           Rcpp_1.1.0              gridExtra_2.3          
+[82] nlme_3.1-168            xfun_0.54               pkgconfig_2.0.3        
 ```
 
 

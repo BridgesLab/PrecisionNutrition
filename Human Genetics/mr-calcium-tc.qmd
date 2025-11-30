@@ -465,11 +465,11 @@ calcium.tc.summary <-
   
   
 calcium.tc.summary |>   
-  kable(caption="MR Results for Total Cholesterol on Calcium",
+  kable(caption="MR Results for Calcium on Total Cholesterol",
         digits=c(0,0,0,0,4,4,99))
 
 calcium.tc.summary |> 
-  write_csv("MR Results - Total Cholesterol - Calcium.csv")
+  write_csv("MR Results - Calcium - Total Cholesterol.csv")
 
 calcium.tc.summary |>
   mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order

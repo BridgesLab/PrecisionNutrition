@@ -185,7 +185,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for total cholesterol GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 09:33:53 2025</p>
+<p>To validate SNPs for total cholesterol GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 11:51:14 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -1604,7 +1604,7 @@ attr(,"split_labels")
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>tc.calcium.mr_presso_results<span class="sc">$</span><span class="st">`</span><span class="at">MR-PRESSO results</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Distortion Test</span><span class="st">`</span> <span class="ot">-&gt;</span> tc.distortion.test</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>From MR-PRESSO there were 2 outliers that were removed before the distortion test. The ratio of the IVW estimate before and after their removal was -0.5413192, with a p-value of 0.9825, indicating no significant distortion due to outliers. The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.9825), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.</p>
+<p>From MR-PRESSO there were 1 outliers that were removed before the distortion test. The ratio of the IVW estimate before and after their removal was -9.0539073, with a p-value of 0.753, indicating no significant distortion due to outliers. The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.753), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.</p>
 </section>
 <section id="leave-one-out-analysis" class="level3">
 <h3 class="anchored" data-anchor-id="leave-one-out-analysis">Leave-one-out Analysis</h3>
@@ -1767,23 +1767,23 @@ attr(,"split_labels")
 <tr class="odd">
 <td style="text-align: left;">null</td>
 <td style="text-align: left;">sharing</td>
-<td style="text-align: right;">-1.610376</td>
-<td style="text-align: right;">1.611465</td>
-<td style="text-align: right;">-0.9993246</td>
+<td style="text-align: right;">-1.524448</td>
+<td style="text-align: right;">1.610818</td>
+<td style="text-align: right;">-0.9463809</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">null</td>
 <td style="text-align: left;">causal</td>
-<td style="text-align: right;">-2.762846</td>
-<td style="text-align: right;">2.832298</td>
-<td style="text-align: right;">-0.9754784</td>
+<td style="text-align: right;">-2.762433</td>
+<td style="text-align: right;">2.834823</td>
+<td style="text-align: right;">-0.9744641</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">sharing</td>
 <td style="text-align: left;">causal</td>
-<td style="text-align: right;">-1.152470</td>
-<td style="text-align: right;">1.837272</td>
-<td style="text-align: right;">-0.6272723</td>
+<td style="text-align: right;">-1.237986</td>
+<td style="text-align: right;">1.867244</td>
+<td style="text-align: right;">-0.6630014</td>
 </tr>
 </tbody>
 </table>
@@ -1854,9 +1854,9 @@ attr(,"split_labels")
 </table>
 </div>
 </div>
-<p>From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2652404). The estimated causal effect (<span class="math inline">\(\gamma\)</span>) is 0.05 (0.01, 0.1) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The <span class="math inline">\(\eta\)</span> = 0.07 (-0.62, 0.63) is near zero for the causal model but is slightly larger for the sharing model [<span class="math inline">\(\eta\)</span>=0.3 (-0.13, 0.59)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.05 (0, 0.24)% of the SNPs would require correlated pleiotropy for the causal model, but 0.11 (0.01, 0.32)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.</p>
+<p>From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2536648). The estimated causal effect (<span class="math inline">\(\gamma\)</span>) is 0.05 (0.01, 0.1) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The <span class="math inline">\(\eta\)</span> = 0.07 (-0.62, 0.63) is near zero for the causal model but is slightly larger for the sharing model [<span class="math inline">\(\eta\)</span>=0.3 (-0.13, 0.59)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.05 (0, 0.24)% of the SNPs would require correlated pleiotropy for the causal model, but 0.11 (0.01, 0.32)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.</p>
 <p>Alternate explanation with assistance from ChatGPT:</p>
-<p>The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs.&nbsp;causal models yielded a <span class="math inline">\(\Delta\)</span>ELPD (Expected Log Pointwise Predictive Density) of -1.1524697 with a standard error of 1.8372717 (z score of = -0.6272723). The causal model estimated a positive effect of cholesterol on calcium (0.05 (0.01, 0.1)), while the corresponding pleiotropic parameter <span class="math inline">\(\eta\)</span> was centered near zero (0.07 (-0.62, 0.63)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.05 (0, 0.24)), and lower than under the sharing model (0.11 (0.01, 0.32)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.</p>
+<p>The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs.&nbsp;causal models yielded a <span class="math inline">\(\Delta\)</span>ELPD (Expected Log Pointwise Predictive Density) of -1.2379856 with a standard error of 1.8672442 (z score of = -0.6630014). The causal model estimated a positive effect of cholesterol on calcium (0.05 (0.01, 0.1)), while the corresponding pleiotropic parameter <span class="math inline">\(\eta\)</span> was centered near zero (0.07 (-0.62, 0.63)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.05 (0, 0.24)), and lower than under the sharing model (0.11 (0.01, 0.32)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.</p>
 </section>
 <section id="summary-of-analyses" class="level3">
 <h3 class="anchored" data-anchor-id="summary-of-analyses">Summary of Analyses</h3>
@@ -1955,8 +1955,8 @@ attr(,"split_labels")
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">280</td>
 <td style="text-align: right;">0.0537</td>
-<td style="text-align: right;">0.0260</td>
-<td style="text-align: right;">3.848337e-02</td>
+<td style="text-align: right;">0.0279</td>
+<td style="text-align: right;">5.405649e-02</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
@@ -1973,8 +1973,8 @@ attr(,"split_labels")
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">280</td>
 <td style="text-align: right;">0.0552</td>
-<td style="text-align: right;">0.0287</td>
-<td style="text-align: right;">5.534434e-02</td>
+<td style="text-align: right;">0.0260</td>
+<td style="text-align: right;">3.468542e-02</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
@@ -1990,9 +1990,9 @@ attr(,"split_labels")
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
 <td style="text-align: left;">MR-PRESSO (Corrected)</td>
 <td style="text-align: right;">280</td>
-<td style="text-align: right;">0.0623</td>
-<td style="text-align: right;">0.0183</td>
-<td style="text-align: right;">7.412864e-04</td>
+<td style="text-align: right;">0.0681</td>
+<td style="text-align: right;">0.0184</td>
+<td style="text-align: right;">2.496994e-04</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>

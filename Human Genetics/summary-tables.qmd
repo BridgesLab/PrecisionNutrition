@@ -108,7 +108,7 @@ bind_rows(read_csv(calcium.tc.mr.file) |> mutate(Analysis = "Calcium -> Total Ch
 mr.results.summary |> kable(caption="Mendelian Randomization Results Summary")
 
 mr.results.summary |>
-  filter(method=="Inverse variance weighted") |>
+  filter(method=="IVW-RE") |>
   mutate(across(c(b, se), ~ round(., 4))) %>%
   mutate(across(c(pval), ~ signif(., 3))) %>%
   select(-method) %>%
@@ -119,7 +119,7 @@ mr.results.summary |>
   write_csv("MR Results Summary.csv")
 
 mr.results.summary |>
-  filter(method=="Inverse variance weighted") |>
+  filter(method=="IVW-RE") |>
   ggplot(aes(x=Analysis, y=b)) +
   geom_point(stat="identity") +
   geom_errorbar(aes(ymin=b - 1.96*se, ymax=b + 1.96*se), width=.2) +
@@ -135,7 +135,7 @@ mr.results.summary |>
 
 # Create the first plot (Calcium -> Cholesterol)
 calcium.mr.plot <- mr.results.summary |>
-  filter(method == "Inverse variance weighted") |>
+  filter(method == "IVW-RE") |>
   filter(Analysis %in% c("Calcium -> Total Cholesterol", "Calcium -> LDL Cholesterol")) |>
   ggplot(aes(x = Analysis, y = b)) +
   geom_point(stat = "identity") +
@@ -143,13 +143,13 @@ calcium.mr.plot <- mr.results.summary |>
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   theme_classic(base_size = 14) +
-  labs(title = "Calcium Effects", y = "Beta Coefficient", x = "") +
+  labs(title = "Calcium Effects on Cholesterol", y = "Beta Coefficient", x = "") +
   # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
   scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
 
 # Create the second plot (Cholesterol -> Calcium)
 cholesterol.mr.plot <- mr.results.summary |>
-  filter(method == "Inverse variance weighted") |>
+  filter(method == "IVW-RE") |>
   filter(Analysis %in% c("Total Cholesterol -> Calcium", "LDL Cholesterol -> Calcium")) |>
   ggplot(aes(x = Analysis, y = b)) +
   geom_point(stat = "identity") +
@@ -157,7 +157,7 @@ cholesterol.mr.plot <- mr.results.summary |>
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   theme_classic(base_size = 14) +
-  labs(title = "Cholesterol Effects", y = "Beta Coefficient", x = "") +
+  labs(title = "Cholesterol Effects on Calcium", y = "Beta Coefficient", x = "") +
   # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
   scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
 

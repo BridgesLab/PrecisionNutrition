@@ -147,31 +147,51 @@ mr.results.summary |> kable(caption="Mendelian Randomization Results Summary")
 
 Table: Mendelian Randomization Results Summary
 
-|Analysis                     |method                    |          b|        se|      pval|
-|:----------------------------|:-------------------------|----------:|---------:|---------:|
-|Calcium -> Total Cholesterol |Inverse variance weighted |  0.0323096| 0.0379454| 0.3945054|
-|Calcium -> Total Cholesterol |MR Egger                  |  0.0124277| 0.0806417| 0.8776367|
-|Calcium -> Total Cholesterol |Weighted median           |  0.0109517| 0.0552326| 0.8428227|
-|Calcium -> Total Cholesterol |Weighted mode             |  0.0182577| 0.0568915| 0.7485148|
-|Calcium -> LDL Cholesterol   |Inverse variance weighted | -0.0010879| 0.0383213| 0.9773529|
-|Calcium -> LDL Cholesterol   |MR Egger                  | -0.0659224| 0.0806079| 0.4141755|
-|Calcium -> LDL Cholesterol   |Weighted median           | -0.0598648| 0.0489683| 0.2215104|
-|Calcium -> LDL Cholesterol   |Weighted mode             | -0.0003838| 0.0580152| 0.9947265|
-|Total Cholesterol -> Calcium |Inverse variance weighted |  0.0645110| 0.0187438| 0.0005780|
-|Total Cholesterol -> Calcium |MR Egger                  |  0.0375814| 0.0303938| 0.2173225|
-|Total Cholesterol -> Calcium |Weighted median           |  0.0537301| 0.0262090| 0.0403582|
-|Total Cholesterol -> Calcium |Weighted mode             |  0.0551629| 0.0275275| 0.0460454|
-|LDL Cholesterol -> Calcium   |Inverse variance weighted |  0.0532824| 0.0193685| 0.0059417|
-|LDL Cholesterol -> Calcium   |MR Egger                  |  0.0501729| 0.0288584| 0.0834445|
-|LDL Cholesterol -> Calcium   |Weighted median           |  0.0549073| 0.0243212| 0.0239710|
-|LDL Cholesterol -> Calcium   |Weighted mode             |  0.0552770| 0.0242920| 0.0237913|
+|Analysis                     |method                |          b|        se|      pval|
+|:----------------------------|:---------------------|----------:|---------:|---------:|
+|Calcium -> Total Cholesterol |IVW-RE                |  0.0323096| 0.0379454| 0.3945054|
+|Calcium -> Total Cholesterol |IVW-FE                |  0.0323096| 0.0249609| 0.1955242|
+|Calcium -> Total Cholesterol |Weighted median       |  0.0109517| 0.0541468| 0.8397134|
+|Calcium -> Total Cholesterol |MR Egger              |  0.0124277| 0.0806417| 0.8776367|
+|Calcium -> Total Cholesterol |Weighted mode         |  0.0182577| 0.0574237| 0.7507675|
+|Calcium -> Total Cholesterol |MR-PRESSO (Raw)       |  0.0375495| 0.0383199| 0.3279968|
+|Calcium -> Total Cholesterol |MR-PRESSO (Corrected) | -0.0090727| 0.0297982| 0.7610049|
+|Calcium -> Total Cholesterol |MR-RAPS               |  0.0085414| 0.0330626| 0.7961437|
+|Calcium -> Total Cholesterol |MR-CAUSE              |  0.0204349| 0.0382653|        NA|
+|Calcium -> LDL Cholesterol   |IVW-RE                | -0.0010879| 0.0383213| 0.9773529|
+|Calcium -> LDL Cholesterol   |IVW-FE                | -0.0010879| 0.0257579| 0.9663122|
+|Calcium -> LDL Cholesterol   |Weighted median       | -0.0598648| 0.0484156| 0.2162812|
+|Calcium -> LDL Cholesterol   |MR Egger              | -0.0659224| 0.0806079| 0.4141755|
+|Calcium -> LDL Cholesterol   |Weighted mode         | -0.0003838| 0.0635790| 0.9951880|
+|Calcium -> LDL Cholesterol   |MR-PRESSO (Raw)       |  0.0006814| 0.0382568| 0.9858026|
+|Calcium -> LDL Cholesterol   |MR-PRESSO (Corrected) | -0.0016373| 0.0294716| 0.9557368|
+|Calcium -> LDL Cholesterol   |MR-RAPS               | -0.0044180| 0.0327750| 0.8927706|
+|Calcium -> LDL Cholesterol   |MR-CAUSE              |  0.0115015| 0.0433673|        NA|
+|Total Cholesterol -> Calcium |IVW-RE                |  0.0645110| 0.0187438| 0.0005780|
+|Total Cholesterol -> Calcium |IVW-FE                |  0.0645110| 0.0149052| 0.0000150|
+|Total Cholesterol -> Calcium |Weighted median       |  0.0537301| 0.0278917| 0.0540565|
+|Total Cholesterol -> Calcium |MR Egger              |  0.0375814| 0.0303938| 0.2173225|
+|Total Cholesterol -> Calcium |Weighted mode         |  0.0551629| 0.0259909| 0.0346854|
+|Total Cholesterol -> Calcium |MR-PRESSO (Raw)       |  0.0619382| 0.0185117| 0.0009306|
+|Total Cholesterol -> Calcium |MR-PRESSO (Corrected) |  0.0681044| 0.0183582| 0.0002497|
+|Total Cholesterol -> Calcium |MR-RAPS               |  0.0615523| 0.0186190| 0.0009468|
+|Total Cholesterol -> Calcium |MR-CAUSE              |  0.0504610| 0.0229592|        NA|
+|LDL Cholesterol -> Calcium   |IVW-RE                |  0.0532824| 0.0193685| 0.0059417|
+|LDL Cholesterol -> Calcium   |IVW-FE                |  0.0532824| 0.0153188| 0.0005047|
+|LDL Cholesterol -> Calcium   |Weighted median       |  0.0549073| 0.0245649| 0.0254044|
+|LDL Cholesterol -> Calcium   |MR Egger              |  0.0501729| 0.0288584| 0.0834445|
+|LDL Cholesterol -> Calcium   |Weighted mode         |  0.0552770| 0.0217065| 0.0115294|
+|LDL Cholesterol -> Calcium   |MR-PRESSO (Raw)       |  0.0513826| 0.0191643| 0.0078566|
+|LDL Cholesterol -> Calcium   |MR-PRESSO (Corrected) |  0.0526317| 0.0187045| 0.0053135|
+|LDL Cholesterol -> Calcium   |MR-RAPS               |  0.0545648| 0.0189899| 0.0040614|
+|LDL Cholesterol -> Calcium   |MR-CAUSE              |  0.0426601| 0.0178571|        NA|
 
 
 :::
 
 ```{.r .cell-code}
 mr.results.summary |>
-  filter(method=="Inverse variance weighted") |>
+  filter(method=="IVW-RE") |>
   mutate(across(c(b, se), ~ round(., 4))) %>%
   mutate(across(c(pval), ~ signif(., 3))) %>%
   select(-method) %>%
@@ -182,7 +202,7 @@ mr.results.summary |>
   write_csv("MR Results Summary.csv")
 
 mr.results.summary |>
-  filter(method=="Inverse variance weighted") |>
+  filter(method=="IVW-RE") |>
   ggplot(aes(x=Analysis, y=b)) +
   geom_point(stat="identity") +
   geom_errorbar(aes(ymin=b - 1.96*se, ymax=b + 1.96*se), width=.2) +
@@ -204,7 +224,7 @@ mr.results.summary |>
 
 # Create the first plot (Calcium -> Cholesterol)
 calcium.mr.plot <- mr.results.summary |>
-  filter(method == "Inverse variance weighted") |>
+  filter(method == "IVW-RE") |>
   filter(Analysis %in% c("Calcium -> Total Cholesterol", "Calcium -> LDL Cholesterol")) |>
   ggplot(aes(x = Analysis, y = b)) +
   geom_point(stat = "identity") +
@@ -212,13 +232,13 @@ calcium.mr.plot <- mr.results.summary |>
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   theme_classic(base_size = 14) +
-  labs(title = "Calcium Effects", y = "Beta Coefficient", x = "") +
+  labs(title = "Calcium Effects on Cholesterol", y = "Beta Coefficient", x = "") +
   # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
   scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
 
 # Create the second plot (Cholesterol -> Calcium)
 cholesterol.mr.plot <- mr.results.summary |>
-  filter(method == "Inverse variance weighted") |>
+  filter(method == "IVW-RE") |>
   filter(Analysis %in% c("Total Cholesterol -> Calcium", "LDL Cholesterol -> Calcium")) |>
   ggplot(aes(x = Analysis, y = b)) +
   geom_point(stat = "identity") +
@@ -226,7 +246,7 @@ cholesterol.mr.plot <- mr.results.summary |>
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   theme_classic(base_size = 14) +
-  labs(title = "Cholesterol Effects", y = "Beta Coefficient", x = "") +
+  labs(title = "Cholesterol Effects on Calcium", y = "Beta Coefficient", x = "") +
   # Apply limits to the y-axis (beta coefficients, which become x-axis after coord_flip)
   scale_y_continuous(limits = c(grid.xlims$xmin, grid.xlims$xmax)) 
 
@@ -253,12 +273,12 @@ sessionInfo()
 ::: {.cell-output .cell-output-stdout}
 
 ```
-R version 4.5.1 (2025-06-13)
+R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Sequoia 15.7.1
+Running under: macOS Tahoe 26.1
 
 Matrix products: default
-BLAS:   /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRblas.0.dylib 
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
 LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 
 locale:
@@ -272,20 +292,20 @@ attached base packages:
 
 other attached packages:
  [1] cowplot_1.2.0   knitr_1.50      lubridate_1.9.4 forcats_1.0.1  
- [5] stringr_1.5.2   dplyr_1.1.4     purrr_1.1.0     readr_2.1.5    
- [9] tidyr_1.3.1     tibble_3.3.0    ggplot2_4.0.0   tidyverse_2.0.0
+ [5] stringr_1.6.0   dplyr_1.1.4     purrr_1.2.0     readr_2.1.6    
+ [9] tidyr_1.3.1     tibble_3.3.0    ggplot2_4.0.1   tidyverse_2.0.0
 
 loaded via a namespace (and not attached):
  [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
- [5] compiler_4.5.1     tidyselect_1.2.1   parallel_4.5.1     scales_1.4.0      
+ [5] compiler_4.5.2     tidyselect_1.2.1   parallel_4.5.2     scales_1.4.0      
  [9] yaml_2.3.10        fastmap_1.2.0      R6_2.6.1           labeling_0.4.3    
 [13] generics_0.1.4     htmlwidgets_1.6.4  pillar_1.11.1      RColorBrewer_1.1-3
-[17] tzdb_0.5.0         rlang_1.1.6        stringi_1.8.7      xfun_0.53         
-[21] S7_0.2.0           bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5         
-[25] withr_3.0.2        magrittr_2.0.4     digest_0.6.37      grid_4.5.1        
-[29] vroom_1.6.5        rstudioapi_0.17.1  hms_1.1.3          lifecycle_1.0.4   
+[17] tzdb_0.5.0         rlang_1.1.6        stringi_1.8.7      xfun_0.54         
+[21] S7_0.2.1           bit64_4.6.0-1      timechange_0.3.0   cli_3.6.5         
+[25] withr_3.0.2        magrittr_2.0.4     digest_0.6.38      grid_4.5.2        
+[29] vroom_1.6.6        rstudioapi_0.17.1  hms_1.1.4          lifecycle_1.0.4   
 [33] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      
-[37] rmarkdown_2.29     tools_4.5.1        pkgconfig_2.0.3    htmltools_0.5.8.1 
+[37] rmarkdown_2.30     tools_4.5.2        pkgconfig_2.0.3    htmltools_0.5.8.1 
 ```
 
 

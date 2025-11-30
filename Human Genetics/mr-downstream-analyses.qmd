@@ -350,6 +350,22 @@ Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholest
 #  geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```  
 
+## Summary of Proposed Causal Mechanisms
+
+```{r vitamin-d-bmd-mechanisms}
+bind_rows(vitd.mr,bmd.mr.2015) |>
+  filter(method == "Inverse variance weighted (multiplicative random effects)") |>
+  ggplot(aes(x = outcome, y = b)) +
+  geom_point(stat = "identity") +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se), width = 0.2) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 16) +
+  labs(title = "", y = "Beta Coefficient", x = "") 
+
+
+```
+
 ## Hypothesis Testing
 
 Given that we have two hypotheses:

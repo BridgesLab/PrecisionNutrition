@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 17:38:12 2025
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 17:49:41 2025
 
 ## Data Entry
 
@@ -169,8 +169,8 @@ Table: MR Results for Total Cholesterol - Vitamin D Analysis
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| -0.063| 0.029| 0.02795864|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| -0.067| 0.034| 0.04513899|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.050| 0.91932458|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.053| 0.82568725|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.051| 0.92109000|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.055| 0.83168071|
 
 
 :::
@@ -409,8 +409,8 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |   84| -0.061| 0.035| 0.07825289|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |   84| -0.041| 0.045| 0.36616562|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |   84| -0.060| 0.071| 0.40291614|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.064| 0.51176028|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.058| 0.88133473|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.064| 0.51223894|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.060| 0.88429761|
 
 
 :::
@@ -523,6 +523,29 @@ Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholest
 #       x="Effect Size (Beta)") +
 #  geom_vline(xintercept=0, linetype="dashed", color = "red") 
 ```
+:::
+
+
+## Summary of Proposed Causal Mechanisms
+
+
+::: {.cell}
+
+```{.r .cell-code}
+bind_rows(vitd.mr,bmd.mr.2015) |>
+  filter(method == "Inverse variance weighted (multiplicative random effects)") |>
+  ggplot(aes(x = outcome, y = b)) +
+  geom_point(stat = "identity") +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se), width = 0.2) +
+  coord_flip() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 16) +
+  labs(title = "", y = "Beta Coefficient", x = "") 
+```
+
+::: {.cell-output-display}
+![](figures/vitamin-d-bmd-mechanisms-1.png){width=672}
+:::
 :::
 
 

@@ -425,7 +425,7 @@ The CAUSE model comparison favored the causal model over both the null and shari
 
 ### Summary of Analyses
 
-```{r ldlc-calcium-mr-summary}
+```{r calcium-ldlc-mr-summary}
 calcium.ldlc.cause.summary <- 
   summary(calcium.ldlc.cause, ci_size = 0.95)$tab |> 
   as_tibble() |>

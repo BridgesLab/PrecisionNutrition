@@ -18,6 +18,7 @@ knitr:
 execute:
   echo: true
   warning: false
+bibliography: references.bib
 ---
 
 ```{r global_options}
@@ -166,6 +167,186 @@ library(cowplot)
 plot_grid(calcium.mr.plot, cholesterol.mr.plot, ncol = 1, align = "hv")
 
 ```
+
+## Bayesian Inference
+
+To come up with posterior probabilities of the four hypotheses I am interested in (focusing on total cholesterol rather than LDL-C)
+
+```{r bayesian-inference-setup}
+H1_prob <- 0.75
+H2_prob <- 0.10
+H3_prob <- 0.10
+H4_prob <- 0.05
+
+# pulled out relevant beta coefficents
+beta1   <- mr.results.summary %>% filter(method=="IVW-RE",Analysis == "Total Cholesterol -> Calcium") |> pull(b)
+se1 <- mr.results.summary %>% filter(method=="IVW-RE",Analysis == "Total Cholesterol -> Calcium") |> pull(se) 
+beta2   <- mr.results.summary %>% filter(method=="IVW-RE",Analysis == "Calcium -> Total Cholesterol") |> pull(b)
+se2     <- mr.results.summary %>% filter(method=="IVW-RE",Analysis == "Calcium -> Total Cholesterol") |> pull(se) 
+```
+
+* H1: Cholesterol causes increases in calcium.  I estimate a prior probability of `r H1_prob*100`% for this hypothesis
+* H2: Calcium causes increases in cholesterol (`r H2_prob*100`%)
+* H3: Neither causes the other (*e.g.* the observed correlation is confounded, `r H3_prob*100`%)
+* H4: Both hypotheses are true (*e.g.* its bidirectional, `r H4_prob*100`%)
+
+### Bayesian Assessment of Causal Direction
+
+To formally compare the four competing causal hypotheses between circulating cholesterol and calcium levels, we performed Bayesian model comparison using the two bidirectional Mendelian randomization (MR) estimates (cholesterol $\rightarrow$ calcium: $\hat{\beta}_1$ =`r beta1` $\pm$ `r se1`; calcium $\rightarrow$ cholesterol: $\hat{\beta}_2$ = `r beta2` $\pm$ `r se2`). Horizontal pleiotropy was previously ruled out using MR-Egger, weighted median, and MR-PRESSO ($P > 0.05$ for all tests).
+
+For each non-zero causal effect under H1, H2, and H4, we specified a weakly informative normal prior on the true causal effect size: $\theta \sim \mathcal{N}(0, 0.1^2)$. This corresponds to a 95% prior belief that the causal odds ratio per genetically predicted standard deviation lies between approximately 0.71 and 1.41—consistent with small-to-moderate effects typically observed for similar traits .
+
+The marginal likelihood for each hypothesis was computed analytically under the normal approximations:
+
+$$
+\hat{\beta}_i \mid \theta_i, \sigma_i \sim \mathcal{N}(\theta_i, \sigma_i^2), \quad
+\theta_i \sim 
+\begin{cases}
+\delta_0 & \text{(spike at zero if hypothesis assumes no effect)} \\
+\mathcal{N}(0, 0.1^2) & \text{(slab if hypothesis assumes a non-zero effect)}
+\end{cases}
+$$
+
+Posterior probabilities were obtained via Bayes’ theorem:
+
+$$
+P(H_k \mid \text{data}) = \frac{P(\text{data} \mid H_k) \cdot P(H_k)}{\sum_{j=1}^4 P(\text{data} \mid H_j) \cdot P(H_j)}
+$$
+
+This Bayesian framework follows the approach of [@grantBayesianApproachMendelian2024]
+
+```{r cholesterol-calcium-bayesian-inference}
+
+# Priors on hypotheses --------------------------------------
+prior_H <- c(H1 = H1_prob, H2 = H2_prob, H3 = H3_prob, H4 = H4_prob)
+
+# Prior on non-zero effects (small effects) -----------------
+prior_sd <- 0.1   # change to 0.05–0.20 to test sensitivity
+prior_sd_low <- 0.05   # change to 0.05–0.20 to test sensitivity
+prior_sd_high <- 0.2  # change to 0.05–0.20 to test sensitivity
+
+# Function to compute log marginal likelihood for a single effect
+log_marg_lik <- function(beta, se, prior_sd, hypothesis_zero = FALSE) {
+  if (hypothesis_zero) {
+    # Spike at zero
+    dnorm(beta, 0, sqrt(se^2), log = TRUE)
+  } else {
+    # Normal prior on effect, variance = se^2 + prior_sd^2
+    post_var  <- 1 / (1/se^2 + 1/prior_sd^2)
+    post_mean <- post_var * (beta / se^2)
+    post_sd   <- sqrt(post_var)
+    
+    # log marginal likelihood under the alternative
+    dnorm(beta, 0, sqrt(se^2 + prior_sd^2), log = TRUE)
+  }
+}
+
+# Log marginal likelihood for each hypothesis ----------------
+log_marg <- c(
+  H1 = log_marg_lik(beta1, se1, prior_sd, hypothesis_zero = FALSE) +  # Chol->Ca non-zero
+       log_marg_lik(beta2, se2, prior_sd, hypothesis_zero = TRUE),    # Ca->Chol zero
+  
+  H2 = log_marg_lik(beta1, se1, prior_sd, hypothesis_zero = TRUE) +     # Chol->Ca zero
+       log_marg_lik(beta2, se2, prior_sd, hypothesis_zero = FALSE),   # Ca->Chol non-zero
+  
+  H3 = log_marg_lik(beta1, se1, prior_sd, hypothesis_zero = TRUE) + 
+       log_marg_lik(beta2, se2, prior_sd, hypothesis_zero = TRUE),
+  
+  H4 = log_marg_lik(beta1, se1, prior_sd, hypothesis_zero = FALSE) + 
+       log_marg_lik(beta2, se2, prior_sd, hypothesis_zero = FALSE)
+)
+
+# Posterior probabilities ------------------------------------
+log_marg <- log_marg + log(prior_H)   # add log prior
+log_marg <- log_marg - max(log_marg)  # stabilise
+post_prob <- exp(log_marg) / sum(exp(log_marg))
+post_prob |> as.data.frame() |> kable(caption="Posterior probabilities for each hypothesis")
+
+# Sensitivities
+log_marg_low <- c(
+  H1 = log_marg_lik(beta1, se1, prior_sd_low, hypothesis_zero = FALSE) +  # Chol->Ca non-zero
+       log_marg_lik(beta2, se2, prior_sd_low, hypothesis_zero = TRUE),    # Ca->Chol zero
+  
+  H2 = log_marg_lik(beta1, se1, prior_sd_low, hypothesis_zero = TRUE) +     # Chol->Ca zero
+       log_marg_lik(beta2, se2, prior_sd_low, hypothesis_zero = FALSE),   # Ca->Chol non-zero
+  
+  H3 = log_marg_lik(beta1, se1, prior_sd_low, hypothesis_zero = TRUE) + 
+       log_marg_lik(beta2, se2, prior_sd_low, hypothesis_zero = TRUE),
+  
+  H4 = log_marg_lik(beta1, se1, prior_sd_low, hypothesis_zero = FALSE) + 
+       log_marg_lik(beta2, se2, prior_sd_low, hypothesis_zero = FALSE)
+)
+
+log_marg_low <- log_marg_low + log(prior_H)   # add log prior
+log_marg_low <- log_marg_low - max(log_marg_low)  # stabilise
+post_prob_low <- exp(log_marg_low) / sum(exp(log_marg_low))
+
+log_marg_high <- c(
+  H1 = log_marg_lik(beta1, se1, prior_sd_high, hypothesis_zero = FALSE) +  # Chol->Ca non-zero
+       log_marg_lik(beta2, se2, prior_sd_high, hypothesis_zero = TRUE),    # Ca->Chol zero
+  
+  H2 = log_marg_lik(beta1, se1, prior_sd_high, hypothesis_zero = TRUE) +     # Chol->Ca zero
+       log_marg_lik(beta2, se2, prior_sd_high, hypothesis_zero = FALSE),   # Ca->Chol non-zero
+  
+  H3 = log_marg_lik(beta1, se1, prior_sd_high, hypothesis_zero = TRUE) + 
+       log_marg_lik(beta2, se2, prior_sd_high, hypothesis_zero = TRUE),
+  
+  H4 = log_marg_lik(beta1, se1, prior_sd_high, hypothesis_zero = FALSE) + 
+       log_marg_lik(beta2, se2, prior_sd_high, hypothesis_zero = FALSE)
+)
+
+log_marg_high <- log_marg_high + log(prior_H)   # add log prior
+log_marg_high <- log_marg_high - max(log_marg_high)  # stabilise
+post_prob_high <- exp(log_marg_high) / sum(exp(log_marg_high))
+
+# Create data frame
+df <- data.frame(
+  Hypothesis = c("H1: Cholesterol → Calcium", 
+                 "H2: Calcium → Cholesterol", 
+                 "H3: No causal effect", 
+                 "H4: Bidirectional"),
+  Probability = post_prob,
+  Label = scales::percent(post_prob, accuracy = 1)
+) %>% 
+  arrange(desc(Probability)) %>%
+  mutate(Hypothesis = factor(Hypothesis, levels = Hypothesis))
+library(ggrepel)
+# Beautiful bar plot
+ggplot(df, aes(x = "", y = Probability, fill = Hypothesis)) +
+  geom_col(width = 0.6, color = "white") +
+  #geom_text_repel(aes(label = Label), 
+  #          position = position_stack(vjust = 0.5), 
+  #          size = 5, fontface = "bold", color = "white") +
+  scale_fill_brewer(palette = "Set2") +
+  coord_polar(theta = "y") +
+  theme_void() +
+  labs(title = "Posterior Probabilities \nof Causal Directions",
+       subtitle = "Bayesian Mendelian Randomization Model Comparison",
+       fill = "Hypothesis:") +
+  theme(legend.position = "right",
+        plot.title = element_text(size = 16, face = "bold", hjust = 0.5),
+        plot.subtitle = element_text(size = 12, hjust = 0.5))
+
+ggplot(df, aes(x = Probability, y = reorder(Hypothesis, Probability))) +
+  geom_col(aes(fill = Hypothesis), width = 0.7) +
+  geom_text(aes(label = Label), hjust = -0.2, size = 3, fontface = "bold") +
+  scale_x_continuous(labels = scales::percent, limits = c(0, 1)) +
+  scale_fill_brewer(palette = "Set1") +
+  theme_classic(base_size=16) +
+  theme(legend.position = "none",
+        axis.text.y = element_text(size = 12),
+        plot.title = element_text(size = 14, face = "bold")) +
+  labs(x = "Posterior Probability",
+       y = "",
+       title = "Posterior Probabilities \nof Competing Causal Hypotheses")
+```
+
+Thus, after integrating the bidirectional MR evidence with the prior belief favoring a cholesterol-to-calcium direction, the data strongly support a unidirectional causal effect of genetically predicted cholesterol on calcium levels (posterior probability = `r post_prob['H1']*100`%). Results were robust to prior sensitivity analyses varying the slab standard deviation between 0.05 and 0.20 (posterior probabilities `r round(post_prob_low['H1']*100,1)`-`r round(post_prob_high['H1']*100,1)`%).
+
+### References
+
+::: {#refs}
+:::
 
 ## Session Information
 

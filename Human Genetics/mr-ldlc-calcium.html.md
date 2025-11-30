@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 10:24:23 2025
+To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 13:11:20 2025
 
 ## Data Entry
 
@@ -783,9 +783,9 @@ Table: if delta_elpd is negative, model2 is a better fit, in this case means the
 
 |model1  |model2  | delta_elpd| se_delta_elpd|          z|
 |:-------|:-------|----------:|-------------:|----------:|
-|null    |sharing |  0.0383782|     0.6036004|  0.0635821|
-|null    |causal  | -1.5066168|     2.2065872| -0.6827814|
-|sharing |causal  | -1.5449950|     1.8930777| -0.8161287|
+|null    |sharing |  0.0716681|     0.6373098|  0.1124541|
+|null    |causal  | -1.4826191|     2.2261844| -0.6659911|
+|sharing |causal  | -1.5542871|     1.8940346| -0.8206224|
 
 
 :::
@@ -796,7 +796,7 @@ tmp.plots[[1]]
 ```
 
 ::: {.cell-output-display}
-![](figures/calcium-calcium-cause-1.png){width=672}
+![](figures/ldlc-calcium-cause-1.png){width=672}
 :::
 
 ```{.r .cell-code}
@@ -804,7 +804,7 @@ tmp.plots[[2]]
 ```
 
 ::: {.cell-output-display}
-![](figures/calcium-calcium-cause-2.png){width=672}
+![](figures/ldlc-calcium-cause-2.png){width=672}
 :::
 
 ```{.r .cell-code}
@@ -812,7 +812,7 @@ tmp.plots[[3]]
 ```
 
 ::: {.cell-output-display}
-![](figures/calcium-calcium-cause-3.png){width=672}
+![](figures/ldlc-calcium-cause-3.png){width=672}
 :::
 
 ```{.r .cell-code}
@@ -834,11 +834,11 @@ Table: Pathway estimates and 95% confidence interveals for estimated effect size
 :::
 
 
-From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2072133). The estimated causal effect ($\gamma$) is 0.04 (0.01, 0.08) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.03 (-0.75, 0.8) is near zero for the causal model but is slightly larger for the sharing model [$\eta$=0.23 (-0.62, 0.86)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.04 (0, 0.21)% of the SNPs would require correlated pleiotropy for the causal model, but 0.05 (0, 0.27)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2059307). The estimated causal effect ($\gamma$) is 0.04 (0.01, 0.08) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.03 (-0.75, 0.8) is near zero for the causal model but is slightly larger for the sharing model [$\eta$=0.23 (-0.62, 0.86)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.04 (0, 0.21)% of the SNPs would require correlated pleiotropy for the causal model, but 0.05 (0, 0.27)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
 
 Alternate explanation with assistance from ChatGPT:
 
-The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of -1.544995 with a standard error of 1.8930777 (z score of = -0.8161287). The causal model estimated a positive effect of LDL-C on calcium (0.04 (0.01, 0.08)), while the corresponding pleiotropic parameter $\eta$ was centered near zero (-0.03 (-0.75, 0.8)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.04 (0, 0.21)), and lower than under the sharing model (0.05 (0, 0.27)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of -1.5542871 with a standard error of 1.8940346 (z score of = -0.8206224). The causal model estimated a positive effect of LDL-C on calcium (0.04 (0.01, 0.08)), while the corresponding pleiotropic parameter $\eta$ was centered near zero (-0.03 (-0.75, 0.8)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.04 (0, 0.21)), and lower than under the sharing model (0.05 (0, 0.27)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
 
 ### Summary of Analyses
 
@@ -900,9 +900,9 @@ Table: MR Results for LDL-C on Calcium
 |:--------------------------|:----------------------------|:---------------------|----:|------:|------:|-----------:|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |IVW-RE                |  232| 0.0533| 0.0194| 0.005941743|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |IVW-FE                |  232| 0.0533| 0.0153| 0.000504717|
-|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted median       |  232| 0.0549| 0.0246| 0.025404364|
+|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted median       |  232| 0.0549| 0.0256| 0.031669523|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |MR Egger              |  232| 0.0502| 0.0289| 0.083444518|
-|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted mode         |  232| 0.0553| 0.0217| 0.011529409|
+|Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |Weighted mode         |  232| 0.0553| 0.0226| 0.015368302|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |MR-PRESSO (Raw)       |  232| 0.0514| 0.0192| 0.007856621|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |MR-PRESSO (Corrected) |  232| 0.0526| 0.0187| 0.005313518|
 |Calcium (MGI-BioVU LabWAS) |LDL Cholesterol (UK Biobank) |MR-RAPS               |  232| 0.0546| 0.0190| 0.004061396|

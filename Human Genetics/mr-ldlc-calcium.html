@@ -184,7 +184,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 10:24:23 2025</p>
+<p>To validate SNPs for LDL cholesterol GWAS using those identified using UK Biobank. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 13:11:20 2025</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -1644,23 +1644,23 @@ attr(,"split_labels")
 <tr class="odd">
 <td style="text-align: left;">null</td>
 <td style="text-align: left;">sharing</td>
-<td style="text-align: right;">0.0383782</td>
-<td style="text-align: right;">0.6036004</td>
-<td style="text-align: right;">0.0635821</td>
+<td style="text-align: right;">0.0716681</td>
+<td style="text-align: right;">0.6373098</td>
+<td style="text-align: right;">0.1124541</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">null</td>
 <td style="text-align: left;">causal</td>
-<td style="text-align: right;">-1.5066168</td>
-<td style="text-align: right;">2.2065872</td>
-<td style="text-align: right;">-0.6827814</td>
+<td style="text-align: right;">-1.4826191</td>
+<td style="text-align: right;">2.2261844</td>
+<td style="text-align: right;">-0.6659911</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">sharing</td>
 <td style="text-align: left;">causal</td>
-<td style="text-align: right;">-1.5449950</td>
-<td style="text-align: right;">1.8930777</td>
-<td style="text-align: right;">-0.8161287</td>
+<td style="text-align: right;">-1.5542871</td>
+<td style="text-align: right;">1.8940346</td>
+<td style="text-align: right;">-0.8206224</td>
 </tr>
 </tbody>
 </table>
@@ -1673,7 +1673,7 @@ attr(,"split_labels")
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-cause-1.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/ldlc-calcium-cause-1.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1684,7 +1684,7 @@ attr(,"split_labels")
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-cause-2.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/ldlc-calcium-cause-2.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1695,7 +1695,7 @@ attr(,"split_labels")
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/calcium-calcium-cause-3.png" class="img-fluid figure-img" width="672"></p>
+<p><img src="figures/ldlc-calcium-cause-3.png" class="img-fluid figure-img" width="672"></p>
 </figure>
 </div>
 </div>
@@ -1731,9 +1731,9 @@ attr(,"split_labels")
 </table>
 </div>
 </div>
-<p>From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2072133). The estimated causal effect (<span class="math inline">\(\gamma\)</span>) is 0.04 (0.01, 0.08) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The <span class="math inline">\(\eta\)</span> = -0.03 (-0.75, 0.8) is near zero for the causal model but is slightly larger for the sharing model [<span class="math inline">\(\eta\)</span>=0.23 (-0.62, 0.86)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.04 (0, 0.21)% of the SNPs would require correlated pleiotropy for the causal model, but 0.05 (0, 0.27)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.</p>
+<p>From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.2059307). The estimated causal effect (<span class="math inline">\(\gamma\)</span>) is 0.04 (0.01, 0.08) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The <span class="math inline">\(\eta\)</span> = -0.03 (-0.75, 0.8) is near zero for the causal model but is slightly larger for the sharing model [<span class="math inline">\(\eta\)</span>=0.23 (-0.62, 0.86)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy. In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.04 (0, 0.21)% of the SNPs would require correlated pleiotropy for the causal model, but 0.05 (0, 0.27)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.</p>
 <p>Alternate explanation with assistance from ChatGPT:</p>
-<p>The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs.&nbsp;causal models yielded a <span class="math inline">\(\Delta\)</span>ELPD (Expected Log Pointwise Predictive Density) of -1.544995 with a standard error of 1.8930777 (z score of = -0.8161287). The causal model estimated a positive effect of LDL-C on calcium (0.04 (0.01, 0.08)), while the corresponding pleiotropic parameter <span class="math inline">\(\eta\)</span> was centered near zero (-0.03 (-0.75, 0.8)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.04 (0, 0.21)), and lower than under the sharing model (0.05 (0, 0.27)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.</p>
+<p>The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs.&nbsp;causal models yielded a <span class="math inline">\(\Delta\)</span>ELPD (Expected Log Pointwise Predictive Density) of -1.5542871 with a standard error of 1.8940346 (z score of = -0.8206224). The causal model estimated a positive effect of LDL-C on calcium (0.04 (0.01, 0.08)), while the corresponding pleiotropic parameter <span class="math inline">\(\eta\)</span> was centered near zero (-0.03 (-0.75, 0.8)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.04 (0, 0.21)), and lower than under the sharing model (0.05 (0, 0.27)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.</p>
 </section>
 <section id="summary-of-analyses" class="level3">
 <h3 class="anchored" data-anchor-id="summary-of-analyses">Summary of Analyses</h3>
@@ -1832,8 +1832,8 @@ attr(,"split_labels")
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">232</td>
 <td style="text-align: right;">0.0549</td>
-<td style="text-align: right;">0.0246</td>
-<td style="text-align: right;">0.025404364</td>
+<td style="text-align: right;">0.0256</td>
+<td style="text-align: right;">0.031669523</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>
@@ -1850,8 +1850,8 @@ attr(,"split_labels")
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">232</td>
 <td style="text-align: right;">0.0553</td>
-<td style="text-align: right;">0.0217</td>
-<td style="text-align: right;">0.011529409</td>
+<td style="text-align: right;">0.0226</td>
+<td style="text-align: right;">0.015368302</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Calcium (MGI-BioVU LabWAS)</td>

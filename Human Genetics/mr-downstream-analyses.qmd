@@ -94,6 +94,30 @@ library(TwoSampleMR)
 
 vitd.data <- harmonise_data(instruments.tc, gwas.vitd, action = 2)
 vitd.data_steiger <- steiger_filtering(vitd.data)
+
+#instrument strength
+vitd.data.annot <- vitd.data_steiger %>%
+  mutate(
+    R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
+    F.exposure = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
+  )
+
+vitd.exposure.summary <- vitd.data.annot %>%
+  summarise(
+    num_snps = n(),
+    samplesize.exposure = first(samplesize.exposure),
+    cumulative_R2 = sum(R2.exposure, na.rm = TRUE),
+    mean_F = mean(F.exposure, na.rm = TRUE),
+    median_F = median(F.exposure, na.rm = TRUE),
+    mean_maf = mean(eaf.exposure, na.rm = TRUE),
+    mean_beta = mean(abs(beta.exposure), na.rm = TRUE)
+  ) |>
+  mutate(overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) / 
+                     ((1 - cumulative_R2) * num_snps))
+
+library(knitr)
+kable(vitd.exposure.summary, caption="Summary of total cholesterol instruments after harmonisation for vitamin D analysis")
+
 vitd.mr <- mr(vitd.data_steiger,
                          method_list = c("mr_ivw_mre",
                                          "mr_ivw_fe",
@@ -168,7 +192,7 @@ bmd.snp.data <- read_csv(gefos.snp.datafile) |>
                    chrom_start,
                    substr(allele, 1, 1), #first allele in naming
                    substr(allele, 3, 3), #second allele (third position) in naming
-                   sep=":")) #just picked hte first alt allele
+                   sep=":")) #just picked the first alt allele
 
 gwas.bmd.combined <- 
   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
@@ -218,6 +242,31 @@ gwas.bmd.2015 <- read_tsv(gwas.bmd.file.2015) |>
 
 bmd.data.2015 <- harmonise_data(instruments.tc, gwas.bmd.2015, action = 2)
 bmd.data_steiger.2015 <- steiger_filtering(bmd.data.2015)
+
+
+#instrument strength
+bmd.2015.data.annot <- bmd.data_steiger.2015 %>%
+  mutate(
+    R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
+    F.exposure = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
+  )
+
+bmd.2015.exposure.summary <- bmd.2015.data.annot %>%
+  summarise(
+    num_snps = n(),
+    samplesize.exposure = first(samplesize.exposure),
+    cumulative_R2 = sum(R2.exposure, na.rm = TRUE),
+    mean_F = mean(F.exposure, na.rm = TRUE),
+    median_F = median(F.exposure, na.rm = TRUE),
+    mean_maf = mean(eaf.exposure, na.rm = TRUE),
+    mean_beta = mean(abs(beta.exposure), na.rm = TRUE)
+  ) |>
+  mutate(overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) / 
+                     ((1 - cumulative_R2) * num_snps))
+
+library(knitr)
+kable(bmd.2015.exposure.summary, caption="Summary of total cholesterol instruments after harmonisation for BMD analysis")
+
 bmd.mr.2015 <- mr(bmd.data_steiger.2015,
                          method_list = c("mr_ivw_mre",
                                          "mr_ivw_fe",

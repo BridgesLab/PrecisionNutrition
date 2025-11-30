@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 17:27:35 2025
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 17:38:12 2025
 
 ## Data Entry
 
@@ -107,6 +107,44 @@ library(TwoSampleMR)
 
 vitd.data <- harmonise_data(instruments.tc, gwas.vitd, action = 2)
 vitd.data_steiger <- steiger_filtering(vitd.data)
+
+#instrument strength
+vitd.data.annot <- vitd.data_steiger %>%
+  mutate(
+    R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
+    F.exposure = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
+  )
+
+vitd.exposure.summary <- vitd.data.annot %>%
+  summarise(
+    num_snps = n(),
+    samplesize.exposure = first(samplesize.exposure),
+    cumulative_R2 = sum(R2.exposure, na.rm = TRUE),
+    mean_F = mean(F.exposure, na.rm = TRUE),
+    median_F = median(F.exposure, na.rm = TRUE),
+    mean_maf = mean(eaf.exposure, na.rm = TRUE),
+    mean_beta = mean(abs(beta.exposure), na.rm = TRUE)
+  ) |>
+  mutate(overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) / 
+                     ((1 - cumulative_R2) * num_snps))
+
+library(knitr)
+kable(vitd.exposure.summary, caption="Summary of total cholesterol instruments after harmonisation for vitamin D analysis")
+```
+
+::: {.cell-output-display}
+
+
+Table: Summary of total cholesterol instruments after harmonisation for vitamin D analysis
+
+| num_snps| samplesize.exposure| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|      285|              420607|     0.0972188| 143.7673|  53.4925| 0.3497576| 0.0301266|  158.8196|
+
+
+:::
+
+```{.r .cell-code}
 vitd.mr <- mr(vitd.data_steiger,
                          method_list = c("mr_ivw_mre",
                                          "mr_ivw_fe",
@@ -131,8 +169,8 @@ Table: MR Results for Total Cholesterol - Vitamin D Analysis
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| -0.063| 0.029| 0.02795864|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| -0.067| 0.034| 0.04513899|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.050| 0.91912615|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.053| 0.82693671|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.050| 0.91932458|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.053| 0.82568725|
 
 
 :::
@@ -238,7 +276,7 @@ bmd.snp.data <- read_csv(gefos.snp.datafile) |>
                    chrom_start,
                    substr(allele, 1, 1), #first allele in naming
                    substr(allele, 3, 3), #second allele (third position) in naming
-                   sep=":")) #just picked hte first alt allele
+                   sep=":")) #just picked the first alt allele
 
 gwas.bmd.combined <- 
   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
@@ -307,6 +345,45 @@ gwas.bmd.2015 <- read_tsv(gwas.bmd.file.2015) |>
 
 bmd.data.2015 <- harmonise_data(instruments.tc, gwas.bmd.2015, action = 2)
 bmd.data_steiger.2015 <- steiger_filtering(bmd.data.2015)
+
+
+#instrument strength
+bmd.2015.data.annot <- bmd.data_steiger.2015 %>%
+  mutate(
+    R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
+    F.exposure = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
+  )
+
+bmd.2015.exposure.summary <- bmd.2015.data.annot %>%
+  summarise(
+    num_snps = n(),
+    samplesize.exposure = first(samplesize.exposure),
+    cumulative_R2 = sum(R2.exposure, na.rm = TRUE),
+    mean_F = mean(F.exposure, na.rm = TRUE),
+    median_F = median(F.exposure, na.rm = TRUE),
+    mean_maf = mean(eaf.exposure, na.rm = TRUE),
+    mean_beta = mean(abs(beta.exposure), na.rm = TRUE)
+  ) |>
+  mutate(overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) / 
+                     ((1 - cumulative_R2) * num_snps))
+
+library(knitr)
+kable(bmd.2015.exposure.summary, caption="Summary of total cholesterol instruments after harmonisation for BMD analysis")
+```
+
+::: {.cell-output-display}
+
+
+Table: Summary of total cholesterol instruments after harmonisation for BMD analysis
+
+| num_snps| samplesize.exposure| cumulative_R2|   mean_F| median_F|  mean_maf| mean_beta| overall_F|
+|--------:|-------------------:|-------------:|--------:|--------:|---------:|---------:|---------:|
+|       87|              420607|     0.0346371| 167.7501| 50.84945| 0.5781175| 0.0313052|  173.4275|
+
+
+:::
+
+```{.r .cell-code}
 bmd.mr.2015 <- mr(bmd.data_steiger.2015,
                          method_list = c("mr_ivw_mre",
                                          "mr_ivw_fe",
@@ -332,8 +409,8 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |   84| -0.061| 0.035| 0.07825289|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |   84| -0.041| 0.045| 0.36616562|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |   84| -0.060| 0.071| 0.40291614|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.063| 0.50944661|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.062| 0.88837242|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.064| 0.51176028|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.058| 0.88133473|
 
 
 :::

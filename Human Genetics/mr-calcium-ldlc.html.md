@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Nov 26 10:30:52 2025
+To validate SNPs for calcium GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 10:39:36 2025
 
 ## Data Entry
 
@@ -496,6 +496,8 @@ Table: Summary of LDL cholesterol effects by calcium instruments after harmonisa
 :::
 
 
+## MR Analyses
+
 
 ::: {.cell}
 
@@ -503,48 +505,41 @@ Table: Summary of LDL cholesterol effects by calcium instruments after harmonisa
 calcium.ldlc.mr <- mr(data_steiger,
                          method_list = c( "mr_ivw_mre",
                                            "mr_ivw_fe",
+                                          'mr_raps',
                                          "mr_egger_regression", 
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
 
-calcium.ldlc.mr |> select(-starts_with('id')) |> 
-  kable(caption="MR Results for Calcium Effects on LDL Cholesterol",
-        digits=c(0,0,0,0,3,3,99))
+
+#M-PRESSO has to be run separately
+library(MRPRESSO)
+
+calcium.ldlc.mr_presso_results <- mr_presso(
+  BetaOutcome = "beta.outcome",      # Column name for outcome betas
+  BetaExposure = "beta.exposure",    # Column name for exposure betas
+  SdOutcome = "se.outcome",          # Column name for outcome SEs
+  SdExposure = "se.exposure",        # Column name for exposure SEs
+  data = data_steiger,                  # Your dataset
+  NbDistribution = 2000,              # Number of distributions (default 1000)
+  SignifThreshold = 0.05,             # Significance threshold
+  OUTLIERtest = TRUE,                 # Perform outlier test
+  DISTORTIONtest = TRUE,              # Perform distortion test
+)
+
+library(forcats)
+calcium.ldlc.mr_presso_results$`Main MR results` |>
+  select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  rename(method = `MR Analysis`,
+         b = `Causal Estimate`,
+         se = Sd,
+         pval = `P-value`) |>
+  mutate(method = fct_recode(method,
+                             "MR-PRESSO (Raw)"="Raw",
+                             "MR-PRESSO (Outlier-corrected)"="Outlier-corrected")) -> calcium.ldlc.mr_presso_df
+
+calcium.ldlc.mr.mrpresso <- bind_rows(as_tibble(calcium.ldlc.mr), as_tibble(calcium.ldlc.mr_presso_df))|>
+  fill(id.exposure, id.outcome, exposure, outcome,nsnp,.direction="down")
 ```
-
-::: {.cell-output-display}
-
-
-Table: MR Results for Calcium Effects on LDL Cholesterol
-
-|outcome                            |exposure             |method                                                    | nsnp|      b|    se|      pval|
-|:----------------------------------|:--------------------|:---------------------------------------------------------|----:|------:|-----:|---------:|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  275| -0.001| 0.038| 0.9773529|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Inverse variance weighted (fixed effects)                 |  275| -0.001| 0.026| 0.9663122|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger                                                  |  275| -0.066| 0.081| 0.4141755|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median                                           |  275| -0.060| 0.051| 0.2377560|
-|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode                                             |  275|  0.000| 0.061| 0.9949508|
-
-
-:::
-
-```{.r .cell-code}
-calcium.ldlc.mr |> select(-starts_with('id')) |> 
-  write_csv("MR Results - Calcium - LDL Cholesterol.csv")
-
-ggplot(calcium.ldlc.mr, aes(y=method,x=b)) +
-  geom_point() +
-  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-  theme_classic(base_size=16) +
-  labs(title="",
-       y="",
-       x="Effect Size (Beta)") +
-  geom_vline(xintercept=0, linetype="dashed", color = "red") 
-```
-
-::: {.cell-output-display}
-![](figures/calcium-ldlc-mr-1.png){width=672}
-:::
 :::
 
 
@@ -755,6 +750,226 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 Leave-one-out analyses suggested that four SNPs had a relatively large influence on the IVW estimate, but removal of either SNP did not qualitatively change the overall conclusion.
 
 
+### MR-CAUSE Analysis
+
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
+
+
+::: {.cell}
+
+```{.r .cell-code}
+#devtools::install_github("jean997/cause@v1.2.0")
+library(cause)
+tc.cause.data <-
+  data_steiger |>
+  rename(
+    snp = SNP,
+    beta_hat_1 = beta.exposure,
+    beta_hat_2 = beta.outcome,
+    seb1 = se.exposure,
+    seb2 = se.outcome
+  ) |>
+  new_cause_data()
+
+tc.params_ests <- est_cause_params(
+  X = tc.cause.data,                    # Merged data
+  variants = tc.cause.data$snp,
+  optmethod = "mixSQP",     # Default & recommended
+  null_wt = 10,             # Weight on null (default)
+  max_candidates = Inf      # Full grid (default)
+)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Estimating CAUSE parameters with  277  variants.
+1 0.1077897 
+2 0.001350809 
+3 1.888131e-05 
+4 1.241148e-07 
+5 1.009747e-07 
+6 8.446399e-08 
+```
+
+
+:::
+
+```{.r .cell-code}
+calcium.ldlc.cause <- cause(X=tc.cause.data,
+                               param_ests = tc.params_ests)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Estimating CAUSE posteriors using  277  variants.
+```
+
+
+:::
+
+```{.r .cell-code}
+calcium.ldlc.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+```
+
+::: {.cell-output-display}
+
+
+Table: if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models
+
+|model1  |model2  | delta_elpd| se_delta_elpd|         z|
+|:-------|:-------|----------:|-------------:|---------:|
+|null    |sharing |  0.3723442|     0.6675411| 0.5577846|
+|null    |causal  |  1.2815556|     0.9909655| 1.2932394|
+|sharing |causal  |  0.9092115|     0.6428994| 1.4142361|
+
+
+:::
+
+```{.r .cell-code}
+plot(calcium.ldlc.cause, type="data",intern=TRUE) -> tmp.plots
+tmp.plots[[1]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-ldlc-cause-1.png){width=672}
+:::
+
+```{.r .cell-code}
+tmp.plots[[2]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-ldlc-cause-2.png){width=672}
+:::
+
+```{.r .cell-code}
+tmp.plots[[3]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-ldlc-cause-3.png){width=672}
+:::
+
+```{.r .cell-code}
+summary(calcium.ldlc.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+```
+
+::: {.cell-output-display}
+
+
+Table: Pathway estimates and 95% confidence interveals for estimated effect sizes, 
+
+|model   |gamma              |eta                 |q              |
+|:-------|:------------------|:-------------------|:--------------|
+|Sharing |NA                 |-0.58 (-2.27, 0.8)  |0.03 (0, 0.18) |
+|Causal  |0.01 (-0.08, 0.09) |-0.57 (-1.76, 0.75) |0.05 (0, 0.24) |
+
+
+:::
+:::
+
+
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.9213537). The estimated causal effect ($\gamma$) is 0.01 (-0.08, 0.09) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = -0.57 (-1.76, 0.75) is near zero for the causal model but is slightly larger for the sharing model [$\eta$=-0.58 (-2.27, 0.8)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.05 (0, 0.24)% of the SNPs would require correlated pleiotropy for the causal model, but 0.03 (0, 0.18)% of the SNPs would. 
+
+Alternate explanation with assistance from ChatGPT:
+
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of 0.9092115 with a standard error of 0.6428994 (z score of = 1.4142361). The causal model estimated a null effect of calcium on LDL-C (0.01 (-0.08, 0.09)), while the corresponding pleiotropic parameter $\eta$ was centered near zero (-0.57 (-1.76, 0.75)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.05 (0, 0.24)), and lower than under the sharing model (0.03 (0, 0.18)). 
+
+### Summary of Analyses
+
+
+::: {.cell}
+
+```{.r .cell-code}
+calcium.ldlc.cause.summary <- 
+  summary(calcium.ldlc.cause, ci_size = 0.95)$tab |> 
+  as_tibble() |>
+  filter(model=="Causal") |>
+  mutate(method=fct_recode(as.factor(model), "MR-CAUSE"="Causal")) |>
+  select(method,gamma) |>
+  separate(
+    col = gamma, into = c("b", "ci"), sep = " \\(",remove = TRUE) |>
+  mutate(
+    ci = str_remove(ci, "\\)$"),          # remove trailing ")"
+    ci = str_squish(ci)) |>              # clean any extra spaces
+  separate(ci, into=c("lower.ci","upper.ci"), sep=", ") |>
+  mutate(se = (as.numeric(upper.ci)-as.numeric(lower.ci))/2/1.96) |>
+  mutate(b=summary(calcium.ldlc.cause)$quants[[2]][1,'gamma']) |>
+  select(method,b,se)
+
+method.order <- c("IVW-RE",
+                  "IVW-FE",
+                  "Weighted median",
+                  "MR Egger",
+                  "Weighted mode",
+                  "MR-PRESSO (Raw)",
+                  "MR-PRESSO (Corrected)",
+                  "MR-RAPS",
+                  "MR-CAUSE")
+
+calcium.ldlc.summary <-
+  calcium.ldlc.mr.mrpresso |> 
+  select(-starts_with('id')) |>
+  bind_rows(calcium.ldlc.cause.summary) |>
+  mutate(method=fct_recode(as.factor(method),
+                                  "IVW-RE"="Inverse variance weighted (multiplicative random effects)",
+                                  "IVW-FE"="Inverse variance weighted (fixed effects)",
+                           "MR-RAPS"="Robust adjusted profile score (RAPS)",
+                           "MR-PRESSO (Corrected)" = "MR-PRESSO (Outlier-corrected)")) |>
+  mutate(method = factor(method, levels=method.order)) |>
+  arrange(method) |>
+  fill(outcome,exposure,nsnp) 
+  
+  
+calcium.ldlc.summary |>   
+  kable(caption="MR Results for Calcium on LDL-C",
+        digits=c(0,0,0,0,4,4,99))
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Results for Calcium on LDL-C
+
+|outcome                            |exposure             |method                | nsnp|       b|     se|      pval|
+|:----------------------------------|:--------------------|:---------------------|----:|-------:|------:|---------:|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |IVW-RE                |  275| -0.0011| 0.0383| 0.9773529|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |IVW-FE                |  275| -0.0011| 0.0258| 0.9663122|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted median       |  275| -0.0599| 0.0484| 0.2162812|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR Egger              |  275| -0.0659| 0.0806| 0.4141755|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |Weighted mode         |  275| -0.0004| 0.0636| 0.9951880|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR-PRESSO (Raw)       |  275|  0.0007| 0.0383| 0.9858026|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR-PRESSO (Corrected) |  275| -0.0016| 0.0295| 0.9557368|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR-RAPS               |  275| -0.0044| 0.0328| 0.8927706|
+|LDL Cholesterol (MGI-BioVU LabWAS) |Calcium (UK Biobank) |MR-CAUSE              |  275|  0.0115| 0.0434|        NA|
+
+
+:::
+
+```{.r .cell-code}
+calcium.ldlc.summary |> 
+  write_csv("MR Results - Calcium - LDL Cholesterol.csv")
+
+calcium.ldlc.summary |>
+  mutate(method = factor(method, levels = rev(method.order))) %>% #reverse order
+  ggplot(aes(y=method ,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
+
+::: {.cell-output-display}
+![](figures/ldlc-calcium-mr-summary-1.png){width=672}
+:::
+:::
+
+
 
 ## Session Information
 
@@ -786,25 +1001,35 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
- [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
-[13] tidyverse_2.0.0   
+ [1] cause_1.2.0        MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22
+ [5] knitr_1.50         lubridate_1.9.4    forcats_1.0.1      stringr_1.6.0     
+ [9] dplyr_1.1.4        purrr_1.2.0        readr_2.1.6        tidyr_1.3.1       
+[13] tibble_3.3.0       ggplot2_4.0.1      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] generics_0.1.4     lattice_0.22-7     stringi_1.8.7      hms_1.1.4         
- [5] digest_0.6.38      magrittr_2.0.4     evaluate_1.0.5     grid_4.5.2        
- [9] timechange_0.3.0   RColorBrewer_1.1-3 fastmap_1.2.0      Matrix_1.7-4      
-[13] plyr_1.8.9         jsonlite_2.0.0     mgcv_1.9-4         scales_1.4.0      
-[17] mnormt_2.1.1       cli_3.6.5          rlang_1.1.6        crayon_1.5.3      
-[21] splines_4.5.2      bit64_4.6.0-1      withr_3.0.2        yaml_2.3.10       
-[25] tools_4.5.2        parallel_4.5.2     tzdb_0.5.0         vctrs_0.6.5       
-[29] R6_2.6.1           lifecycle_1.0.4    htmlwidgets_1.6.4  bit_4.6.0         
-[33] psych_2.5.6        vroom_1.6.6        pkgconfig_2.0.3    pillar_1.11.1     
-[37] gtable_0.3.6       glue_1.8.0         data.table_1.17.8  Rcpp_1.1.0        
-[41] xfun_0.54          tidyselect_1.2.1   rstudioapi_0.17.1  farver_2.1.2      
-[45] nlme_3.1-168       htmltools_0.5.8.1  rmarkdown_2.30     labeling_0.4.3    
-[49] compiler_4.5.2     S7_0.2.1          
+ [1] gtable_0.3.6          xfun_0.54             htmlwidgets_1.6.4    
+ [4] psych_2.5.6           lattice_0.22-7        tzdb_0.5.0           
+ [7] vctrs_0.6.5           tools_4.5.2           generics_0.1.4       
+[10] curl_7.0.0            parallel_4.5.2        pkgconfig_2.0.3      
+[13] Matrix_1.7-4          SQUAREM_2021.1        data.table_1.17.8    
+[16] RColorBrewer_1.1-3    S7_0.2.1              RcppParallel_5.1.11-1
+[19] truncnorm_1.0-9       lifecycle_1.0.4       rootSolve_1.8.2.4    
+[22] compiler_4.5.2        farver_2.1.2          mnormt_2.1.1         
+[25] htmltools_0.5.8.1     mr.raps_0.4.2         yaml_2.3.10          
+[28] pillar_1.11.1         crayon_1.5.3          nlme_3.1-168         
+[31] rsnps_0.6.1           tidyselect_1.2.1      digest_0.6.38        
+[34] nortest_1.0-4         stringi_1.8.7         ashr_2.2-63          
+[37] labeling_0.4.3        splines_4.5.2         fastmap_1.2.0        
+[40] grid_4.5.2            invgamma_1.2          cli_3.6.5            
+[43] magrittr_2.0.4        loo_2.8.0             crul_1.6.0           
+[46] withr_3.0.2           scales_1.4.0          bit64_4.6.0-1        
+[49] timechange_0.3.0      rmarkdown_2.30        matrixStats_1.5.0    
+[52] bit_4.6.0             gridExtra_2.3         hms_1.1.4            
+[55] evaluate_1.0.5        irlba_2.3.5.1         mgcv_1.9-4           
+[58] rlang_1.1.6           mixsqp_0.3-54         Rcpp_1.1.0           
+[61] glue_1.8.0            httpcode_0.3.0        rstudioapi_0.17.1    
+[64] vroom_1.6.6           jsonlite_2.0.0        R6_2.6.1             
+[67] plyr_1.8.9            intervals_0.15.5     
 ```
 
 

@@ -381,7 +381,7 @@ Leave-one-out analyses suggested that no SNPs had a relatively large influence o
 
 CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
 
-```{r calcium-calcium-cause}
+```{r ldlc-calcium-cause}
 #devtools::install_github("jean997/cause@v1.2.0")
 library(cause)
 tc.cause.data <-

@@ -5,7 +5,7 @@ This document indicates where the raw data for each Figure panel can be found, a
 | Figure/Table | Script | File |
 | ------ | ------ | ------ |
 | Figure 1 | *no script* | |
-| Figure 2A | mr-calcium-tc.qmd | calcium-ldlc-1.pdf |
+| Figure 2A | mr-calcium-tc.qmd | calcium-ldlc-summary-1.pdf |
 | Figure 2B | mr-calcium-ldlc.qmd  | calcium-tc-mr-1.pdf |
 | Figure 2C | mr-tc-calcium.qmd   | tc-calcium-mr-summary-1.pdf |
 | Figure 2D | mr-ldlc-calcium.qmd | ldlc-calcium-mr-summary-1.pdf |

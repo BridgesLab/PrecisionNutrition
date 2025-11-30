@@ -45,7 +45,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Nov 28 07:45:48 2025
+To validate SNPs for total cholesterol GWAS using those identified using UK Biobank.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 07:55:47 2025
 
 ## Data Entry
 
@@ -534,10 +534,10 @@ Table: MR Results for Total Cholesterol on Calcium Positive Control
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| 0.0645| 0.0149| 1.504019e-05|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| 0.0616| 0.0186| 9.467571e-04|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| 0.0376| 0.0304| 2.173225e-01|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| 0.0537| 0.0267| 4.414392e-02|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| 0.0552| 0.0279| 4.902681e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| 0.0537| 0.0263| 4.127897e-02|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| 0.0552| 0.0258| 3.338487e-02|
 |Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Raw)                                           |  280| 0.0619| 0.0185| 9.306166e-04|
-|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Outlier-corrected)                             |  280| 0.0623| 0.0183| 7.412864e-04|
+|Calcium (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR-PRESSO (Outlier-corrected)                             |  280| 0.0565| 0.0182| 2.101856e-03|
 
 
 :::
@@ -741,7 +741,7 @@ tc.control.mr_presso_results$`MR-PRESSO results`$`Distortion Test` -> tc.distort
 :::
 
 
-From MR-PRESSO there were 2 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was -0.5413192, with a p-value of 0.985, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.985), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
+From MR-PRESSO there were 3 outliers that were removed before the distortion test.  The ratio of the IVW estimate before and after their removal was 9.5910583, with a p-value of 0.7125, indicating no significant distortion due to outliers.  The global test was significant, showing evidence of the presence of horizontal pleiotropy via outliers, but their removal did not significantly alter the estimate (p=0.7125), IVW-MRE is preferred given heterogeneity (significant Q) but stable estimate after outlier removal.
 
 ### Leave-one-out Analysis
 
@@ -801,6 +801,131 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 
 Leave-one-out analyses suggested that no SNPs had a relatively large influence on the IVW estimate, because removal did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
+### MR-CAUSE Analysis
+
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
+
+
+::: {.cell}
+
+```{.r .cell-code}
+#devtools::install_github("jean997/cause@v1.2.0")
+library(cause)
+tc.cause.data <-
+  data_steiger |>
+  rename(
+    snp = SNP,
+    beta_hat_1 = beta.exposure,
+    beta_hat_2 = beta.outcome,
+    seb1 = se.exposure,
+    seb2 = se.outcome
+  ) |>
+  new_cause_data()
+
+tc.params_ests <- est_cause_params(
+  X = tc.cause.data,                    # Merged data
+  variants = tc.cause.data$snp,
+  optmethod = "mixSQP",     # Default & recommended
+  null_wt = 10,             # Weight on null (default)
+  max_candidates = Inf      # Full grid (default)
+)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Estimating CAUSE parameters with  285  variants.
+1 0.287355 
+2 0.001490841 
+3 1.004197e-05 
+4 2.586329e-08 
+```
+
+
+:::
+
+```{.r .cell-code}
+tc.control.cause <- cause(X=tc.cause.data,
+                               param_ests = tc.params_ests)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Estimating CAUSE posteriors using  285  variants.
+```
+
+
+:::
+
+```{.r .cell-code}
+tc.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+```
+
+::: {.cell-output-display}
+
+
+Table: if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models
+
+|model1  |model2  | delta_elpd| se_delta_elpd|          z|
+|:-------|:-------|----------:|-------------:|----------:|
+|null    |sharing |  -1.521253|      1.619159| -0.9395330|
+|null    |causal  |  -2.722417|      2.912478| -0.9347424|
+|sharing |causal  |  -1.201164|      1.905543| -0.6303524|
+
+
+:::
+
+```{.r .cell-code}
+plot(tc.control.cause, type="data",intern=TRUE) -> tmp.plots
+tmp.plots[[1]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-cause-1.png){width=672}
+:::
+
+```{.r .cell-code}
+tmp.plots[[2]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-cause-2.png){width=672}
+:::
+
+```{.r .cell-code}
+tmp.plots[[3]]
+```
+
+::: {.cell-output-display}
+![](figures/calcium-calcium-cause-3.png){width=672}
+:::
+
+```{.r .cell-code}
+summary(tc.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+```
+
+::: {.cell-output-display}
+
+
+Table: Pathway estimates and 95% confidence interveals for estimated effect sizes, 
+
+|model   |gamma            |eta                |q                 |
+|:-------|:----------------|:------------------|:-----------------|
+|Sharing |NA               |0.3 (-0.13, 0.59)  |0.11 (0.01, 0.32) |
+|Causal  |0.05 (0.01, 0.1) |0.07 (-0.62, 0.63) |0.05 (0, 0.24)    |
+
+
+:::
+:::
+
+
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=0.264232). The estimated causal effect ($\gamma$) is 0.05 (0.01, 0.1) and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = 0.07 (-0.62, 0.63) is near zero for the causal model but is slightly larger for the sharing model [$\eta$=0.3 (-0.13, 0.59)]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain 0.05 (0, 0.24)% of the SNPs would require correlated pleiotropy for the causal model, but 0.11 (0.01, 0.32)% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
+
+Alternate explanation with assistance from ChatGPT:
+
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of -1.2011636 with a standard error of 1.9055429 (z score of = -0.6303524). The causal model estimated a positive effect of cholesterol on calcium (0.05 (0.01, 0.1)), while the corresponding pleiotropic parameter $\eta$ was centered near zero (0.07 (-0.62, 0.63)), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (0.05 (0, 0.24)), and lower than under the sharing model (0.11 (0.01, 0.32)). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+
 ## Session Information
 
 
@@ -831,27 +956,35 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
- [1] MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22 knitr_1.50        
- [5] lubridate_1.9.4    forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4       
- [9] purrr_1.2.0        readr_2.1.6        tidyr_1.3.1        tibble_3.3.0      
-[13] ggplot2_4.0.1      tidyverse_2.0.0   
+ [1] cause_1.2.0        MRPRESSO_1.0       ggrepel_0.9.6      TwoSampleMR_0.6.22
+ [5] knitr_1.50         lubridate_1.9.4    forcats_1.0.1      stringr_1.6.0     
+ [9] dplyr_1.1.4        purrr_1.2.0        readr_2.1.6        tidyr_1.3.1       
+[13] tibble_3.3.0       ggplot2_4.0.1      tidyverse_2.0.0   
 
 loaded via a namespace (and not attached):
- [1] gtable_0.3.6       xfun_0.54          htmlwidgets_1.6.4  psych_2.5.6       
- [5] lattice_0.22-7     tzdb_0.5.0         vctrs_0.6.5        tools_4.5.2       
- [9] generics_0.1.4     curl_7.0.0         parallel_4.5.2     pkgconfig_2.0.3   
-[13] Matrix_1.7-4       data.table_1.17.8  RColorBrewer_1.1-3 S7_0.2.1          
-[17] lifecycle_1.0.4    rootSolve_1.8.2.4  compiler_4.5.2     farver_2.1.2      
-[21] mnormt_2.1.1       htmltools_0.5.8.1  mr.raps_0.4.2      yaml_2.3.10       
-[25] pillar_1.11.1      crayon_1.5.3       nlme_3.1-168       rsnps_0.6.1       
-[29] tidyselect_1.2.1   digest_0.6.38      nortest_1.0-4      stringi_1.8.7     
-[33] labeling_0.4.3     splines_4.5.2      fastmap_1.2.0      grid_4.5.2        
-[37] cli_3.6.5          magrittr_2.0.4     crul_1.6.0         withr_3.0.2       
-[41] scales_1.4.0       bit64_4.6.0-1      timechange_0.3.0   rmarkdown_2.30    
-[45] bit_4.6.0          gridExtra_2.3      hms_1.1.4          evaluate_1.0.5    
-[49] mgcv_1.9-4         rlang_1.1.6        Rcpp_1.1.0         glue_1.8.0        
-[53] httpcode_0.3.0     rstudioapi_0.17.1  vroom_1.6.6        jsonlite_2.0.0    
-[57] R6_2.6.1           plyr_1.8.9        
+ [1] gtable_0.3.6          xfun_0.54             htmlwidgets_1.6.4    
+ [4] psych_2.5.6           lattice_0.22-7        tzdb_0.5.0           
+ [7] vctrs_0.6.5           tools_4.5.2           generics_0.1.4       
+[10] curl_7.0.0            parallel_4.5.2        pkgconfig_2.0.3      
+[13] Matrix_1.7-4          SQUAREM_2021.1        data.table_1.17.8    
+[16] RColorBrewer_1.1-3    S7_0.2.1              RcppParallel_5.1.11-1
+[19] truncnorm_1.0-9       lifecycle_1.0.4       rootSolve_1.8.2.4    
+[22] compiler_4.5.2        farver_2.1.2          mnormt_2.1.1         
+[25] htmltools_0.5.8.1     mr.raps_0.4.2         yaml_2.3.10          
+[28] pillar_1.11.1         crayon_1.5.3          nlme_3.1-168         
+[31] rsnps_0.6.1           tidyselect_1.2.1      digest_0.6.38        
+[34] nortest_1.0-4         stringi_1.8.7         ashr_2.2-63          
+[37] labeling_0.4.3        splines_4.5.2         fastmap_1.2.0        
+[40] grid_4.5.2            invgamma_1.2          cli_3.6.5            
+[43] magrittr_2.0.4        loo_2.8.0             crul_1.6.0           
+[46] withr_3.0.2           scales_1.4.0          bit64_4.6.0-1        
+[49] timechange_0.3.0      rmarkdown_2.30        matrixStats_1.5.0    
+[52] bit_4.6.0             gridExtra_2.3         hms_1.1.4            
+[55] evaluate_1.0.5        irlba_2.3.5.1         mgcv_1.9-4           
+[58] rlang_1.1.6           mixsqp_0.3-54         Rcpp_1.1.0           
+[61] glue_1.8.0            httpcode_0.3.0        rstudioapi_0.17.1    
+[64] vroom_1.6.6           jsonlite_2.0.0        R6_2.6.1             
+[67] plyr_1.8.9            intervals_0.15.5     
 ```
 
 

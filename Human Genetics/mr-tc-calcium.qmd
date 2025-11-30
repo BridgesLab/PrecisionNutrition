@@ -406,6 +406,51 @@ ggplot(loo_res, aes(x = reorder(SNP, -b), y = b)) +
 ```
 Leave-one-out analyses suggested that no SNPs had a relatively large influence on the IVW estimate, because removal did not qualitatively change the overall conclusion, supporting the robustness of the causal inference.
 
+### MR-CAUSE Analysis
+
+CAUSE was used to model both correlated and uncorrelated horizontal pleiotropy.  Correlated pleiotropy are the effects of the SNPs an outcome not through the trait but through a confounder.  Uncorrelated horizontal pleiotropy is direct effects of the SNPs on the outcome independent of the modeled trait.  This is described in [@morrisonMendelianRandomizationAccounting2020].
+
+```{r calcium-calcium-cause}
+#devtools::install_github("jean997/cause@v1.2.0")
+library(cause)
+tc.cause.data <-
+  data_steiger |>
+  rename(
+    snp = SNP,
+    beta_hat_1 = beta.exposure,
+    beta_hat_2 = beta.outcome,
+    seb1 = se.exposure,
+    seb2 = se.outcome
+  ) |>
+  new_cause_data()
+
+tc.params_ests <- est_cause_params(
+  X = tc.cause.data,                    # Merged data
+  variants = tc.cause.data$snp,
+  optmethod = "mixSQP",     # Default & recommended
+  null_wt = 10,             # Weight on null (default)
+  max_candidates = Inf      # Full grid (default)
+)
+
+tc.control.cause <- cause(X=tc.cause.data,
+                               param_ests = tc.params_ests)
+
+tc.control.cause$elpd |> kable(caption="if delta_elpd is negative, model2 is a better fit, in this case means the causal model is better than the pleiotropic sharing model or either null models")
+
+plot(tc.control.cause, type="data",intern=TRUE) -> tmp.plots
+tmp.plots[[1]]
+tmp.plots[[2]]
+tmp.plots[[3]]
+
+summary(tc.control.cause, ci_size = 0.95)$tab |> kable(caption="Pathway estimates and 95% confidence interveals for estimated effect sizes, ")
+```
+
+From the CAUSE analyses there is qualitative evidence to prefer the causal pathway compared with the shared (pleiotropic) pathways (p=`r summary(tc.control.cause, ci_size = 0.95)$p`). The estimated causal effect ($\gamma$) is `r summary(tc.control.cause, ci_size = 0.95)$tab[2,'gamma']` and the residual correlated pleiotropy was minimal after accounting for this causal effect. The $\eta$ = `r summary(tc.control.cause, ci_size = 0.95)$tab[2,'eta']` is near zero for the causal model but is slightly larger for the sharing model [$\eta$=`r summary(tc.control.cause, ci_size = 0.95)$tab[1,'eta']`]. To explain this data without a causal effect, CAUSE would require more correlated pleiotropy.  In the absence of a causal effect (sharing model), correlated horizontal pleiotropy would explain `r summary(tc.control.cause, ci_size = 0.95)$tab[2,'q']`% of the SNPs would require correlated pleiotropy for the causal model, but `r summary(tc.control.cause, ci_size = 0.95)$tab[1,'q']`% of the SNPs would. Overall, CAUSE provided weak but consistent evidence favoring a causal model over correlated pleiotropy.
+
+Alternate explanation with assistance from ChatGPT:
+
+The CAUSE model comparison favored the causal model over both the null and sharing models, although none of the differences reached statistical significance. For example, comparing the sharing vs. causal models yielded a $\Delta$ELPD (Expected Log Pointwise Predictive Density) of `r tc.control.cause$elpd$delta_elpd[tc.control.cause$elpd$model1=="sharing"]` with a standard error of `r tc.control.cause$elpd$se_delta_elpd[tc.control.cause$elpd$model1=="sharing"]` (z score of = `r tc.control.cause$elpd$z[tc.control.cause$elpd$model1=="sharing"]`). The causal model estimated a positive effect of cholesterol on calcium (`r summary(tc.control.cause)$tab[2,"gamma"]`), while the corresponding pleiotropic parameter $\eta$ was centered near zero (`r summary(tc.control.cause)$tab[2,"eta"]`), suggesting minimal directional pleiotropy. The estimated fraction of variants exhibiting correlated pleiotropy (q) was small under the causal model (`r summary(tc.control.cause)$tab[2,"q"]`), and lower than under the sharing model (`r summary(tc.control.cause)$tab[1,"q"]`). Together, these results indicate that correlated pleiotropy does not adequately explain the SNP–trait associations and that the CAUSE analysis is most consistent with a causal effect.
+
 ## Session Information
 
 ```{r session-information}

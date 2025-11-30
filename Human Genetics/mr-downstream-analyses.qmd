@@ -361,8 +361,7 @@ bind_rows(vitd.mr,bmd.mr.2015) |>
   coord_flip() +
   geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
   theme_classic(base_size = 16) +
-  labs(title = "", y = "Beta Coefficient", x = "") 
-
+  labs(title = "Cholesterol Effects", y = "Beta Coefficient", x = "") 
 
 ```
 

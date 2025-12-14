@@ -119,7 +119,7 @@ additive.snp.summary %>%
   kable(caption="Relaxed suggestive genome-wide significant associations from mixed linear models for cholesterol in additive model, clumped by first two digits of the position") 
 
 library(ggmanh)
-manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet (Additive Model)", y.label = "LOD Score")
+manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet", y.label = "LOD Score")
 
 #library(GWASTools)
 #with(lmm.additive.data,manhattanPlot(p=p_wald,

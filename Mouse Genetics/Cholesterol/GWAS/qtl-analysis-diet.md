@@ -62,6 +62,11 @@ Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of t
 ``` r
 library(qqman)
 qq(lmm.additive.data$p_wald)
+```
+
+![](figures-diet/lmm-additive-1.png)<!-- -->
+
+``` r
 suggestive.pval <- 1E-5
 genome.pval <- 5E-8
 
@@ -75,12 +80,12 @@ lmm.additive.data %>%
 
 Table: Genome-wide significant associations from mixed linear models for cholesterol in additive model
 
-|chr |rs              |chromosome |  position|allele |alt |        ps| n_miss|allele1 |allele0 |    af| beta|   se| logl_H1| l_remle| p_wald|
-|:---|:---------------|:----------|---------:|:------|:---|---------:|------:|:-------|:-------|-----:|----:|----:|-------:|-------:|------:|
-|1   |1_171425406_H_C |1          | 171425406|H      |C   | 171425406|      0|C       |H       | 0.094| 14.6| 2.62|   -3815|    2.22|      0|
-|1   |1_171431917_H_C |1          | 171431917|H      |C   | 171431917|      0|C       |H       | 0.094| 14.6| 2.62|   -3815|    2.22|      0|
-|1   |1_171295194_H_C |1          | 171295194|H      |C   | 171295194|      0|C       |H       | 0.095| 14.5| 2.61|   -3815|    2.21|      0|
-|1   |1_171418895_H_C |1          | 171418895|H      |C   | 171418895|      0|C       |H       | 0.095| 14.5| 2.62|   -3815|    2.22|      0|
+| chr|rs              |chromosome |  position|allele |alt | ps| n_miss|allele1 |allele0 |    af| beta|   se| logl_H1| l_remle| p_wald|
+|---:|:---------------|:----------|---------:|:------|:---|--:|------:|:-------|:-------|-----:|----:|----:|-------:|-------:|------:|
+|  -9|1_171425406_H_C |1          | 171425406|H      |C   | -9|      0|C       |H       | 0.094| 14.6| 2.62|   -3815|    2.22|      0|
+|  -9|1_171431917_H_C |1          | 171431917|H      |C   | -9|      0|C       |H       | 0.094| 14.6| 2.62|   -3815|    2.22|      0|
+|  -9|1_171295194_H_C |1          | 171295194|H      |C   | -9|      0|C       |H       | 0.095| 14.5| 2.61|   -3815|    2.21|      0|
+|  -9|1_171418895_H_C |1          | 171418895|H      |C   | -9|      0|C       |H       | 0.095| 14.5| 2.62|   -3815|    2.22|      0|
 
 ``` r
 lmm.additive.data %>%
@@ -137,12 +142,7 @@ Table: Relaxed suggestive genome-wide significant associations from mixed linear
 
 ``` r
 library(ggmanh)
-```
-
-![](figures-diet/lmm-additive-1.png)<!-- -->
-
-``` r
-manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet (Additive Model)", y.label = "LOD Score")
+manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet", y.label = "LOD Score")
 ```
 
 ![](figures-diet/lmm-additive-2.png)<!-- -->
@@ -732,8 +732,8 @@ lmm.ncd.results %>%
 
 Table: Genome-wide significant associations from mixed linear models for cholesterol on NCD
 
-|chr |rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
-|:---|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+| chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
 ``` r
 lmm.ncd.results %>%
@@ -852,8 +852,8 @@ lmm.hfd.results %>%
 
 Table: Genome-wide significant associations from mixed linear models for cholesterol on HFD
 
-|chr |rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
-|:---|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
+| chr|rs |chromosome | position|allele |alt | ps| n_miss|allele1 |allele0 | af| beta| se| logl_H1| l_remle| p_wald|
+|---:|:--|:----------|--------:|:------|:---|--:|------:|:-------|:-------|--:|----:|--:|-------:|-------:|------:|
 
 ``` r
 lmm.hfd.results %>%
@@ -905,7 +905,7 @@ Table: Suggestive genome-wide significant associations from mixed linear models 
 |2          |2_5564930_G_E    |   5564930|G      |E   |      0|E       |G       | 0.133| -12.4| 3.73|   -1814|    3.13|  0.001|
 |2          |2_5611635_G_E    |   5611635|G      |E   |      0|E       |G       | 0.133| -12.4| 3.73|   -1814|    3.16|  0.001|
 |2          |2_5772554_D_E    |   5772554|D      |E   |      0|E       |D       | 0.133| -12.4| 3.70|   -1814|    3.17|  0.001|
-|2          |2_6108249_D_E    |   6108249|D      |E   |      0|E       |D       | 0.132| -12.4| 3.70|   -1814|    3.16|  0.001|
+|2          |2_6108249_D_E    |   6108249|D      |E   |      0|E       |D       | 0.132| -12.4| 3.70|   -1814|    3.17|  0.001|
 |2          |2_6288486_D_E    |   6288486|D      |E   |      0|E       |D       | 0.131| -12.6| 3.70|   -1814|    3.17|  0.001|
 |2          |2_6368382_D_E    |   6368382|D      |E   |      0|E       |D       | 0.129| -14.1| 3.72|   -1812|    3.22|  0.000|
 |2          |2_6468723_D_E    |   6468723|D      |E   |      0|E       |D       | 0.128| -14.2| 3.73|   -1812|    3.22|  0.000|
@@ -916,7 +916,7 @@ Table: Suggestive genome-wide significant associations from mixed linear models 
 |2          |2_7025078_D_E    |   7025078|D      |E   |      0|E       |D       | 0.127| -14.3| 3.75|   -1812|    3.21|  0.000|
 |2          |2_7250227_D_E    |   7250227|D      |E   |      0|E       |D       | 0.127| -14.4| 3.76|   -1812|    3.21|  0.000|
 |2          |2_7501966_H_E    |   7501966|H      |E   |      0|E       |H       | 0.122| -14.8| 3.82|   -1812|    3.20|  0.000|
-|2          |2_7611414_D_E    |   7611414|D      |E   |      0|E       |D       | 0.125| -14.1| 3.80|   -1813|    3.20|  0.000|
+|2          |2_7611414_D_E    |   7611414|D      |E   |      0|E       |D       | 0.125| -14.1| 3.80|   -1813|    3.21|  0.000|
 |2          |2_7737471_H_E    |   7737471|H      |E   |      0|E       |H       | 0.124| -14.3| 3.81|   -1813|    3.19|  0.000|
 |2          |2_7857737_H_E    |   7857737|H      |E   |      0|E       |H       | 0.124| -14.2| 3.81|   -1813|    3.16|  0.000|
 |2          |2_8011673_H_E    |   8011673|H      |E   |      0|E       |H       | 0.123| -14.4| 3.82|   -1812|    3.19|  0.000|
@@ -1090,45 +1090,39 @@ sessionInfo()
 ```
 
 ```
-## R version 4.4.0 (2024-04-24)
-## Platform: x86_64-pc-linux-gnu
-## Running under: Red Hat Enterprise Linux 8.8 (Ootpa)
+## R version 4.5.2 (2025-10-31)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Tahoe 26.1
 ## 
 ## Matrix products: default
-## BLAS:   /sw/pkgs/arc/stacks/gcc/13.2.0/R/4.4.0/lib64/R/lib/libRblas.so 
-## LAPACK: /sw/pkgs/arc/stacks/gcc/13.2.0/R/4.4.0/lib64/R/lib/libRlapack.so;  LAPACK version 3.12.0
+## BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 ## 
 ## locale:
-##  [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
-##  [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
-##  [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
-##  [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
-##  [9] LC_ADDRESS=C               LC_TELEPHONE=C            
-## [11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## time zone: America/Detroit
-## tzcode source: system (glibc)
+## tzcode source: internal
 ## 
 ## attached base packages:
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] cowplot_1.1.3 forcats_1.0.0 ggmanh_1.8.0  ggplot2_3.5.1 qqman_0.1.9  
-##  [6] broom_1.0.6   dplyr_1.1.4   tidyr_1.3.1   readr_2.1.5   knitr_1.48   
+##  [1] cowplot_1.2.0 forcats_1.0.1 ggmanh_1.12.0 ggplot2_4.0.1 qqman_0.1.9  
+##  [6] broom_1.0.11  dplyr_1.1.4   tidyr_1.3.1   readr_2.1.6   knitr_1.50   
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] sass_0.4.9         utf8_1.2.4         generics_0.1.3     hms_1.1.3         
-##  [5] digest_0.6.36      magrittr_2.0.3     evaluate_0.24.0    grid_4.4.0        
-##  [9] RColorBrewer_1.1-3 calibrate_1.7.7    fastmap_1.2.0      jsonlite_1.8.8    
-## [13] backports_1.5.0    purrr_1.0.2        fansi_1.0.6        scales_1.3.0      
-## [17] jquerylib_0.1.4    cli_3.6.3          rlang_1.1.4        crayon_1.5.3      
-## [21] bit64_4.0.5        munsell_0.5.1      withr_3.0.0        cachem_1.1.0      
-## [25] yaml_2.3.9         tools_4.4.0        parallel_4.4.0     tzdb_0.4.0        
-## [29] colorspace_2.1-0   vctrs_0.6.5        R6_2.5.1           lifecycle_1.0.4   
-## [33] bit_4.0.5          vroom_1.6.5        MASS_7.3-60.2      pkgconfig_2.0.3   
-## [37] pillar_1.9.0       bslib_0.7.0        gtable_0.3.5       glue_1.7.0        
-## [41] highr_0.11         xfun_0.45          tibble_3.2.1       tidyselect_1.2.1  
-## [45] rstudioapi_0.16.0  farver_2.1.2       htmltools_0.5.8.1  rmarkdown_2.27    
-## [49] labeling_0.4.3     compiler_4.4.0
+##  [1] sass_0.4.10        generics_0.1.4     hms_1.1.4          digest_0.6.39     
+##  [5] magrittr_2.0.4     evaluate_1.0.5     grid_4.5.2         RColorBrewer_1.1-3
+##  [9] calibrate_1.7.7    fastmap_1.2.0      jsonlite_2.0.0     backports_1.5.0   
+## [13] purrr_1.2.0        scales_1.4.0       jquerylib_0.1.4    cli_3.6.5         
+## [17] rlang_1.1.6        crayon_1.5.3       bit64_4.6.0-1      withr_3.0.2       
+## [21] cachem_1.1.0       yaml_2.3.12        tools_4.5.2        parallel_4.5.2    
+## [25] tzdb_0.5.0         vctrs_0.6.5        R6_2.6.1           lifecycle_1.0.4   
+## [29] bit_4.6.0          vroom_1.6.7        MASS_7.3-65        pkgconfig_2.0.3   
+## [33] pillar_1.11.1      bslib_0.9.0        gtable_0.3.6       glue_1.8.0        
+## [37] xfun_0.54          tibble_3.3.0       tidyselect_1.2.1   rstudioapi_0.17.1 
+## [41] dichromat_2.0-0.1  farver_2.1.2       htmltools_0.5.9    rmarkdown_2.30    
+## [45] labeling_0.4.3     compiler_4.5.2     S7_0.2.1
 ```
 

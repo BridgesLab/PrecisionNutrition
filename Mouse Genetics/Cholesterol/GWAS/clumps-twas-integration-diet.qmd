@@ -2,7 +2,19 @@
 title: "Analysis of Clumped QTLs for TWAS Associations"
 author: "Dave Bridges and Kaelin Loftus"
 date: "2024-10-07"
-format: html
+editor: source
+format: 
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures/"
+theme: journal
+execute:
+  echo: true
+  warning: false
 ---
 
 This file is for looking at genes within the clumped QTL regions for NCD and HFD, and cross-referencing these against TWAS results. This script was last run on `r date()` and can be found in `r getwd()`.
@@ -24,14 +36,43 @@ ncd.clump.data <- read_csv(ncd.clump.filename)
 hfd.clump.data <- read_csv(hfd.clump.filename)
 ```
 
+## Loaded in Human Cholesterol Data
+
+```{r human-cholesterol-data}
+library(forcats)
+library(dplyr)
+library(tidyr)
+human.mouse.mapping.filename <- 'HOM_MouseHumanSequence.rpt'
+mouse.human.mapping <- read_tsv(human.mouse.mapping.filename) |>
+  select(`DB Class Key`,Symbol,`Common Organism Name`) |>
+  rename(Species = `Common Organism Name`) |>
+  mutate(Species = fct_recode(as.factor(Species),
+                              human='human',
+                              mouse='mouse, laboratory')) |>
+  pivot_wider(id_cols=`DB Class Key`,
+              names_from=Species,
+              values_from=Symbol,
+              values_fn=first)
+
+human.cholesterol.filename <- 'gene_associations_total_cholesterol.csv'
+human.cholesterol.data <- read_csv(human.cholesterol.filename) |>
+  left_join(mouse.human.mapping,
+            by=c('gene'='human')) |>
+  rename(gene_mouse = mouse)
+
+```
+
 ### TWAS Data
 
 ```{r twas-data-entry}
 twas.all.filename <- 'Cholesterol - Expression Associations - Linear Model.csv'
 library(dplyr)
+library(knitr)
 twas.all.data <- read_csv(twas.all.filename) %>%
   mutate(t.statistic=sqrt(abs(r2))*sqrt((478-2)/(1-r2)),
-         BF=sqrt(478/2)*exp((t.statistic^2)/2))
+         BF=sqrt(478/2)*exp((t.statistic^2)/2)) |>
+  left_join(human.cholesterol.data |> select(gene_mouse,bf_common,bf_rare,huge),
+            by=c('symbol'='gene_mouse'))
 
 #using twas data, dont have lm data yet
 twas.hfd.data <- read_csv('Cholesterol TWAS - HFD Only - Sex Adjusted.csv')
@@ -43,6 +84,17 @@ Calculated an approximate Bayes factor according to this formula from Bartos and
 $$t = r \sqrt{\frac{n-2}{1-r^2}}$$
 $$ BF \approx \sqrt{\frac{n}{2}} \cdot e^{t^2/2} \ $$
  
+## Top Hits with Human Evidence
+
+```{r top-hits-human}
+twas.all.data %>%
+  filter(!(is.na(huge))) %>%
+  arrange(-huge,-BF) %>%
+  filter(pval<0.05) %>%
+  select(symbol,beta,se,r2,BF,pval,huge,chr,start.true) %>%
+  head(25) %>%
+  kable(caption="Top TWAS hits with human evidence from Type 2 Diabetes Knowledge Portal")
+```
 
 ## TWAS and QTL Hits
 
@@ -53,7 +105,7 @@ library(dplyr)
 library(knitr)
 twas.all.data %>%
   filter(symbol %in% hfd.clump.data$external_gene_name) %>% #is in a QTL
-  filter(pval<0.05) %>%
+  #filter(pval<0.05) %>%
   dplyr::select(symbol,beta,se,BF,pval,chr,start.true,end.true) %>%
   arrange(chr,start.true) -> twas.QTL.summary.hfd
 nrow(twas.QTL.summary.hfd)
@@ -63,7 +115,7 @@ nrow(twas.QTL.summary.hfd)
 ```{r hfd-twas-chr5}
 twas.QTL.summary.hfd |> filter(chr==5) |>
   arrange(-BF) |>
-  kable(caption="TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF", digits=c(1,3,3,1,99,0,0))
+  kable(caption="TWAS hits in NCD-specific QTL on chromosome 5, sorted by BF", digits=c(1,3,3,1,99,0,0))
 ```
 
 
@@ -75,7 +127,7 @@ First looked for genes in HFD that were in QTL clumps, and also had TWAS associa
 ```{r twas-ncd-overlap}
 twas.all.data %>%
   filter(symbol %in% ncd.clump.data$external_gene_name) %>% #is in a QTL
-  filter(pval<0.05) %>%
+  #filter(pval<0.05) %>%
   dplyr::select(symbol,beta,se,BF,pval,chr,start.true,end.true) %>%
   arrange(chr,start.true) -> twas.QTL.summary.ncd
 nrow(twas.QTL.summary.ncd)
@@ -86,8 +138,11 @@ nrow(twas.QTL.summary.ncd)
 For the chromosome 18 (NCD-specific QTL) the top hits are
 
 ```{r ncd-twas-chr18}
-twas.QTL.summary.ncd |> filter(chr==18) |>
-  arrange(-BF) |>
+twas.QTL.summary.ncd |> 
+  filter(chr==18) |>
+  left_join(human.cholesterol.data |> select(gene_mouse,bf_common,bf_rare,huge),
+            by=c('symbol'='gene_mouse')) |>
+  arrange(-BF) |> 
   kable(caption="TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF")
 ```
 Manually searched these for associations in the Type 2 Diabetes knowledge portal, listing their BFs (rare + common, most of the contribution to the BF is from common variants):
@@ -95,7 +150,10 @@ Manually searched these for associations in the Type 2 Diabetes knowledge portal
 - *Mcc*: HDL-C - 	51.69 (total cholesterol $<$1)
 - *Tcerg1*: HDL-C 45.02; Total cholesterol 45
 - *Ythdc2*: HDL-C and triglycerides 45
-- *Dcp2*: HDL-C (3) and 
+- *Dcp2*: HDL-C (3) and triglycerides  
+- *Dmxl1*: 1.42
+- *Fem1c* 1.01
+
 
 
 ### Overlap between NCD and HFD TWAS QTL hits 

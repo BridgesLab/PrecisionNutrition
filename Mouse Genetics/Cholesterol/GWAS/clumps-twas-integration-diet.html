@@ -70,7 +70,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
 <link href="clumps-twas-integration-diet_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
 <script src="clumps-twas-integration-diet_files/libs/bootstrap/bootstrap.min.js"></script>
 <link href="clumps-twas-integration-diet_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
-<link href="clumps-twas-integration-diet_files/libs/bootstrap/bootstrap-81267100e462c21b3d6c0d5bf76a3417.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+<link href="clumps-twas-integration-diet_files/libs/bootstrap/bootstrap-ff7067f47e26017551bec3c0280d8ab3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
 
   <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
   <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
@@ -104,10 +104,33 @@ window.Quarto = {
 
 </head>
 
-<body class="fullcontent quarto-light">
+<body class="quarto-light">
 
 <div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
-
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#data-entry" id="toc-data-entry" class="nav-link active" data-scroll-target="#data-entry">Data Entry</a></li>
+  <li><a href="#load-clumping-data" id="toc-load-clumping-data" class="nav-link" data-scroll-target="#load-clumping-data">Load Clumping Data</a></li>
+  <li><a href="#loaded-in-human-cholesterol-data" id="toc-loaded-in-human-cholesterol-data" class="nav-link" data-scroll-target="#loaded-in-human-cholesterol-data">Loaded in Human Cholesterol Data</a>
+  <ul class="collapse">
+  <li><a href="#twas-data" id="toc-twas-data" class="nav-link" data-scroll-target="#twas-data">TWAS Data</a></li>
+  </ul></li>
+  <li><a href="#top-hits-with-human-evidence" id="toc-top-hits-with-human-evidence" class="nav-link" data-scroll-target="#top-hits-with-human-evidence">Top Hits with Human Evidence</a></li>
+  <li><a href="#twas-and-qtl-hits" id="toc-twas-and-qtl-hits" class="nav-link" data-scroll-target="#twas-and-qtl-hits">TWAS and QTL Hits</a></li>
+  <li><a href="#normal-chow-diet-twas-and-qtl-hits" id="toc-normal-chow-diet-twas-and-qtl-hits" class="nav-link" data-scroll-target="#normal-chow-diet-twas-and-qtl-hits">Normal Chow Diet TWAS and QTL Hits</a>
+  <ul class="collapse">
+  <li><a href="#overlap-between-ncd-and-hfd-twas-qtl-hits" id="toc-overlap-between-ncd-and-hfd-twas-qtl-hits" class="nav-link" data-scroll-target="#overlap-between-ncd-and-hfd-twas-qtl-hits">Overlap between NCD and HFD TWAS QTL hits</a></li>
+  </ul></li>
+  <li><a href="#diet-independent-twas-and-qtl-hits" id="toc-diet-independent-twas-and-qtl-hits" class="nav-link" data-scroll-target="#diet-independent-twas-and-qtl-hits">Diet-Independent TWAS and QTL Hits</a></li>
+  <li><a href="#plotting" id="toc-plotting" class="nav-link" data-scroll-target="#plotting">Plotting</a></li>
+  <li><a href="#comparason-with-human-gwas" id="toc-comparason-with-human-gwas" class="nav-link" data-scroll-target="#comparason-with-human-gwas">Comparason with human GWAS</a></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+</nav>
+</div>
 <main class="content" id="quarto-document-content">
 
 <header id="title-block-header" class="quarto-title-block default">
@@ -141,7 +164,7 @@ window.Quarto = {
 </header>
 
 
-<p>This file is for looking at genes within the clumped QTL regions for NCD and HFD, and cross-referencing these against TWAS results. This script was last run on Sun Nov 23 20:14:25 2025 and can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Cholesterol/GWAS.</p>
+<p>This file is for looking at genes within the clumped QTL regions for NCD and HFD, and cross-referencing these against TWAS results. This script was last run on Mon Dec 15 15:26:22 2025 and can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Cholesterol/GWAS.</p>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
 <p>Loaded in clumping data and TWAS data</p>
@@ -150,121 +173,421 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="load-clumping-data">Load Clumping Data</h2>
 <p>This is long-format annotated clump data for NCD or HFD GWAS</p>
 <div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>ncd.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps NCD QTLs.csv'</span></span>
 <span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>hfd.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'</span></span>
 <span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
-<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>ncd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(ncd.clump.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 5047 Columns: 26
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr  (6): SNP, SP2, ensembl_gene_id, external_gene_name, gene_biotype, strand
-dbl (19): CHR, F, BP, P, TOTAL, NSIG, S05, S01, S001, S0001, Min_Position, M...
-lgl  (1): SP2.split
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>ncd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(ncd.clump.filename)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>hfd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(hfd.clump.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>hfd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(hfd.clump.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 4546 Columns: 26
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr  (6): SNP, SP2, ensembl_gene_id, external_gene_name, gene_biotype, strand
-dbl (19): CHR, F, BP, P, TOTAL, NSIG, S05, S01, S001, S0001, Min_Position, M...
-lgl  (1): SP2.split
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
+</section>
+<section id="loaded-in-human-cholesterol-data" class="level2">
+<h2 class="anchored" data-anchor-id="loaded-in-human-cholesterol-data">Loaded in Human Cholesterol Data</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>human.mouse.mapping.filename <span class="ot">&lt;-</span> <span class="st">'HOM_MouseHumanSequence.rpt'</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>mouse.human.mapping <span class="ot">&lt;-</span> <span class="fu">read_tsv</span>(human.mouse.mapping.filename) <span class="sc">|&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>,Symbol,<span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Species =</span> <span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Species =</span> <span class="fu">fct_recode</span>(<span class="fu">as.factor</span>(Species),</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>                              <span class="at">human=</span><span class="st">'human'</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>                              <span class="at">mouse=</span><span class="st">'mouse, laboratory'</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">id_cols=</span><span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">names_from=</span>Species,</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from=</span>Symbol,</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_fn=</span>first)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>human.cholesterol.filename <span class="ot">&lt;-</span> <span class="st">'gene_associations_total_cholesterol.csv'</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>human.cholesterol.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(human.cholesterol.filename) <span class="sc">|&gt;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(mouse.human.mapping,</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'gene'</span><span class="ot">=</span><span class="st">'human'</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">gene_mouse =</span> mouse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <section id="twas-data" class="level3">
 <h3 class="anchored" data-anchor-id="twas-data">TWAS Data</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>twas.all.filename <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Linear Model.csv'</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>
-Attaching package: 'dplyr'</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:stats':
-
-    filter, lag</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>The following objects are masked from 'package:base':
-
-    intersect, setdiff, setequal, union</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(twas.all.filename) <span class="sc">%&gt;%</span></span>
-<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">t.statistic=</span><span class="fu">sqrt</span>(<span class="fu">abs</span>(r2))<span class="sc">*</span><span class="fu">sqrt</span>((<span class="dv">478-2</span>)<span class="sc">/</span>(<span class="dv">1</span><span class="sc">-</span>r2)),</span>
-<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">BF=</span><span class="fu">sqrt</span>(<span class="dv">478</span><span class="sc">/</span><span class="dv">2</span>)<span class="sc">*</span><span class="fu">exp</span>((t.statistic<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span><span class="dv">2</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 11770 Columns: 10</code></pre>
-</div>
-<div class="cell-output cell-output-stderr">
-<pre><code>── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr (3): ID, symbol, chr
-dbl (7): beta, se, pval, r2, padj, start.true, end.true
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="co">#using twas data, dont have lm data yet</span></span>
-<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>twas.hfd.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'Cholesterol TWAS - HFD Only - Sex Adjusted.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 11735 Columns: 16
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr  (5): gene.id, symbol, chr, strand, nearest.marker.id
-dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>twas.ncd.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'Cholesterol TWAS - NCD Only - Sex Adjusted.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 11738 Columns: 16
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr  (5): gene.id, symbol, chr, strand, nearest.marker.id
-dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>twas.all.filename <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Linear Model.csv'</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(twas.all.filename) <span class="sc">%&gt;%</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">t.statistic=</span><span class="fu">sqrt</span>(<span class="fu">abs</span>(r2))<span class="sc">*</span><span class="fu">sqrt</span>((<span class="dv">478-2</span>)<span class="sc">/</span>(<span class="dv">1</span><span class="sc">-</span>r2)),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>         <span class="at">BF=</span><span class="fu">sqrt</span>(<span class="dv">478</span><span class="sc">/</span><span class="dv">2</span>)<span class="sc">*</span><span class="fu">exp</span>((t.statistic<span class="sc">^</span><span class="dv">2</span>)<span class="sc">/</span><span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(human.cholesterol.data <span class="sc">|&gt;</span> <span class="fu">select</span>(gene_mouse,bf_common,bf_rare,huge),</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'symbol'</span><span class="ot">=</span><span class="st">'gene_mouse'</span>))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a><span class="co">#using twas data, dont have lm data yet</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>twas.hfd.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'Cholesterol TWAS - HFD Only - Sex Adjusted.csv'</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>twas.ncd.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">'Cholesterol TWAS - NCD Only - Sex Adjusted.csv'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>Calculated an approximate Bayes factor according to this formula from Bartos and Wagenmakers (https://doi.org/10.1002/sta4.600)</p>
 <p><span class="math display">\[t = r \sqrt{\frac{n-2}{1-r^2}}\]</span> <span class="math display">\[ BF \approx \sqrt{\frac{n}{2}} \cdot e^{t^2/2} \ \]</span></p>
 </section>
 </section>
+<section id="top-hits-with-human-evidence" class="level2">
+<h2 class="anchored" data-anchor-id="top-hits-with-human-evidence">Top Hits with Human Evidence</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(huge))) <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>huge,<span class="sc">-</span>BF) <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol,beta,se,r2,BF,pval,huge,chr,start.true) <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">25</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Top TWAS hits with human evidence from Type 2 Diabetes Knowledge Portal"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Top TWAS hits with human evidence from Type 2 Diabetes Knowledge Portal</caption>
+<colgroup>
+<col style="width: 11%">
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 14%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">symbol</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">r2</th>
+<th style="text-align: right;">BF</th>
+<th style="text-align: right;">pval</th>
+<th style="text-align: right;">huge</th>
+<th style="text-align: left;">chr</th>
+<th style="text-align: right;">start.true</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Apoh</td>
+<td style="text-align: right;">-13.908686</td>
+<td style="text-align: right;">3.4093597</td>
+<td style="text-align: right;">0.0322105</td>
+<td style="text-align: right;">4.259457e+04</td>
+<td style="text-align: right;">0.0000530</td>
+<td style="text-align: right;">902.7753</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">108343354</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ldlr</td>
+<td style="text-align: right;">-13.316654</td>
+<td style="text-align: right;">2.8038642</td>
+<td style="text-align: right;">0.0438540</td>
+<td style="text-align: right;">8.510247e+05</td>
+<td style="text-align: right;">0.0000027</td>
+<td style="text-align: right;">762.8057</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">21723576</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Abca6</td>
+<td style="text-align: right;">-15.545207</td>
+<td style="text-align: right;">3.3720847</td>
+<td style="text-align: right;">0.0413090</td>
+<td style="text-align: right;">4.395062e+05</td>
+<td style="text-align: right;">0.0000052</td>
+<td style="text-align: right;">717.4041</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">110176820</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fgb</td>
+<td style="text-align: right;">-8.138551</td>
+<td style="text-align: right;">2.8579048</td>
+<td style="text-align: right;">0.0149014</td>
+<td style="text-align: right;">5.658927e+02</td>
+<td style="text-align: right;">0.0045965</td>
+<td style="text-align: right;">385.5009</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">83040141</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc27a5</td>
+<td style="text-align: right;">-14.763216</td>
+<td style="text-align: right;">3.3991425</td>
+<td style="text-align: right;">0.0366159</td>
+<td style="text-align: right;">1.311405e+05</td>
+<td style="text-align: right;">0.0000172</td>
+<td style="text-align: right;">366.5396</td>
+<td style="text-align: left;">7</td>
+<td style="text-align: right;">12988346</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Plscr4</td>
+<td style="text-align: right;">-7.079956</td>
+<td style="text-align: right;">2.6183314</td>
+<td style="text-align: right;">0.0132510</td>
+<td style="text-align: right;">3.777808e+02</td>
+<td style="text-align: right;">0.0071001</td>
+<td style="text-align: right;">360.8304</td>
+<td style="text-align: left;">9</td>
+<td style="text-align: right;">92457373</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Usp8</td>
+<td style="text-align: right;">-17.859983</td>
+<td style="text-align: right;">4.0873768</td>
+<td style="text-align: right;">0.0370686</td>
+<td style="text-align: right;">1.472941e+05</td>
+<td style="text-align: right;">0.0000153</td>
+<td style="text-align: right;">355.9564</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">126707328</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hbb-bt</td>
+<td style="text-align: right;">3.816633</td>
+<td style="text-align: right;">0.8320338</td>
+<td style="text-align: right;">0.0408978</td>
+<td style="text-align: right;">3.951248e+05</td>
+<td style="text-align: right;">0.0000058</td>
+<td style="text-align: right;">351.3551</td>
+<td style="text-align: left;">7</td>
+<td style="text-align: right;">103812524</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hbb-bs</td>
+<td style="text-align: right;">4.055409</td>
+<td style="text-align: right;">0.9277789</td>
+<td style="text-align: right;">0.0370953</td>
+<td style="text-align: right;">1.483063e+05</td>
+<td style="text-align: right;">0.0000152</td>
+<td style="text-align: right;">351.3551</td>
+<td style="text-align: left;">7</td>
+<td style="text-align: right;">103826534</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Jak2</td>
+<td style="text-align: right;">-7.284364</td>
+<td style="text-align: right;">3.6933509</td>
+<td style="text-align: right;">0.0061112</td>
+<td style="text-align: right;">6.679611e+01</td>
+<td style="text-align: right;">0.0491634</td>
+<td style="text-align: right;">351.1317</td>
+<td style="text-align: left;">19</td>
+<td style="text-align: right;">29251828</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Myct1</td>
+<td style="text-align: right;">-7.774825</td>
+<td style="text-align: right;">3.1071354</td>
+<td style="text-align: right;">0.0110702</td>
+<td style="text-align: right;">2.219469e+02</td>
+<td style="text-align: right;">0.0126801</td>
+<td style="text-align: right;">350.7582</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">5593728</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cps1</td>
+<td style="text-align: right;">-18.616299</td>
+<td style="text-align: right;">2.6531024</td>
+<td style="text-align: right;">0.0930765</td>
+<td style="text-align: right;">6.267955e+11</td>
+<td style="text-align: right;">0.0000000</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">67123026</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kif13b</td>
+<td style="text-align: right;">-15.099085</td>
+<td style="text-align: right;">2.8057361</td>
+<td style="text-align: right;">0.0561502</td>
+<td style="text-align: right;">2.179095e+07</td>
+<td style="text-align: right;">0.0000001</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">64652531</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fgfr4</td>
+<td style="text-align: right;">-17.084330</td>
+<td style="text-align: right;">3.2014584</td>
+<td style="text-align: right;">0.0552334</td>
+<td style="text-align: right;">1.706114e+07</td>
+<td style="text-align: right;">0.0000001</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">55152640</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc39a8</td>
+<td style="text-align: right;">-15.375389</td>
+<td style="text-align: right;">3.1180771</td>
+<td style="text-align: right;">0.0472624</td>
+<td style="text-align: right;">2.073342e+06</td>
+<td style="text-align: right;">0.0000011</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">135825279</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Uap1l1</td>
+<td style="text-align: right;">9.146948</td>
+<td style="text-align: right;">1.9751726</td>
+<td style="text-align: right;">0.0416882</td>
+<td style="text-align: right;">4.848714e+05</td>
+<td style="text-align: right;">0.0000047</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">25359889</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hnf1a</td>
+<td style="text-align: right;">-16.314856</td>
+<td style="text-align: right;">3.9170676</td>
+<td style="text-align: right;">0.0336134</td>
+<td style="text-align: right;">6.086892e+04</td>
+<td style="text-align: right;">0.0000371</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114948980</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Lrba</td>
+<td style="text-align: right;">-16.020666</td>
+<td style="text-align: right;">3.8998373</td>
+<td style="text-align: right;">0.0326749</td>
+<td style="text-align: right;">4.793210e+04</td>
+<td style="text-align: right;">0.0000471</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">3</td>
+<td style="text-align: right;">86224680</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hnf4a</td>
+<td style="text-align: right;">-13.853094</td>
+<td style="text-align: right;">3.5233840</td>
+<td style="text-align: right;">0.0298451</td>
+<td style="text-align: right;">2.338577e+04</td>
+<td style="text-align: right;">0.0000970</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">163506808</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cd300lg</td>
+<td style="text-align: right;">-11.618793</td>
+<td style="text-align: right;">3.1030821</td>
+<td style="text-align: right;">0.0269546</td>
+<td style="text-align: right;">1.128392e+04</td>
+<td style="text-align: right;">0.0002034</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">102041509</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Serpina1b</td>
+<td style="text-align: right;">-12.250695</td>
+<td style="text-align: right;">3.2812964</td>
+<td style="text-align: right;">0.0267921</td>
+<td style="text-align: right;">1.083247e+04</td>
+<td style="text-align: right;">0.0002120</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">103728156</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rbm47</td>
+<td style="text-align: right;">-13.104253</td>
+<td style="text-align: right;">3.6999518</td>
+<td style="text-align: right;">0.0239727</td>
+<td style="text-align: right;">5.344714e+03</td>
+<td style="text-align: right;">0.0004372</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">66016549</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gpam</td>
+<td style="text-align: right;">6.392380</td>
+<td style="text-align: right;">1.9562174</td>
+<td style="text-align: right;">0.0201761</td>
+<td style="text-align: right;">2.077703e+03</td>
+<td style="text-align: right;">0.0011637</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">19</td>
+<td style="text-align: right;">55069734</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Golga3</td>
+<td style="text-align: right;">-12.282048</td>
+<td style="text-align: right;">3.8828763</td>
+<td style="text-align: right;">0.0188002</td>
+<td style="text-align: right;">1.477953e+03</td>
+<td style="text-align: right;">0.0016621</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">110176701</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Golga2</td>
+<td style="text-align: right;">-14.026952</td>
+<td style="text-align: right;">4.6382547</td>
+<td style="text-align: right;">0.0170360</td>
+<td style="text-align: right;">9.563085e+02</td>
+<td style="text-align: right;">0.0026298</td>
+<td style="text-align: right;">350.0000</td>
+<td style="text-align: left;">2</td>
+<td style="text-align: right;">32287384</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
 <section id="twas-and-qtl-hits" class="level2">
 <h2 class="anchored" data-anchor-id="twas-and-qtl-hits">TWAS and QTL Hits</h2>
 <p>First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under any conditions</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
-<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
-<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> hfd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
-<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,BF,pval,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
-<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.hfd</span>
-<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.hfd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> hfd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter(pval&lt;0.05) %&gt;%</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,BF,pval,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.hfd</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.hfd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 294</code></pre>
+<pre><code>[1] 596</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="co">#twas.QTL.summary.hfd %&gt;% kable(caption="Nominally significant TWAS hits inside QTL regions on HFD")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#twas.QTL.summary.hfd %&gt;% kable(caption="Nominally significant TWAS hits inside QTL regions on HFD")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd <span class="sc">|&gt;</span> <span class="fu">filter</span>(chr<span class="sc">==</span><span class="dv">5</span>) <span class="sc">|&gt;</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>BF) <span class="sc">|&gt;</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF"</span>, <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">99</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd <span class="sc">|&gt;</span> <span class="fu">filter</span>(chr<span class="sc">==</span><span class="dv">5</span>) <span class="sc">|&gt;</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>BF) <span class="sc">|&gt;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"TWAS hits in NCD-specific QTL on chromosome 5, sorted by BF"</span>, <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">1</span>,<span class="dv">99</span>,<span class="dv">0</span>,<span class="dv">0</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF</caption>
+<caption>TWAS hits in NCD-specific QTL on chromosome 5, sorted by BF</caption>
 <colgroup>
 <col style="width: 17%">
 <col style="width: 10%">
@@ -1168,6 +1491,966 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 <td style="text-align: right;">113612354</td>
 <td style="text-align: right;">113650426</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">Zcchc4</td>
+<td style="text-align: right;">-7.242</td>
+<td style="text-align: right;">3.751</td>
+<td style="text-align: right;">6.150000e+01</td>
+<td style="text-align: right;">5.410233e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">52775409</td>
+<td style="text-align: right;">52824665</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ptpn11</td>
+<td style="text-align: right;">-8.687</td>
+<td style="text-align: right;">4.537</td>
+<td style="text-align: right;">5.960000e+01</td>
+<td style="text-align: right;">5.616551e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121130533</td>
+<td style="text-align: right;">121191397</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Srrm4</td>
+<td style="text-align: right;">-3.352</td>
+<td style="text-align: right;">1.777</td>
+<td style="text-align: right;">5.640000e+01</td>
+<td style="text-align: right;">5.991296e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">116439275</td>
+<td style="text-align: right;">116591817</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Bcl7a</td>
+<td style="text-align: right;">-7.406</td>
+<td style="text-align: right;">3.948</td>
+<td style="text-align: right;">5.540000e+01</td>
+<td style="text-align: right;">6.125575e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123343834</td>
+<td style="text-align: right;">123374992</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kdm2b</td>
+<td style="text-align: right;">-5.040</td>
+<td style="text-align: right;">2.705</td>
+<td style="text-align: right;">5.400000e+01</td>
+<td style="text-align: right;">6.306970e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122870665</td>
+<td style="text-align: right;">122989823</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Srsf9</td>
+<td style="text-align: right;">-6.048</td>
+<td style="text-align: right;">3.308</td>
+<td style="text-align: right;">5.060000e+01</td>
+<td style="text-align: right;">6.818065e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115327177</td>
+<td style="text-align: right;">115333080</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kctd10</td>
+<td style="text-align: right;">-6.444</td>
+<td style="text-align: right;">3.589</td>
+<td style="text-align: right;">4.770000e+01</td>
+<td style="text-align: right;">7.320036e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114363567</td>
+<td style="text-align: right;">114380508</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tpcn1</td>
+<td style="text-align: right;">-5.791</td>
+<td style="text-align: right;">3.392</td>
+<td style="text-align: right;">4.080000e+01</td>
+<td style="text-align: right;">8.838425e-02</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120534153</td>
+<td style="text-align: right;">120588673</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oasl2</td>
+<td style="text-align: right;">2.545</td>
+<td style="text-align: right;">1.566</td>
+<td style="text-align: right;">3.550000e+01</td>
+<td style="text-align: right;">1.048222e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114896936</td>
+<td style="text-align: right;">114912234</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Eif2b1</td>
+<td style="text-align: right;">-6.187</td>
+<td style="text-align: right;">3.845</td>
+<td style="text-align: right;">3.460000e+01</td>
+<td style="text-align: right;">1.082598e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124570213</td>
+<td style="text-align: right;">124579131</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gtf2h3</td>
+<td style="text-align: right;">-5.586</td>
+<td style="text-align: right;">3.609</td>
+<td style="text-align: right;">3.130000e+01</td>
+<td style="text-align: right;">1.224195e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124579140</td>
+<td style="text-align: right;">124597680</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rnf34</td>
+<td style="text-align: right;">-5.846</td>
+<td style="text-align: right;">3.787</td>
+<td style="text-align: right;">3.110000e+01</td>
+<td style="text-align: right;">1.233435e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122850048</td>
+<td style="text-align: right;">122871291</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Oasl1</td>
+<td style="text-align: right;">2.800</td>
+<td style="text-align: right;">1.815</td>
+<td style="text-align: right;">3.110000e+01</td>
+<td style="text-align: right;">1.236685e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114923240</td>
+<td style="text-align: right;">114937915</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Arl6ip4</td>
+<td style="text-align: right;">-5.027</td>
+<td style="text-align: right;">3.266</td>
+<td style="text-align: right;">3.090000e+01</td>
+<td style="text-align: right;">1.245174e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124116089</td>
+<td style="text-align: right;">124118196</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stim2</td>
+<td style="text-align: right;">-5.279</td>
+<td style="text-align: right;">3.517</td>
+<td style="text-align: right;">2.920000e+01</td>
+<td style="text-align: right;">1.340723e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">53998499</td>
+<td style="text-align: right;">54121057</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc8b1</td>
+<td style="text-align: right;">-4.243</td>
+<td style="text-align: right;">2.836</td>
+<td style="text-align: right;">2.890000e+01</td>
+<td style="text-align: right;">1.352727e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120511168</td>
+<td style="text-align: right;">120534024</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wdr1</td>
+<td style="text-align: right;">-5.606</td>
+<td style="text-align: right;">3.766</td>
+<td style="text-align: right;">2.860000e+01</td>
+<td style="text-align: right;">1.372629e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">38526813</td>
+<td style="text-align: right;">38563221</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sds</td>
+<td style="text-align: right;">-3.163</td>
+<td style="text-align: right;">2.150</td>
+<td style="text-align: right;">2.790000e+01</td>
+<td style="text-align: right;">1.419701e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120476526</td>
+<td style="text-align: right;">120483932</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Anapc7</td>
+<td style="text-align: right;">-5.598</td>
+<td style="text-align: right;">3.841</td>
+<td style="text-align: right;">2.730000e+01</td>
+<td style="text-align: right;">1.455875e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122421693</td>
+<td style="text-align: right;">122444912</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pi4k2b</td>
+<td style="text-align: right;">-4.260</td>
+<td style="text-align: right;">3.001</td>
+<td style="text-align: right;">2.580000e+01</td>
+<td style="text-align: right;">1.564998e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">52741574</td>
+<td style="text-align: right;">52769340</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tmem248</td>
+<td style="text-align: right;">-5.042</td>
+<td style="text-align: right;">3.554</td>
+<td style="text-align: right;">2.580000e+01</td>
+<td style="text-align: right;">1.566287e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">130217081</td>
+<td style="text-align: right;">130243765</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cdk2ap1</td>
+<td style="text-align: right;">0.006</td>
+<td style="text-align: right;">3.276</td>
+<td style="text-align: right;">2.570000e+01</td>
+<td style="text-align: right;">9.984571e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124345417</td>
+<td style="text-align: right;">124363082</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Alkbh2</td>
+<td style="text-align: right;">0.057</td>
+<td style="text-align: right;">1.873</td>
+<td style="text-align: right;">2.560000e+01</td>
+<td style="text-align: right;">9.759447e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114123926</td>
+<td style="text-align: right;">114128218</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2900026A02Rik</td>
+<td style="text-align: right;">-0.175</td>
+<td style="text-align: right;">3.692</td>
+<td style="text-align: right;">2.560000e+01</td>
+<td style="text-align: right;">9.622187e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">113086323</td>
+<td style="text-align: right;">113163351</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ogfod2</td>
+<td style="text-align: right;">0.255</td>
+<td style="text-align: right;">3.480</td>
+<td style="text-align: right;">2.560000e+01</td>
+<td style="text-align: right;">9.416259e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124112297</td>
+<td style="text-align: right;">124115483</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Orai1</td>
+<td style="text-align: right;">-0.356</td>
+<td style="text-align: right;">2.908</td>
+<td style="text-align: right;">2.550000e+01</td>
+<td style="text-align: right;">9.025850e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123015074</td>
+<td style="text-align: right;">123030456</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Suds3</td>
+<td style="text-align: right;">-0.746</td>
+<td style="text-align: right;">3.718</td>
+<td style="text-align: right;">2.510000e+01</td>
+<td style="text-align: right;">8.410735e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">117091680</td>
+<td style="text-align: right;">117116113</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Psph</td>
+<td style="text-align: right;">0.661</td>
+<td style="text-align: right;">2.640</td>
+<td style="text-align: right;">2.490000e+01</td>
+<td style="text-align: right;">8.025204e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129765558</td>
+<td style="text-align: right;">129787449</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Plbd2</td>
+<td style="text-align: right;">-1.194</td>
+<td style="text-align: right;">4.074</td>
+<td style="text-align: right;">2.460000e+01</td>
+<td style="text-align: right;">7.696566e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120483282</td>
+<td style="text-align: right;">120503625</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cox6a1</td>
+<td style="text-align: right;">0.908</td>
+<td style="text-align: right;">2.926</td>
+<td style="text-align: right;">2.440000e+01</td>
+<td style="text-align: right;">7.564879e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115345642</td>
+<td style="text-align: right;">115348981</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Triap1</td>
+<td style="text-align: right;">1.085</td>
+<td style="text-align: right;">3.493</td>
+<td style="text-align: right;">2.440000e+01</td>
+<td style="text-align: right;">7.562789e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115341225</td>
+<td style="text-align: right;">115343569</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ssh1</td>
+<td style="text-align: right;">1.305</td>
+<td style="text-align: right;">4.115</td>
+<td style="text-align: right;">2.440000e+01</td>
+<td style="text-align: right;">7.513414e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">113937094</td>
+<td style="text-align: right;">113993894</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rita1</td>
+<td style="text-align: right;">-1.150</td>
+<td style="text-align: right;">3.268</td>
+<td style="text-align: right;">2.410000e+01</td>
+<td style="text-align: right;">7.251697e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120594305</td>
+<td style="text-align: right;">120612589</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gltp</td>
+<td style="text-align: right;">-0.854</td>
+<td style="text-align: right;">2.424</td>
+<td style="text-align: right;">2.410000e+01</td>
+<td style="text-align: right;">7.248246e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114669398</td>
+<td style="text-align: right;">114690984</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gpn3</td>
+<td style="text-align: right;">-1.108</td>
+<td style="text-align: right;">3.042</td>
+<td style="text-align: right;">2.400000e+01</td>
+<td style="text-align: right;">7.159435e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122371876</td>
+<td style="text-align: right;">122382902</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Acad10</td>
+<td style="text-align: right;">-3.653</td>
+<td style="text-align: right;">2.674</td>
+<td style="text-align: right;">2.400000e+01</td>
+<td style="text-align: right;">1.725622e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121621026</td>
+<td style="text-align: right;">121660514</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Aacs</td>
+<td style="text-align: right;">-2.069</td>
+<td style="text-align: right;">1.518</td>
+<td style="text-align: right;">2.390000e+01</td>
+<td style="text-align: right;">1.734606e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">125475814</td>
+<td style="text-align: right;">125517410</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Scarb1</td>
+<td style="text-align: right;">-1.315</td>
+<td style="text-align: right;">3.308</td>
+<td style="text-align: right;">2.370000e+01</td>
+<td style="text-align: right;">6.912268e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">125277087</td>
+<td style="text-align: right;">125341094</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tmem120b</td>
+<td style="text-align: right;">-1.169</td>
+<td style="text-align: right;">2.914</td>
+<td style="text-align: right;">2.360000e+01</td>
+<td style="text-align: right;">6.884678e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123068415</td>
+<td style="text-align: right;">123117749</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ung</td>
+<td style="text-align: right;">-0.882</td>
+<td style="text-align: right;">2.200</td>
+<td style="text-align: right;">2.360000e+01</td>
+<td style="text-align: right;">6.884520e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114130386</td>
+<td style="text-align: right;">114139323</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fam216a</td>
+<td style="text-align: right;">0.905</td>
+<td style="text-align: right;">2.205</td>
+<td style="text-align: right;">2.360000e+01</td>
+<td style="text-align: right;">6.817719e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122364580</td>
+<td style="text-align: right;">122372364</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fbxw8</td>
+<td style="text-align: right;">-1.696</td>
+<td style="text-align: right;">4.101</td>
+<td style="text-align: right;">2.350000e+01</td>
+<td style="text-align: right;">6.794722e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">118064965</td>
+<td style="text-align: right;">118155464</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Gm15690</td>
+<td style="text-align: right;">-0.720</td>
+<td style="text-align: right;">1.667</td>
+<td style="text-align: right;">2.330000e+01</td>
+<td style="text-align: right;">6.661159e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120479842</td>
+<td style="text-align: right;">120480903</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mrps17</td>
+<td style="text-align: right;">-4.828</td>
+<td style="text-align: right;">3.587</td>
+<td style="text-align: right;">2.330000e+01</td>
+<td style="text-align: right;">1.789680e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129715497</td>
+<td style="text-align: right;">129722556</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Erp29</td>
+<td style="text-align: right;">1.502</td>
+<td style="text-align: right;">3.455</td>
+<td style="text-align: right;">2.330000e+01</td>
+<td style="text-align: right;">6.638841e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121428590</td>
+<td style="text-align: right;">121452506</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Vps29</td>
+<td style="text-align: right;">-4.824</td>
+<td style="text-align: right;">3.635</td>
+<td style="text-align: right;">2.270000e+01</td>
+<td style="text-align: right;">1.851103e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122354369</td>
+<td style="text-align: right;">122364984</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sod3</td>
+<td style="text-align: right;">-0.856</td>
+<td style="text-align: right;">1.697</td>
+<td style="text-align: right;">2.260000e+01</td>
+<td style="text-align: right;">6.142007e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">52363791</td>
+<td style="text-align: right;">52371418</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Prkab1</td>
+<td style="text-align: right;">-3.965</td>
+<td style="text-align: right;">3.004</td>
+<td style="text-align: right;">2.250000e+01</td>
+<td style="text-align: right;">1.875494e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">116013586</td>
+<td style="text-align: right;">116024508</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Mapkapk5</td>
+<td style="text-align: right;">-1.890</td>
+<td style="text-align: right;">3.445</td>
+<td style="text-align: right;">2.200000e+01</td>
+<td style="text-align: right;">5.836202e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121525038</td>
+<td style="text-align: right;">121545905</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rad9b</td>
+<td style="text-align: right;">-0.687</td>
+<td style="text-align: right;">1.242</td>
+<td style="text-align: right;">2.200000e+01</td>
+<td style="text-align: right;">5.805192e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122323223</td>
+<td style="text-align: right;">122354233</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Acads</td>
+<td style="text-align: right;">2.043</td>
+<td style="text-align: right;">3.623</td>
+<td style="text-align: right;">2.180000e+01</td>
+<td style="text-align: right;">5.730640e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115110299</td>
+<td style="text-align: right;">115119346</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Chchd2</td>
+<td style="text-align: right;">-4.020</td>
+<td style="text-align: right;">3.103</td>
+<td style="text-align: right;">2.180000e+01</td>
+<td style="text-align: right;">1.957696e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129881156</td>
+<td style="text-align: right;">129887470</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Wsb2</td>
+<td style="text-align: right;">2.490</td>
+<td style="text-align: right;">4.337</td>
+<td style="text-align: right;">2.170000e+01</td>
+<td style="text-align: right;">5.660648e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">117357304</td>
+<td style="text-align: right;">117378601</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sumf2</td>
+<td style="text-align: right;">1.846</td>
+<td style="text-align: right;">3.186</td>
+<td style="text-align: right;">2.160000e+01</td>
+<td style="text-align: right;">5.625547e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129846986</td>
+<td style="text-align: right;">129864050</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Clip1</td>
+<td style="text-align: right;">-5.528</td>
+<td style="text-align: right;">4.304</td>
+<td style="text-align: right;">2.150000e+01</td>
+<td style="text-align: right;">1.996518e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123577795</td>
+<td style="text-align: right;">123684618</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hnf1aos1</td>
+<td style="text-align: right;">0.579</td>
+<td style="text-align: right;">0.965</td>
+<td style="text-align: right;">2.140000e+01</td>
+<td style="text-align: right;">5.489051e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114968784</td>
+<td style="text-align: right;">114998042</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rab35</td>
+<td style="text-align: right;">-5.093</td>
+<td style="text-align: right;">4.010</td>
+<td style="text-align: right;">2.110000e+01</td>
+<td style="text-align: right;">2.047287e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115631908</td>
+<td style="text-align: right;">115647736</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smim20</td>
+<td style="text-align: right;">2.432</td>
+<td style="text-align: right;">3.895</td>
+<td style="text-align: right;">2.110000e+01</td>
+<td style="text-align: right;">5.327282e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">53267083</td>
+<td style="text-align: right;">53278540</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Diablo</td>
+<td style="text-align: right;">-4.369</td>
+<td style="text-align: right;">3.507</td>
+<td style="text-align: right;">2.040000e+01</td>
+<td style="text-align: right;">2.134905e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123509765</td>
+<td style="text-align: right;">123525488</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rnf10</td>
+<td style="text-align: right;">-5.001</td>
+<td style="text-align: right;">4.039</td>
+<td style="text-align: right;">2.030000e+01</td>
+<td style="text-align: right;">2.161985e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115241412</td>
+<td style="text-align: right;">115272898</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Brap</td>
+<td style="text-align: right;">-2.531</td>
+<td style="text-align: right;">3.579</td>
+<td style="text-align: right;">1.990000e+01</td>
+<td style="text-align: right;">4.797585e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121660563</td>
+<td style="text-align: right;">121687256</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tmed2</td>
+<td style="text-align: right;">-3.052</td>
+<td style="text-align: right;">4.143</td>
+<td style="text-align: right;">1.950000e+01</td>
+<td style="text-align: right;">4.617541e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124540695</td>
+<td style="text-align: right;">124550506</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sppl3</td>
+<td style="text-align: right;">-5.103</td>
+<td style="text-align: right;">4.234</td>
+<td style="text-align: right;">1.940000e+01</td>
+<td style="text-align: right;">2.287175e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115011137</td>
+<td style="text-align: right;">115098790</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Coq5</td>
+<td style="text-align: right;">-4.242</td>
+<td style="text-align: right;">3.534</td>
+<td style="text-align: right;">1.930000e+01</td>
+<td style="text-align: right;">2.306369e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115279666</td>
+<td style="text-align: right;">115296972</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Selplg</td>
+<td style="text-align: right;">1.460</td>
+<td style="text-align: right;">1.933</td>
+<td style="text-align: right;">1.920000e+01</td>
+<td style="text-align: right;">4.505552e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">113818536</td>
+<td style="text-align: right;">113832644</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hspb8</td>
+<td style="text-align: right;">-3.525</td>
+<td style="text-align: right;">2.950</td>
+<td style="text-align: right;">1.920000e+01</td>
+<td style="text-align: right;">2.328430e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">116408491</td>
+<td style="text-align: right;">116422864</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rab28</td>
+<td style="text-align: right;">-4.272</td>
+<td style="text-align: right;">3.586</td>
+<td style="text-align: right;">1.910000e+01</td>
+<td style="text-align: right;">2.341797e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">41624976</td>
+<td style="text-align: right;">41708157</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tyw1</td>
+<td style="text-align: right;">3.080</td>
+<td style="text-align: right;">4.034</td>
+<td style="text-align: right;">1.910000e+01</td>
+<td style="text-align: right;">4.454827e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">130255619</td>
+<td style="text-align: right;">130341563</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Sdsl</td>
+<td style="text-align: right;">2.189</td>
+<td style="text-align: right;">2.818</td>
+<td style="text-align: right;">1.890000e+01</td>
+<td style="text-align: right;">4.377405e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120458186</td>
+<td style="text-align: right;">120472810</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Rfc5</td>
+<td style="text-align: right;">-4.089</td>
+<td style="text-align: right;">3.472</td>
+<td style="text-align: right;">1.880000e+01</td>
+<td style="text-align: right;">2.394921e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">117378103</td>
+<td style="text-align: right;">117389047</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rpl37rt</td>
+<td style="text-align: right;">-0.488</td>
+<td style="text-align: right;">0.611</td>
+<td style="text-align: right;">1.860000e+01</td>
+<td style="text-align: right;">4.249593e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115102923</td>
+<td style="text-align: right;">115110268</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2210016L21Rik</td>
+<td style="text-align: right;">-4.221</td>
+<td style="text-align: right;">3.628</td>
+<td style="text-align: right;">1.850000e+01</td>
+<td style="text-align: right;">2.452246e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">114942158</td>
+<td style="text-align: right;">114949783</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Trafd1</td>
+<td style="text-align: right;">-3.700</td>
+<td style="text-align: right;">3.216</td>
+<td style="text-align: right;">1.820000e+01</td>
+<td style="text-align: right;">2.504680e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121371725</td>
+<td style="text-align: right;">121385632</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pebp1</td>
+<td style="text-align: right;">-3.002</td>
+<td style="text-align: right;">2.610</td>
+<td style="text-align: right;">1.820000e+01</td>
+<td style="text-align: right;">2.505614e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">117282654</td>
+<td style="text-align: right;">117287625</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ficd</td>
+<td style="text-align: right;">-2.129</td>
+<td style="text-align: right;">2.585</td>
+<td style="text-align: right;">1.820000e+01</td>
+<td style="text-align: right;">4.104596e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">113735803</td>
+<td style="text-align: right;">113740600</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Oas1b</td>
+<td style="text-align: right;">2.289</td>
+<td style="text-align: right;">2.002</td>
+<td style="text-align: right;">1.810000e+01</td>
+<td style="text-align: right;">2.535036e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">120812635</td>
+<td style="text-align: right;">120824163</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rps16-ps2</td>
+<td style="text-align: right;">0.369</td>
+<td style="text-align: right;">0.444</td>
+<td style="text-align: right;">1.810000e+01</td>
+<td style="text-align: right;">4.054455e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129128077</td>
+<td style="text-align: right;">129128517</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stx2</td>
+<td style="text-align: right;">4.070</td>
+<td style="text-align: right;">3.573</td>
+<td style="text-align: right;">1.800000e+01</td>
+<td style="text-align: right;">2.553021e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">128984557</td>
+<td style="text-align: right;">129008574</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ccdc62</td>
+<td style="text-align: right;">-2.171</td>
+<td style="text-align: right;">2.579</td>
+<td style="text-align: right;">1.790000e+01</td>
+<td style="text-align: right;">4.001883e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123930679</td>
+<td style="text-align: right;">123969895</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Dynll1</td>
+<td style="text-align: right;">-2.511</td>
+<td style="text-align: right;">2.248</td>
+<td style="text-align: right;">1.750000e+01</td>
+<td style="text-align: right;">2.646143e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115297110</td>
+<td style="text-align: right;">115300999</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rplp0</td>
+<td style="text-align: right;">-3.065</td>
+<td style="text-align: right;">3.526</td>
+<td style="text-align: right;">1.750000e+01</td>
+<td style="text-align: right;">3.851629e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115559467</td>
+<td style="text-align: right;">115563727</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Slc15a4</td>
+<td style="text-align: right;">-2.607</td>
+<td style="text-align: right;">2.354</td>
+<td style="text-align: right;">1.730000e+01</td>
+<td style="text-align: right;">2.686302e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">127595664</td>
+<td style="text-align: right;">127632897</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Anapc4</td>
+<td style="text-align: right;">-3.676</td>
+<td style="text-align: right;">3.432</td>
+<td style="text-align: right;">1.670000e+01</td>
+<td style="text-align: right;">2.846865e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">52834012</td>
+<td style="text-align: right;">52867797</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Snrnp35</td>
+<td style="text-align: right;">2.918</td>
+<td style="text-align: right;">2.740</td>
+<td style="text-align: right;">1.650000e+01</td>
+<td style="text-align: right;">2.874432e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124483134</td>
+<td style="text-align: right;">124491124</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tctn1</td>
+<td style="text-align: right;">-3.683</td>
+<td style="text-align: right;">3.481</td>
+<td style="text-align: right;">1.640000e+01</td>
+<td style="text-align: right;">2.906149e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122237848</td>
+<td style="text-align: right;">122264460</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ran</td>
+<td style="text-align: right;">-3.045</td>
+<td style="text-align: right;">3.207</td>
+<td style="text-align: right;">1.630000e+01</td>
+<td style="text-align: right;">3.429326e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129020069</td>
+<td style="text-align: right;">129024323</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rpl6</td>
+<td style="text-align: right;">-3.298</td>
+<td style="text-align: right;">3.170</td>
+<td style="text-align: right;">1.610000e+01</td>
+<td style="text-align: right;">2.986873e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121204481</td>
+<td style="text-align: right;">121209241</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sbds</td>
+<td style="text-align: right;">-3.662</td>
+<td style="text-align: right;">3.545</td>
+<td style="text-align: right;">1.600000e+01</td>
+<td style="text-align: right;">3.021322e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">130245731</td>
+<td style="text-align: right;">130255530</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rilpl2</td>
+<td style="text-align: right;">-3.437</td>
+<td style="text-align: right;">3.555</td>
+<td style="text-align: right;">1.600000e+01</td>
+<td style="text-align: right;">3.340704e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">124463265</td>
+<td style="text-align: right;">124478366</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gusb</td>
+<td style="text-align: right;">3.679</td>
+<td style="text-align: right;">3.590</td>
+<td style="text-align: right;">1.590000e+01</td>
+<td style="text-align: right;">3.059606e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129989011</td>
+<td style="text-align: right;">130003049</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Bri3bp</td>
+<td style="text-align: right;">-3.046</td>
+<td style="text-align: right;">3.107</td>
+<td style="text-align: right;">1.580000e+01</td>
+<td style="text-align: right;">3.274162e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">125441568</td>
+<td style="text-align: right;">125460370</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Psmd9</td>
+<td style="text-align: right;">-3.241</td>
+<td style="text-align: right;">3.304</td>
+<td style="text-align: right;">1.580000e+01</td>
+<td style="text-align: right;">3.270894e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">123169413</td>
+<td style="text-align: right;">123250131</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Iscu</td>
+<td style="text-align: right;">3.177</td>
+<td style="text-align: right;">3.210</td>
+<td style="text-align: right;">1.560000e+01</td>
+<td style="text-align: right;">3.228053e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">113772748</td>
+<td style="text-align: right;">113778288</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mlec</td>
+<td style="text-align: right;">2.927</td>
+<td style="text-align: right;">2.952</td>
+<td style="text-align: right;">1.560000e+01</td>
+<td style="text-align: right;">3.218615e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">115142981</td>
+<td style="text-align: right;">115158179</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Vkorc1l1</td>
+<td style="text-align: right;">3.960</td>
+<td style="text-align: right;">3.988</td>
+<td style="text-align: right;">1.560000e+01</td>
+<td style="text-align: right;">3.211672e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">129941970</td>
+<td style="text-align: right;">129986692</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Arpc3</td>
+<td style="text-align: right;">-3.450</td>
+<td style="text-align: right;">3.447</td>
+<td style="text-align: right;">1.550000e+01</td>
+<td style="text-align: right;">3.174613e-01</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">122391878</td>
+<td style="text-align: right;">122414184</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -1177,34 +2460,49 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 <h2 class="anchored" data-anchor-id="normal-chow-diet-twas-and-qtl-hits">Normal Chow Diet TWAS and QTL Hits</h2>
 <p>First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under all conditions</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
-<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,BF,pval,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
-<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.ncd</span>
-<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.ncd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="co">#filter(pval&lt;0.05) %&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,BF,pval,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.ncd</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.ncd)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 367</code></pre>
+<pre><code>[1] 745</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co">#twas.QTL.summary.ncd %&gt;% kable(caption="Nominally significant TWAS hits inside QTL regions on NCD")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="co">#twas.QTL.summary.ncd %&gt;% kable(caption="Nominally significant TWAS hits inside QTL regions on NCD")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>For the chromosome 18 (NCD-specific QTL) the top hits are</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd <span class="sc">|&gt;</span> <span class="fu">filter</span>(chr<span class="sc">==</span><span class="dv">18</span>) <span class="sc">|&gt;</span></span>
-<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>BF) <span class="sc">|&gt;</span></span>
-<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd <span class="sc">|&gt;</span> </span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(chr<span class="sc">==</span><span class="dv">18</span>) <span class="sc">|&gt;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(human.cholesterol.data <span class="sc">|&gt;</span> <span class="fu">select</span>(gene_mouse,bf_common,bf_rare,huge),</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'symbol'</span><span class="ot">=</span><span class="st">'gene_mouse'</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>BF) <span class="sc">|&gt;</span> </span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>TWAS hits in NCD-specific QTL on chromosome 18, sorted by BF</caption>
 <colgroup>
-<col style="width: 9%">
-<col style="width: 14%">
-<col style="width: 12%">
-<col style="width: 17%">
+<col style="width: 8%">
+<col style="width: 11%">
+<col style="width: 10%">
 <col style="width: 13%">
+<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 11%">
+<col style="width: 9%">
+<col style="width: 10%">
+<col style="width: 8%">
 <col style="width: 5%">
-<col style="width: 14%">
-<col style="width: 12%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1216,98 +2514,258 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 <th style="text-align: left;">chr</th>
 <th style="text-align: right;">start.true</th>
 <th style="text-align: right;">end.true</th>
+<th style="text-align: right;">bf_common</th>
+<th style="text-align: right;">bf_rare</th>
+<th style="text-align: right;">huge</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">Kcnn2</td>
 <td style="text-align: right;">-17.365697</td>
-<td style="text-align: right;">3.189432</td>
+<td style="text-align: right;">3.1894318</td>
 <td style="text-align: right;">3.082363e+07</td>
 <td style="text-align: right;">0.0000001</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">45268860</td>
 <td style="text-align: right;">45686024</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Mcc</td>
 <td style="text-align: right;">-14.665844</td>
-<td style="text-align: right;">2.778969</td>
+<td style="text-align: right;">2.7789693</td>
 <td style="text-align: right;">1.242611e+07</td>
 <td style="text-align: right;">0.0000002</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">44425060</td>
 <td style="text-align: right;">44812182</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Dmxl1</td>
 <td style="text-align: right;">-16.540550</td>
-<td style="text-align: right;">3.233865</td>
+<td style="text-align: right;">3.2338647</td>
 <td style="text-align: right;">5.279756e+06</td>
 <td style="text-align: right;">0.0000005</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">49832670</td>
 <td style="text-align: right;">49965473</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Cdo1</td>
 <td style="text-align: right;">-10.423712</td>
-<td style="text-align: right;">2.663163</td>
+<td style="text-align: right;">2.6631628</td>
 <td style="text-align: right;">2.179571e+04</td>
 <td style="text-align: right;">0.0001042</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">46713205</td>
 <td style="text-align: right;">46728342</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Tcerg1</td>
 <td style="text-align: right;">-12.041842</td>
-<td style="text-align: right;">3.351281</td>
+<td style="text-align: right;">3.3512814</td>
 <td style="text-align: right;">6.437031e+03</td>
 <td style="text-align: right;">0.0003612</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">42511510</td>
 <td style="text-align: right;">42575551</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Pggt1b</td>
 <td style="text-align: right;">-8.989326</td>
-<td style="text-align: right;">3.266870</td>
+<td style="text-align: right;">3.2668702</td>
 <td style="text-align: right;">4.309549e+02</td>
 <td style="text-align: right;">0.0061590</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">46239949</td>
 <td style="text-align: right;">46280850</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Fem1c</td>
 <td style="text-align: right;">-10.311275</td>
-<td style="text-align: right;">3.892939</td>
+<td style="text-align: right;">3.8929393</td>
 <td style="text-align: right;">3.252088e+02</td>
 <td style="text-align: right;">0.0083524</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">46501746</td>
 <td style="text-align: right;">46525971</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Ythdc2</td>
 <td style="text-align: right;">-7.773632</td>
-<td style="text-align: right;">3.325224</td>
+<td style="text-align: right;">3.3252239</td>
 <td style="text-align: right;">1.483143e+02</td>
 <td style="text-align: right;">0.0198184</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">44827746</td>
 <td style="text-align: right;">44889724</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Dcp2</td>
 <td style="text-align: right;">-9.187939</td>
-<td style="text-align: right;">3.955067</td>
+<td style="text-align: right;">3.9550669</td>
 <td style="text-align: right;">1.432581e+02</td>
 <td style="text-align: right;">0.0206017</td>
 <td style="text-align: left;">18</td>
 <td style="text-align: right;">44380502</td>
 <td style="text-align: right;">44424969</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Commd10</td>
+<td style="text-align: right;">-4.699061</td>
+<td style="text-align: right;">2.7203130</td>
+<td style="text-align: right;">4.221795e+01</td>
+<td style="text-align: right;">0.0847547</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">46958862</td>
+<td style="text-align: right;">47087992</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ap3s1</td>
+<td style="text-align: right;">5.295224</td>
+<td style="text-align: right;">3.1032238</td>
+<td style="text-align: right;">4.070171e+01</td>
+<td style="text-align: right;">0.0886026</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">46741917</td>
+<td style="text-align: right;">46790826</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Atg12</td>
+<td style="text-align: right;">-5.657356</td>
+<td style="text-align: right;">3.5890469</td>
+<td style="text-align: right;">3.278738e+01</td>
+<td style="text-align: right;">0.1156347</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">46732417</td>
+<td style="text-align: right;">46741579</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Tmed7</td>
+<td style="text-align: right;">-5.326377</td>
+<td style="text-align: right;">3.5594534</td>
+<td style="text-align: right;">2.895528e+01</td>
+<td style="text-align: right;">0.1352213</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">46560235</td>
+<td style="text-align: right;">46597535</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Gm3650</td>
+<td style="text-align: right;">1.315251</td>
+<td style="text-align: right;">0.8937922</td>
+<td style="text-align: right;">2.789328e+01</td>
+<td style="text-align: right;">0.1418157</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">43472816</td>
+<td style="text-align: right;">43475169</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Eif3j2</td>
+<td style="text-align: right;">-4.670281</td>
+<td style="text-align: right;">3.2012572</td>
+<td style="text-align: right;">2.737454e+01</td>
+<td style="text-align: right;">0.1452649</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">43475418</td>
+<td style="text-align: right;">43477796</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sema6a</td>
+<td style="text-align: right;">-4.388689</td>
+<td style="text-align: right;">3.0594824</td>
+<td style="text-align: right;">2.641186e+01</td>
+<td style="text-align: right;">0.1521090</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">47235598</td>
+<td style="text-align: right;">47368870</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Dtwd2</td>
+<td style="text-align: right;">-2.762396</td>
+<td style="text-align: right;">3.3932563</td>
+<td style="text-align: right;">1.833878e+01</td>
+<td style="text-align: right;">0.4160100</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">49696145</td>
+<td style="text-align: right;">49755601</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Tnfaip8</td>
+<td style="text-align: right;">-2.217297</td>
+<td style="text-align: right;">2.2649550</td>
+<td style="text-align: right;">1.578907e+01</td>
+<td style="text-align: right;">0.3281052</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">49979427</td>
+<td style="text-align: right;">50107173</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Eif1a</td>
+<td style="text-align: right;">-2.435114</td>
+<td style="text-align: right;">2.4852013</td>
+<td style="text-align: right;">1.577518e+01</td>
+<td style="text-align: right;">0.3276675</td>
+<td style="text-align: left;">18</td>
+<td style="text-align: right;">46597704</td>
+<td style="text-align: right;">46610225</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
 </tr>
 </tbody>
 </table>
@@ -1318,27 +2776,39 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 <li><em>Mcc</em>: HDL-C - 51.69 (total cholesterol $&lt;$1)</li>
 <li><em>Tcerg1</em>: HDL-C 45.02; Total cholesterol 45</li>
 <li><em>Ythdc2</em>: HDL-C and triglycerides 45</li>
-<li><em>Dcp2</em>: HDL-C (3) and</li>
+<li><em>Dcp2</em>: HDL-C (3) and triglycerides<br>
+</li>
+<li><em>Dmxl1</em>: 1.42</li>
+<li><em>Fem1c</em> 1.01</li>
 </ul>
 <section id="overlap-between-ncd-and-hfd-twas-qtl-hits" class="level3">
 <h3 class="anchored" data-anchor-id="overlap-between-ncd-and-hfd-twas-qtl-hits">Overlap between NCD and HFD TWAS QTL hits</h3>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">intersect</span>(twas.QTL.summary.hfd<span class="sc">$</span>symbol, twas.QTL.summary.ncd<span class="sc">$</span>symbol) <span class="sc">%&gt;%</span></span>
-<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">intersect</span>(twas.QTL.summary.hfd<span class="sc">$</span>symbol, twas.QTL.summary.ncd<span class="sc">$</span>symbol) <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">length</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
-<pre><code>[1] 108</code></pre>
+<pre><code>[1] 214</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>twas.hfd.data <span class="sc">%&gt;%</span></span>
-<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
-<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true)<span class="sc">%&gt;%</span></span>
-<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.hfd.diet</span>
-<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.hfd.diet)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>twas.hfd.data <span class="sc">%&gt;%</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true)<span class="sc">%&gt;%</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.hfd.diet</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.hfd.diet)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 88</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd.diet <span class="sc">%&gt;%</span></span>
-<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominally significant TWAS hits inside QTL regions on "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd.diet <span class="sc">%&gt;%</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominally significant TWAS hits inside QTL regions on "</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Nominally significant TWAS hits inside QTL regions on</caption>
@@ -2248,17 +3718,23 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>twas.ncd.data <span class="sc">%&gt;%</span></span>
-<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
-<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
-<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.ncd.diet</span>
-<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.ncd.diet)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>twas.ncd.data <span class="sc">%&gt;%</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,log2FoldChange,lfcSE,pvalue,padj,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="ot">-&gt;</span> twas.QTL.summary.ncd.diet</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a><span class="fu">nrow</span>(twas.QTL.summary.ncd.diet)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>[1] 125</code></pre>
 </div>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd.diet <span class="sc">%&gt;%</span></span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominally significant TWAS hits inside QTL regions on NCD"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd.diet <span class="sc">%&gt;%</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominally significant TWAS hits inside QTL regions on NCD"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Nominally significant TWAS hits inside QTL regions on NCD</caption>
@@ -3545,12 +5021,15 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 <h2 class="anchored" data-anchor-id="diet-independent-twas-and-qtl-hits">Diet-Independent TWAS and QTL Hits</h2>
 <p>First looked for genes in HFD that were in QTL clumps, and also had TWAS associations under HFD conditions</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
-<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(padj<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,pval,padj,BF,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
-<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="sc">%&gt;%</span> </span>
-<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Significant TWAS hits inside NCD QTL regions where TWAS is sex-adjusted but not diet specific"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> ncd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(padj<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,pval,padj,BF,chr,start.true,end.true) <span class="sc">%&gt;%</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="sc">%&gt;%</span> </span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Significant TWAS hits inside NCD QTL regions where TWAS is sex-adjusted but not diet specific"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Significant TWAS hits inside NCD QTL regions where TWAS is sex-adjusted but not diet specific</caption>
@@ -6750,12 +8229,15 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 </tbody>
 </table>
 </div>
-<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> hfd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
-<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(padj<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,pval,padj,BF,chr,start.true,end.true)  <span class="sc">%&gt;%</span></span>
-<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="sc">%&gt;%</span> </span>
-<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Significant TWAS hits inside HFD QTL regions where TWAS is sex-adjusted but not diet specific"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(symbol <span class="sc">%in%</span> hfd.clump.data<span class="sc">$</span>external_gene_name) <span class="sc">%&gt;%</span> <span class="co">#is in a QTL</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(padj<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(symbol,beta,se,pval,padj,BF,chr,start.true,end.true)  <span class="sc">%&gt;%</span></span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(chr,start.true) <span class="sc">%&gt;%</span> </span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Significant TWAS hits inside HFD QTL regions where TWAS is sex-adjusted but not diet specific"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Significant TWAS hits inside HFD QTL regions where TWAS is sex-adjusted but not diet specific</caption>
@@ -9333,23 +10815,22 @@ dbl (11): baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, start, end, m...
 <section id="plotting" class="level1">
 <h1>Plotting</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
-<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggrepel)</span>
-<span id="cb34-3"><a href="#cb34-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.hfd <span class="sc">%&gt;%</span> <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">1E-5</span>),</span>
-<span id="cb34-4"><a href="#cb34-4" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
-<span id="cb34-5"><a href="#cb34-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">x=</span><span class="fu">as.integer</span>(chr),</span>
-<span id="cb34-6"><a href="#cb34-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb34-7"><a href="#cb34-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb34-8"><a href="#cb34-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol)) <span class="sc">+</span></span>
-<span id="cb34-9"><a href="#cb34-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb34-10"><a href="#cb34-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Correlation (-log10 pvalue)"</span>,</span>
-<span id="cb34-11"><a href="#cb34-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">""</span>,</span>
-<span id="cb34-12"><a href="#cb34-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"HFD QTL Genes"</span>,</span>
-<span id="cb34-13"><a href="#cb34-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle=</span><span class="st">"Correlation with cholesterol"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: ggrepel: 5 unlabeled data points (too many overlaps). Consider
-increasing max.overlaps</code></pre>
-</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggrepel)</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.hfd <span class="sc">%&gt;%</span> <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">1E-5</span>),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">x=</span><span class="fu">as.integer</span>(chr),</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol)) <span class="sc">+</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb23-10"><a href="#cb23-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Correlation (-log10 pvalue)"</span>,</span>
+<span id="cb23-11"><a href="#cb23-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">""</span>,</span>
+<span id="cb23-12"><a href="#cb23-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"HFD QTL Genes"</span>,</span>
+<span id="cb23-13"><a href="#cb23-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle=</span><span class="st">"Correlation with cholesterol"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -9359,21 +10840,20 @@ increasing max.overlaps</code></pre>
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.ncd <span class="sc">%&gt;%</span> <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">1E-5</span>),</span>
-<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
-<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">x=</span><span class="fu">as.integer</span>(chr),</span>
-<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol)) <span class="sc">+</span></span>
-<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Correlation (-log10 pvalue)"</span>,</span>
-<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">""</span>,</span>
-<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"NCD QTL Genes"</span>,</span>
-<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle=</span><span class="st">"Correlation with cholesterol"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Warning: ggrepel: 25 unlabeled data points (too many overlaps). Consider
-increasing max.overlaps</code></pre>
-</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.ncd <span class="sc">%&gt;%</span> <span class="fu">filter</span>(pval<span class="sc">&lt;</span><span class="fl">1E-5</span>),</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">x=</span><span class="fu">as.integer</span>(chr),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol)) <span class="sc">+</span></span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Correlation (-log10 pvalue)"</span>,</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">""</span>,</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"NCD QTL Genes"</span>,</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">subtitle=</span><span class="st">"Correlation with cholesterol"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -9386,71 +10866,62 @@ increasing max.overlaps</code></pre>
 <section id="comparason-with-human-gwas" class="level1">
 <h1>Comparason with human GWAS</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a>mgi_table <span class="ot">&lt;-</span> <span class="st">"http://www.informatics.jax.org/downloads/reports/HOM_MouseHumanSequence.rpt"</span></span>
-<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>mgi_file <span class="ot">&lt;-</span> <span class="st">'HOM_MouseHumanSequence.rpt'</span></span>
-<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a><span class="co">#download.file(url=mgi_table,destfile=mgi_file)</span></span>
-<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>mouse_human_genes <span class="ot">=</span> <span class="fu">read_tsv</span>(mgi_file)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 46396 Columns: 13
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: "\t"
-chr (10): Common Organism Name, Symbol, Mouse MGI ID, HGNC ID, OMIM Gene ID,...
-dbl  (3): DB Class Key, NCBI Taxon ID, EntrezGene ID
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
-<span id="cb40-2"><a href="#cb40-2" aria-hidden="true" tabindex="-1"></a>mouse.human.table <span class="ot">&lt;-</span> mouse_human_genes <span class="sc">%&gt;%</span></span>
-<span id="cb40-3"><a href="#cb40-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>, <span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>,<span class="st">`</span><span class="at">Symbol</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb40-4"><a href="#cb40-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb40-5"><a href="#cb40-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from=</span><span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>,</span>
-<span id="cb40-6"><a href="#cb40-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from=</span>Symbol,</span>
-<span id="cb40-7"><a href="#cb40-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_fn=</span>first) <span class="sc">%&gt;%</span></span>
-<span id="cb40-8"><a href="#cb40-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">mouse=</span><span class="st">`</span><span class="at">mouse, laboratory</span><span class="st">`</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>mgi_table <span class="ot">&lt;-</span> <span class="st">"http://www.informatics.jax.org/downloads/reports/HOM_MouseHumanSequence.rpt"</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>mgi_file <span class="ot">&lt;-</span> <span class="st">'HOM_MouseHumanSequence.rpt'</span></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="co">#download.file(url=mgi_table,destfile=mgi_file)</span></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>mouse_human_genes <span class="ot">=</span> <span class="fu">read_tsv</span>(mgi_file)</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>mouse.human.table <span class="ot">&lt;-</span> mouse_human_genes <span class="sc">%&gt;%</span></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>, <span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>,<span class="st">`</span><span class="at">Symbol</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from=</span><span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>,</span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from=</span>Symbol,</span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_fn=</span>first) <span class="sc">%&gt;%</span></span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">mouse=</span><span class="st">`</span><span class="at">mouse, laboratory</span><span class="st">`</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <p>To convert human to mouse genes, I used the resource from MGI at http://www.informatics.jax.org/downloads/reports/HOM_MouseHumanSequence.rpt.</p>
 <p>Downloaded gene- and SNP-level asssociations for total cholesterol from https://t2d.hugeamp.org/phenotype.html?phenotype=CHOL</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a>gene.associations.file <span class="ot">&lt;-</span> <span class="st">'gene_associations_total_cholesterol.csv'</span></span>
-<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>snp.associations.file <span class="ot">&lt;-</span> <span class="st">'associations_total_cholesterol.csv'</span></span>
-<span id="cb41-3"><a href="#cb41-3" aria-hidden="true" tabindex="-1"></a>cholesterol.data.human <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(gene.associations.file) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-<div class="cell-output cell-output-stderr">
-<pre><code>Rows: 1000 Columns: 11
-── Column specification ────────────────────────────────────────────────────────
-Delimiter: ","
-chr (5): gene, phenotype, chromosome, position, range
-dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
-
-ℹ Use `spec()` to retrieve the full column specification for this data.
-ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.</code></pre>
-</div>
-<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd.anno <span class="ot">&lt;-</span> </span>
-<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(twas.QTL.summary.hfd,</span>
-<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a>            mouse.human.table,</span>
-<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'symbol'</span><span class="ot">=</span><span class="st">'mouse'</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(cholesterol.data.human,</span>
-<span id="cb43-6"><a href="#cb43-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'human'</span><span class="ot">=</span><span class="st">'gene'</span>))</span>
-<span id="cb43-7"><a href="#cb43-7" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb43-8"><a href="#cb43-8" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd.anno <span class="ot">&lt;-</span> </span>
-<span id="cb43-9"><a href="#cb43-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(twas.QTL.summary.ncd,</span>
-<span id="cb43-10"><a href="#cb43-10" aria-hidden="true" tabindex="-1"></a>            mouse.human.table,</span>
-<span id="cb43-11"><a href="#cb43-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'symbol'</span><span class="ot">=</span><span class="st">'mouse'</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb43-12"><a href="#cb43-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(cholesterol.data.human,</span>
-<span id="cb43-13"><a href="#cb43-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'human'</span><span class="ot">=</span><span class="st">'gene'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>gene.associations.file <span class="ot">&lt;-</span> <span class="st">'gene_associations_total_cholesterol.csv'</span></span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>snp.associations.file <span class="ot">&lt;-</span> <span class="st">'associations_total_cholesterol.csv'</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a>cholesterol.data.human <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(gene.associations.file) </span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd.anno <span class="ot">&lt;-</span> </span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(twas.QTL.summary.hfd,</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>            mouse.human.table,</span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'symbol'</span><span class="ot">=</span><span class="st">'mouse'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(cholesterol.data.human,</span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'human'</span><span class="ot">=</span><span class="st">'gene'</span>))</span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd.anno <span class="ot">&lt;-</span> </span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(twas.QTL.summary.ncd,</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>            mouse.human.table,</span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'symbol'</span><span class="ot">=</span><span class="st">'mouse'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(cholesterol.data.human,</span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">'human'</span><span class="ot">=</span><span class="st">'gene'</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.hfd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))),</span>
-<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
-<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">y=</span><span class="fu">log10</span>(huge),</span>
-<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb44-6"><a href="#cb44-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol),</span>
-<span id="cb44-7"><a href="#cb44-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">max.overlaps=</span><span class="dv">99</span>) <span class="sc">+</span></span>
-<span id="cb44-8"><a href="#cb44-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb44-9"><a href="#cb44-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Correlation with Cholesterol (-log10 pvalue)"</span>,</span>
-<span id="cb44-10"><a href="#cb44-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"Nominating genes on HFD"</span>,</span>
-<span id="cb44-11"><a href="#cb44-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Human GWAS HuGE Score (log10)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.hfd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))),</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">y=</span><span class="fu">log10</span>(huge),</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol),</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">max.overlaps=</span><span class="dv">99</span>) <span class="sc">+</span></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Correlation with Cholesterol (-log10 pvalue)"</span>,</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"Nominating genes on HFD"</span>,</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Human GWAS HuGE Score (log10)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -9458,11 +10929,14 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))) <span class="sc">%&gt;%</span></span>
-<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol,beta,pval,chr,start.true,huge) <span class="sc">%&gt;%</span></span>
-<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>huge) <span class="sc">%&gt;%</span></span>
-<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(huge<span class="sc">&gt;=</span><span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominated genes by HUGE score on HFD, showing all strong scores"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.hfd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))) <span class="sc">%&gt;%</span></span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol,beta,pval,chr,start.true,huge) <span class="sc">%&gt;%</span></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>huge) <span class="sc">%&gt;%</span></span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(huge<span class="sc">&gt;=</span><span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominated genes by HUGE score on HFD, showing all strong scores"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Nominated genes by HUGE score on HFD, showing all strong scores</caption>
@@ -9494,6 +10968,22 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">46.39236</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">Scarb1</td>
+<td style="text-align: right;">-1.314871</td>
+<td style="text-align: right;">0.6912268</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">125277087</td>
+<td style="text-align: right;">45.52194</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Edem3</td>
+<td style="text-align: right;">-4.575992</td>
+<td style="text-align: right;">0.1393890</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">151755371</td>
+<td style="text-align: right;">45.00370</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Tmtc3</td>
 <td style="text-align: right;">-12.029818</td>
 <td style="text-align: right;">0.0002268</td>
@@ -9502,6 +10992,30 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">45.00129</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">Ptprc</td>
+<td style="text-align: right;">-2.028485</td>
+<td style="text-align: right;">0.2782451</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">138062861</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Lamc1</td>
+<td style="text-align: right;">-3.846796</td>
+<td style="text-align: right;">0.2158643</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">153218922</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cacybp</td>
+<td style="text-align: right;">-4.084661</td>
+<td style="text-align: right;">0.1178355</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">160202367</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Serpinc1</td>
 <td style="text-align: right;">-12.680424</td>
 <td style="text-align: right;">0.0002863</td>
@@ -9509,7 +11023,7 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">160978585</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Uap1</td>
 <td style="text-align: right;">-6.693991</td>
 <td style="text-align: right;">0.0246369</td>
@@ -9517,12 +11031,20 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">170141938</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Gcc2</td>
 <td style="text-align: right;">-7.697912</td>
 <td style="text-align: right;">0.0460763</td>
 <td style="text-align: left;">10</td>
 <td style="text-align: right;">58255497</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Pla2g12b</td>
+<td style="text-align: right;">-6.231954</td>
+<td style="text-align: right;">0.0737374</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">59403660</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="odd">
@@ -9542,6 +11064,14 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">Supv3l1</td>
+<td style="text-align: right;">-5.250118</td>
+<td style="text-align: right;">0.1807558</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">62429209</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Socs2</td>
 <td style="text-align: right;">-5.104110</td>
 <td style="text-align: right;">0.0000123</td>
@@ -9549,7 +11079,39 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">95385362</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">Poc1b</td>
+<td style="text-align: right;">2.709332</td>
+<td style="text-align: right;">0.2916259</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">99107036</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
 <tr class="even">
+<td style="text-align: left;">Hsp90aa1</td>
+<td style="text-align: right;">-1.767038</td>
+<td style="text-align: right;">0.3632859</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">110690605</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">E2f3</td>
+<td style="text-align: right;">5.275242</td>
+<td style="text-align: right;">0.1113563</td>
+<td style="text-align: left;">13</td>
+<td style="text-align: right;">29906575</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Wdr1</td>
+<td style="text-align: right;">-5.606407</td>
+<td style="text-align: right;">0.1372629</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">38526813</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Cpeb2</td>
 <td style="text-align: right;">-6.289915</td>
 <td style="text-align: right;">0.0359491</td>
@@ -9557,7 +11119,7 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">43233170</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Mmab</td>
 <td style="text-align: right;">-18.541993</td>
 <td style="text-align: right;">0.0000000</td>
@@ -9565,7 +11127,7 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">114431034</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Gatc</td>
 <td style="text-align: right;">-10.266702</td>
 <td style="text-align: right;">0.0044940</td>
@@ -9573,7 +11135,23 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <td style="text-align: right;">115333239</td>
 <td style="text-align: right;">45.00000</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;">Ptpn11</td>
+<td style="text-align: right;">-8.686637</td>
+<td style="text-align: right;">0.0561655</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121130533</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
 <tr class="odd">
+<td style="text-align: left;">Trafd1</td>
+<td style="text-align: right;">-3.699923</td>
+<td style="text-align: right;">0.2504680</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121371725</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Slc10a2</td>
 <td style="text-align: right;">2.699177</td>
 <td style="text-align: right;">0.0317342</td>
@@ -9586,17 +11164,20 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb46"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.ncd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))),</span>
-<span id="cb46-2"><a href="#cb46-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
-<span id="cb46-3"><a href="#cb46-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">y=</span><span class="fu">log10</span>(huge),</span>
-<span id="cb46-4"><a href="#cb46-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
-<span id="cb46-5"><a href="#cb46-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
-<span id="cb46-6"><a href="#cb46-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol),</span>
-<span id="cb46-7"><a href="#cb46-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">max.overlaps =</span> <span class="dv">99</span>) <span class="sc">+</span></span>
-<span id="cb46-8"><a href="#cb46-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb46-9"><a href="#cb46-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Nominating genes on NCD"</span>,</span>
-<span id="cb46-10"><a href="#cb46-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">y=</span><span class="st">"Correlation with Cholesterol (-log10 pvalue)"</span>,</span>
-<span id="cb46-11"><a href="#cb46-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Human GWAS HuGE Score (log10)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(twas.QTL.summary.ncd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))),</span>
+<span id="cb29-2"><a href="#cb29-2" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x=</span><span class="sc">-</span><span class="fu">log10</span>(pval),</span>
+<span id="cb29-3"><a href="#cb29-3" aria-hidden="true" tabindex="-1"></a>           <span class="at">y=</span><span class="fu">log10</span>(huge),</span>
+<span id="cb29-4"><a href="#cb29-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">col=</span>beta<span class="sc">&gt;</span><span class="dv">0</span>)) <span class="sc">+</span></span>
+<span id="cb29-5"><a href="#cb29-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb29-6"><a href="#cb29-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>symbol),</span>
+<span id="cb29-7"><a href="#cb29-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">max.overlaps =</span> <span class="dv">99</span>) <span class="sc">+</span></span>
+<span id="cb29-8"><a href="#cb29-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb29-9"><a href="#cb29-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title=</span><span class="st">"Nominating genes on NCD"</span>,</span>
+<span id="cb29-10"><a href="#cb29-10" aria-hidden="true" tabindex="-1"></a>         <span class="at">y=</span><span class="st">"Correlation with Cholesterol (-log10 pvalue)"</span>,</span>
+<span id="cb29-11"><a href="#cb29-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Human GWAS HuGE Score (log10)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -9604,11 +11185,14 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 </figure>
 </div>
 </div>
-<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))) <span class="sc">%&gt;%</span></span>
-<span id="cb47-2"><a href="#cb47-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol,beta,pval,chr,start.true,huge) <span class="sc">%&gt;%</span></span>
-<span id="cb47-3"><a href="#cb47-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>huge) <span class="sc">%&gt;%</span></span>
-<span id="cb47-4"><a href="#cb47-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(huge<span class="sc">&gt;=</span><span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb47-5"><a href="#cb47-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominated genes by HUGE score on NCD, showing all strong scores"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a>twas.QTL.summary.ncd.anno <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span>(<span class="fu">is.na</span>(phenotype))) <span class="sc">%&gt;%</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol,beta,pval,chr,start.true,huge) <span class="sc">%&gt;%</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>huge) <span class="sc">%&gt;%</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(huge<span class="sc">&gt;=</span><span class="dv">3</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"Nominated genes by HUGE score on NCD, showing all strong scores"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>Nominated genes by HUGE score on NCD, showing all strong scores</caption>
@@ -9624,92 +11208,268 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 </thead>
 <tbody>
 <tr class="odd">
+<td style="text-align: left;">Mkrn1</td>
+<td style="text-align: right;">-2.5886657</td>
+<td style="text-align: right;">0.4966203</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">39397804</td>
+<td style="text-align: right;">350.00599</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Ascc3</td>
-<td style="text-align: right;">-10.427196</td>
+<td style="text-align: right;">-10.4271962</td>
 <td style="text-align: right;">0.0042497</td>
 <td style="text-align: left;">10</td>
 <td style="text-align: right;">50592669</td>
-<td style="text-align: right;">350</td>
+<td style="text-align: right;">350.00000</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Kif13b</td>
-<td style="text-align: right;">-15.099085</td>
+<td style="text-align: right;">-15.0990849</td>
 <td style="text-align: right;">0.0000001</td>
 <td style="text-align: left;">14</td>
 <td style="text-align: right;">64652531</td>
-<td style="text-align: right;">350</td>
+<td style="text-align: right;">350.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Por</td>
+<td style="text-align: right;">-1.6928605</td>
+<td style="text-align: right;">0.3400210</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">135670033</td>
+<td style="text-align: right;">350.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Epha1</td>
+<td style="text-align: right;">-6.6071747</td>
+<td style="text-align: right;">0.0784288</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">42358487</td>
+<td style="text-align: right;">350.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Abca1</td>
+<td style="text-align: right;">0.6537588</td>
+<td style="text-align: right;">0.8653869</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">53030787</td>
+<td style="text-align: right;">81.71939</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ccdc57</td>
+<td style="text-align: right;">-4.6322076</td>
+<td style="text-align: right;">0.0761573</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">120826529</td>
+<td style="text-align: right;">46.70051</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Scarb1</td>
+<td style="text-align: right;">-1.3148709</td>
+<td style="text-align: right;">0.6912268</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">125277087</td>
+<td style="text-align: right;">45.52194</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Znhit1</td>
+<td style="text-align: right;">-4.8906652</td>
+<td style="text-align: right;">0.1339001</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">136982164</td>
+<td style="text-align: right;">45.08911</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Edem3</td>
+<td style="text-align: right;">-4.5759917</td>
+<td style="text-align: right;">0.1393890</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">151755371</td>
+<td style="text-align: right;">45.00370</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Insig2</td>
+<td style="text-align: right;">1.3965616</td>
+<td style="text-align: right;">0.4791633</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">121304353</td>
+<td style="text-align: right;">45.00110</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ptprc</td>
+<td style="text-align: right;">-2.0284854</td>
+<td style="text-align: right;">0.2782451</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">138062861</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">Cfh</td>
-<td style="text-align: right;">-10.870282</td>
+<td style="text-align: right;">-10.8702824</td>
 <td style="text-align: right;">0.0000087</td>
 <td style="text-align: left;">1</td>
 <td style="text-align: right;">140084708</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">Lamc1</td>
+<td style="text-align: right;">-3.8467961</td>
+<td style="text-align: right;">0.2158643</td>
+<td style="text-align: left;">1</td>
+<td style="text-align: right;">153218922</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Uap1</td>
-<td style="text-align: right;">-6.693991</td>
+<td style="text-align: right;">-6.6939911</td>
 <td style="text-align: right;">0.0246369</td>
 <td style="text-align: left;">1</td>
 <td style="text-align: right;">170141938</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Gcc2</td>
-<td style="text-align: right;">-7.697912</td>
+<td style="text-align: right;">-7.6979115</td>
 <td style="text-align: right;">0.0460763</td>
 <td style="text-align: left;">10</td>
 <td style="text-align: right;">58255497</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Pla2g12b</td>
+<td style="text-align: right;">-6.2319537</td>
+<td style="text-align: right;">0.0737374</td>
+<td style="text-align: left;">10</td>
+<td style="text-align: right;">59403660</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">Pgs1</td>
+<td style="text-align: right;">0.2448758</td>
+<td style="text-align: right;">0.9370242</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">117986292</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">B3gntl1</td>
+<td style="text-align: right;">-6.3142503</td>
+<td style="text-align: right;">0.0585402</td>
+<td style="text-align: left;">11</td>
+<td style="text-align: right;">121616197</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Numb</td>
+<td style="text-align: right;">-7.9134887</td>
+<td style="text-align: right;">0.0643199</td>
+<td style="text-align: left;">12</td>
+<td style="text-align: right;">83794034</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Setdb2</td>
+<td style="text-align: right;">-4.0317039</td>
+<td style="text-align: right;">0.2247331</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">59402009</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ctsb</td>
+<td style="text-align: right;">-0.8513389</td>
+<td style="text-align: right;">0.7952935</td>
+<td style="text-align: left;">14</td>
+<td style="text-align: right;">63122462</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">Hmbox1</td>
-<td style="text-align: right;">-13.476836</td>
+<td style="text-align: right;">-13.4768364</td>
 <td style="text-align: right;">0.0021647</td>
 <td style="text-align: left;">14</td>
 <td style="text-align: right;">64811600</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Ppp2r2a</td>
-<td style="text-align: right;">-9.666132</td>
+<td style="text-align: right;">-9.6661316</td>
 <td style="text-align: right;">0.0117488</td>
 <td style="text-align: left;">14</td>
 <td style="text-align: right;">67014057</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Slc44a1</td>
+<td style="text-align: right;">0.0605020</td>
+<td style="text-align: right;">0.9827662</td>
+<td style="text-align: left;">4</td>
+<td style="text-align: right;">53440413</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ptpn11</td>
+<td style="text-align: right;">-8.6866367</td>
+<td style="text-align: right;">0.0561655</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121130533</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Trafd1</td>
+<td style="text-align: right;">-3.6999230</td>
+<td style="text-align: right;">0.2504680</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">121371725</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Mlxipl</td>
-<td style="text-align: right;">-10.684999</td>
+<td style="text-align: right;">-10.6849988</td>
 <td style="text-align: right;">0.0011704</td>
 <td style="text-align: left;">5</td>
 <td style="text-align: right;">135089890</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">Pilrb1</td>
+<td style="text-align: right;">-0.6707457</td>
+<td style="text-align: right;">0.6556008</td>
+<td style="text-align: left;">5</td>
+<td style="text-align: right;">137852147</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">Creb3l2</td>
-<td style="text-align: right;">-6.252474</td>
+<td style="text-align: right;">-6.2524741</td>
 <td style="text-align: right;">0.0226419</td>
 <td style="text-align: left;">6</td>
 <td style="text-align: right;">37327255</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">Akr1d1</td>
-<td style="text-align: right;">-9.977844</td>
+<td style="text-align: right;">-9.9778438</td>
 <td style="text-align: right;">0.0000286</td>
 <td style="text-align: left;">6</td>
 <td style="text-align: right;">37530173</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">Clstn3</td>
-<td style="text-align: right;">8.441781</td>
+<td style="text-align: right;">8.4417805</td>
 <td style="text-align: right;">0.0000000</td>
 <td style="text-align: left;">6</td>
 <td style="text-align: right;">124430759</td>
-<td style="text-align: right;">45</td>
+<td style="text-align: right;">45.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ltbr</td>
+<td style="text-align: right;">5.2992265</td>
+<td style="text-align: right;">0.1822738</td>
+<td style="text-align: left;">6</td>
+<td style="text-align: right;">125306571</td>
+<td style="text-align: right;">45.00000</td>
 </tr>
 </tbody>
 </table>
@@ -9719,7 +11479,10 @@ dbl (6): start, end, bf_common, bf_rare, huge, logHugeScore
 <section id="session-information" class="level1">
 <h1>Session Information</h1>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
@@ -9739,21 +11502,21 @@ attached base packages:
 [1] stats     graphics  grDevices utils     datasets  methods   base     
 
 other attached packages:
-[1] tidyr_1.3.1   ggrepel_0.9.6 ggplot2_4.0.1 knitr_1.50    dplyr_1.1.4  
-[6] readr_2.1.6  
+[1] ggrepel_0.9.6 ggplot2_4.0.1 knitr_1.50    tidyr_1.3.1   dplyr_1.1.4  
+[6] forcats_1.0.1 readr_2.1.6  
 
 loaded via a namespace (and not attached):
  [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     compiler_4.5.2    
- [5] crayon_1.5.3       tidyselect_1.2.1   Rcpp_1.1.0         parallel_4.5.2    
- [9] scales_1.4.0       yaml_2.3.10        fastmap_1.2.0      R6_2.6.1          
-[13] labeling_0.4.3     generics_0.1.4     htmlwidgets_1.6.4  tibble_3.3.0      
-[17] pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6       
-[21] xfun_0.54          S7_0.2.1           bit64_4.6.0-1      cli_3.6.5         
-[25] withr_3.0.2        magrittr_2.0.4     digest_0.6.38      grid_4.5.2        
-[29] vroom_1.6.6        rstudioapi_0.17.1  hms_1.1.4          lifecycle_1.0.4   
-[33] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      
-[37] purrr_1.2.0        rmarkdown_2.30     tools_4.5.2        pkgconfig_2.0.3   
-[41] htmltools_0.5.8.1 </code></pre>
+ [5] crayon_1.5.3       Rcpp_1.1.0         tidyselect_1.2.1   parallel_4.5.2    
+ [9] dichromat_2.0-0.1  scales_1.4.0       yaml_2.3.12        fastmap_1.2.0     
+[13] R6_2.6.1           labeling_0.4.3     generics_0.1.4     htmlwidgets_1.6.4 
+[17] tibble_3.3.0       pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0        
+[21] rlang_1.1.6        xfun_0.54          S7_0.2.1           bit64_4.6.0-1     
+[25] cli_3.6.5          withr_3.0.2        magrittr_2.0.4     digest_0.6.39     
+[29] grid_4.5.2         vroom_1.6.7        rstudioapi_0.17.1  hms_1.1.4         
+[33] lifecycle_1.0.4    vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0        
+[37] farver_2.1.2       rmarkdown_2.30     purrr_1.2.0        tools_4.5.2       
+[41] pkgconfig_2.0.3    htmltools_0.5.9   </code></pre>
 </div>
 </div>
 </section>

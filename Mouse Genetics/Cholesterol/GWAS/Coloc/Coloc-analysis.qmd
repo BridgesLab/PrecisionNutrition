@@ -1,0 +1,1609 @@
+---
+title: "Coloc analysis of candidate eQTLs"
+author: "Kaelin Loftus and Dave Bridges"
+format:
+  html:
+    toc: true
+    toc-location: left
+editor: source  
+---
+
+## Data structure
+
+```{r install}
+library(coloc)
+library(tidyr)
+##
+cholesterol.file <- "../output/cholesterol_all.assoc.txt"  #cholesterol and LD file all the same
+hfd.cholesterol.file <- "../output/cholesterol_hfd.assoc.txt"
+ncd.cholesterol.file <- "../output/cholesterol_ncd.assoc.txt"
+
+eQTL.file.scarb1 <- "../eQTL/output/ENSMUSG00000037936.assoc.txt"    #19 and 22 updated for each gene
+eQTL.file.apoa1 <- "../eQTL/output/ENSMUSG00000032083.assoc.txt"    #19 and 22 updated for each gene
+eQTL.file.ppp2re5 <- "../eQTL/output/ENSMUSG00000021051.assoc.txt"
+eQTL.file.dusp22 <- "../eQTL/output/ENSMUSG00000069255.assoc.txt"
+eQTL.file.cdkal1 <- "../eQTL/output/ENSMUSG00000006191.assoc.txt"
+eQTL.file.apoa2 <- "../eQTL/output/ENSMUSG00000005681.assoc.txt"
+eQTL.file.lpin1 <- "../eQTL/output/ENSMUSG00000020593.assoc.txt"
+eQTL.file.asap2 <- "../eQTL/output/ENSMUSG00000052632.assoc.txt"
+eQTL.file.mup2 <- "../eQTL/output/ENSMUSG00000094793.assoc.txt"
+eQTL.file.cyp2c69 <- "../eQTL/output/ENSMUSG00000092008.assoc.txt"
+eQTL.file.foxq1 <- "../eQTL/output/ENSMUSG00000038415.assoc.txt"
+eQTL.file.serpin6b6 <- "../eQTL/output/ENSMUSG00000038415.assoc.txt"
+eQTL.file.ap3s1 <- "../eQTL/output/ENSMUSG00000038415.assoc.txt"
+eQTL.file.mvk <- "../eQTL/output/ENSMUSG00000041939.assoc.txt"
+eQTL.file.tcerg1 <- "../eQTL/output/ENSMUSG00000024498.assoc.txt"
+eQTL.file.dcp2 <- "../eQTL/output/ENSMUSG00000024472.assoc.txt"
+eQTL.file.mcc <- "../eQTL/output/ENSMUSG00000071856.assoc.txt"
+eQTL.file.ythdc2 <- "../eQTL/output/ENSMUSG00000034653.assoc.txt"
+eQTL.file.kcnn2 <- "../eQTL/output/ENSMUSG00000054477.assoc.txt"
+eQTL.file.pggt1b <- "../eQTL/output/ENSMUSG00000024477.assoc.txt"
+eQTL.file.fem1c <- "../eQTL/output/ENSMUSG00000033319.assoc.txt"
+eQTL.file.cdo1 <- "../eQTL/output/ENSMUSG00000033022.assoc.txt"
+eQTL.file.dmxl1 <- "../eQTL/output/ENSMUSG00000037416.assoc.txt"
+
+library(readr)
+cholesterol.data <- read_table(cholesterol.file)
+hfdcholesterol.data <- read_table(hfd.cholesterol.file)
+ncdcholesterol.data <- read_table(ncd.cholesterol.file)
+
+eQTL.data.scarb1 <- read_table(eQTL.file.scarb1)
+eQTL.data.apoa1 <- read_table(eQTL.file.apoa1)
+eQTL.data.ppp2re5 <- read_table(eQTL.file.ppp2re5)
+eQTL.data.dusp22 <- read_table(eQTL.file.dusp22)
+eQTL.data.cdkal1 <- read_table(eQTL.file.cdkal1)
+eQTL.data.apoa2 <- read_table(eQTL.file.apoa2)
+eQTL.data.lpin1 <- read_table(eQTL.file.lpin1)
+eQTL.data.asap2 <- read_table(eQTL.file.asap2)
+eQTL.data.mup2 <- read_table(eQTL.file.mup2)
+eQTL.data.cyp2c69 <- read_table(eQTL.file.cyp2c69)
+eQTL.data.foxq1 <- read_table(eQTL.file.foxq1)
+eQTL.data.serpin6b6 <- read_table(eQTL.file.serpin6b6)
+eQTL.data.ap3s1 <- read_table(eQTL.file.ap3s1)
+eQTL.data.mvk <- read_table(eQTL.file.mvk)
+eQTL.data.tcerg1 <- read_table(eQTL.file.tcerg1)
+eQTL.data.dcp2 <- read_table(eQTL.file.dcp2)
+eQTL.data.mcc <- read_table(eQTL.file.mcc)
+eQTL.data.ythdc2 <- read_table(eQTL.file.ythdc2)
+eQTL.data.kcnn2 <- read_table(eQTL.file.kcnn2)
+eQTL.data.pggt1b <- read_table(eQTL.file.pggt1b)
+eQTL.data.fem1c <- read_table(eQTL.file.fem1c)
+eQTL.data.cdo1 <- read_table(eQTL.file.cdo1)
+eQTL.data.dmxl1 <- read_table(eQTL.file.dmxl1)
+
+```
+
+## Generating SNP Lists
+
+Next based on visual inspection of the relevant cholesterol peaks we made lists of SNPs to estimate LD matrices for.
+
+```{r generating-snp-lists}
+
+#make snp list
+library(dplyr)
+#scarb1 region chr5 118958519
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.scarb1 <- 
+  cholesterol.data %>%
+  filter(chr==5) %>%
+  filter(ps>118958519-gap.region & ps<118958519+gap.region) %>%
+  pull(rs)
+
+write(snp.list.scarb1, file="../ld-calculations/Scarb1-snp-list.txt")
+
+#apoa1 region chr9 45695998
+gap.region <- 5e6 #(5M bases on either side)
+snp.list.apoa1 <- 
+  cholesterol.data %>%
+  filter(chr==9) %>%
+  filter(ps>45695998-gap.region & ps<45695998+gap.region) %>%
+  pull(rs)
+
+write(snp.list.apoa1, file="../ld-calculations/apoa1-snp-list.txt")
+
+#Ppp2re5 12: 75500000 ENSMUSG00000021051
+gap.region <- 2e6 
+snp.list.ppp2re5.2e6 <- 
+  cholesterol.data %>%
+  filter(chr==12) %>%
+  filter(ps>75500000-gap.region & ps<75500000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.ppp2re5.2e6, file="../ld-calculations/ppp2re5-snp-list-2e6.txt")
+
+gap.region <- 1e7 
+snp.list.ppp2re5.1e7 <- 
+  cholesterol.data %>%
+  filter(chr==12) %>%
+  filter(ps>75500000-gap.region & ps<75500000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.ppp2re5.1e7, file="../ld-calculations/ppp2re5-snp-list-1e7.txt")
+
+gap.region <- 5e7 
+snp.list.ppp2re5.5e7 <- 
+  cholesterol.data %>%
+  filter(chr==12) %>%
+  filter(ps>75500000-gap.region & ps<75500000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.ppp2re5.5e7, file="../ld-calculations/ppp2re5-snp-list-5e7.txt")
+
+#ENSMUSG00000069255 is Dusp22 on chromosome 13 30,844,000
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.dusp22 <- 
+  cholesterol.data %>%
+  filter(chr==13) %>%
+  filter(ps>30844000-gap.region & ps<30844000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.dusp22, file="../ld-calculations/dusp22-snp-list.txt")
+
+
+#ENSMUSG00000006191 is Cdkal1 on chromosome 13 at 118958519
+gap.region <- 5e6 #(5M bases on either side)
+snp.list.cdkal1 <- 
+  hfdcholesterol.data %>%
+  filter(chr==13) %>%
+  filter(ps>118958519-gap.region & ps<118958519+gap.region) %>%
+  pull(rs)
+
+write(snp.list.cdkal1, file="../ld-calculations/cdkal1-snp-list.txt")
+
+
+#ENSMUSG00000054702 is Ap3s1 on chromosome 18 at ~47000000
+gap.region <- 5e6 #(5M bases on either side)
+snp.list.ap3s1 <- 
+  ncdcholesterol.data %>%
+  filter(chr==18) %>%
+  filter(ps>47000000-gap.region & ps<47000000+gap.region)  %>%
+  pull(rs)
+
+write(snp.list.ap3s1, file="../ld-calculations/ap3s1-snp-list.txt")
+
+
+# Serpin6b6 is on chromosome 18 at 118958519
+gap.region <- 5e6 #(5M bases on either side)
+snp.list.serpin6b6 <- 
+  hfdcholesterol.data %>%
+  filter(chr==13) %>%
+  filter(ps>30844000-gap.region & ps<30844000+gap.region)  %>%
+  pull(rs)
+
+write(snp.list.serpin6b6, file="../ld-calculations/serpin6b6-snp-list.txt")
+
+
+#ENSMUSG00000005681 is Apoa2 on chromosome 1 at 177024867
+gap.region <- 5e6 #(2M bases on either side)
+snp.list.apoa2 <- 
+  cholesterol.data %>%
+  filter(chr==1) %>%
+  filter(ps>177024867-gap.region & ps<177024867+gap.region) %>%
+  pull(rs)
+
+write(snp.list.apoa2, file="../ld-calculations/apoa2-snp-list.txt")
+
+#ENSMUSG00000020593 is Lpin1 on chromosome 12 at 16525000
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.lpin1 <- 
+  cholesterol.data %>%
+  filter(chr==12) %>%
+  filter(ps>16525000-gap.region & ps<16525000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.lpin1, file="../ld-calculations/lpin1-snp-list.txt")
+
+#ENSMUSG00000052632 is Asap2 on chromosome 12 at 21040000
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.asap2 <- 
+  cholesterol.data %>%
+  filter(chr==12) %>%
+  filter(ps>21040000-gap.region & ps<21040000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.asap2, file="../ld-calculations/asap2-snp-list.txt")
+
+#ENSMUSG00000094793 is Mup2 on chromosome 4 at 124485642
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.mup2 <- 
+  cholesterol.data %>%
+  filter(chr==4) %>%
+  filter(ps>124485642-gap.region & ps<124485642+gap.region) %>%
+  pull(rs)
+
+write(snp.list.mup2, file="../ld-calculations/mup2-snp-list.txt")
+
+#ENSMUSG00000092008 is Cyp2c69 on chromosome 19 at 39800000
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.cyp2c69 <- 
+  cholesterol.data %>%
+  filter(chr==19) %>%
+  filter(ps>39800000-gap.region & ps<39800000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.cyp2c69, file="../ld-calculations/cyp2c69-snp-list.txt")
+
+#ENSMUSG00000038415 is Foxq1 on chromosome 12 at 57273104
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.foxq1 <- 
+  cholesterol.data %>%
+  filter(chr==12) %>%
+  filter(ps>57273104-gap.region & ps<57273104+gap.region) %>%
+  pull(rs)
+
+write(snp.list.foxq1, file="../ld-calculations/foxq1-snp-list.txt")
+
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.abhd2 <- 
+  cholesterol.data %>%
+  filter(chr==7) %>%
+  filter(ps>78900000-gap.region & ps<78900000+gap.region) %>%
+  pull(rs)
+
+write(snp.list.abhd2, file="../ld-calculations/abhd2-snp-list.txt")
+
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.mvk <- 
+  cholesterol.data %>%
+  dplyr::filter(chr==5) %>%
+  dplyr::filter(ps>123629774-gap.region & ps<123629774+gap.region) %>%
+  dplyr::pull(rs)
+
+write(snp.list.mvk, file="../ld-calculations/mvk-snp-list.txt")
+
+gap.region <- 2e6 #(2M bases on either side)
+snp.list.tcerg1 <- 
+  cholesterol.data %>%
+  dplyr::filter(chr==18) %>%
+  dplyr::filter(ps>46410922-gap.region & ps<46410922+gap.region) %>%
+  dplyr::pull(rs)
+
+write(snp.list.tcerg1, file="../ld-calculations/tcerg1-snp-list.txt")
+```
+
+To calculate the LD matrix for a snp list run on the command line (in the ld-calculations folder)
+
+```
+module load Bioinformatics
+module load plink/1.9
+plink --bfile ../plink --make-bed --r2 gz --ld-window-kb 10000 --ld-window-r2 0 --ld-window 999999 --ld-snp-list Scarb1-snp-list.txt --out genotypes.plink.Scarb1
+```
+
+This can also be done by running the bash script `calculate-ld.sh` from within the ld-calculations folder.  This will perform the above LD calculations for all files in the format `<GENE>-snp-list.txt`.
+
+# Analysis using SuSiE
+
+From the Coloc manual "The sum of single effects regression method proposed by Wang et al (ref 6) can instead simultaneously decompose multiple signals from the marginal summary stats, and appears to work better than conditioning."
+
+## Scarb1
+
+```{r susie-scarb1}
+scarb1.ld.file <- '../ld-calculations/genotypes.plink.Scarb1.ld.gz'
+scarb1.ld.data <- read_table(scarb1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+scarb1.LD.matrix <- scarb1.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.scarb1 <- filter(cholesterol.data, rs %in% snp.list.scarb1)
+
+scarb1.LD.matrix.reordered <- scarb1.LD.matrix[cholesterol.snps.scarb1$rs,cholesterol.snps.scarb1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.scarb1 <- with(cholesterol.snps.scarb1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=scarb1.LD.matrix.reordered)) 
+
+eqtl.snps.scarb1 <- filter(eQTL.data.scarb1, rs %in% snp.list.scarb1)
+
+D2.scarb1 <- with(eqtl.snps.scarb1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=scarb1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.scarb1 <-runsusie(D1.cholesterol.scarb1)
+S2.scarb1 <- runsusie(D2.scarb1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.scarb1)
+summary(S2.scarb1)
+#library(Rfast)
+#install.packages('Rfast')
+coloc.scarb1 <- coloc.susie(S1.cholesterol.scarb1, S2.scarb1)
+library(knitr)
+coloc.scarb1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 5 QTL and the Scarb1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.scarb1,"H4 > 0.9",row=19,dataset1=D1.cholesterol.scarb1,dataset2=D2.scarb1)
+```
+
+## Apoa1
+
+Not running with the error
+
+> Error in susie_suff_stat(XtX = XtX, Xty = Xty, n = n, yty = (n - 1) *  :  The estimated prior variance is unreasonably large.  This is usually caused by mismatch between the summary statistics and the LD matrix.  Please check the input.
+
+```{ susie-apoa1}
+apoa1.ld.file <- '../ld-calculations/genotypes.plink.apoa1.ld.gz'
+apoa1.ld.data <- read_table(apoa1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+apoa1.LD.matrix <- apoa1.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.apoa1 <- filter(cholesterol.data, rs %in% snp.list.apoa1)
+
+apoa1.LD.matrix.reordered <- apoa1.LD.matrix[cholesterol.snps.apoa1$rs,cholesterol.snps.apoa1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.apoa1 <- with(cholesterol.snps.apoa1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=apoa1.LD.matrix.reordered)) 
+
+eqtl.snps.apoa1 <- filter(eQTL.data.apoa1, rs %in% snp.list.apoa1)
+D2.eqtls.apoa1 <- with(eqtl.snps.apoa1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=apoa1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.apoa1 <- runsusie(D1.cholesterol.apoa1)
+S2.eqtls.apoa1 <- runsusie(D2.eqtls.apoa1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.apoa1)
+summary(S2.eqtls.apoa1)
+
+#did not converge for S2.apoa1
+#library(Rfast)
+coloc.apoa1 <- coloc.susie(S1.cholesterol.apoa1, S2.eqtls.apoa1)
+#library(knitr)
+coloc.apoa1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 5 QTL and the Apoa1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.apoa1,"H4 > 0.9",row=1,dataset1=D1.cholesterol.apoa1,dataset2=D2.eqtls.apoa1)
+```
+
+## Apoa2
+
+Missing LD values
+
+```{ susie-apoa2}
+apoa2.ld.file <- '../ld-calculations/genotypes.plink.apoa2.ld.gz'
+apoa2.ld.data <- read_table(apoa2.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+apoa2.LD.matrix <- apoa2.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.apoa2 <- filter(cholesterol.data, rs %in% snp.list.apoa2)
+
+apoa2.LD.matrix.reordered <- apoa2.LD.matrix#[cholesterol.snps.apoa2$rs,cholesterol.snps.apoa2$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.apoa2 <- with(cholesterol.snps.apoa2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=apoa2.LD.matrix.reordered)) 
+
+eqtl.snps.apoa2 <- filter(eQTL.data.apoa2, rs %in% snp.list.apoa2)
+D2.eqtls.apoa2 <- with(cholesterol.snps.apoa2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=apoa2.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.apoa2 <- runsusie(D1.cholesterol.apoa2)
+S2.eqtls.apoa2 <- runsusie(D2.eqtls.apoa2)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.apoa2)
+summary(S2.eqtls.apoa2)
+
+#did not converge for S2.apoa2
+#library(Rfast)
+coloc.apoa2 <- coloc.susie(S1.cholesterol.apoa2, S2.eqtls.apoa2)
+#library(knitr)
+coloc.apoa2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 5 QTL and the Apoa2 eQTLs",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+#sensitivity(coloc.apoa2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.apoa2,dataset2=D2.eqtls.apoa2)
+```
+
+## Ppp2re5
+
+```{r susie-ppp2re5}
+ppp2re5.ld.file <- '../ld-calculations/genotypes.plink.ppp2re5-snp-list-1e7.ld.gz' #worked with 1e7
+ppp2re5.ld.data <- read_table(ppp2re5.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+ppp2re5.LD.matrix <- ppp2re5.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.ppp2re5 <- filter(cholesterol.data, rs %in% snp.list.ppp2re5.2e6)
+
+ppp2re5.LD.matrix.reordered <- ppp2re5.LD.matrix[cholesterol.snps.ppp2re5$rs,cholesterol.snps.ppp2re5$rs]
+D1.cholesterol.ppp2re5 <- with(cholesterol.snps.ppp2re5,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=ppp2re5.LD.matrix.reordered))
+
+#check_dataset(D1.cholesterol.ppp2re5,warn.minp=1e-10)
+
+eqtl.snps.ppp2re5 <- filter(eQTL.data.ppp2re5, rs %in% snp.list.ppp2re5.2e6)
+D2.ppp2re5 <- with(eqtl.snps.ppp2re5,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=ppp2re5.LD.matrix.reordered))
+
+
+
+#failed at creating S1 cholesterol object 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.ppp2re5 <-runsusie(D1.cholesterol.ppp2re5)
+S2.ppp2re5 <- runsusie(D2.ppp2re5)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.ppp2re5) # nothing in credible set for cholesterol
+summary(S2.ppp2re5)
+#library(Rfast)
+coloc.ppp2re5 <- coloc.susie(S1.cholesterol.ppp2re5, S2.ppp2re5)
+library(knitr)
+coloc.ppp2re5$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 5 QTL and the ppp2re5 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+#sensitivity(coloc.ppp2re5,"H4 > 0.9",row=19,dataset1=D1.cholesterol,dataset2=D2.ppp2re5)
+```
+
+## Dusp22
+
+```{r susie-dusp22}
+dusp22.ld.file <- '../ld-calculations/genotypes.plink.dusp22.ld.gz'
+dusp22.ld.data <- read_table(dusp22.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+dusp22.LD.matrix <- dusp22.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.dusp22 <- filter(cholesterol.data, rs %in% snp.list.dusp22)
+
+dusp22.LD.matrix.reordered <- dusp22.LD.matrix[cholesterol.snps.dusp22$rs,cholesterol.snps.dusp22$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.dusp22 <- with(cholesterol.snps.dusp22,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=dusp22.LD.matrix.reordered)) 
+
+eqtl.snps.dusp22 <- filter(eQTL.data.dusp22, rs %in% snp.list.dusp22)
+D2.eqtls.dusp22 <- with(eqtl.snps.dusp22,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=dusp22.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.dusp22 <- runsusie(D1.cholesterol.dusp22)
+S2.eqtls.dusp22 <- runsusie(D2.eqtls.dusp22)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.dusp22)
+summary(S2.eqtls.dusp22)
+
+#did not converge for S2.dusp22
+#library(Rfast)
+coloc.dusp22 <- coloc.susie(S1.cholesterol.dusp22, S2.eqtls.dusp22)
+#library(knitr)
+coloc.dusp22$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 13 QTL and the Dusp22 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.dusp22,"H4 > 0.9",row=1,dataset1=D1.cholesterol.dusp22,dataset2=D2.eqtls.dusp22)
+```
+
+## Cdkal1
+
+```{ susie-cdkal1}
+cdkal1.ld.file <- '../ld-calculations/genotypes.plink.cdkal1.ld.gz'
+cdkal1.ld.data <- read_table(cdkal1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+cdkal1.LD.matrix <- cdkal1.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.cdkal1 <- filter(cholesterol.data, rs %in% snp.list.cdkal1)
+
+cdkal1.LD.matrix.reordered <- cdkal1.LD.matrix[cholesterol.snps.cdkal1$rs,cholesterol.snps.cdkal1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.cdkal1 <- with(cholesterol.snps.cdkal1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=cdkal1.LD.matrix.reordered)) 
+
+eqtl.snps.cdkal1 <- filter(eQTL.data.cdkal1, rs %in% snp.list.cdkal1)
+D2.eqtls.cdkal1 <- with(eqtl.snps.cdkal1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=cdkal1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.cdkal1 <- runsusie(D1.cholesterol.cdkal1)
+S2.eqtls.cdkal1 <- runsusie(D2.eqtls.cdkal1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.cdkal1)
+summary(S2.eqtls.cdkal1)
+
+#did not converge for S2.cdkal1
+#library(Rfast)
+coloc.cdkal1 <- coloc.susie(S1.cholesterol.cdkal1, S2.eqtls.cdkal1)
+#library(knitr)
+coloc.cdkal1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 13 QTL and the Cdkal1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+#sensitivity(coloc.cdkal1,"H4 > 0.9",row=1,dataset1=D1.cholesterol.cdkal1,dataset2=D2.eqtls.cdkal1)
+```
+
+### For HFD Only
+
+```{r susie-cdkal1-hfd}
+cdkal1.ld.file <- '../ld-calculations/genotypes.plink.cdkal1.ld.gz'
+cdkal1.ld.data <- read_table(cdkal1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+cdkal1.LD.matrix <- cdkal1.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+hfdcholesterol.snps.cdkal1 <- filter(hfdcholesterol.data, rs %in% snp.list.cdkal1)
+
+cdkal1.LD.matrix.reordered <- cdkal1.LD.matrix[hfdcholesterol.snps.cdkal1$rs,hfdcholesterol.snps.cdkal1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.cdkal1.hfd <- with(hfdcholesterol.snps.cdkal1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=383, 
+                       MAF=af,
+                       LD=cdkal1.LD.matrix.reordered)) 
+
+eqtl.snps.cdkal1 <- filter(eQTL.data.cdkal1, rs %in% snp.list.cdkal1)
+D2.eqtls.cdkal1 <- with(eqtl.snps.cdkal1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=383, 
+                       MAF=af,
+                       LD=cdkal1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.cdkal1.hfd <- runsusie(D1.cholesterol.cdkal1.hfd)
+S2.eqtls.cdkal1 <- runsusie(D2.eqtls.cdkal1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.cdkal1.hfd)
+summary(S2.eqtls.cdkal1)
+
+#did not converge for S2.cdkal1
+#library(Rfast)
+coloc.cdkal1.hfd <- coloc.susie(S1.cholesterol.cdkal1.hfd, S2.eqtls.cdkal1)
+library(knitr)
+coloc.cdkal1.hfd$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 13 QTL and the Cdkal1 eQTL only considering HFD fed animals",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+#sensitivity(coloc.cdkal1.hfd,"H4 > 0.9",row=1,dataset1=D1.cholesterol.cdkal1.hfd,dataset2=D2.eqtls.cdkal1)
+```
+
+## Lpin1
+
+```{r susie-lpin1}
+lpin.ld.file <- '../ld-calculations/genotypes.plink.lpin1.ld.gz' 
+lpin.ld.data <- read_table(lpin.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+lpin.LD.matrix <- lpin.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.lpin <- filter(cholesterol.data, rs %in% snp.list.lpin1)
+
+lpin.LD.matrix.reordered <- lpin.LD.matrix[cholesterol.snps.lpin$rs,cholesterol.snps.lpin$rs]
+D1.cholesterol.lpin <- with(cholesterol.snps.lpin,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=lpin.LD.matrix.reordered))
+
+#check_dataset(D1.cholesterol.lpin,warn.minp=1e-10)
+
+eqtl.snps.lpin <- filter(eQTL.data.lpin1, rs %in% snp.list.lpin1)
+D2.lpin <- with(eqtl.snps.lpin,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=lpin.LD.matrix.reordered))
+
+
+
+#failed at creating S1 cholesterol object 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.lpin <-runsusie(D1.cholesterol.lpin)
+S2.lpin <- runsusie(D2.lpin)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.lpin) # nothing in credible set for cholesterol
+summary(S2.lpin)
+#library(Rfast)
+coloc.lpin <- coloc.susie(S1.cholesterol.lpin, S2.lpin)
+coloc.lpin$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 12 QTL and the Lipin eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 1
+sensitivity(coloc.lpin,"H4 > 0.9",row=4,dataset1=D1.cholesterol.lpin,dataset2=D2.lpin)
+```
+
+## Asap2
+
+```{r susie-asap2}
+asap2.ld.file <- '../ld-calculations/genotypes.plink.asap2.ld.gz'
+asap2.ld.data <- read_table(asap2.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+asap2.LD.matrix <- asap2.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.asap2 <- filter(cholesterol.data, rs %in% snp.list.asap2)
+
+asap2.LD.matrix.reordered <- asap2.LD.matrix[cholesterol.snps.asap2$rs,cholesterol.snps.asap2$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.asap2 <- with(cholesterol.snps.asap2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=asap2.LD.matrix.reordered)) 
+
+eqtl.snps.asap2 <- filter(eQTL.data.asap2, rs %in% snp.list.asap2)
+D2.eqtls.asap2 <- with(eqtl.snps.asap2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=asap2.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.asap2 <- runsusie(D1.cholesterol.asap2)
+S2.eqtls.asap2 <- runsusie(D2.eqtls.asap2)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.asap2)
+summary(S2.eqtls.asap2)
+
+#did not converge for S2.asap2
+#library(Rfast)
+coloc.asap2 <- coloc.susie(S1.cholesterol.asap2, S2.eqtls.asap2)
+#library(knitr)
+coloc.asap2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 12 QTL and the Asap2 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.asap2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.asap2,dataset2=D2.eqtls.asap2)
+```
+
+## Abhd2
+
+Missing eQTL data
+
+```{ susie-abhd2}
+abhd2.ld.file <- '../ld-calculations/genotypes.plink.abhd2.ld.gz'
+abhd2.ld.data <- read_table(abhd2.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+abhd2.LD.matrix <- abhd2.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.abhd2 <- filter(cholesterol.data, rs %in% snp.list.abhd2)
+
+abhd2.LD.matrix.reordered <- abhd2.LD.matrix[cholesterol.snps.abhd2$rs,cholesterol.snps.abhd2$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.abhd2 <- with(cholesterol.snps.abhd2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=abhd2.LD.matrix.reordered)) 
+
+eqtl.snps.abhd2 <- filter(eQTL.data.abhd2, rs %in% snp.list.abhd2)
+D2.eqtls.abhd2 <- with(eqtl.snps.abhd2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=abhd2.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.abhd2 <- runsusie(D1.cholesterol.abhd2)
+S2.eqtls.abhd2 <- runsusie(D2.eqtls.abhd2)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.abhd2)
+summary(S2.eqtls.abhd2)
+
+#did not converge for S2.abhd2
+#library(Rfast)
+coloc.abhd2 <- coloc.susie(S1.cholesterol.abhd2, S2.eqtls.abhd2)
+#library(knitr)
+coloc.abhd2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 12 QTL and the Abhd2 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.abhd2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.abhd2,dataset2=D2.eqtls.abhd2)
+```
+
+## Mup2
+
+Error for running run_susie on the mup2 eQTLs
+The estimated prior variance is unreasonably large. This is usually caused by mismatch between the summary statistics and the LD matrix.  Please check the input.
+
+```{ susie-mup2}
+mup2.ld.file <- '../ld-calculations/genotypes.plink.mup2.ld.gz'
+mup2.ld.data <- read_table(mup2.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+mup2.LD.matrix <- mup2.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.mup2 <- filter(cholesterol.data, rs %in% snp.list.mup2)
+
+mup2.LD.matrix.reordered <- mup2.LD.matrix[cholesterol.snps.mup2$rs,cholesterol.snps.mup2$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.mup2 <- with(cholesterol.snps.mup2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=mup2.LD.matrix.reordered)) 
+
+eqtl.snps.mup2 <- filter(eQTL.data.mup2, rs %in% snp.list.mup2)
+D2.eqtls.mup2 <- with(eqtl.snps.mup2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=mup2.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.mup2 <- runsusie(D1.cholesterol.mup2)
+S2.eqtls.mup2 <- runsusie(D2.eqtls.mup2)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.mup2)
+summary(S2.eqtls.mup2)
+
+#did not converge for S2.mup2
+#library(Rfast)
+coloc.mup2 <- coloc.susie(S1.cholesterol.mup2, S2.eqtls.mup2)
+#library(knitr)
+coloc.mup2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 12 QTL and the Mup2 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.mup2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.mup2,dataset2=D2.eqtls.mup2)
+```
+
+## Cyp2c69
+
+LD matrix contains missing values
+
+```{r susie-cyp2c69}
+cyp2c69.ld.file <- '../ld-calculations/genotypes.plink.cyp2c69.ld.gz'
+cyp2c69.ld.data <- read_table(cyp2c69.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+cyp2c69.LD.matrix <- cyp2c69.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.cyp2c69 <- filter(cholesterol.data, rs %in% snp.list.cyp2c69)
+
+cyp2c69.LD.matrix.reordered <- cyp2c69.LD.matrix[cholesterol.snps.cyp2c69$rs,cholesterol.snps.cyp2c69$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.cyp2c69 <- with(cholesterol.snps.cyp2c69,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=cyp2c69.LD.matrix.reordered)) 
+check_dataset(D1.cholesterol.cyp2c69)
+
+eqtl.snps.cyp2c69 <- filter(eQTL.data.cyp2c69, rs %in% snp.list.cyp2c69)
+D2.eqtls.cyp2c69 <- with(eqtl.snps.cyp2c69,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=cyp2c69.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.cyp2c69 <- runsusie(D1.cholesterol.cyp2c69)
+S2.eqtls.cyp2c69 <- runsusie(D2.eqtls.cyp2c69)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.cyp2c69)
+summary(S2.eqtls.cyp2c69)
+
+#did not converge for S2.cyp2c69
+#library(Rfast)
+coloc.cyp2c69 <- coloc.susie(S1.cholesterol.cyp2c69, S2.eqtls.cyp2c69)
+#library(knitr)
+coloc.cyp2c69$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 12 QTL and the Cyp2c69 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+#sensitivity(coloc.cyp2c69,"H4 > 0.9",row=1,dataset1=D1.cholesterol.cyp2c69,dataset2=D2.eqtls.cyp2c69)
+```
+
+
+## Foxq1
+
+```{r susie-foxq1}
+foxq1.ld.file <- '../ld-calculations/genotypes.plink.foxq1.ld.gz'
+foxq1.ld.data <- read_table(foxq1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+foxq1.LD.matrix <- foxq1.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.foxq1 <- filter(cholesterol.data, rs %in% snp.list.foxq1)
+
+foxq1.LD.matrix.reordered <- foxq1.LD.matrix[cholesterol.snps.foxq1$rs,cholesterol.snps.foxq1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.foxq1 <- with(cholesterol.snps.foxq1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=foxq1.LD.matrix.reordered)) 
+
+eqtl.snps.foxq1 <- filter(eQTL.data.foxq1, rs %in% snp.list.foxq1)
+D2.eqtls.foxq1 <- with(eqtl.snps.foxq1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=foxq1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.foxq1 <- runsusie(D1.cholesterol.foxq1)
+S2.eqtls.foxq1 <- runsusie(D2.eqtls.foxq1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.foxq1)
+summary(S2.eqtls.foxq1)
+
+#did not converge for S2.foxq1
+#library(Rfast)
+coloc.foxq1 <- coloc.susie(S1.cholesterol.foxq1, S2.eqtls.foxq1)
+#library(knitr)
+coloc.foxq1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 12 QTL and the Foxq1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+#sensitivity(coloc.foxq1,"H4 > 0.9",row=1,dataset1=D1.cholesterol.foxq1,dataset2=D2.eqtls.foxq1)
+```
+
+## Serpin6b6 
+
+For HFD specific peak
+
+```{r susie-serpin6b6}
+serpin6b6.ld.file <- '../ld-calculations/genotypes.plink.serpin6b6.ld.gz'
+serpin6b6.ld.data <- read_table(serpin6b6.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+serpin6b6.LD.matrix <- serpin6b6.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.serpin6b6 <- filter(hfdcholesterol.data, rs %in% snp.list.serpin6b6)
+
+serpin6b6.LD.matrix.reordered <- serpin6b6.LD.matrix[cholesterol.snps.serpin6b6$rs,cholesterol.snps.serpin6b6$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.serpin6b6 <- with(cholesterol.snps.serpin6b6,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=serpin6b6.LD.matrix.reordered)) 
+
+eqtl.snps.serpin6b6 <- filter(eQTL.data.serpin6b6, rs %in% snp.list.serpin6b6)
+D2.eqtls.serpin6b6 <- with(eqtl.snps.serpin6b6,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=serpin6b6.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.serpin6b6 <- runsusie(D1.cholesterol.serpin6b6)
+S2.eqtls.serpin6b6 <- runsusie(D2.eqtls.serpin6b6)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.serpin6b6)
+summary(S2.eqtls.serpin6b6)
+
+#did not converge for S2.serpin6b6
+#library(Rfast)
+coloc.serpin6b6 <- coloc.susie(S1.cholesterol.serpin6b6, S2.eqtls.serpin6b6)
+#library(knitr)
+coloc.serpin6b6$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 13 QTL on HFHS diet and the Serpin6b6 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.serpin6b6,"H4 > 0.9",row=7,dataset1=D1.cholesterol.serpin6b6,dataset2=D2.eqtls.serpin6b6)
+```
+
+## Ap3s1
+
+```{r susie-ap3s1}
+ap3s1.ld.file <- '../ld-calculations/genotypes.plink.ap3s1.ld.gz'
+ap3s1.ld.data <- read_table(ap3s1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+ap3s1.LD.matrix <- ap3s1.ld.data %>%
+   select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.ap3s1 <- filter(ncdcholesterol.data, rs %in% snp.list.ap3s1)
+
+ap3s1.LD.matrix.reordered <- ap3s1.LD.matrix[cholesterol.snps.ap3s1$rs,cholesterol.snps.ap3s1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.ap3s1 <- with(cholesterol.snps.ap3s1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=446, 
+                       MAF=af,
+                       LD=ap3s1.LD.matrix.reordered)) 
+
+eqtl.snps.ap3s1 <- filter(eQTL.data.ap3s1, rs %in% snp.list.ap3s1)
+D2.eqtls.ap3s1 <- with(eqtl.snps.ap3s1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=446, 
+                       MAF=af,
+                       LD=ap3s1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.ap3s1 <- runsusie(D1.cholesterol.ap3s1)
+S2.eqtls.ap3s1 <- runsusie(D2.eqtls.ap3s1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.ap3s1)
+summary(S2.eqtls.ap3s1)
+
+#did not converge for S2.ap3s1
+#library(Rfast)
+coloc.ap3s1 <- coloc.susie(S1.cholesterol.ap3s1, S2.eqtls.ap3s1)
+#library(knitr)
+coloc.ap3s1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 QTL on NCD and the Ap3s1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 1
+#sensitivity(coloc.mvk,"H4 > 0.9",row=1,dataset1=D1.cholesterol.mvk,dataset2=D2.eqtls.mvk)
+```
+## Chromosome 5 HFD QTL Colocalization
+
+### Mvk
+
+MVK is mevalonate kinase, a key enzyme in the cholesterol biosynthesis pathway.
+
+First testing for colocalization between additive cholesterol QTLs and Mvk eQTLs
+
+#### Mvk Additive Model Colocalization
+
+```{r susie-mvk}
+mvk.ld.file <- '../ld-calculations/diet-specific-regions/genotypes.plink.5_123629774_B_E.ld.gz'
+mvk.ld.data <- read_table(mvk.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+mvk.LD.matrix <- mvk.ld.data %>%
+   dplyr::select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.mvk <- dplyr::filter(cholesterol.data, rs %in% snp.list.mvk)
+
+mvk.LD.matrix.reordered <- mvk.LD.matrix[cholesterol.snps.mvk$rs,cholesterol.snps.mvk$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.mvk<- with(cholesterol.snps.mvk,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=mvk.LD.matrix.reordered)) 
+
+eqtl.snps.mvk <- dplyr::filter(eQTL.data.mvk, rs %in% snp.list.mvk)
+D2.eqtls.mvk <- with(eqtl.snps.mvk,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=mvk.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.mvk <- runsusie(D1.cholesterol.mvk)
+S2.eqtls.mvk <- runsusie(D2.eqtls.mvk)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.mvk)
+summary(S2.eqtls.mvk)
+
+#did not converge for S2.ap3s1
+#library(Rfast)
+coloc.mvk <- coloc.susie(S1.cholesterol.mvk, S2.eqtls.mvk)
+#library(knitr)
+coloc.mvk$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 5 cholesterol QTL and the Mvk eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.mvk,"H4 > 0.9",row=1,dataset1=D1.cholesterol.mvk,dataset2=D2.eqtls.mvk)
+```
+
+#### Mvk HFD Model Colocalization
+
+Now modelled HFD-specific QTLs vs Mvk eQTLs
+
+```{r susie-mvk-hfd}
+
+
+hfd.cholesterol.snps.mvk <- dplyr::filter(hfdcholesterol.data, rs %in% snp.list.mvk)
+
+mvk.LD.matrix.reordered <- mvk.LD.matrix[hfd.cholesterol.snps.mvk$rs,hfd.cholesterol.snps.mvk$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.hfd.cholesterol.mvk<- with(hfd.cholesterol.snps.mvk,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=383, 
+                       MAF=af,
+                       LD=mvk.LD.matrix.reordered)) 
+
+
+#susie method 
+# not essential but saves time
+S1.hfd.cholesterol.mvk <- runsusie(D1.hfd.cholesterol.mvk)
+# if you want to see the credible sets from the interval
+summary(S1.hfd.cholesterol.mvk)
+summary(S2.eqtls.mvk)
+
+#did not converge for S2.ap3s1
+#library(Rfast)
+coloc.mvk.hfd <- coloc.susie(S1.hfd.cholesterol.mvk, S2.eqtls.mvk)
+#library(knitr)
+coloc.mvk.hfd$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 5 HFD-specific cholesterol QTL and the Mvk eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.mvk.hfd,"H4 > 0.9",row=1,dataset1=D1.hfd.cholesterol.mvk,dataset2=D2.eqtls.mvk)
+```
+
+
+## Chromosome 18, NCD Specific QTL Colocalization
+
+### Tcerg1
+
+*Tcerg1* is a poorly understood transcription factor nominated in the chromosome 18 QTL
+
+First testing for colocalization between additive cholesterol QTLs and *Tcerg1* eQTLs
+
+#### Tcerg1 Additive Model Colocalization
+
+```{r susie-tcerg1}
+tcerg1.ld.file <- '../ld-calculations/genotypes.plink.tcerg1.ld.gz'
+tcerg1.ld.data <- read_table(tcerg1.ld.file)
+#susie set up: redone for every snp list but same for gene and cholesterol 
+tcerg1.LD.matrix <- tcerg1.ld.data %>%
+   dplyr::select(SNP_A, SNP_B,R2) %>%
+   pivot_wider(names_from=SNP_B, values_from=R2) %>%
+   tibble::column_to_rownames("SNP_A") %>%
+   as.matrix()
+
+cholesterol.snps.tcerg1 <- dplyr::filter(cholesterol.data, rs %in% snp.list.tcerg1)
+
+tcerg1.LD.matrix.reordered <- tcerg1.LD.matrix[cholesterol.snps.tcerg1$rs,cholesterol.snps.tcerg1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.cholesterol.tcerg1<- with(cholesterol.snps.tcerg1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered)) 
+
+eqtl.snps.tcerg1 <- dplyr::filter(eQTL.data.tcerg1, rs %in% snp.list.tcerg1)
+D2.eqtls.tcerg1 <- with(eqtl.snps.tcerg1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered)) 
+
+#susie method 
+# not essential but saves time
+S1.cholesterol.tcerg1 <- runsusie(D1.cholesterol.tcerg1)
+S2.eqtls.tcerg1 <- runsusie(D2.eqtls.tcerg1)
+# if you want to see the credible sets from the interval
+summary(S1.cholesterol.tcerg1)
+summary(S2.eqtls.tcerg1)
+
+#did not converge for S2.ap3s1
+#library(Rfast)
+coloc.tcerg1 <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.tcerg1)
+#library(knitr)
+coloc.tcerg1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 cholesterol QTL and the Tcerg1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.tcerg1,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.tcerg1)
+```
+
+#### Tcerg NCD only Colocalization
+
+Now modelled NCD-specific QTLs vs *Tcerg1* eQTLs
+
+```{r susie-tcerg1-ncd}
+ncd.cholesterol.snps.tcerg1 <- dplyr::filter(ncdcholesterol.data, rs %in% snp.list.tcerg1)
+
+tcerg1.LD.matrix.reordered <- tcerg1.LD.matrix[ncd.cholesterol.snps.tcerg1$rs,ncd.cholesterol.snps.tcerg1$rs] #rearranged matrix to have same order as cholesterol snps
+
+D1.ncd.cholesterol.tcerg1<- with(ncd.cholesterol.snps.tcerg1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=452, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered)) 
+
+
+#susie method 
+# not essential but saves time
+S1.ncd.cholesterol.tcerg1 <- runsusie(D1.ncd.cholesterol.tcerg1)
+# if you want to see the credible sets from the interval
+summary(S1.ncd.cholesterol.tcerg1)
+summary(S2.eqtls.tcerg1)
+
+#did not converge for S2.ap3s1
+#library(Rfast)
+coloc.tcerg1.ncd <- coloc.susie(S1.ncd.cholesterol.tcerg1, S2.eqtls.tcerg1)
+#library(knitr)
+coloc.tcerg1.ncd$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Tcerg1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 19
+sensitivity(coloc.tcerg1.ncd,"H4 > 0.9",row=1,dataset1=D1.ncd.cholesterol.tcerg1,dataset2=D2.eqtls.tcerg1)
+```
+
+### Dcp2
+
+For the remainder of these used the LD blocks and regions set for Tcerg1
+
+```{r susie-dcp2}
+eqtl.snps.dcp2 <- dplyr::filter(eQTL.data.dcp2, rs %in% snp.list.tcerg1)
+D2.eqtls.dcp2 <- with(eqtl.snps.dcp2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered)) #uses LD matrix for TCERG1 region
+S2.eqtls.dcp2<- runsusie(D2.eqtls.dcp2)
+summary(S2.eqtls.dcp2)
+
+#did not converge for S2.ap3s1
+#library(Rfast)
+coloc.dcp2 <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.dcp2)
+#library(knitr)
+coloc.dcp2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Dcp2 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+
+#row with the strongest H4 signal, in this case row 1
+sensitivity(coloc.dcp2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.dcp2)
+```
+
+### Mcc
+
+```{r susie-mcc}
+eqtl.snps.mcc <- dplyr::filter(eQTL.data.mcc, rs %in% snp.list.tcerg1)
+D2.eqtls.mcc <- with(eqtl.snps.mcc,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.mcc <- runsusie(D2.eqtls.mcc)
+summary(S2.eqtls.mcc)
+coloc.mcc <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.mcc)
+coloc.mcc$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Mcc eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+sensitivity(coloc.mcc,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.mcc)
+```
+
+### Ythdc2
+
+```{r susie-ythdc2}
+eqtl.snps.ythdc2 <- dplyr::filter(eQTL.data.ythdc2, rs %in% snp.list.tcerg1)
+D2.eqtls.ythdc2 <- with(eqtl.snps.ythdc2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.ythdc2 <- runsusie(D2.eqtls.ythdc2)
+summary(S2.eqtls.ythdc2)
+coloc.ythdc2 <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.ythdc2)
+coloc.ythdc2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Ythdc2 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+sensitivity(coloc.ythdc2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.ythdc2)
+```
+
+### Kcnn2
+
+```{r susie-kcnn2}
+eqtl.snps.kcnn2 <- dplyr::filter(eQTL.data.kcnn2, rs %in% snp.list.tcerg1)
+D2.eqtls.kcnn2 <- with(eqtl.snps.kcnn2,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.kcnn2 <- runsusie(D2.eqtls.kcnn2)
+summary(S2.eqtls.kcnn2)
+coloc.kcnn2 <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.kcnn2)
+coloc.kcnn2$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Kcnn2 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+sensitivity(coloc.kcnn2,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.kcnn2)
+```
+
+### Pggt1b
+
+```{r pggt1b}
+eqtl.snps.pggt1b <- dplyr::filter(eQTL.data.pggt1b, rs %in% snp.list.tcerg1)
+D2.eqtls.pggt1b <- with(eqtl.snps.pggt1b,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.pggt1b <- runsusie(D2.eqtls.pggt1b)
+summary(S2.eqtls.pggt1b)
+coloc.pggt1b <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.pggt1b)
+coloc.pggt1b$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Pggt1b eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+#sensitivity(coloc.pggt1b,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.pggt1b)
+```
+
+### Fem1c
+
+```{r susie-fem1c}
+eqtl.snps.fem1c <- dplyr::filter(eQTL.data.fem1c, rs %in% snp.list.tcerg1)
+D2.eqtls.fem1c <- with(eqtl.snps.fem1c,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.fem1c <- runsusie(D2.eqtls.fem1c)
+summary(S2.eqtls.fem1c)
+coloc.fem1c <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.fem1c)
+coloc.fem1c$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Fem1c eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+sensitivity(coloc.fem1c,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.fem1c)
+```
+
+### Cdo1
+
+```{r susie-cdo1}
+eqtl.snps.cdo1 <- dplyr::filter(eQTL.data.cdo1, rs %in% snp.list.tcerg1)
+D2.eqtls.cdo1 <- with(eqtl.snps.cdo1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.cdo1 <- runsusie(D2.eqtls.cdo1)
+summary(S2.eqtls.cdo1)
+coloc.cdo1 <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.cdo1)
+coloc.cdo1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Cdo1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+sensitivity(coloc.cdo1,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.cdo1)
+```
+
+### Dmxl1
+
+```{r susie-dmxl1}
+eqtl.snps.dmxl1 <- dplyr::filter(eQTL.data.dmxl1, rs %in% snp.list.tcerg1)
+D2.eqtls.dmxl1 <- with(eqtl.snps.dmxl1,
+                       list(beta=beta,
+                       varbeta=se,
+                       snp=rs,
+                       position=ps,
+                       type="quant", 
+                       N=835, 
+                       MAF=af,
+                       LD=tcerg1.LD.matrix.reordered))
+S2.eqtls.dmxl1 <- runsusie(D2.eqtls.dmxl1)
+summary(S2.eqtls.dmxl1)
+coloc.dmxl1 <- coloc.susie(S1.cholesterol.tcerg1, S2.eqtls.dmxl1)
+coloc.dmxl1$summary %>% 
+  kable(caption="Posterior probabilities for the Chromosome 18 NCD-specific cholesterol QTL and the Dmxl1 eQTL",
+        digits=c(0,0,0,3,3,3,3,3,0,0))
+sensitivity(coloc.dmxl1,"H4 > 0.9",row=1,dataset1=D1.cholesterol.tcerg1,dataset2=D2.eqtls.dmxl1)
+```
+
+# Summary and output
+
+
+```{r summary-output}
+library(dplyr)
+library(purrr)
+library(stringr)
+
+# Get all coloc objects in your environment
+coloc_objects <- ls(pattern = "^coloc\\.")
+
+# Extract summaries into a data frame
+coloc_summary <- map_dfr(coloc_objects, function(obj_name) {
+  # Get the object
+  obj <- get(obj_name)
+  
+  # Extract gene name and diet suffix from object name (after "coloc.")
+  name_parts <- str_remove(obj_name, "^coloc\\.") %>%
+    str_to_lower()
+  
+  # Check if it ends with .hfd or .ncd
+  if (str_detect(name_parts, "\\.hfd$")) {
+    gene_name <- str_remove(name_parts, "\\.hfd$") %>% str_to_title()
+    diet <- "HFD"
+  } else if (str_detect(name_parts, "\\.ncd$")) {
+    gene_name <- str_remove(name_parts, "\\.ncd$") %>% str_to_title()
+    diet <- "NCD"
+  } else {
+    gene_name <- str_to_title(name_parts)
+    diet <- "Additive"
+  }
+  
+  # Get summary - handle different formats
+  summary_data <- obj$summary
+  
+  # Convert to data frame depending on structure
+  if (is.matrix(summary_data)) {
+    summary_df <- as.data.frame(t(summary_data))
+  } else if (is.vector(summary_data) || is.numeric(summary_data)) {
+    summary_df <- as.data.frame(t(summary_data))
+  } else if (is.data.frame(summary_data)) {
+    summary_df <- summary_data
+  } else {
+    # If unknown format, try to coerce
+    summary_df <- as.data.frame(as.list(summary_data))
+  }
+  
+  # Add gene name and diet as first columns
+  summary_df %>%
+    mutate(Gene = gene_name, Diet = diet, .before = 1)
+})
+
+# Optionally write to CSV
+write_csv(coloc_summary, "Coloc results summary.csv")
+```
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

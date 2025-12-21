@@ -1,0 +1,2641 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.7.32">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges">
+<meta name="dcterms.date" content="2020-07-07">
+
+<title>Analysis of Diversity Outbred Strain QTLs of Interest</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="QTLs_of_interest_files/libs/clipboard/clipboard.min.js"></script>
+<script src="QTLs_of_interest_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="QTLs_of_interest_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="QTLs_of_interest_files/libs/quarto-html/popper.min.js"></script>
+<script src="QTLs_of_interest_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="QTLs_of_interest_files/libs/quarto-html/anchor.min.js"></script>
+<link href="QTLs_of_interest_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="QTLs_of_interest_files/libs/quarto-html/quarto-syntax-highlighting-37eea08aefeeee20ff55810ff984fec1.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="QTLs_of_interest_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="QTLs_of_interest_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="QTLs_of_interest_files/libs/bootstrap/bootstrap-ff7067f47e26017551bec3c0280d8ab3.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#experimental-details" id="toc-experimental-details" class="nav-link" data-scroll-target="#experimental-details">Experimental Details</a>
+  <ul class="collapse">
+  <li><a href="#identifying-interesting-snps" id="toc-identifying-interesting-snps" class="nav-link" data-scroll-target="#identifying-interesting-snps">Identifying Interesting SNPs</a></li>
+  </ul></li>
+  <li><a href="#data-entry" id="toc-data-entry" class="nav-link" data-scroll-target="#data-entry">Data Entry</a>
+  <ul class="collapse">
+  <li><a href="#qtl-barplots" id="toc-qtl-barplots" class="nav-link" data-scroll-target="#qtl-barplots">QTL Barplots</a></li>
+  <li><a href="#statistics" id="toc-statistics" class="nav-link" data-scroll-target="#statistics">Statistics</a>
+  <ul class="collapse">
+  <li><a href="#diet-stratified-snps" id="toc-diet-stratified-snps" class="nav-link" data-scroll-target="#diet-stratified-snps">Diet-Stratified SNPS</a></li>
+  </ul></li>
+  <li><a href="#summary-of-snp-level-analyses-for-diet" id="toc-summary-of-snp-level-analyses-for-diet" class="nav-link" data-scroll-target="#summary-of-snp-level-analyses-for-diet">Summary of SNP-Level Analyses For Diet</a>
+  <ul class="collapse">
+  <li><a href="#sex-stratified-snps" id="toc-sex-stratified-snps" class="nav-link" data-scroll-target="#sex-stratified-snps">Sex-Stratified SNPS</a></li>
+  </ul></li>
+  <li><a href="#summary-of-snp-level-analyses-for-sex" id="toc-summary-of-snp-level-analyses-for-sex" class="nav-link" data-scroll-target="#summary-of-snp-level-analyses-for-sex">Summary of SNP-Level Analyses For Sex</a></li>
+  </ul></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Analysis of Diversity Outbred Strain QTLs of Interest</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 7, 2020</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose" class="level1">
+<h1>Purpose</h1>
+<p>Used QTLs identified in <strong>qtl_analysis.Rmd</strong>, and create plots of their associations with cholesterol</p>
+</section>
+<section id="experimental-details" class="level1">
+<h1>Experimental Details</h1>
+<p>This analyses the data from the server where the bimbam file with genotypes was filtered for SNPs of interest using this code, where <strong>SNPs_of_interest.txt</strong> was generated as a nonredundant list of interesting SNPs. This file has to be generated first then this code run after.</p>
+<section id="identifying-interesting-snps" class="level2">
+<h2 class="anchored" data-anchor-id="identifying-interesting-snps">Identifying Interesting SNPs</h2>
+<p>Loaded in SNPs from clumped QTL data</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>male.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps Male QTLs.csv'</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>female.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps Female QTLs.csv'</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>ncd.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps NCD QTLs.csv'</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>hfd.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'</span></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>ncd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(ncd.clump.filename)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>hfd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(hfd.clump.filename)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>male.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(male.clump.filename)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>female.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(female.clump.filename)</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>all.clumps <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(ncd.clump.data,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>                        hfd.clump.data,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>                        male.clump.data,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>                        female.clump.data)</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>unique.snps <span class="ot">&lt;-</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  all.clumps <span class="sc">%&gt;%</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(SNP) <span class="sc">%&gt;%</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(SNP)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>unique.snps <span class="sc">%&gt;%</span> <span class="fu">write</span>(<span class="at">file=</span><span class="st">"SNPs_of_interest.txt"</span>) <span class="co">#just the rsids</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>diet.snps <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(ncd.clump.data, hfd.clump.data) <span class="sc">%&gt;%</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(SNP) <span class="sc">%&gt;%</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(SNP)</span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>sex.snps <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(male.clump.data,female.clump.data) <span class="sc">%&gt;%</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(SNP) <span class="sc">%&gt;%</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(SNP)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<p>Based on tht clump data we pulled out 60 interesting lead SNPs.</p>
+<pre class="{snps-code}"><code>grep -Ff SNPs_of_interest.txt Genotypes_all.bimbam &gt; Genotypes_of_interest.bimbam</code></pre>
+</section>
+</section>
+<section id="data-entry" class="level1">
+<h1>Data Entry</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>genotype.file <span class="ot">&lt;-</span> <span class="st">'Genotypes_of_interest.bimbam'</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>cholesterol.file <span class="ot">&lt;-</span> <span class="st">'Cholesterol_all.txt'</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>covariates.file <span class="ot">&lt;-</span> <span class="st">'Covariates.tab'</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>genotype.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(genotype.file, <span class="at">col_names =</span> F) </span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>snps <span class="ot">&lt;-</span> genotype.data <span class="sc">%&gt;%</span> <span class="fu">select</span>(X1,X2,X3)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>genotype.data.clean <span class="ot">&lt;-</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  genotype.data <span class="sc">%&gt;%</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>X1,<span class="sc">-</span>X2,<span class="sc">-</span>X3) <span class="sc">%&gt;%</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate_all</span>(round)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>genotype.data.clean.r <span class="ot">&lt;-</span><span class="fu">as.data.frame</span>(<span class="fu">t</span>(genotype.data.clean))</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>cholesterol.data <span class="ot">&lt;-</span> <span class="fu">read_table</span>(cholesterol.file, <span class="at">col_names =</span> F)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>covariates.data <span class="ot">&lt;-</span> <span class="fu">read_delim</span>(covariates.file, <span class="at">col_names =</span> F)</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>combined.data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">Cholesterol=</span>cholesterol.data<span class="sc">$</span>X1,</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>                            <span class="at">Sex=</span>covariates.data<span class="sc">$</span>X2,</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>                            <span class="at">Diet=</span>covariates.data<span class="sc">$</span>X3) <span class="sc">%&gt;%</span></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sex =</span> <span class="fu">case_when</span>(Sex<span class="sc">==</span><span class="dv">0</span><span class="sc">~</span><span class="st">"M"</span>,</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>                         Sex<span class="sc">==</span><span class="dv">1</span><span class="sc">~</span><span class="st">"F"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diet =</span> <span class="fu">case_when</span>(Diet<span class="sc">==</span><span class="dv">1</span><span class="sc">~</span><span class="st">"HFHS"</span>,</span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>                         Diet<span class="sc">==</span><span class="dv">0</span><span class="sc">~</span><span class="st">"NCD"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>Sex,<span class="sc">-</span>Diet) <span class="sc">%&gt;%</span></span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_cols</span>(genotype.data.clean.r) <span class="sc">%&gt;%</span></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">diet =</span> <span class="fu">relevel</span>(<span class="fu">as.factor</span>(diet),<span class="at">ref=</span><span class="st">"NCD"</span>))</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(combined.data) <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">colnames</span>(combined.data)[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>],snps<span class="sc">$</span>X1)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>combined.data.long <span class="ot">&lt;-</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  combined.data <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(diet,sex) <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="at">cols=</span><span class="dv">4</span><span class="sc">:</span><span class="fu">ncol</span>(combined.data), <span class="co">#first threre columns arer cholesterol, sex and diet</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>               <span class="at">names_to=</span><span class="st">"SNP"</span>,</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>               <span class="at">values_to =</span> <span class="st">"Count"</span>) </span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>summary.data <span class="ot">&lt;-</span> combined.data.long <span class="sc">%&gt;%</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SNP,sex,diet,Count) <span class="sc">%&gt;%</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(sex)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">Cholesterol.mean =</span> <span class="fu">mean</span>(Cholesterol,<span class="at">na.rm=</span>T),</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">Cholesterol.se=</span> <span class="fu">se</span>(Cholesterol),</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">n=</span><span class="fu">length</span>(Cholesterol)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+<section id="qtl-barplots" class="level2">
+<h2 class="anchored" data-anchor-id="qtl-barplots">QTL Barplots</h2>
+<p>This will generate a barplot for every QTL in the list</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(forcats)</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (qtl <span class="cf">in</span> unique.snps) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>summary.data <span class="sc">%&gt;%</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(SNP<span class="sc">==</span>qtl) <span class="sc">%&gt;%</span>  </span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Genotype=</span><span class="fu">fct_recode</span>(<span class="fu">as.factor</span>(Count),</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>         <span class="st">"GG"</span><span class="ot">=</span><span class="st">'0'</span>,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>         <span class="st">"GC"</span><span class="ot">=</span><span class="st">'1'</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>         <span class="st">"CC"</span><span class="ot">=</span><span class="st">'2'</span>)) <span class="sc">%&gt;%</span>  </span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y=</span>Cholesterol.mean,</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>             <span class="at">ymin=</span>Cholesterol.mean<span class="sc">-</span>Cholesterol.se,</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>             <span class="at">ymax=</span>Cholesterol.mean<span class="sc">+</span>Cholesterol.se,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>             <span class="at">fill=</span>Genotype,</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>             <span class="at">x=</span>diet,</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>             <span class="at">label=</span>n)) <span class="sc">+</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">'identity'</span>,<span class="at">position=</span><span class="st">"dodge"</span>, <span class="at">width=</span><span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width=</span><span class="fl">0.75</span>), <span class="at">width=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="co">#geom_text(aes(y=0),position=position_dodge(width=0.75)) +</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(.<span class="sc">~</span>sex) <span class="sc">+</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>,</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span>qtl,</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> <span class="fu">paste</span>(<span class="st">"Effects of "</span>,qtl),</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill=</span><span class="st">"Genotype"</span>) <span class="sc">+</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">18</span>) <span class="ot">-&gt;</span> qtl.barplot</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(qtl.barplot)</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">plot=</span>qtl.barplot, <span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">'QTL-Barplots/'</span>,qtl,<span class="st">'-all.png'</span>))</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">plot=</span>qtl.barplot, <span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">'QTL-Barplots/'</span>,qtl,<span class="st">'-all.pdf'</span>))</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>summary.data <span class="sc">%&gt;%</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(SNP<span class="sc">==</span>qtl) <span class="sc">%&gt;%</span>  </span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Genotype=</span><span class="fu">fct_recode</span>(<span class="fu">as.factor</span>(Count),</span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>         <span class="st">"Homozygous"</span><span class="ot">=</span><span class="st">'0'</span>,</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>         <span class="st">"Heterozygous"</span><span class="ot">=</span><span class="st">'1'</span>,</span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>         <span class="st">"CC"</span><span class="ot">=</span><span class="st">'2'</span>)) <span class="sc">%&gt;%</span> </span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(Genotype<span class="sc">!=</span><span class="st">"CC"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">y=</span>Cholesterol.mean,</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>             <span class="at">ymin=</span>Cholesterol.mean<span class="sc">-</span>Cholesterol.se,</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>             <span class="at">ymax=</span>Cholesterol.mean<span class="sc">+</span>Cholesterol.se,</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a>             <span class="at">fill=</span>Genotype,</span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>             <span class="at">x=</span>diet,</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>             <span class="at">label=</span>n)) <span class="sc">+</span></span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">'identity'</span>,<span class="at">position=</span><span class="st">"dodge"</span>, <span class="at">width=</span><span class="fl">0.75</span>) <span class="sc">+</span></span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width=</span><span class="fl">0.75</span>), <span class="at">width=</span><span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb5-43"><a href="#cb5-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_text</span>(<span class="fu">aes</span>(<span class="at">y=</span><span class="dv">0</span>),<span class="at">position=</span><span class="fu">position_dodge</span>(<span class="at">width=</span><span class="fl">0.75</span>), <span class="at">vjust =</span> <span class="sc">-</span><span class="fl">0.5</span>,<span class="at">color=</span><span class="st">"white"</span>) <span class="sc">+</span></span>
+<span id="cb5-44"><a href="#cb5-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_grid</span>(.<span class="sc">~</span>sex) <span class="sc">+</span></span>
+<span id="cb5-45"><a href="#cb5-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Cholesterol (mg/dL)"</span>,</span>
+<span id="cb5-46"><a href="#cb5-46" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">""</span>,</span>
+<span id="cb5-47"><a href="#cb5-47" aria-hidden="true" tabindex="-1"></a>       <span class="at">title =</span> qtl,</span>
+<span id="cb5-48"><a href="#cb5-48" aria-hidden="true" tabindex="-1"></a>       <span class="at">fill=</span><span class="st">"Genotype"</span>) <span class="sc">+</span></span>
+<span id="cb5-49"><a href="#cb5-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb5-50"><a href="#cb5-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>color.scheme) <span class="sc">+</span></span>
+<span id="cb5-51"><a href="#cb5-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">'none'</span>,</span>
+<span id="cb5-52"><a href="#cb5-52" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.text =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">10</span>),</span>
+<span id="cb5-53"><a href="#cb5-53" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.title =</span> <span class="fu">element_text</span>(<span class="at">size=</span><span class="dv">12</span>)) <span class="ot">-&gt;</span></span>
+<span id="cb5-54"><a href="#cb5-54" aria-hidden="true" tabindex="-1"></a>  qtl.barplot<span class="fl">.2</span></span>
+<span id="cb5-55"><a href="#cb5-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-56"><a href="#cb5-56" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(qtl.barplot<span class="fl">.2</span>)</span>
+<span id="cb5-57"><a href="#cb5-57" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">plot=</span>qtl.barplot<span class="fl">.2</span>, <span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">'QTL-Barplots/'</span>,qtl,<span class="st">'-hets.png'</span>))</span>
+<span id="cb5-58"><a href="#cb5-58" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">plot=</span>qtl.barplot<span class="fl">.2</span>, <span class="at">filename=</span><span class="fu">paste0</span>(<span class="st">'QTL-Barplots/'</span>,qtl,<span class="st">'-hets.pdf'</span>))</span>
+<span id="cb5-59"><a href="#cb5-59" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-3.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-4.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-5.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-6.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-7.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-8.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-9.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-10.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-11.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-12.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-13.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-14.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-15.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-16.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-17.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-18.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-19.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-20.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-21.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-22.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-23.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-24.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-25.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-26.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-27.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-28.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-29.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-30.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-31.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-32.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-33.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-34.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-35.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-36.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-37.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-38.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-39.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-40.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-41.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-42.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-43.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-44.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-45.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-46.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-47.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-48.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-49.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-50.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-51.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-52.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-53.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-54.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-55.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-56.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-57.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-58.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-59.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-60.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-61.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-62.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-63.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-64.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-65.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-66.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-67.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-68.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-69.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-70.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-71.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-72.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-73.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-74.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-75.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-76.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-77.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-78.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-79.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-80.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-81.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-82.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-83.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-84.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-85.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-86.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-87.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-88.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-89.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-90.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-91.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-92.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-93.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-94.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-95.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-96.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-97.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-98.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-99.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-100.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-101.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-102.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-103.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-104.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-105.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-106.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-107.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-108.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-109.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-110.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-111.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-112.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-113.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-114.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-115.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-116.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-117.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-118.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-119.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/qtl-barplots-120.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="statistics" class="level2">
+<h2 class="anchored" data-anchor-id="statistics">Statistics</h2>
+<p>This analysis performs the statistics, using simple linear models adjusting for sex, diet and testing for interactions between them and the genotype. This is differrent from the p-values from the GEMMA analyses, since it dos not account for genetic similarity outside the QTL</p>
+<section id="diet-stratified-snps" class="level3">
+<h3 class="anchored" data-anchor-id="diet-stratified-snps">Diet-Stratified SNPS</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>lm.data <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (qtl <span class="cf">in</span> diet.snps) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>formula.no.int <span class="ot">&lt;-</span> <span class="fu">eval</span>(<span class="fu">bquote</span>(Cholesterol <span class="sc">~</span> sex <span class="sc">+</span> diet <span class="sc">+</span> .(<span class="fu">as.name</span>(qtl))))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>lm.no.int <span class="ot">&lt;-</span> <span class="fu">lm</span>(formula.no.int,<span class="at">data=</span>combined.data) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term,estimate,std.error,p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">4</span>)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>formula.ncd <span class="ot">&lt;-</span> <span class="fu">eval</span>(<span class="fu">bquote</span>(Cholesterol <span class="sc">~</span> sex <span class="sc">+</span> .(<span class="fu">as.name</span>(qtl))))</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>lm.ncd <span class="ot">&lt;-</span> <span class="fu">lm</span>(formula.ncd,<span class="at">data=</span>combined.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(diet<span class="sc">==</span><span class="st">'NCD'</span>)) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term,estimate,std.error,p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">3</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>formula.hfd <span class="ot">&lt;-</span> <span class="fu">eval</span>(<span class="fu">bquote</span>(Cholesterol <span class="sc">~</span> sex <span class="sc">+</span> .(<span class="fu">as.name</span>(qtl))))</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>lm.hfd<span class="ot">&lt;-</span> <span class="fu">lm</span>(formula.hfd,<span class="at">data=</span>combined.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(diet<span class="sc">==</span><span class="st">'HFHS'</span>)) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term,estimate,std.error,p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">3</span>)</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>diet.data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(lm.hfd,lm.ncd,<span class="at">by=</span><span class="st">"term"</span>,</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>                      <span class="at">suffix=</span><span class="fu">c</span>(<span class="st">"_hfd"</span>,<span class="st">"_ncd"</span>))</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>qtl.data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(diet.data,lm.no.int,<span class="at">by=</span><span class="st">"term"</span>,</span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>                      <span class="at">suffix=</span><span class="fu">c</span>(<span class="st">""</span>,<span class="st">"_all"</span>))</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>lm.data <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(lm.data,qtl.data)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="summary-of-snp-level-analyses-for-diet" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-snp-level-analyses-for-diet">Summary of SNP-Level Analyses For Diet</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(lm.data <span class="sc">%&gt;%</span> </span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="at">diet.difference=</span>estimate_hfd<span class="sc">-</span>estimate_ncd) <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(diet.difference)) <span class="sc">%&gt;%</span> </span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>        <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'std.error'</span>)),</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption=</span><span class="st">"Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 12%">
+<col style="width: 11%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 15%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">term</th>
+<th style="text-align: right;">estimate_hfd</th>
+<th style="text-align: right;">p.value_hfd</th>
+<th style="text-align: right;">estimate_ncd</th>
+<th style="text-align: right;">p.value_ncd</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">p.value</th>
+<th style="text-align: right;">diet.difference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>2_46253198_H_E</code></td>
+<td style="text-align: right;">-16.383</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1.097</td>
+<td style="text-align: right;">0.709</td>
+<td style="text-align: right;">-6.92</td>
+<td style="text-align: right;">0.009</td>
+<td style="text-align: right;">-17.48</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>10_57753923_G_C</code></td>
+<td style="text-align: right;">16.085</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-0.745</td>
+<td style="text-align: right;">0.786</td>
+<td style="text-align: right;">7.11</td>
+<td style="text-align: right;">0.004</td>
+<td style="text-align: right;">16.83</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>6_126771534_D_E</code></td>
+<td style="text-align: right;">-5.142</td>
+<td style="text-align: right;">0.201</td>
+<td style="text-align: right;">11.688</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2.09</td>
+<td style="text-align: right;">0.416</td>
+<td style="text-align: right;">-16.83</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>12_108748974_D_C</code></td>
+<td style="text-align: right;">14.697</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-1.765</td>
+<td style="text-align: right;">0.484</td>
+<td style="text-align: right;">6.48</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">16.46</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>2_7501966_H_E</code></td>
+<td style="text-align: right;">-13.611</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2.659</td>
+<td style="text-align: right;">0.302</td>
+<td style="text-align: right;">-5.75</td>
+<td style="text-align: right;">0.009</td>
+<td style="text-align: right;">-16.27</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>14_64610241_H_F</code></td>
+<td style="text-align: right;">-5.218</td>
+<td style="text-align: right;">0.183</td>
+<td style="text-align: right;">10.932</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">3.24</td>
+<td style="text-align: right;">0.157</td>
+<td style="text-align: right;">-16.15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>8_3410751_H_C</code></td>
+<td style="text-align: right;">-14.265</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-0.174</td>
+<td style="text-align: right;">0.952</td>
+<td style="text-align: right;">-7.08</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">-14.09</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>5_40272493_E_A</code></td>
+<td style="text-align: right;">-15.440</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-1.685</td>
+<td style="text-align: right;">0.527</td>
+<td style="text-align: right;">-8.04</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-13.76</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_133357791_C_F</code></td>
+<td style="text-align: right;">-3.933</td>
+<td style="text-align: right;">0.340</td>
+<td style="text-align: right;">9.541</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2.98</td>
+<td style="text-align: right;">0.219</td>
+<td style="text-align: right;">-13.47</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_117784609_B_C</code></td>
+<td style="text-align: right;">-3.846</td>
+<td style="text-align: right;">0.329</td>
+<td style="text-align: right;">9.600</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">3.50</td>
+<td style="text-align: right;">0.119</td>
+<td style="text-align: right;">-13.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>10_99490238_H_D</code></td>
+<td style="text-align: right;">-13.022</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-0.140</td>
+<td style="text-align: right;">0.941</td>
+<td style="text-align: right;">-5.90</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-12.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>15_94566593_F_G</code></td>
+<td style="text-align: right;">-0.858</td>
+<td style="text-align: right;">0.857</td>
+<td style="text-align: right;">11.721</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">5.61</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">-12.58</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>11_121921138_G_G</code></td>
+<td style="text-align: right;">2.811</td>
+<td style="text-align: right;">0.500</td>
+<td style="text-align: right;">-9.720</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-3.33</td>
+<td style="text-align: right;">0.185</td>
+<td style="text-align: right;">12.53</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_43690499_H_G</code></td>
+<td style="text-align: right;">-2.884</td>
+<td style="text-align: right;">0.433</td>
+<td style="text-align: right;">9.589</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">3.73</td>
+<td style="text-align: right;">0.080</td>
+<td style="text-align: right;">-12.47</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>14_58887010_F_F</code></td>
+<td style="text-align: right;">-3.503</td>
+<td style="text-align: right;">0.347</td>
+<td style="text-align: right;">8.841</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2.94</td>
+<td style="text-align: right;">0.178</td>
+<td style="text-align: right;">-12.34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_135664277_D_C</code></td>
+<td style="text-align: right;">-2.859</td>
+<td style="text-align: right;">0.497</td>
+<td style="text-align: right;">9.480</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">4.03</td>
+<td style="text-align: right;">0.088</td>
+<td style="text-align: right;">-12.34</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>13_30180778_E_C</code></td>
+<td style="text-align: right;">15.800</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">3.833</td>
+<td style="text-align: right;">0.083</td>
+<td style="text-align: right;">9.51</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">11.97</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>19_25487123_G_G</code></td>
+<td style="text-align: right;">13.200</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1.648</td>
+<td style="text-align: right;">0.501</td>
+<td style="text-align: right;">7.09</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">11.55</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>6_107008934_D_A</code></td>
+<td style="text-align: right;">-13.747</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-2.270</td>
+<td style="text-align: right;">0.414</td>
+<td style="text-align: right;">-7.53</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">-11.48</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>18_46410922_G_A</code></td>
+<td style="text-align: right;">-0.397</td>
+<td style="text-align: right;">0.911</td>
+<td style="text-align: right;">10.569</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">5.58</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">-10.96</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>3_156886929_F_B</code></td>
+<td style="text-align: right;">-3.308</td>
+<td style="text-align: right;">0.403</td>
+<td style="text-align: right;">7.485</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">2.44</td>
+<td style="text-align: right;">0.288</td>
+<td style="text-align: right;">-10.79</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_49650224_G_G</code></td>
+<td style="text-align: right;">-1.554</td>
+<td style="text-align: right;">0.637</td>
+<td style="text-align: right;">8.847</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">3.87</td>
+<td style="text-align: right;">0.045</td>
+<td style="text-align: right;">-10.40</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_117508066_B_E</code></td>
+<td style="text-align: right;">13.058</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">2.843</td>
+<td style="text-align: right;">0.179</td>
+<td style="text-align: right;">7.37</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">10.22</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>5_55215630_E_A</code></td>
+<td style="text-align: right;">-15.028</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-5.060</td>
+<td style="text-align: right;">0.074</td>
+<td style="text-align: right;">-10.02</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-9.97</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>6_42232037_G_G</code></td>
+<td style="text-align: right;">0.039</td>
+<td style="text-align: right;">0.992</td>
+<td style="text-align: right;">-8.976</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-4.86</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">9.02</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>10_95418856_F_E</code></td>
+<td style="text-align: right;">11.484</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">2.578</td>
+<td style="text-align: right;">0.339</td>
+<td style="text-align: right;">7.29</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">8.90</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>12_84203316_H_C</code></td>
+<td style="text-align: right;">1.668</td>
+<td style="text-align: right;">0.592</td>
+<td style="text-align: right;">-7.123</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-3.03</td>
+<td style="text-align: right;">0.085</td>
+<td style="text-align: right;">8.79</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>16_63647011_B_B</code></td>
+<td style="text-align: right;">-9.860</td>
+<td style="text-align: right;">0.004</td>
+<td style="text-align: right;">-1.083</td>
+<td style="text-align: right;">0.612</td>
+<td style="text-align: right;">-5.04</td>
+<td style="text-align: right;">0.009</td>
+<td style="text-align: right;">-8.78</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_145155626_A_H</code></td>
+<td style="text-align: right;">14.510</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">6.436</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">10.24</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">8.07</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_83629456_F_B</code></td>
+<td style="text-align: right;">-11.615</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">-3.552</td>
+<td style="text-align: right;">0.075</td>
+<td style="text-align: right;">-6.78</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-8.06</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_155454177_H_H</code></td>
+<td style="text-align: right;">14.351</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">6.475</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">10.06</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">7.88</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>5_123629774_B_E</code></td>
+<td style="text-align: right;">15.086</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">7.482</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">10.65</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">7.60</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_126387851_E_H</code></td>
+<td style="text-align: right;">-12.662</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-5.069</td>
+<td style="text-align: right;">0.016</td>
+<td style="text-align: right;">-8.57</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.59</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_159426890_H_H</code></td>
+<td style="text-align: right;">12.147</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">4.701</td>
+<td style="text-align: right;">0.013</td>
+<td style="text-align: right;">7.80</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">7.45</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_122944168_B_E</code></td>
+<td style="text-align: right;">14.323</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">7.253</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">10.25</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">7.07</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_137999848_D_H</code></td>
+<td style="text-align: right;">14.019</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">7.624</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">10.80</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">6.39</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>4_54753377_C_G</code></td>
+<td style="text-align: right;">3.417</td>
+<td style="text-align: right;">0.397</td>
+<td style="text-align: right;">9.507</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">6.93</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">-6.09</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_16663582_H_G</code></td>
+<td style="text-align: right;">5.635</td>
+<td style="text-align: right;">0.185</td>
+<td style="text-align: right;">11.434</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">9.06</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-5.80</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_128399127_D_E</code></td>
+<td style="text-align: right;">3.252</td>
+<td style="text-align: right;">0.395</td>
+<td style="text-align: right;">8.352</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">6.06</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">-5.10</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>10_55538600_H_B</code></td>
+<td style="text-align: right;">-7.364</td>
+<td style="text-align: right;">0.077</td>
+<td style="text-align: right;">-12.288</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-9.54</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">4.92</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_152428168_H_A</code></td>
+<td style="text-align: right;">-5.416</td>
+<td style="text-align: right;">0.122</td>
+<td style="text-align: right;">-9.630</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.66</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">4.21</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_136644599_C_A</code></td>
+<td style="text-align: right;">-7.239</td>
+<td style="text-align: right;">0.039</td>
+<td style="text-align: right;">-11.176</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-9.34</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">3.94</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_183576795_H_C</code></td>
+<td style="text-align: right;">5.739</td>
+<td style="text-align: right;">0.141</td>
+<td style="text-align: right;">8.228</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">6.99</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">-2.49</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_171425406_H_C</code></td>
+<td style="text-align: right;">13.177</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">11.584</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">12.33</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1.59</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_170324641_H_C</code></td>
+<td style="text-align: right;">12.364</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">13.652</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">13.05</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-1.29</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggrepel)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lm.data,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>estimate_hfd,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">ymin=</span>estimate_hfd<span class="sc">-</span>std.error_hfd,</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">ymax=</span>estimate_hfd<span class="sc">+</span>std.error_hfd,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">x=</span>estimate_ncd,</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>           <span class="at">xmin=</span>estimate_ncd<span class="sc">-</span>std.error_ncd,</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">xmax=</span>estimate_ncd<span class="sc">+</span>std.error_ncd,)) <span class="sc">+</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="at">alpha=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">alpha=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"HFD Estimate (mg/dL)"</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"NCD Estimate (mg/dL)"</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"Estimates for Lead SNPs on Cholesterol"</span>) <span class="sc">+</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">lty=</span><span class="dv">2</span>,<span class="at">xintercept=</span><span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">lty=</span><span class="dv">2</span>,<span class="at">yintercept=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/snp-level-summary-diet-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+<section id="sex-stratified-snps" class="level3">
+<h3 class="anchored" data-anchor-id="sex-stratified-snps">Sex-Stratified SNPS</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>lm.data.sex <span class="ot">&lt;-</span> <span class="fu">data.frame</span>()</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (qtl <span class="cf">in</span> sex.snps) {</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>formula.no.int <span class="ot">&lt;-</span> <span class="fu">eval</span>(<span class="fu">bquote</span>(Cholesterol <span class="sc">~</span> sex <span class="sc">+</span> diet <span class="sc">+</span> .(<span class="fu">as.name</span>(qtl))))</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>lm.no.int <span class="ot">&lt;-</span> <span class="fu">lm</span>(formula.no.int,<span class="at">data=</span>combined.data) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term,estimate,std.error,p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">4</span>)</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>formula.f <span class="ot">&lt;-</span> <span class="fu">eval</span>(<span class="fu">bquote</span>(Cholesterol <span class="sc">~</span> diet <span class="sc">+</span> .(<span class="fu">as.name</span>(qtl))))</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>lm.f <span class="ot">&lt;-</span> <span class="fu">lm</span>(formula.f,<span class="at">data=</span>combined.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(sex<span class="sc">==</span><span class="st">'F'</span>)) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term,estimate,std.error,p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">3</span>)</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>formula.m <span class="ot">&lt;-</span> <span class="fu">eval</span>(<span class="fu">bquote</span>(Cholesterol <span class="sc">~</span> diet <span class="sc">+</span> .(<span class="fu">as.name</span>(qtl))))</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>lm.m<span class="ot">&lt;-</span> <span class="fu">lm</span>(formula.m,<span class="at">data=</span>combined.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(sex<span class="sc">==</span><span class="st">'M'</span>)) <span class="sc">%&gt;%</span> tidy <span class="sc">%&gt;%</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(term,estimate,std.error,p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">3</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>sex.data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(lm.f,lm.m,<span class="at">by=</span><span class="st">"term"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>                      <span class="at">suffix=</span><span class="fu">c</span>(<span class="st">"_f"</span>,<span class="st">"_m"</span>))</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>qtl.data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(sex.data,lm.no.int,<span class="at">by=</span><span class="st">"term"</span>,</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>                      <span class="at">suffix=</span><span class="fu">c</span>(<span class="st">""</span>,<span class="st">"_all"</span>))</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>lm.data.sex <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(lm.data.sex,qtl.data)</span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+</div>
+</section>
+</section>
+<section id="summary-of-snp-level-analyses-for-sex" class="level2">
+<h2 class="anchored" data-anchor-id="summary-of-snp-level-analyses-for-sex">Summary of SNP-Level Analyses For Sex</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(lm.data.sex <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="at">sex.difference=</span>estimate_m<span class="sc">-</span>estimate_f) <span class="sc">%&gt;%</span> </span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>        <span class="fu">arrange</span>(<span class="sc">-</span><span class="fu">abs</span>(sex.difference)) <span class="sc">%&gt;%</span> <span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'std.error'</span>)),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption=</span><span class="st">"Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Simple linear models, both diet and sex adjusted and stratified by diet (while adjusting for sex)</caption>
+<colgroup>
+<col style="width: 20%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 11%">
+<col style="width: 10%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 16%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">term</th>
+<th style="text-align: right;">estimate_f</th>
+<th style="text-align: right;">p.value_f</th>
+<th style="text-align: right;">estimate_m</th>
+<th style="text-align: right;">p.value_m</th>
+<th style="text-align: right;">estimate</th>
+<th style="text-align: right;">p.value</th>
+<th style="text-align: right;">sex.difference</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;"><code>15_94566593_F_G</code></td>
+<td style="text-align: right;">-4.298</td>
+<td style="text-align: right;">0.298</td>
+<td style="text-align: right;">14.244</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">5.61</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">18.542</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_44256608_H_G</code></td>
+<td style="text-align: right;">7.992</td>
+<td style="text-align: right;">0.007</td>
+<td style="text-align: right;">-0.375</td>
+<td style="text-align: right;">0.897</td>
+<td style="text-align: right;">3.79</td>
+<td style="text-align: right;">0.065</td>
+<td style="text-align: right;">-8.367</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_152428168_H_A</code></td>
+<td style="text-align: right;">-3.950</td>
+<td style="text-align: right;">0.155</td>
+<td style="text-align: right;">-11.965</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.66</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-8.014</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_136593782_C_A</code></td>
+<td style="text-align: right;">-5.267</td>
+<td style="text-align: right;">0.066</td>
+<td style="text-align: right;">-13.212</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-9.18</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.945</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>10_55538600_H_B</code></td>
+<td style="text-align: right;">-5.778</td>
+<td style="text-align: right;">0.117</td>
+<td style="text-align: right;">-13.413</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-9.54</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.635</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_136644599_C_A</code></td>
+<td style="text-align: right;">-5.604</td>
+<td style="text-align: right;">0.049</td>
+<td style="text-align: right;">-13.212</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-9.34</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.608</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_183576795_H_C</code></td>
+<td style="text-align: right;">10.772</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">3.205</td>
+<td style="text-align: right;">0.324</td>
+<td style="text-align: right;">6.99</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">-7.567</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_135664277_D_C</code></td>
+<td style="text-align: right;">7.563</td>
+<td style="text-align: right;">0.021</td>
+<td style="text-align: right;">0.179</td>
+<td style="text-align: right;">0.958</td>
+<td style="text-align: right;">4.03</td>
+<td style="text-align: right;">0.088</td>
+<td style="text-align: right;">-7.384</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_170324641_H_C</code></td>
+<td style="text-align: right;">16.849</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">9.591</td>
+<td style="text-align: right;">0.006</td>
+<td style="text-align: right;">13.05</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-7.258</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_43690499_H_G</code></td>
+<td style="text-align: right;">7.197</td>
+<td style="text-align: right;">0.018</td>
+<td style="text-align: right;">0.206</td>
+<td style="text-align: right;">0.945</td>
+<td style="text-align: right;">3.73</td>
+<td style="text-align: right;">0.080</td>
+<td style="text-align: right;">-6.990</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>14_64318374_H_F</code></td>
+<td style="text-align: right;">0.440</td>
+<td style="text-align: right;">0.888</td>
+<td style="text-align: right;">5.585</td>
+<td style="text-align: right;">0.096</td>
+<td style="text-align: right;">2.86</td>
+<td style="text-align: right;">0.209</td>
+<td style="text-align: right;">5.145</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>5_133357791_C_F</code></td>
+<td style="text-align: right;">0.458</td>
+<td style="text-align: right;">0.894</td>
+<td style="text-align: right;">5.586</td>
+<td style="text-align: right;">0.102</td>
+<td style="text-align: right;">2.98</td>
+<td style="text-align: right;">0.219</td>
+<td style="text-align: right;">5.128</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>14_64610241_H_F</code></td>
+<td style="text-align: right;">1.080</td>
+<td style="text-align: right;">0.727</td>
+<td style="text-align: right;">5.793</td>
+<td style="text-align: right;">0.090</td>
+<td style="text-align: right;">3.24</td>
+<td style="text-align: right;">0.157</td>
+<td style="text-align: right;">4.714</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_117784609_B_C</code></td>
+<td style="text-align: right;">5.694</td>
+<td style="text-align: right;">0.068</td>
+<td style="text-align: right;">1.072</td>
+<td style="text-align: right;">0.741</td>
+<td style="text-align: right;">3.50</td>
+<td style="text-align: right;">0.119</td>
+<td style="text-align: right;">-4.622</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>12_84203316_H_C</code></td>
+<td style="text-align: right;">-5.078</td>
+<td style="text-align: right;">0.041</td>
+<td style="text-align: right;">-1.107</td>
+<td style="text-align: right;">0.662</td>
+<td style="text-align: right;">-3.03</td>
+<td style="text-align: right;">0.085</td>
+<td style="text-align: right;">3.971</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>1_117367881_B_C</code></td>
+<td style="text-align: right;">5.712</td>
+<td style="text-align: right;">0.072</td>
+<td style="text-align: right;">1.993</td>
+<td style="text-align: right;">0.533</td>
+<td style="text-align: right;">3.91</td>
+<td style="text-align: right;">0.082</td>
+<td style="text-align: right;">-3.719</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>14_105825620_G_H</code></td>
+<td style="text-align: right;">5.184</td>
+<td style="text-align: right;">0.109</td>
+<td style="text-align: right;">1.473</td>
+<td style="text-align: right;">0.648</td>
+<td style="text-align: right;">3.38</td>
+<td style="text-align: right;">0.139</td>
+<td style="text-align: right;">-3.711</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_49650224_G_G</code></td>
+<td style="text-align: right;">5.350</td>
+<td style="text-align: right;">0.051</td>
+<td style="text-align: right;">2.306</td>
+<td style="text-align: right;">0.397</td>
+<td style="text-align: right;">3.87</td>
+<td style="text-align: right;">0.045</td>
+<td style="text-align: right;">-3.044</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>3_158368229_C_D</code></td>
+<td style="text-align: right;">-4.431</td>
+<td style="text-align: right;">0.077</td>
+<td style="text-align: right;">-1.490</td>
+<td style="text-align: right;">0.578</td>
+<td style="text-align: right;">-3.08</td>
+<td style="text-align: right;">0.092</td>
+<td style="text-align: right;">2.942</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>14_58887010_F_F</code></td>
+<td style="text-align: right;">1.752</td>
+<td style="text-align: right;">0.570</td>
+<td style="text-align: right;">4.087</td>
+<td style="text-align: right;">0.188</td>
+<td style="text-align: right;">2.94</td>
+<td style="text-align: right;">0.178</td>
+<td style="text-align: right;">2.336</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>14_58928537_F_F</code></td>
+<td style="text-align: right;">1.752</td>
+<td style="text-align: right;">0.570</td>
+<td style="text-align: right;">4.087</td>
+<td style="text-align: right;">0.188</td>
+<td style="text-align: right;">2.94</td>
+<td style="text-align: right;">0.178</td>
+<td style="text-align: right;">2.336</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>3_159975288_F_B</code></td>
+<td style="text-align: right;">1.373</td>
+<td style="text-align: right;">0.655</td>
+<td style="text-align: right;">3.615</td>
+<td style="text-align: right;">0.266</td>
+<td style="text-align: right;">2.47</td>
+<td style="text-align: right;">0.267</td>
+<td style="text-align: right;">2.242</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>4_54753377_C_G</code></td>
+<td style="text-align: right;">5.862</td>
+<td style="text-align: right;">0.066</td>
+<td style="text-align: right;">7.902</td>
+<td style="text-align: right;">0.011</td>
+<td style="text-align: right;">6.93</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">2.040</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>18_46410922_G_A</code></td>
+<td style="text-align: right;">6.495</td>
+<td style="text-align: right;">0.018</td>
+<td style="text-align: right;">4.519</td>
+<td style="text-align: right;">0.125</td>
+<td style="text-align: right;">5.58</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">-1.976</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>3_156886929_F_B</code></td>
+<td style="text-align: right;">1.503</td>
+<td style="text-align: right;">0.634</td>
+<td style="text-align: right;">3.442</td>
+<td style="text-align: right;">0.304</td>
+<td style="text-align: right;">2.44</td>
+<td style="text-align: right;">0.288</td>
+<td style="text-align: right;">1.939</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>5_128374074_D_E</code></td>
+<td style="text-align: right;">5.714</td>
+<td style="text-align: right;">0.063</td>
+<td style="text-align: right;">7.534</td>
+<td style="text-align: right;">0.015</td>
+<td style="text-align: right;">6.63</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">1.820</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>8_110706632_H_G</code></td>
+<td style="text-align: right;">5.506</td>
+<td style="text-align: right;">0.085</td>
+<td style="text-align: right;">7.193</td>
+<td style="text-align: right;">0.016</td>
+<td style="text-align: right;">6.41</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">1.687</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_16145267_H_G</code></td>
+<td style="text-align: right;">7.801</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">9.426</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">8.68</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1.625</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>1_107745435_E_C</code></td>
+<td style="text-align: right;">3.333</td>
+<td style="text-align: right;">0.312</td>
+<td style="text-align: right;">1.799</td>
+<td style="text-align: right;">0.586</td>
+<td style="text-align: right;">2.62</td>
+<td style="text-align: right;">0.260</td>
+<td style="text-align: right;">-1.533</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>2_16663582_H_G</code></td>
+<td style="text-align: right;">8.348</td>
+<td style="text-align: right;">0.012</td>
+<td style="text-align: right;">9.673</td>
+<td style="text-align: right;">0.003</td>
+<td style="text-align: right;">9.06</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">1.324</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_122944168_B_E</code></td>
+<td style="text-align: right;">10.735</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">9.775</td>
+<td style="text-align: right;">0.002</td>
+<td style="text-align: right;">10.25</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">-0.959</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>11_121921138_G_G</code></td>
+<td style="text-align: right;">-3.737</td>
+<td style="text-align: right;">0.286</td>
+<td style="text-align: right;">-2.907</td>
+<td style="text-align: right;">0.422</td>
+<td style="text-align: right;">-3.33</td>
+<td style="text-align: right;">0.185</td>
+<td style="text-align: right;">0.831</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>5_143920616_B_A</code></td>
+<td style="text-align: right;">4.859</td>
+<td style="text-align: right;">0.103</td>
+<td style="text-align: right;">4.042</td>
+<td style="text-align: right;">0.196</td>
+<td style="text-align: right;">4.51</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: right;">-0.817</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>5_128399127_D_E</code></td>
+<td style="text-align: right;">5.702</td>
+<td style="text-align: right;">0.065</td>
+<td style="text-align: right;">6.371</td>
+<td style="text-align: right;">0.037</td>
+<td style="text-align: right;">6.06</td>
+<td style="text-align: right;">0.005</td>
+<td style="text-align: right;">0.670</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>7_138782782_C_H</code></td>
+<td style="text-align: right;">3.272</td>
+<td style="text-align: right;">0.304</td>
+<td style="text-align: right;">3.890</td>
+<td style="text-align: right;">0.239</td>
+<td style="text-align: right;">3.61</td>
+<td style="text-align: right;">0.114</td>
+<td style="text-align: right;">0.617</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>6_126771534_D_E</code></td>
+<td style="text-align: right;">2.328</td>
+<td style="text-align: right;">0.519</td>
+<td style="text-align: right;">1.860</td>
+<td style="text-align: right;">0.611</td>
+<td style="text-align: right;">2.09</td>
+<td style="text-align: right;">0.416</td>
+<td style="text-align: right;">-0.469</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;"><code>6_127083191_C_E</code></td>
+<td style="text-align: right;">2.328</td>
+<td style="text-align: right;">0.519</td>
+<td style="text-align: right;">2.057</td>
+<td style="text-align: right;">0.579</td>
+<td style="text-align: right;">2.19</td>
+<td style="text-align: right;">0.397</td>
+<td style="text-align: right;">-0.272</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;"><code>6_42232037_G_G</code></td>
+<td style="text-align: right;">-4.854</td>
+<td style="text-align: right;">0.119</td>
+<td style="text-align: right;">-4.911</td>
+<td style="text-align: right;">0.116</td>
+<td style="text-align: right;">-4.86</td>
+<td style="text-align: right;">0.027</td>
+<td style="text-align: right;">-0.057</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggrepel)</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(lm.data.sex,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">y=</span>estimate_f,</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>           <span class="at">ymin=</span>estimate_f<span class="sc">-</span>std.error_f,</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>           <span class="at">ymax=</span>estimate_f<span class="sc">+</span>std.error_f,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>           <span class="at">x=</span>estimate_m,</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>           <span class="at">xmin=</span>estimate_m<span class="sc">-</span>std.error_m,</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>           <span class="at">xmax=</span>estimate_m<span class="sc">+</span>std.error_m,)) <span class="sc">+</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="at">alpha=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">alpha=</span><span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">y=</span><span class="st">"Female Estimate (mg/dL)"</span>,</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>       <span class="at">x=</span><span class="st">"Male Estimate (mg/dL)"</span>,</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>       <span class="at">title=</span><span class="st">"Estimates for Lead SNPs on Cholesterol"</span>) <span class="sc">+</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size=</span><span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">lty=</span><span class="dv">2</span>,<span class="at">xintercept=</span><span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">lty=</span><span class="dv">2</span>,<span class="at">yintercept=</span><span class="dv">0</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/snp-level-summary-sex-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+</section>
+<section id="session-information" class="level1">
+<h1>Session Information</h1>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.5.2 (2025-10-31)
+Platform: aarch64-apple-darwin20
+Running under: macOS Tahoe 26.2
+
+Matrix products: default
+BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Detroit
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+[1] ggrepel_0.9.6 forcats_1.0.1 ggplot2_4.0.1 broom_1.0.11  dplyr_1.1.4  
+[6] tidyr_1.3.1   readr_2.1.6   knitr_1.50   
+
+loaded via a namespace (and not attached):
+ [1] bit_4.6.0          gtable_0.3.6       jsonlite_2.0.0     crayon_1.5.3      
+ [5] compiler_4.5.2     Rcpp_1.1.0         tidyselect_1.2.1   parallel_4.5.2    
+ [9] dichromat_2.0-0.1  textshaping_1.0.4  systemfonts_1.3.1  scales_1.4.0      
+[13] yaml_2.3.12        fastmap_1.2.0      R6_2.6.1           labeling_0.4.3    
+[17] generics_0.1.4     htmlwidgets_1.6.4  backports_1.5.0    tibble_3.3.0      
+[21] pillar_1.11.1      RColorBrewer_1.1-3 tzdb_0.5.0         rlang_1.1.6       
+[25] xfun_0.54          S7_0.2.1           bit64_4.6.0-1      cli_3.6.5         
+[29] withr_3.0.2        magrittr_2.0.4     digest_0.6.39      grid_4.5.2        
+[33] vroom_1.6.7        rstudioapi_0.17.1  hms_1.1.4          lifecycle_1.0.4   
+[37] vctrs_0.6.5        evaluate_1.0.5     glue_1.8.0         farver_2.1.2      
+[41] ragg_1.5.0         rmarkdown_2.30     purrr_1.2.0        tools_4.5.2       
+[45] pkgconfig_2.0.3    htmltools_0.5.9   </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+        const codeEl = trigger.previousElementSibling.cloneNode(true);
+        for (const childEl of codeEl.children) {
+          if (isCodeAnnotation(childEl)) {
+            childEl.remove();
+          }
+        }
+        return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

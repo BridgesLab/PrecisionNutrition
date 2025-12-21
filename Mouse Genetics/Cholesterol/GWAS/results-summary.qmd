@@ -1,0 +1,36 @@
+---
+title: "Diet Specific QTL Summary Results"
+author: "Dave Bridges"
+format: revealjs
+editor: visual
+---
+
+# Premise
+
+# Results
+
+## Diet-Stratifed GWAS Reveals Unique Loci
+
+These data are found in `r qtl-analysis.Rmd`.
+
+:::: {.columns}
+
+::: {.column width="50%"}
+![GWAS with diet as covariate](figures/lmm-additive-2.png)
+:::
+
+::: {.column width="50%"}
+![GWAS stratified by diet](figures/ncd-hfd-comparason-1.png)
+:::
+
+::::
+
+## Summary of Interesting QTL
+
+After LD clumping, QTLs are assigned and analysed in `QTLs_of_interest.qmd`.
+
+| QTL | Direction | Specificity |
+|----------|----------|----------|
+| Chr1  | XXX | Both Diets  |
+| Value 4  | Value 5  | Value 6  |
+| Value 7  | Value 8  | Value 9  |

@@ -365,6 +365,67 @@ Table: liklihood of each gene in the second chromosome 5 QTL
 :::
 :::
 
+## Chromosome 13 QTL (HFD specific)
+
+
+::: {.cell}
+
+```{.r .cell-code}
+twas.all.data %>%
+  right_join(hfd.clump.data %>%
+               filter(CHR==13) %>%
+               select(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position),
+             by = c('ID'='ensembl_gene_id')) %>%
+  mutate(logLR_expression = moduleB_logLR(beta, se)) |>
+  select(SNP,chr,symbol,logLR_expression,beta,huge) |>
+  filter(!is.na(symbol)) |>
+  left_join(hfd.clump.summary |>
+              select(Clump,Prior,Gene.Count),by=c("SNP"="Clump")) |>
+  full_join(coloc.summary |> select(Gene,Diet, logLR_coloc), by=c("symbol"="Gene")) |>
+  left_join(hfd.gene.distances |> select(logLR_dist,external_gene_name), by=c("symbol"="external_gene_name")) |>
+  filter(!is.na(SNP)) |>
+    mutate(logLR_prior = log(Prior)) |>
+  mutate(logLR_human = ifelse(!is.na(huge), log(huge), 0)) |>
+  mutate(log_odds = logLR_prior + logLR_coloc + logLR_dist + logLR_expression + logLR_human) |>
+    mutate(posterior = plogis(log_odds)) |>
+  select(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) |>
+  arrange(-logLR_expression)  ->
+  chr13.summary.data
+
+kable(chr13.summary.data, caption="liklihood of each gene in the chromosome 13 QTL")
+```
+
+::: {.cell-output-display}
+
+
+Table: liklihood of each gene in the chromosome 13 QTL
+
+|SNP             |symbol    | posterior|  log_odds|     Prior| logLR_prior| logLR_coloc| logLR_dist|        beta| logLR_expression| logLR_human|
+|:---------------|:---------|---------:|---------:|---------:|-----------:|-----------:|----------:|-----------:|----------------:|-----------:|
+|13_30180778_E_C |Cdkal1    |        NA|        NA| 0.0153846|   -4.174387|          NA|          0| -11.0765308|        1.0000000|    0.000000|
+|13_30180778_E_C |Wrnip1    |        NA|        NA| 0.0153846|   -4.174387|          NA|          0| -18.5230649|        1.0000000|    0.000000|
+|13_30180778_E_C |Foxq1     |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -5.2134928|        1.0000000|    0.000000|
+|13_30180778_E_C |Serpinb6b |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|   9.8059085|        1.0000000|    0.000000|
+|13_30180778_E_C |Serpinb1a |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -4.1688716|        1.0000000|    0.000000|
+|13_30180778_E_C |Agtr1a    |        NA|        NA| 0.0153846|   -4.174387|          NA|          0| -15.8968520|        1.0000000|    0.000000|
+|13_30180778_E_C |Dcdc2a    |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -5.4837801|        0.9326417|    0.000000|
+|13_30180778_E_C |Ripk1     |        NA|        NA| 0.0153846|   -4.174387|          NA|          0| -10.0734756|        0.7815369|    0.000000|
+|13_30180778_E_C |Bphl      |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -7.4225183|        0.5469114|    0.000000|
+|13_30180778_E_C |Uqcrfs1   |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -8.3692532|        0.5070385|    0.000000|
+|13_30180778_E_C |Nqo2      |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -6.1245074|        0.4639308|    0.000000|
+|13_30180778_E_C |Exoc2     |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -7.6802585|        0.3203858|    0.000000|
+|13_30180778_E_C |Dusp22    |         0| -23.50833| 0.0153846|   -4.174387|   -19.65112|          0|   6.4069483|        0.3171717|    0.000000|
+|13_30180778_E_C |E2f3      |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|   5.2752424|        0.2544446|    3.806662|
+|13_30180778_E_C |Serpinb6a |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -4.5508752|        0.2254086|    0.000000|
+|13_30180778_E_C |Slc22a23  |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -4.9213482|        0.1553026|    0.000000|
+|13_30180778_E_C |Serpinb9  |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -3.2339024|        0.1313383|    0.000000|
+|13_30180778_E_C |Tubb2a    |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -0.9144915|        0.0647426|    0.000000|
+|13_30180778_E_C |Prl8a1    |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -1.6307464|        0.0532674|    0.000000|
+|13_30180778_E_C |Psmg4     |        NA|        NA| 0.0153846|   -4.174387|          NA|          0|  -1.4098899|        0.0294358|    0.000000|
+
+
+:::
+:::
 
 
 ## Chromosome 18 QTL (NCD specific)

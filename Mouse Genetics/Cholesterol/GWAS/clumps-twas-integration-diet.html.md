@@ -17,7 +17,7 @@ execute:
   warning: false
 ---
 
-This file is for looking at genes within the clumped QTL regions for NCD and HFD, and cross-referencing these against TWAS results. This script was last run on Mon Dec 15 15:26:22 2025 and can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Cholesterol/GWAS.
+This file is for looking at genes within the clumped QTL regions for NCD and HFD, and cross-referencing these against TWAS results. This script was last run on Sun Dec 21 09:42:13 2025 and can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Mouse Genetics/Cholesterol/GWAS.
 
 ## Data  Entry
 
@@ -183,6 +183,54 @@ nrow(twas.QTL.summary.hfd)
 ```
 :::
 
+
+### HFD Specific QTLs
+
+#### Chromosome 13 QTL
+
+
+::: {.cell}
+
+```{.r .cell-code}
+twas.QTL.summary.hfd |> filter(chr==13) |>
+  arrange(-BF) |>
+  kable(caption="TWAS hits in NCD-specific QTL on chromosome 13, sorted by BF", digits=c(1,3,3,1,99,0,0))
+```
+
+::: {.cell-output-display}
+
+
+Table: TWAS hits in NCD-specific QTL on chromosome 13, sorted by BF
+
+|symbol    |    beta|    se|           BF|         pval|chr | start.true| end.true|
+|:---------|-------:|-----:|------------:|------------:|:---|----------:|--------:|
+|Agtr1a    | -15.897| 2.325| 1.796853e+11| 2.500392e-11|13  |   30336441| 30382867|
+|Wrnip1    | -18.523| 2.900| 8.680169e+09| 4.096926e-10|13  |   32802038| 32822609|
+|Serpinb6b |   9.806| 1.802| 3.014299e+07| 8.563320e-08|13  |   32965209| 32979067|
+|Serpinb1a |  -4.169| 0.836| 2.737724e+06| 8.675233e-07|13  |   32842092| 32851185|
+|Foxq1     |  -5.213| 1.452| 6.348600e+03| 3.663418e-04|13  |   31558324| 31560976|
+|Cdkal1    | -11.077| 3.200| 4.019900e+03| 5.865143e-04|13  |   29191746| 29855674|
+|Dcdc2a    |  -5.484| 1.796| 1.047900e+03| 2.387231e-03|13  |   25056004| 25210706|
+|Ripk1     | -10.073| 3.603| 4.876000e+02| 5.392955e-03|13  |   34002363| 34035170|
+|Bphl      |  -7.423| 3.174| 1.486000e+02| 1.977461e-02|13  |   34037641| 34074074|
+|Uqcrfs1   |  -8.369| 3.717| 1.214000e+02| 2.479991e-02|13  |   30540308| 30545362|
+|Nqo2      |  -6.125| 2.843| 9.760000e+01| 3.175643e-02|13  |   33964659| 33988465|
+|Exoc2     |  -7.680| 4.291| 4.720000e+01| 7.410977e-02|13  |   30813919| 30974047|
+|Dusp22    |   6.407| 3.598| 4.640000e+01| 7.557076e-02|13  |   30659999| 30711231|
+|E2f3      |   5.275| 3.307| 3.380000e+01| 1.113563e-01|13  |   29906575| 29985668|
+|Serpinb6a |  -4.551| 3.031| 2.920000e+01| 1.339351e-01|13  |   33917918| 34002794|
+|Psmg4     |  -1.410| 2.599| 2.210000e+01| 5.876993e-01|13  |   34162964| 34178172|
+|Slc22a23  |  -4.921| 3.949| 2.050000e+01| 2.133114e-01|13  |   34179158| 34345182|
+|Prl8a1    |  -1.631| 2.234| 1.960000e+01| 4.658490e-01|13  |   27573922| 27582171|
+|Tubb2a    |  -0.914| 1.137| 1.850000e+01| 4.214421e-01|13  |   34074301| 34078008|
+|Serpinb9  |  -3.234| 2.822| 1.810000e+01| 2.523675e-01|13  |   33003250| 33017957|
+
+
+:::
+:::
+
+
+#### Chromosome 5 QTL
 
 
 ::: {.cell}
@@ -1611,7 +1659,7 @@ sessionInfo()
 ```
 R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Tahoe 26.1
+Running under: macOS Tahoe 26.2
 
 Matrix products: default
 BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 

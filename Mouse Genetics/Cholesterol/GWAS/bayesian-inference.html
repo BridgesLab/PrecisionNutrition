@@ -126,6 +126,7 @@ window.Quarto = {
   <li><a href="#analyses" id="toc-analyses" class="nav-link" data-scroll-target="#analyses">Analyses</a>
   <ul class="collapse">
   <li><a href="#chromosome-5-qtl-hfd-specific" id="toc-chromosome-5-qtl-hfd-specific" class="nav-link" data-scroll-target="#chromosome-5-qtl-hfd-specific">Chromosome 5 QTL (HFD specific)</a></li>
+  <li><a href="#chromosome-13-qtl-hfd-specific" id="toc-chromosome-13-qtl-hfd-specific" class="nav-link" data-scroll-target="#chromosome-13-qtl-hfd-specific">Chromosome 13 QTL (HFD specific)</a></li>
   <li><a href="#chromosome-18-qtl-ncd-specific" id="toc-chromosome-18-qtl-ncd-specific" class="nav-link" data-scroll-target="#chromosome-18-qtl-ncd-specific">Chromosome 18 QTL (NCD specific)</a></li>
   </ul></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
@@ -583,33 +584,358 @@ window.Quarto = {
 </div>
 </div>
 </section>
-<section id="chromosome-18-qtl-ncd-specific" class="level2">
-<h2 class="anchored" data-anchor-id="chromosome-18-qtl-ncd-specific">Chromosome 18 QTL (NCD specific)</h2>
+<section id="chromosome-13-qtl-hfd-specific" class="level2">
+<h2 class="anchored" data-anchor-id="chromosome-13-qtl-hfd-specific">Chromosome 13 QTL (HFD specific)</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(ncd.clump.data <span class="sc">%&gt;%</span></span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(CHR<span class="sc">==</span><span class="dv">18</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(hfd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(CHR<span class="sc">==</span><span class="dv">13</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position),</span>
 <span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'ID'</span><span class="ot">=</span><span class="st">'ensembl_gene_id'</span>)) <span class="sc">%&gt;%</span></span>
 <span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_expression =</span> <span class="fu">moduleB_logLR</span>(beta, se)) <span class="sc">|&gt;</span></span>
 <span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,chr,symbol,logLR_expression,beta,huge) <span class="sc">|&gt;</span></span>
 <span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(symbol)) <span class="sc">|&gt;</span></span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.clump.summary <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(hfd.clump.summary <span class="sc">|&gt;</span></span>
 <span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Clump,Prior,Gene.Count),<span class="at">by=</span><span class="fu">c</span>(<span class="st">"SNP"</span><span class="ot">=</span><span class="st">"Clump"</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(coloc.summary <span class="sc">|&gt;</span> <span class="fu">select</span>(Gene,Diet, logLR_coloc), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"Gene"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.gene.distances <span class="sc">|&gt;</span> <span class="fu">select</span>(logLR_dist,external_gene_name), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(hfd.gene.distances <span class="sc">|&gt;</span> <span class="fu">select</span>(logLR_dist,external_gene_name), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SNP)) <span class="sc">|&gt;</span></span>
 <span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">logLR_prior =</span> <span class="fu">log</span>(Prior)) <span class="sc">|&gt;</span></span>
 <span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_human =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(huge), <span class="fu">log</span>(huge), <span class="dv">0</span>)) <span class="sc">|&gt;</span></span>
 <span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_odds =</span> logLR_prior <span class="sc">+</span> logLR_coloc <span class="sc">+</span> logLR_dist <span class="sc">+</span> logLR_expression <span class="sc">+</span> logLR_human) <span class="sc">|&gt;</span></span>
 <span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">posterior =</span> <span class="fu">plogis</span>(log_odds)) <span class="sc">|&gt;</span></span>
 <span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) <span class="sc">|&gt;</span></span>
-<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>log_odds)  <span class="ot">-&gt;</span></span>
-<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  chr18.summary.data</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>logLR_expression)  <span class="ot">-&gt;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  chr13.summary.data</span>
 <span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr18.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the chromosome 18 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr13.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the chromosome 13 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>liklihood of each gene in the chromosome 13 QTL</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 12%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">SNP</th>
+<th style="text-align: left;">symbol</th>
+<th style="text-align: right;">posterior</th>
+<th style="text-align: right;">log_odds</th>
+<th style="text-align: right;">Prior</th>
+<th style="text-align: right;">logLR_prior</th>
+<th style="text-align: right;">logLR_coloc</th>
+<th style="text-align: right;">logLR_dist</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">logLR_expression</th>
+<th style="text-align: right;">logLR_human</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Cdkal1</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-11.0765308</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Wrnip1</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-18.5230649</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Foxq1</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-5.2134928</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Serpinb6b</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">9.8059085</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Serpinb1a</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-4.1688716</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Agtr1a</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-15.8968520</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Dcdc2a</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-5.4837801</td>
+<td style="text-align: right;">0.9326417</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Ripk1</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-10.0734756</td>
+<td style="text-align: right;">0.7815369</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Bphl</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-7.4225183</td>
+<td style="text-align: right;">0.5469114</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Uqcrfs1</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-8.3692532</td>
+<td style="text-align: right;">0.5070385</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Nqo2</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-6.1245074</td>
+<td style="text-align: right;">0.4639308</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Exoc2</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-7.6802585</td>
+<td style="text-align: right;">0.3203858</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Dusp22</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-23.50833</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">-19.65112</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">6.4069483</td>
+<td style="text-align: right;">0.3171717</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">E2f3</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">5.2752424</td>
+<td style="text-align: right;">0.2544446</td>
+<td style="text-align: right;">3.806662</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Serpinb6a</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-4.5508752</td>
+<td style="text-align: right;">0.2254086</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Slc22a23</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-4.9213482</td>
+<td style="text-align: right;">0.1553026</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Serpinb9</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-3.2339024</td>
+<td style="text-align: right;">0.1313383</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Tubb2a</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-0.9144915</td>
+<td style="text-align: right;">0.0647426</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Prl8a1</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1.6307464</td>
+<td style="text-align: right;">0.0532674</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">13_30180778_E_C</td>
+<td style="text-align: left;">Psmg4</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0153846</td>
+<td style="text-align: right;">-4.174387</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1.4098899</td>
+<td style="text-align: right;">0.0294358</td>
+<td style="text-align: right;">0.000000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="chromosome-18-qtl-ncd-specific" class="level2">
+<h2 class="anchored" data-anchor-id="chromosome-18-qtl-ncd-specific">Chromosome 18 QTL (NCD specific)</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(ncd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(CHR<span class="sc">==</span><span class="dv">18</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position),</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'ID'</span><span class="ot">=</span><span class="st">'ensembl_gene_id'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_expression =</span> <span class="fu">moduleB_logLR</span>(beta, se)) <span class="sc">|&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,chr,symbol,logLR_expression,beta,huge) <span class="sc">|&gt;</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(symbol)) <span class="sc">|&gt;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.clump.summary <span class="sc">|&gt;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Clump,Prior,Gene.Count),<span class="at">by=</span><span class="fu">c</span>(<span class="st">"SNP"</span><span class="ot">=</span><span class="st">"Clump"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(coloc.summary <span class="sc">|&gt;</span> <span class="fu">select</span>(Gene,Diet, logLR_coloc), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"Gene"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.gene.distances <span class="sc">|&gt;</span> <span class="fu">select</span>(logLR_dist,external_gene_name), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SNP)) <span class="sc">|&gt;</span></span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">logLR_prior =</span> <span class="fu">log</span>(Prior)) <span class="sc">|&gt;</span></span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_human =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(huge), <span class="fu">log</span>(huge), <span class="dv">0</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_odds =</span> logLR_prior <span class="sc">+</span> logLR_coloc <span class="sc">+</span> logLR_dist <span class="sc">+</span> logLR_expression <span class="sc">+</span> logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">posterior =</span> <span class="fu">plogis</span>(log_odds)) <span class="sc">|&gt;</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>log_odds)  <span class="ot">-&gt;</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  chr18.summary.data</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr18.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the chromosome 18 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -901,7 +1227,7 @@ window.Quarto = {
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.2 (2025-10-31)

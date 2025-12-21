@@ -55,7 +55,9 @@ ncd.clump.filename <- 'ld-calculations/Annotated Gene Clumps NCD QTLs.csv'
 hfd.clump.filename <- 'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'
 
 library(readr)
-ncd.clump.data <- read_csv(ncd.clump.filename) 
+ncd.clump.data <- read_csv(ncd.clump.filename) |>
+  filter(gene_biotype == 'protein_coding') |>
+  filter(!is.na(external_gene_name))
 
 ncd.clump.summary <-
   ncd.clump.data |>
@@ -70,12 +72,13 @@ ncd.clump.summary <-
   mutate(Prior = 1 / Gene.Count)
 
 
-hfd.clump.data <- read_csv(hfd.clump.filename) 
+hfd.clump.data <- read_csv(hfd.clump.filename) |>
+  filter(gene_biotype == 'protein_coding') |>
+  filter(!is.na(external_gene_name))
 
 hfd.clump.summary <-
   hfd.clump.data |>
   group_by(SNP) |>
-  filter(gene_biotype == 'protein_coding') |>
   summarize(BP = first(BP),
             Min.QTL = first(Min_Position),
             Max.QTL = first(Max_Position),
@@ -86,9 +89,37 @@ hfd.clump.summary <-
 
 twas.all.filename <- 'Cholesterol - Expression Associations - Linear Model.csv'
 twas.all.data <- read_csv(twas.all.filename)
+
+human.cholesterol.filename <- 'gene_associations_total_cholesterol.csv'
+human.chol.data <- read_csv(human.cholesterol.filename)
+
+mgi_file <- 'HOM_MouseHumanSequence.rpt'
+#download.file(url=mgi_table,destfile=mgi_file)
+mouse_human_genes = read_tsv(mgi_file)
+
+library(tidyr)
+mouse.human.table <- mouse_human_genes %>%
+  select(`DB Class Key`, `Common Organism Name`,`Symbol`) %>%
+  group_by(`DB Class Key`) %>%
+  pivot_wider(names_from=`Common Organism Name`,
+              values_from=Symbol,
+              values_fn=first) %>%
+  rename(mouse=`mouse, laboratory`)
+
+human.chol.data.annot <-
+  left_join(human.chol.data,
+            mouse.human.table,
+            by=c("gene"="human")) |>
+  arrange(desc(huge)) |>
+  distinct(mouse, .keep_all = T)
+
+twas.all.data <- left_join(twas.all.data,
+                              human.chol.data.annot |>
+                                select(mouse, huge),
+                              by=c("symbol"="mouse")) 
 ```
 
-There is an average of `r round(mean(ncd.clump.summary$Gene.Count),1)` genes [`r min(ncd.clump.summary$Gene.Count)` -`r max(ncd.clump.summary$Gene.Count)`] per NCD QTL and `r round(mean(hfd.clump.summary$Gene.Count),1)` genes per HFD QTL [`r min(hfd.clump.summary$Gene.Count)` -`r max(hfd.clump.summary$Gene.Count)`] .
+There is an average of `r round(mean(ncd.clump.summary$Gene.Count),1)` genes [`r min(ncd.clump.summary$Gene.Count)` -`r max(ncd.clump.summary$Gene.Count)`] per NCD QTL and `r round(mean(hfd.clump.summary$Gene.Count),1)` genes per HFD QTL [`r min(hfd.clump.summary$Gene.Count)` -`r max(hfd.clump.summary$Gene.Count)`].  This is filtered to only include protein coding genes with known external gene names.
 
 ## Formalizing of observed data
 
@@ -98,7 +129,7 @@ There is an average of `r round(mean(ncd.clump.summary$Gene.Count),1)` genes [`r
 coloc.summary.filename <- 'Coloc/Coloc results summary.csv'
 coloc.data <- read_csv(coloc.summary.filename)
 
-alpha.coloc <- 1
+alpha.coloc <- 1.25
 
 coloc.summary <-
   coloc.data |>
@@ -106,7 +137,7 @@ coloc.summary <-
   arrange(desc(PP.H4.abf), desc(PP.H3.abf), desc(PP.H2.abf)) %>%
   slice(1) %>%
   ungroup() |>
-  mutate(logLR.coloc = alpha.coloc * log(PP.H4.abf/(PP.H2.abf + PP.H3.abf + alpha.coloc))) 
+  mutate(logLR_coloc = alpha.coloc * log(PP.H4.abf/(PP.H2.abf + PP.H3.abf + alpha.coloc))) 
 ```
 
 From coloc analyses, found in  we have several probabilities:
@@ -124,60 +155,162 @@ From this analysis:
 
 ### Distance to QTL
 
-Using gene coordinates to define a distance-based prior modifier, rather than a filter.  This will be defined as $log(LR_{dist,g}λ⋅lo\lambda1+dg​)$_ where $\l4ambda$ is a scaling parameter controlling the influence of distance on the final posterior.  $d_g$ is the distance from the gene to the lead SNP for the QTL.
-
 ```{r gene-qtl-distance}
-lambda <- 1.0
-ncd.clump.data %>%
-  mutate(Gene_Midpoint = (start_position + end_position) / 2) |>
-  mutate(Distance_to_QTL = abs(Gene_Midpoint - BP)/1E6) |> #in Mb
-  mutate(logLR_dist = -lambda * log(1+Distance_to_QTL)) |>
-  select(SNP,ensembl_gene_id, external_gene_name, Distance_to_QTL, logLR_dist) ->
-  ncd.gene.distances
+lambda <- 0.1  # relatively weak lambda
+
+ncd.gene.distances <-
+  ncd.clump.data %>%
+  filter(gene_biotype == "protein_coding") %>%
+  mutate(
+    Gene_Midpoint = (start_position + end_position) / 2,
+
+    # distance to clump interval (in Mb)
+    Distance_to_QTL = case_when(
+      Gene_Midpoint >= Min_Position & Gene_Midpoint <= Max_Position ~ 0,
+      Gene_Midpoint < Min_Position ~ (Min_Position - Gene_Midpoint) / 1e6,
+      Gene_Midpoint > Max_Position ~ (Gene_Midpoint - Max_Position) / 1e6
+    ),
+
+    # log-likelihood ratio from distance
+    logLR_dist = -lambda * log1p(Distance_to_QTL)
+  ) %>%
+  select(
+    SNP,
+    ensembl_gene_id,
+    external_gene_name,
+    Distance_to_QTL,
+    logLR_dist
+  )
+
+hfd.gene.distances <-
+  hfd.clump.data %>%
+  filter(gene_biotype == "protein_coding") %>%
+  mutate(
+    Gene_Midpoint = (start_position + end_position) / 2,
+
+    # distance to clump interval (in Mb)
+    Distance_to_QTL = case_when(
+      Gene_Midpoint >= Min_Position & Gene_Midpoint <= Max_Position ~ 0,
+      Gene_Midpoint < Min_Position ~ (Min_Position - Gene_Midpoint) / 1e6,
+      Gene_Midpoint > Max_Position ~ (Gene_Midpoint - Max_Position) / 1e6
+    ),
+
+    # log-likelihood ratio from distance
+    logLR_dist = -lambda * log1p(Distance_to_QTL)
+  ) %>%
+  select(
+    SNP,
+    ensembl_gene_id,
+    external_gene_name,
+    Distance_to_QTL,
+    logLR_dist
+  )
+
 ```
 
-We incorporated a weak distance-based prior that modestly favored genes proximal to the QTL peak while allowing strong genetic or transcriptional evidence to outweigh spatial proximity. The distance penalty was calibrated such that a gene 1 Mb from the peak incurred less than `one`r lambda` log-odds unit of penalty.
+Using gene coordinates, we defined a distance-based prior modifier rather than a hard filter. This was implemented as $logLR_{dist,g} = - \lambda \times log(1+d_g)$ where $d_g$ is the distance (in Mb) from gene $g$ to the nearest boundary of the LD block containing the QTL, and $\lambda$ controls the influence of spatial proximity on the final posterior.  $\lambda$ was assigned a value of `r lambda`, reflecting a deliberately weak spatial prior.
 
-## Gene Expression Proxy
+Genes overlapping the QTL interval were assigned $\log LR_{distg,d}=0$, reflecting the limited positional resolution of DO mouse QTLs. The distance penalty was intentionally weak, such that genes located several megabases outside the interval incurred only modest log-odds penalties, allowing strong genetic, transcriptional, or colocalization evidence to outweigh spatial proximity.  This formulation reflects the broad haplotype structure of DO mouse populations, in which association signals often span multiple megabases and peak position provides limited additional localization within the QTL interval.
 
-This is not causal by itself, but informative conditional on genetics.
+### Gene Expression Proxy
 
-To do this, first we defined a standardized effect: $Z_{expr,g} = \frac{β_{g}}{SE_{g}}$ where $β_{g}$ is the effect estimate from the linear model of expression vs cholesterol and $SE_{g}$ is the standard error of that estimate.
+Gene expression–trait associations were treated as supportive but non-causal evidence, conditional on genetic localization. For each gene ($g$), we defined a standardized association statistic $Z_{expr, g}=\frac{\beta_g}{SE_g}$ where $\beta_g$ is the beta coefficient for the sex-adjusted scaled cholesterol-gene expression linear model and $SE_g$.
+
+We then defined an expression-based log-likelihood ratio component as $\log LR_{expr,g}=\omega \times \frac{Z_{expr,g}^2}{2}$ which corresponds to the log-likelihood ratio for testing $\beta_g=0$ under the normal a normal approximation. The contribution was capped at a maximum value to prevent gene expression evidence from dominating the posterior. This formulation rewards strong expression–trait associations while avoiding penalization of weak or noisy effects and reflects the non-causal but informative role of expression evidence in the model.
 
 ```{r gene-expression-proxy}
-mu_med    <- 1.0
-sigma_med <- 1.0
+omega <- 0.2
+max_reward <- 1.0
 
 moduleB_logLR <- function(beta, se,
-                          max_reward = 1.0,
-                          weight = 0.2) {
+                          omega = 0.2,
+                          max_reward = 1.0) {
 
   Z <- beta / se
+  Z[!is.finite(Z)] <- 0  # handles NA, Inf, -Inf
 
-  # reward strong associations, but do not penalize weak ones
-  logLR <- weight * (Z^2) / 2
-
-  # cap the contribution
+  logLR <- omega * (Z^2) / 2
   logLR <- pmin(logLR, max_reward)
 
   return(logLR)
 }
 
-twas.all.data %>%
-  right_join(hfd.clump.data %>%
-               select(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position) %>%
-               distinct(),
-             by = c('ID'='ensembl_gene_id')) %>%
-  mutate(logLR.expression = moduleB_logLR(beta, se)) |>
-  select(chr,symbol,logLR.expression) ->
-  hfd.gene.expression.proxy
 ```
 
-Then define a likelihood ratio component as $LR_{expr,g} = logit^{-1}(Z_{expr,g})$.
+The weighting parameters included $\omega$=`r omega`, reflecting the deliberately low weight assigned to expression–trait associations, and a maximum reward of `r max_reward`, which prevents this non-causal evidence from dominating the posterior. As a result, expression associations can support—but not override—genetic evidence when nominating causal genes.
+
+## Human Data Proxy
+
+Bayes factors for associations with total cholesterol are downloaded from the [Common Metabolic Disease Knowledge Portal](https://hugeamp.org/).  This is parameterized as: 
+
+$$logLR_{human,g} = \{ \frac{log(BF_{human,g})}{0} \frac{\text{if it exists}}{\text{if it does not exist}}$$
 
 # Analyses
 
-## Chromosome 18 QTL NCD specific
+## Chromosome 5 QTL (HFD specific)
+
+This was first for the '5_117508066_B_E' clump, which is centered on the 123629774 bp position.
+
+```{r hfd-chr-5}
+
+twas.all.data %>%
+  right_join(hfd.clump.data %>%
+               distinct(ensembl_gene_id, .keep_all = T) |>
+               filter(SNP=="5_117508066_B_E") |> #clump boundaries for the 123629774 centered QTL
+               select(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position), by=c("ID"="ensembl_gene_id")) |> 
+  mutate(logLR_expression = moduleB_logLR(beta, se)) |>
+  select(SNP,chr,symbol,logLR_expression,beta,huge) |>
+  filter(!is.na(symbol)) |>
+  left_join(hfd.clump.summary |>
+              select(Clump,Prior,Gene.Count),by=c("SNP"="Clump")) |> 
+  inner_join(coloc.summary |> select(Gene,Diet, logLR_coloc), by=c("symbol"="Gene")) |> 
+  left_join(hfd.gene.distances |> 
+              select(logLR_dist,external_gene_name),
+            by=c("symbol"="external_gene_name")) |>
+  filter(!is.na(SNP)) |>
+  mutate(logLR_prior = log(Prior)) |>
+  mutate(logLR_human = ifelse(!is.na(huge), log(huge), 0)) |>
+  mutate(log_odds = logLR_prior + logLR_coloc + logLR_dist + logLR_expression + logLR_human) |>
+    mutate(posterior = plogis(log_odds)) |>
+  select(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) |>
+  arrange(-log_odds) ->
+  chr5.summary.data
+
+kable(chr5.summary.data, caption="liklihood of each gene in the chromosome 5 QTL")
+```
+
+This was first for the '5_117508066_B_E' clump, which is centered on the 123629774 bp position.
+
+```{r hfd-chr-5-123629774}
+
+twas.all.data %>%
+  right_join(hfd.clump.data %>%
+               distinct(ensembl_gene_id, .keep_all = T) |>
+               filter(SNP=="5_123629774_B_E") |> #clump boundaries for the 123629774 centered QTL
+               select(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position), by=c("ID"="ensembl_gene_id")) |> 
+  mutate(logLR_expression = moduleB_logLR(beta, se)) |>
+  select(SNP,chr,symbol,logLR_expression,beta,huge) |>
+  filter(!is.na(symbol)) |>
+  left_join(hfd.clump.summary |>
+              select(Clump,Prior,Gene.Count),by=c("SNP"="Clump")) |> 
+  inner_join(coloc.summary |> select(Gene,Diet, logLR_coloc), by=c("symbol"="Gene")) |> 
+  left_join(hfd.gene.distances |> 
+              select(logLR_dist,external_gene_name),
+            by=c("symbol"="external_gene_name")) |>
+  filter(!is.na(SNP)) |>
+  mutate(logLR_prior = log(Prior)) |>
+  mutate(logLR_human = ifelse(!is.na(huge), log(huge), 0)) |>
+  mutate(log_odds = logLR_prior + logLR_coloc + logLR_dist + logLR_expression + logLR_human) |>
+    mutate(posterior = plogis(log_odds)) |>
+  select(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) |>
+  arrange(-log_odds) ->
+  chr5.summary.data
+
+kable(chr5.summary.data, caption="liklihood of each gene in the second chromosome 5 QTL")
+```
+
+
+## Chromosome 18 QTL (NCD specific)
 
 ```{r ncd-chr-18}
 twas.all.data %>%
@@ -186,29 +319,22 @@ twas.all.data %>%
                select(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position),
              by = c('ID'='ensembl_gene_id')) %>%
   mutate(logLR_expression = moduleB_logLR(beta, se)) |>
-  select(SNP,chr,symbol,logLR_expression) |>
+  select(SNP,chr,symbol,logLR_expression,beta,huge) |>
   filter(!is.na(symbol)) |>
   left_join(ncd.clump.summary |>
               select(Clump,Prior,Gene.Count),by=c("SNP"="Clump")) |>
-  full_join(coloc.summary |> select(Gene,Diet, logLR.coloc), by=c("symbol"="Gene")) |>
+  full_join(coloc.summary |> select(Gene,Diet, logLR_coloc), by=c("symbol"="Gene")) |>
   left_join(ncd.gene.distances |> select(logLR_dist,external_gene_name), by=c("symbol"="external_gene_name")) |>
   filter(!is.na(SNP)) |>
-  mutate(log_prior = log(Prior)) |>
-  mutate(log_odds = log_prior + logLR.coloc + logLR_dist + logLR_expression) |>
-  select(symbol, log_odds, log_prior, logLR.coloc, logLR_dist, logLR_expression) |>
-  mutate(posterior = plogis(log_odds)) |>
-  arrange(-log_odds) ->
+    mutate(logLR_prior = log(Prior)) |>
+  mutate(logLR_human = ifelse(!is.na(huge), log(huge), 0)) |>
+  mutate(log_odds = logLR_prior + logLR_coloc + logLR_dist + logLR_expression + logLR_human) |>
+    mutate(posterior = plogis(log_odds)) |>
+  select(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) |>
+  arrange(-log_odds)  ->
   chr18.summary.data
 
 kable(chr18.summary.data, caption="liklihood of each gene in the chromosome 18 QTL")
-
-#df$log_odds <-
-#log_prior +
-#df$logLR_coloc +
-#df$logLR_B +
-#df$logLR_dist +
-#df$logLR_human
-
 ```
 
 # Session Information

@@ -119,12 +119,14 @@ window.Quarto = {
   <ul class="collapse">
   <li><a href="#coloc-data" id="toc-coloc-data" class="nav-link" data-scroll-target="#coloc-data">Coloc data</a></li>
   <li><a href="#distance-to-qtl" id="toc-distance-to-qtl" class="nav-link" data-scroll-target="#distance-to-qtl">Distance to QTL</a></li>
-  </ul></li>
   <li><a href="#gene-expression-proxy" id="toc-gene-expression-proxy" class="nav-link" data-scroll-target="#gene-expression-proxy">Gene Expression Proxy</a></li>
+  </ul></li>
+  <li><a href="#human-data-proxy" id="toc-human-data-proxy" class="nav-link" data-scroll-target="#human-data-proxy">Human Data Proxy</a></li>
   </ul></li>
   <li><a href="#analyses" id="toc-analyses" class="nav-link" data-scroll-target="#analyses">Analyses</a>
   <ul class="collapse">
-  <li><a href="#chromosome-18-qtl-ncd-specific" id="toc-chromosome-18-qtl-ncd-specific" class="nav-link" data-scroll-target="#chromosome-18-qtl-ncd-specific">Chromosome 18 QTL NCD specific</a></li>
+  <li><a href="#chromosome-5-qtl-hfd-specific" id="toc-chromosome-5-qtl-hfd-specific" class="nav-link" data-scroll-target="#chromosome-5-qtl-hfd-specific">Chromosome 5 QTL (HFD specific)</a></li>
+  <li><a href="#chromosome-18-qtl-ncd-specific" id="toc-chromosome-18-qtl-ncd-specific" class="nav-link" data-scroll-target="#chromosome-18-qtl-ncd-specific">Chromosome 18 QTL (NCD specific)</a></li>
   </ul></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
@@ -203,40 +205,71 @@ window.Quarto = {
 <span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>hfd.clump.filename <span class="ot">&lt;-</span> <span class="st">'ld-calculations/Annotated Gene Clumps HFD QTLs.csv'</span></span>
 <span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
-<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>ncd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(ncd.clump.filename) </span>
-<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>ncd.clump.summary <span class="ot">&lt;-</span></span>
-<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  ncd.clump.data <span class="sc">|&gt;</span></span>
-<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SNP) <span class="sc">|&gt;</span></span>
-<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">'protein_coding'</span>) <span class="sc">|&gt;</span></span>
-<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">BP =</span> <span class="fu">first</span>(BP),</span>
-<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>            <span class="at">Min.QTL =</span> <span class="fu">first</span>(Min_Position),</span>
-<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>            <span class="at">Max.QTL =</span> <span class="fu">first</span>(Max_Position),</span>
-<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">Genes =</span> <span class="fu">paste</span>(external_gene_name, <span class="at">collapse =</span> <span class="st">';'</span>),</span>
-<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">Gene.Count =</span> <span class="fu">length</span>(ensembl_gene_id)) <span class="sc">|&gt;</span></span>
-<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Clump=</span>SNP) <span class="sc">|&gt;</span></span>
-<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Prior =</span> <span class="dv">1</span> <span class="sc">/</span> Gene.Count)</span>
-<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>hfd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(hfd.clump.filename) </span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>ncd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(ncd.clump.filename) <span class="sc">|&gt;</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">'protein_coding'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(external_gene_name))</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>ncd.clump.summary <span class="ot">&lt;-</span></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  ncd.clump.data <span class="sc">|&gt;</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SNP) <span class="sc">|&gt;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">'protein_coding'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">BP =</span> <span class="fu">first</span>(BP),</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">Min.QTL =</span> <span class="fu">first</span>(Min_Position),</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            <span class="at">Max.QTL =</span> <span class="fu">first</span>(Max_Position),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>            <span class="at">Genes =</span> <span class="fu">paste</span>(external_gene_name, <span class="at">collapse =</span> <span class="st">';'</span>),</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>            <span class="at">Gene.Count =</span> <span class="fu">length</span>(ensembl_gene_id)) <span class="sc">|&gt;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Clump=</span>SNP) <span class="sc">|&gt;</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Prior =</span> <span class="dv">1</span> <span class="sc">/</span> Gene.Count)</span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>hfd.clump.summary <span class="ot">&lt;-</span></span>
-<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  hfd.clump.data <span class="sc">|&gt;</span></span>
-<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SNP) <span class="sc">|&gt;</span></span>
-<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">'protein_coding'</span>) <span class="sc">|&gt;</span></span>
-<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">BP =</span> <span class="fu">first</span>(BP),</span>
-<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>            <span class="at">Min.QTL =</span> <span class="fu">first</span>(Min_Position),</span>
-<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>            <span class="at">Max.QTL =</span> <span class="fu">first</span>(Max_Position),</span>
-<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>            <span class="at">Genes =</span> <span class="fu">paste</span>(external_gene_name, <span class="at">collapse =</span> <span class="st">';'</span>),</span>
-<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>            <span class="at">Gene.Count =</span> <span class="fu">length</span>(ensembl_gene_id)) <span class="sc">|&gt;</span></span>
-<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Clump=</span>SNP) <span class="sc">|&gt;</span></span>
-<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Prior =</span> <span class="dv">1</span> <span class="sc">/</span> Gene.Count)</span>
-<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>twas.all.filename <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Linear Model.csv'</span></span>
-<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(twas.all.filename)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>hfd.clump.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(hfd.clump.filename) <span class="sc">|&gt;</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">'protein_coding'</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(external_gene_name))</span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>hfd.clump.summary <span class="ot">&lt;-</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>  hfd.clump.data <span class="sc">|&gt;</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(SNP) <span class="sc">|&gt;</span></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarize</span>(<span class="at">BP =</span> <span class="fu">first</span>(BP),</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>            <span class="at">Min.QTL =</span> <span class="fu">first</span>(Min_Position),</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>            <span class="at">Max.QTL =</span> <span class="fu">first</span>(Max_Position),</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">Genes =</span> <span class="fu">paste</span>(external_gene_name, <span class="at">collapse =</span> <span class="st">';'</span>),</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>            <span class="at">Gene.Count =</span> <span class="fu">length</span>(ensembl_gene_id)) <span class="sc">|&gt;</span></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">Clump=</span>SNP) <span class="sc">|&gt;</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Prior =</span> <span class="dv">1</span> <span class="sc">/</span> Gene.Count)</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>twas.all.filename <span class="ot">&lt;-</span> <span class="st">'Cholesterol - Expression Associations - Linear Model.csv'</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(twas.all.filename)</span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>human.cholesterol.filename <span class="ot">&lt;-</span> <span class="st">'gene_associations_total_cholesterol.csv'</span></span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>human.chol.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(human.cholesterol.filename)</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>mgi_file <span class="ot">&lt;-</span> <span class="st">'HOM_MouseHumanSequence.rpt'</span></span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a><span class="co">#download.file(url=mgi_table,destfile=mgi_file)</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>mouse_human_genes <span class="ot">=</span> <span class="fu">read_tsv</span>(mgi_file)</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>mouse.human.table <span class="ot">&lt;-</span> mouse_human_genes <span class="sc">%&gt;%</span></span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>, <span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>,<span class="st">`</span><span class="at">Symbol</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(<span class="st">`</span><span class="at">DB Class Key</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb2-51"><a href="#cb2-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_wider</span>(<span class="at">names_from=</span><span class="st">`</span><span class="at">Common Organism Name</span><span class="st">`</span>,</span>
+<span id="cb2-52"><a href="#cb2-52" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_from=</span>Symbol,</span>
+<span id="cb2-53"><a href="#cb2-53" aria-hidden="true" tabindex="-1"></a>              <span class="at">values_fn=</span>first) <span class="sc">%&gt;%</span></span>
+<span id="cb2-54"><a href="#cb2-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rename</span>(<span class="at">mouse=</span><span class="st">`</span><span class="at">mouse, laboratory</span><span class="st">`</span>)</span>
+<span id="cb2-55"><a href="#cb2-55" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-56"><a href="#cb2-56" aria-hidden="true" tabindex="-1"></a>human.chol.data.annot <span class="ot">&lt;-</span></span>
+<span id="cb2-57"><a href="#cb2-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(human.chol.data,</span>
+<span id="cb2-58"><a href="#cb2-58" aria-hidden="true" tabindex="-1"></a>            mouse.human.table,</span>
+<span id="cb2-59"><a href="#cb2-59" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">"gene"</span><span class="ot">=</span><span class="st">"human"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb2-60"><a href="#cb2-60" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(huge)) <span class="sc">|&gt;</span></span>
+<span id="cb2-61"><a href="#cb2-61" aria-hidden="true" tabindex="-1"></a>  <span class="fu">distinct</span>(mouse, <span class="at">.keep_all =</span> T)</span>
+<span id="cb2-62"><a href="#cb2-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-63"><a href="#cb2-63" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="ot">&lt;-</span> <span class="fu">left_join</span>(twas.all.data,</span>
+<span id="cb2-64"><a href="#cb2-64" aria-hidden="true" tabindex="-1"></a>                              human.chol.data.annot <span class="sc">|&gt;</span></span>
+<span id="cb2-65"><a href="#cb2-65" aria-hidden="true" tabindex="-1"></a>                                <span class="fu">select</span>(mouse, huge),</span>
+<span id="cb2-66"><a href="#cb2-66" aria-hidden="true" tabindex="-1"></a>                              <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"mouse"</span>)) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>There is an average of 62.7 genes [12 -156] per NCD QTL and 52.5 genes per HFD QTL [13 -130] .</p>
+<p>There is an average of 62.5 genes [12 -155] per NCD QTL and 52.3 genes per HFD QTL [13 -130]. This is filtered to only include protein coding genes with known external gene names.</p>
 <section id="formalizing-of-observed-data" class="level2">
 <h2 class="anchored" data-anchor-id="formalizing-of-observed-data">Formalizing of observed data</h2>
 <section id="coloc-data" class="level3">
@@ -247,7 +280,7 @@ window.Quarto = {
 <div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>coloc.summary.filename <span class="ot">&lt;-</span> <span class="st">'Coloc/Coloc results summary.csv'</span></span>
 <span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>coloc.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(coloc.summary.filename)</span>
 <span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>alpha.coloc <span class="ot">&lt;-</span> <span class="dv">1</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>alpha.coloc <span class="ot">&lt;-</span> <span class="fl">1.25</span></span>
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>coloc.summary <span class="ot">&lt;-</span></span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  coloc.data <span class="sc">|&gt;</span></span>
@@ -255,7 +288,7 @@ window.Quarto = {
 <span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(PP.H4.abf), <span class="fu">desc</span>(PP.H3.abf), <span class="fu">desc</span>(PP.H2.abf)) <span class="sc">%&gt;%</span></span>
 <span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
 <span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">|&gt;</span></span>
-<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR.coloc =</span> alpha.coloc <span class="sc">*</span> <span class="fu">log</span>(PP.H4.abf<span class="sc">/</span>(PP.H2.abf <span class="sc">+</span> PP.H3.abf <span class="sc">+</span> alpha.coloc))) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_coloc =</span> alpha.coloc <span class="sc">*</span> <span class="fu">log</span>(PP.H4.abf<span class="sc">/</span>(PP.H2.abf <span class="sc">+</span> PP.H3.abf <span class="sc">+</span> alpha.coloc))) </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
 <p>From coloc analyses, found in we have several probabilities:</p>
@@ -268,310 +301,598 @@ window.Quarto = {
 <p>From this analysis:</p>
 <ul>
 <li><span class="math inline">\(\epsilon\)</span> is a numerical and conceptual stabilizer, not a biological parameter. It prevents division by zero, extreme log-odds when posteriors are near zero, and overconfidence from poorly powered regions. Generally something like <span class="math inline">\(1 \times 10^{-6}\)</span> or more conservatively <span class="math inline">\(1\times 10^{-4}\)</span>.</li>
-<li><span class="math inline">\(\alpha\)</span> is a weighting parameter controlling how strongly coloc evidence influences the final posterior. Something between <span class="math inline">\(1-1.5\)</span> is reasonable here. I used 1.</li>
+<li><span class="math inline">\(\alpha\)</span> is a weighting parameter controlling how strongly coloc evidence influences the final posterior. Something between <span class="math inline">\(1-1.5\)</span> is reasonable here. I used 1.25.</li>
 </ul>
 </section>
 <section id="distance-to-qtl" class="level3">
 <h3 class="anchored" data-anchor-id="distance-to-qtl">Distance to QTL</h3>
-<p>Using gene coordinates to define a distance-based prior modifier, rather than a filter. This will be defined as <span class="math inline">\(log(LR_{dist,g}λ⋅lo\lambda1+dg​)\)</span>_ where <span class="math inline">\(\l4ambda\)</span> is a scaling parameter controlling the influence of distance on the final posterior. <span class="math inline">\(d_g\)</span> is the distance from the gene to the lead SNP for the QTL.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fl">1.0</span></span>
-<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>ncd.clump.data <span class="sc">%&gt;%</span></span>
-<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Gene_Midpoint =</span> (start_position <span class="sc">+</span> end_position) <span class="sc">/</span> <span class="dv">2</span>) <span class="sc">|&gt;</span></span>
-<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Distance_to_QTL =</span> <span class="fu">abs</span>(Gene_Midpoint <span class="sc">-</span> BP)<span class="sc">/</span><span class="fl">1E6</span>) <span class="sc">|&gt;</span> <span class="co">#in Mb</span></span>
-<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_dist =</span> <span class="sc">-</span>lambda <span class="sc">*</span> <span class="fu">log</span>(<span class="dv">1</span><span class="sc">+</span>Distance_to_QTL)) <span class="sc">|&gt;</span></span>
-<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, Distance_to_QTL, logLR_dist) <span class="ot">-&gt;</span></span>
-<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  ncd.gene.distances</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>lambda <span class="ot">&lt;-</span> <span class="fl">0.1</span>  <span class="co"># relatively weak lambda</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>ncd.gene.distances <span class="ot">&lt;-</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  ncd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">"protein_coding"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">Gene_Midpoint =</span> (start_position <span class="sc">+</span> end_position) <span class="sc">/</span> <span class="dv">2</span>,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># distance to clump interval (in Mb)</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">Distance_to_QTL =</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>      Gene_Midpoint <span class="sc">&gt;=</span> Min_Position <span class="sc">&amp;</span> Gene_Midpoint <span class="sc">&lt;=</span> Max_Position <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>      Gene_Midpoint <span class="sc">&lt;</span> Min_Position <span class="sc">~</span> (Min_Position <span class="sc">-</span> Gene_Midpoint) <span class="sc">/</span> <span class="fl">1e6</span>,</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>      Gene_Midpoint <span class="sc">&gt;</span> Max_Position <span class="sc">~</span> (Gene_Midpoint <span class="sc">-</span> Max_Position) <span class="sc">/</span> <span class="fl">1e6</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># log-likelihood ratio from distance</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">logLR_dist =</span> <span class="sc">-</span>lambda <span class="sc">*</span> <span class="fu">log1p</span>(Distance_to_QTL)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    SNP,</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    ensembl_gene_id,</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    external_gene_name,</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    Distance_to_QTL,</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    logLR_dist</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>hfd.gene.distances <span class="ot">&lt;-</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>  hfd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene_biotype <span class="sc">==</span> <span class="st">"protein_coding"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">Gene_Midpoint =</span> (start_position <span class="sc">+</span> end_position) <span class="sc">/</span> <span class="dv">2</span>,</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="co"># distance to clump interval (in Mb)</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">Distance_to_QTL =</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>      Gene_Midpoint <span class="sc">&gt;=</span> Min_Position <span class="sc">&amp;</span> Gene_Midpoint <span class="sc">&lt;=</span> Max_Position <span class="sc">~</span> <span class="dv">0</span>,</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>      Gene_Midpoint <span class="sc">&lt;</span> Min_Position <span class="sc">~</span> (Min_Position <span class="sc">-</span> Gene_Midpoint) <span class="sc">/</span> <span class="fl">1e6</span>,</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>      Gene_Midpoint <span class="sc">&gt;</span> Max_Position <span class="sc">~</span> (Gene_Midpoint <span class="sc">-</span> Max_Position) <span class="sc">/</span> <span class="fl">1e6</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># log-likelihood ratio from distance</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">logLR_dist =</span> <span class="sc">-</span>lambda <span class="sc">*</span> <span class="fu">log1p</span>(Distance_to_QTL)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>    SNP,</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>    ensembl_gene_id,</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>    external_gene_name,</span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>    Distance_to_QTL,</span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>    logLR_dist</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>We incorporated a weak distance-based prior that modestly favored genes proximal to the QTL peak while allowing strong genetic or transcriptional evidence to outweigh spatial proximity. The distance penalty was calibrated such that a gene 1 Mb from the peak incurred less than `one1 log-odds unit of penalty.</p>
+<p>Using gene coordinates, we defined a distance-based prior modifier rather than a hard filter. This was implemented as <span class="math inline">\(logLR_{dist,g} = - \lambda \times log(1+d_g)\)</span> where <span class="math inline">\(d_g\)</span> is the distance (in Mb) from gene <span class="math inline">\(g\)</span> to the nearest boundary of the LD block containing the QTL, and <span class="math inline">\(\lambda\)</span> controls the influence of spatial proximity on the final posterior. <span class="math inline">\(\lambda\)</span> was assigned a value of 0.1, reflecting a deliberately weak spatial prior.</p>
+<p>Genes overlapping the QTL interval were assigned <span class="math inline">\(\log LR_{distg,d}=0\)</span>, reflecting the limited positional resolution of DO mouse QTLs. The distance penalty was intentionally weak, such that genes located several megabases outside the interval incurred only modest log-odds penalties, allowing strong genetic, transcriptional, or colocalization evidence to outweigh spatial proximity. This formulation reflects the broad haplotype structure of DO mouse populations, in which association signals often span multiple megabases and peak position provides limited additional localization within the QTL interval.</p>
 </section>
-</section>
-<section id="gene-expression-proxy" class="level2">
-<h2 class="anchored" data-anchor-id="gene-expression-proxy">Gene Expression Proxy</h2>
-<p>This is not causal by itself, but informative conditional on genetics.</p>
-<p>To do this, first we defined a standardized effect: <span class="math inline">\(Z_{expr,g} = \frac{β_{g}}{SE_{g}}\)</span> where <span class="math inline">\(β_{g}\)</span> is the effect estimate from the linear model of expression vs cholesterol and <span class="math inline">\(SE_{g}\)</span> is the standard error of that estimate.</p>
+<section id="gene-expression-proxy" class="level3">
+<h3 class="anchored" data-anchor-id="gene-expression-proxy">Gene Expression Proxy</h3>
+<p>Gene expression–trait associations were treated as supportive but non-causal evidence, conditional on genetic localization. For each gene (<span class="math inline">\(g\)</span>), we defined a standardized association statistic <span class="math inline">\(Z_{expr, g}=\frac{\beta_g}{SE_g}\)</span> where <span class="math inline">\(\beta_g\)</span> is the beta coefficient for the sex-adjusted scaled cholesterol-gene expression linear model and <span class="math inline">\(SE_g\)</span>.</p>
+<p>We then defined an expression-based log-likelihood ratio component as <span class="math inline">\(\log LR_{expr,g}=\omega \times \frac{Z_{expr,g}^2}{2}\)</span> which corresponds to the log-likelihood ratio for testing <span class="math inline">\(\beta_g=0\)</span> under the normal a normal approximation. The contribution was capped at a maximum value to prevent gene expression evidence from dominating the posterior. This formulation rewards strong expression–trait associations while avoiding penalization of weak or noisy effects and reflects the non-causal but informative role of expression evidence in the model.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>mu_med    <span class="ot">&lt;-</span> <span class="fl">1.0</span></span>
-<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>sigma_med <span class="ot">&lt;-</span> <span class="fl">1.0</span></span>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>omega <span class="ot">&lt;-</span> <span class="fl">0.2</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>max_reward <span class="ot">&lt;-</span> <span class="fl">1.0</span></span>
 <span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>moduleB_logLR <span class="ot">&lt;-</span> <span class="cf">function</span>(beta, se,</span>
-<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                          <span class="at">max_reward =</span> <span class="fl">1.0</span>,</span>
-<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">weight =</span> <span class="fl">0.2</span>) {</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>                          <span class="at">omega =</span> <span class="fl">0.2</span>,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">max_reward =</span> <span class="fl">1.0</span>) {</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a></span>
 <span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  Z <span class="ot">&lt;-</span> beta <span class="sc">/</span> se</span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># reward strong associations, but do not penalize weak ones</span></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  logLR <span class="ot">&lt;-</span> weight <span class="sc">*</span> (Z<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="dv">2</span></span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># cap the contribution</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  logLR <span class="ot">&lt;-</span> <span class="fu">pmin</span>(logLR, max_reward)</span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(logLR)</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(hfd.clump.data <span class="sc">%&gt;%</span></span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position) <span class="sc">%&gt;%</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>               <span class="fu">distinct</span>(),</span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'ID'</span><span class="ot">=</span><span class="st">'ensembl_gene_id'</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR.expression =</span> <span class="fu">moduleB_logLR</span>(beta, se)) <span class="sc">|&gt;</span></span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(chr,symbol,logLR.expression) <span class="ot">-&gt;</span></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>  hfd.gene.expression.proxy</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  Z[<span class="sc">!</span><span class="fu">is.finite</span>(Z)] <span class="ot">&lt;-</span> <span class="dv">0</span>  <span class="co"># handles NA, Inf, -Inf</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>  logLR <span class="ot">&lt;-</span> omega <span class="sc">*</span> (Z<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="dv">2</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  logLR <span class="ot">&lt;-</span> <span class="fu">pmin</span>(logLR, max_reward)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">return</span>(logLR)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>}</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 </div>
-<p>Then define a likelihood ratio component as <span class="math inline">\(LR_{expr,g} = logit^{-1}(Z_{expr,g})\)</span>.</p>
+<p>The weighting parameters included <span class="math inline">\(\omega\)</span>=0.2, reflecting the deliberately low weight assigned to expression–trait associations, and a maximum reward of 1, which prevents this non-causal evidence from dominating the posterior. As a result, expression associations can support—but not override—genetic evidence when nominating causal genes.</p>
+</section>
+</section>
+<section id="human-data-proxy" class="level2">
+<h2 class="anchored" data-anchor-id="human-data-proxy">Human Data Proxy</h2>
+<p>Bayes factors for associations with total cholesterol are downloaded from the <a href="https://hugeamp.org/">Common Metabolic Disease Knowledge Portal</a>. This is parameterized as:</p>
+<p><span class="math display">\[logLR_{human,g} = \{ \frac{log(BF_{human,g})}{0} \frac{\text{if it exists}}{\text{if it does not exist}}\]</span></p>
 </section>
 </section>
 <section id="analyses" class="level1">
 <h1>Analyses</h1>
-<section id="chromosome-18-qtl-ncd-specific" class="level2">
-<h2 class="anchored" data-anchor-id="chromosome-18-qtl-ncd-specific">Chromosome 18 QTL NCD specific</h2>
+<section id="chromosome-5-qtl-hfd-specific" class="level2">
+<h2 class="anchored" data-anchor-id="chromosome-5-qtl-hfd-specific">Chromosome 5 QTL (HFD specific)</h2>
+<p>This was first for the ‘5_117508066_B_E’ clump, which is centered on the 123629774 bp position.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
-<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(ncd.clump.data <span class="sc">%&gt;%</span></span>
-<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(CHR<span class="sc">==</span><span class="dv">18</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position),</span>
-<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'ID'</span><span class="ot">=</span><span class="st">'ensembl_gene_id'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(hfd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">distinct</span>(ensembl_gene_id, <span class="at">.keep_all =</span> T) <span class="sc">|&gt;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(SNP<span class="sc">==</span><span class="st">"5_117508066_B_E"</span>) <span class="sc">|&gt;</span> <span class="co">#clump boundaries for the 123629774 centered QTL</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"ID"</span><span class="ot">=</span><span class="st">"ensembl_gene_id"</span>)) <span class="sc">|&gt;</span> </span>
 <span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_expression =</span> <span class="fu">moduleB_logLR</span>(beta, se)) <span class="sc">|&gt;</span></span>
-<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,chr,symbol,logLR_expression) <span class="sc">|&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,chr,symbol,logLR_expression,beta,huge) <span class="sc">|&gt;</span></span>
 <span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(symbol)) <span class="sc">|&gt;</span></span>
-<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.clump.summary <span class="sc">|&gt;</span></span>
-<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Clump,Prior,Gene.Count),<span class="at">by=</span><span class="fu">c</span>(<span class="st">"SNP"</span><span class="ot">=</span><span class="st">"Clump"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(coloc.summary <span class="sc">|&gt;</span> <span class="fu">select</span>(Gene,Diet, logLR.coloc), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"Gene"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.gene.distances <span class="sc">|&gt;</span> <span class="fu">select</span>(logLR_dist,external_gene_name), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
-<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SNP)) <span class="sc">|&gt;</span></span>
-<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_prior =</span> <span class="fu">log</span>(Prior)) <span class="sc">|&gt;</span></span>
-<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_odds =</span> log_prior <span class="sc">+</span> logLR.coloc <span class="sc">+</span> logLR_dist <span class="sc">+</span> logLR_expression) <span class="sc">|&gt;</span></span>
-<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(symbol, log_odds, log_prior, logLR.coloc, logLR_dist, logLR_expression) <span class="sc">|&gt;</span></span>
-<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">posterior =</span> <span class="fu">plogis</span>(log_odds)) <span class="sc">|&gt;</span></span>
-<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>log_odds) <span class="ot">-&gt;</span></span>
-<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>  chr18.summary.data</span>
-<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr18.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the chromosome 18 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(hfd.clump.summary <span class="sc">|&gt;</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Clump,Prior,Gene.Count),<span class="at">by=</span><span class="fu">c</span>(<span class="st">"SNP"</span><span class="ot">=</span><span class="st">"Clump"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(coloc.summary <span class="sc">|&gt;</span> <span class="fu">select</span>(Gene,Diet, logLR_coloc), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"Gene"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(hfd.gene.distances <span class="sc">|&gt;</span> </span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(logLR_dist,external_gene_name),</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SNP)) <span class="sc">|&gt;</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_prior =</span> <span class="fu">log</span>(Prior)) <span class="sc">|&gt;</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_human =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(huge), <span class="fu">log</span>(huge), <span class="dv">0</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_odds =</span> logLR_prior <span class="sc">+</span> logLR_coloc <span class="sc">+</span> logLR_dist <span class="sc">+</span> logLR_expression <span class="sc">+</span> logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">posterior =</span> <span class="fu">plogis</span>(log_odds)) <span class="sc">|&gt;</span></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>log_odds) <span class="ot">-&gt;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>  chr5.summary.data</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr5.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the chromosome 5 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>liklihood of each gene in the chromosome 5 QTL</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 13%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">SNP</th>
+<th style="text-align: left;">symbol</th>
+<th style="text-align: right;">posterior</th>
+<th style="text-align: right;">log_odds</th>
+<th style="text-align: right;">Prior</th>
+<th style="text-align: right;">logLR_prior</th>
+<th style="text-align: right;">logLR_coloc</th>
+<th style="text-align: right;">logLR_dist</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">logLR_expression</th>
+<th style="text-align: right;">logLR_human</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">5_117508066_B_E</td>
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: right;">0.0180006</td>
+<td style="text-align: right;">-3.999186</td>
+<td style="text-align: right;">0.0128205</td>
+<td style="text-align: right;">-4.356709</td>
+<td style="text-align: right;">-0.6424775</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-16.14079</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5_117508066_B_E</td>
+<td style="text-align: left;">Mvk</td>
+<td style="text-align: right;">0.0169676</td>
+<td style="text-align: right;">-4.059338</td>
+<td style="text-align: right;">0.0128205</td>
+<td style="text-align: right;">-4.356709</td>
+<td style="text-align: right;">-0.7026293</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-16.14079</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>This was first for the ‘5_117508066_B_E’ clump, which is centered on the 123629774 bp position.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(hfd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">distinct</span>(ensembl_gene_id, <span class="at">.keep_all =</span> T) <span class="sc">|&gt;</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(SNP<span class="sc">==</span><span class="st">"5_123629774_B_E"</span>) <span class="sc">|&gt;</span> <span class="co">#clump boundaries for the 123629774 centered QTL</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"ID"</span><span class="ot">=</span><span class="st">"ensembl_gene_id"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_expression =</span> <span class="fu">moduleB_logLR</span>(beta, se)) <span class="sc">|&gt;</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,chr,symbol,logLR_expression,beta,huge) <span class="sc">|&gt;</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(symbol)) <span class="sc">|&gt;</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(hfd.clump.summary <span class="sc">|&gt;</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Clump,Prior,Gene.Count),<span class="at">by=</span><span class="fu">c</span>(<span class="st">"SNP"</span><span class="ot">=</span><span class="st">"Clump"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(coloc.summary <span class="sc">|&gt;</span> <span class="fu">select</span>(Gene,Diet, logLR_coloc), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"Gene"</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(hfd.gene.distances <span class="sc">|&gt;</span> </span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(logLR_dist,external_gene_name),</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SNP)) <span class="sc">|&gt;</span></span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_prior =</span> <span class="fu">log</span>(Prior)) <span class="sc">|&gt;</span></span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_human =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(huge), <span class="fu">log</span>(huge), <span class="dv">0</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_odds =</span> logLR_prior <span class="sc">+</span> logLR_coloc <span class="sc">+</span> logLR_dist <span class="sc">+</span> logLR_expression <span class="sc">+</span> logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">posterior =</span> <span class="fu">plogis</span>(log_odds)) <span class="sc">|&gt;</span></span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>log_odds) <span class="ot">-&gt;</span></span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>  chr5.summary.data</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr5.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the second chromosome 5 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>liklihood of each gene in the second chromosome 5 QTL</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 13%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">SNP</th>
+<th style="text-align: left;">symbol</th>
+<th style="text-align: right;">posterior</th>
+<th style="text-align: right;">log_odds</th>
+<th style="text-align: right;">Prior</th>
+<th style="text-align: right;">logLR_prior</th>
+<th style="text-align: right;">logLR_coloc</th>
+<th style="text-align: right;">logLR_dist</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">logLR_expression</th>
+<th style="text-align: right;">logLR_human</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">5_123629774_B_E</td>
+<td style="text-align: left;">Scarb1</td>
+<td style="text-align: right;">0.2062124</td>
+<td style="text-align: right;">-1.347909</td>
+<td style="text-align: right;">0.0083333</td>
+<td style="text-align: right;">-4.787492</td>
+<td style="text-align: right;">-0.3944073</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1.314871</td>
+<td style="text-align: right;">0.0157955</td>
+<td style="text-align: right;">3.818194</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5_123629774_B_E</td>
+<td style="text-align: left;">Scarb1</td>
+<td style="text-align: right;">0.2062124</td>
+<td style="text-align: right;">-1.347909</td>
+<td style="text-align: right;">0.0083333</td>
+<td style="text-align: right;">-4.787492</td>
+<td style="text-align: right;">-0.3944073</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">-1.314871</td>
+<td style="text-align: right;">0.0157955</td>
+<td style="text-align: right;">3.818194</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="chromosome-18-qtl-ncd-specific" class="level2">
+<h2 class="anchored" data-anchor-id="chromosome-18-qtl-ncd-specific">Chromosome 18 QTL (NCD specific)</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>twas.all.data <span class="sc">%&gt;%</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">right_join</span>(ncd.clump.data <span class="sc">%&gt;%</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>               <span class="fu">filter</span>(CHR<span class="sc">==</span><span class="dv">18</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>               <span class="fu">select</span>(SNP,ensembl_gene_id, external_gene_name, CHR, start_position, end_position),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">by =</span> <span class="fu">c</span>(<span class="st">'ID'</span><span class="ot">=</span><span class="st">'ensembl_gene_id'</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_expression =</span> <span class="fu">moduleB_logLR</span>(beta, se)) <span class="sc">|&gt;</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,chr,symbol,logLR_expression,beta,huge) <span class="sc">|&gt;</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(symbol)) <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.clump.summary <span class="sc">|&gt;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Clump,Prior,Gene.Count),<span class="at">by=</span><span class="fu">c</span>(<span class="st">"SNP"</span><span class="ot">=</span><span class="st">"Clump"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">full_join</span>(coloc.summary <span class="sc">|&gt;</span> <span class="fu">select</span>(Gene,Diet, logLR_coloc), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"Gene"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(ncd.gene.distances <span class="sc">|&gt;</span> <span class="fu">select</span>(logLR_dist,external_gene_name), <span class="at">by=</span><span class="fu">c</span>(<span class="st">"symbol"</span><span class="ot">=</span><span class="st">"external_gene_name"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(SNP)) <span class="sc">|&gt;</span></span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">logLR_prior =</span> <span class="fu">log</span>(Prior)) <span class="sc">|&gt;</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">logLR_human =</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.na</span>(huge), <span class="fu">log</span>(huge), <span class="dv">0</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">log_odds =</span> logLR_prior <span class="sc">+</span> logLR_coloc <span class="sc">+</span> logLR_dist <span class="sc">+</span> logLR_expression <span class="sc">+</span> logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">posterior =</span> <span class="fu">plogis</span>(log_odds)) <span class="sc">|&gt;</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(SNP,symbol, posterior, log_odds, Prior, logLR_prior, logLR_coloc, logLR_dist, beta, logLR_expression, logLR_human) <span class="sc">|&gt;</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="sc">-</span>log_odds)  <span class="ot">-&gt;</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  chr18.summary.data</span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(chr18.summary.data, <span class="at">caption=</span><span class="st">"liklihood of each gene in the chromosome 18 QTL"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>liklihood of each gene in the chromosome 18 QTL</caption>
 <colgroup>
-<col style="width: 10%">
-<col style="width: 13%">
 <col style="width: 12%">
-<col style="width: 15%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 8%">
+<col style="width: 8%">
 <col style="width: 13%">
-<col style="width: 21%">
-<col style="width: 12%">
+<col style="width: 9%">
 </colgroup>
 <thead>
 <tr class="header">
+<th style="text-align: left;">SNP</th>
 <th style="text-align: left;">symbol</th>
-<th style="text-align: right;">log_odds</th>
-<th style="text-align: right;">log_prior</th>
-<th style="text-align: right;">logLR.coloc</th>
-<th style="text-align: right;">logLR_dist</th>
-<th style="text-align: right;">logLR_expression</th>
 <th style="text-align: right;">posterior</th>
+<th style="text-align: right;">log_odds</th>
+<th style="text-align: right;">Prior</th>
+<th style="text-align: right;">logLR_prior</th>
+<th style="text-align: right;">logLR_coloc</th>
+<th style="text-align: right;">logLR_dist</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">logLR_expression</th>
+<th style="text-align: right;">logLR_human</th>
 </tr>
 </thead>
 <tbody>
 <tr class="odd">
-<td style="text-align: left;">Cdo1</td>
-<td style="text-align: right;">-3.436049</td>
-<td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-0.2851774</td>
-<td style="text-align: right;">-0.3666820</td>
-<td style="text-align: right;">1.0000000</td>
-<td style="text-align: right;">0.0311876</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Mcc</td>
-<td style="text-align: right;">-4.307368</td>
-<td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-0.5451403</td>
-<td style="text-align: right;">-0.9780381</td>
-<td style="text-align: right;">1.0000000</td>
-<td style="text-align: right;">0.0132900</td>
-</tr>
-<tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Dmxl1</td>
-<td style="text-align: right;">-4.579920</td>
+<td style="text-align: right;">0.0334071</td>
+<td style="text-align: right;">-3.365010</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-0.2650722</td>
-<td style="text-align: right;">-1.5306580</td>
+<td style="text-align: right;">-0.5808205</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-16.540550</td>
 <td style="text-align: right;">1.0000000</td>
-<td style="text-align: right;">0.0101516</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
+<td style="text-align: left;">Cdo1</td>
+<td style="text-align: right;">0.0326668</td>
+<td style="text-align: right;">-3.388185</td>
+<td style="text-align: right;">0.0227273</td>
+<td style="text-align: right;">-3.78419</td>
+<td style="text-align: right;">-0.6039950</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-10.423712</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
+<td style="text-align: left;">Mcc</td>
+<td style="text-align: right;">0.0243427</td>
+<td style="text-align: right;">-3.690879</td>
+<td style="text-align: right;">0.0227273</td>
+<td style="text-align: right;">-3.78419</td>
+<td style="text-align: right;">-0.9066892</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-14.665844</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Ythdc2</td>
-<td style="text-align: right;">-5.196990</td>
+<td style="text-align: right;">0.0083569</td>
+<td style="text-align: right;">-4.776278</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-1.0759163</td>
-<td style="text-align: right;">-0.8834038</td>
+<td style="text-align: right;">-1.5386081</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-7.773632</td>
 <td style="text-align: right;">0.5465201</td>
-<td style="text-align: right;">0.0055027</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Kcnn2</td>
-<td style="text-align: right;">-5.695841</td>
+<td style="text-align: right;">0.0028732</td>
+<td style="text-align: right;">-5.849440</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-2.3235957</td>
-<td style="text-align: right;">-0.5880552</td>
+<td style="text-align: right;">-3.0652501</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-17.365697</td>
 <td style="text-align: right;">1.0000000</td>
-<td style="text-align: right;">0.0033487</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Ap3s1</td>
-<td style="text-align: right;">-8.250580</td>
+<td style="text-align: right;">0.0001126</td>
+<td style="text-align: right;">-9.091765</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-4.3597919</td>
-<td style="text-align: right;">-0.3977662</td>
+<td style="text-align: right;">-5.5987425</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">5.295224</td>
 <td style="text-align: right;">0.2911672</td>
-<td style="text-align: right;">0.0002610</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
-<td style="text-align: left;">Fem1c</td>
-<td style="text-align: right;">-9.326097</td>
-<td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-6.0315915</td>
-<td style="text-align: right;">-0.2118832</td>
-<td style="text-align: right;">0.7015675</td>
-<td style="text-align: right;">0.0000891</td>
-</tr>
-<tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Dcp2</td>
-<td style="text-align: right;">-9.362995</td>
+<td style="text-align: right;">0.0000576</td>
+<td style="text-align: right;">-9.762419</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-5.0623811</td>
-<td style="text-align: right;">-1.0560942</td>
+<td style="text-align: right;">-6.5178999</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-9.187939</td>
 <td style="text-align: right;">0.5396704</td>
-<td style="text-align: right;">0.0000858</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">Tcerg1</td>
-<td style="text-align: right;">-10.014247</td>
-<td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-5.6752411</td>
-<td style="text-align: right;">-1.5548163</td>
-<td style="text-align: right;">1.0000000</td>
-<td style="text-align: right;">0.0000448</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Tcerg1</td>
-<td style="text-align: right;">-10.089125</td>
+<td style="text-align: right;">0.0000436</td>
+<td style="text-align: right;">-10.039880</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">-5.7501185</td>
-<td style="text-align: right;">-1.5548163</td>
+<td style="text-align: right;">-7.2556904</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-12.041842</td>
 <td style="text-align: right;">1.0000000</td>
-<td style="text-align: right;">0.0000415</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
+<td style="text-align: left;">Tcerg1</td>
+<td style="text-align: right;">0.0000397</td>
+<td style="text-align: right;">-10.133446</td>
+<td style="text-align: right;">0.0227273</td>
+<td style="text-align: right;">-3.78419</td>
+<td style="text-align: right;">-7.3492565</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-12.041842</td>
+<td style="text-align: right;">1.0000000</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
+<td style="text-align: left;">Fem1c</td>
+<td style="text-align: right;">0.0000207</td>
+<td style="text-align: right;">-10.786933</td>
+<td style="text-align: right;">0.0227273</td>
+<td style="text-align: right;">-3.78419</td>
+<td style="text-align: right;">-7.7043111</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-10.311275</td>
+<td style="text-align: right;">0.7015675</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Sema6a</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-0.7052630</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-4.388689</td>
 <td style="text-align: right;">0.2057660</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Pggt1b</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-0.0194918</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-8.989326</td>
 <td style="text-align: right;">0.7571650</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Dtwd2</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-1.4924586</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-2.762396</td>
 <td style="text-align: right;">0.0662733</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Atg12</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-0.3770704</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-5.657356</td>
 <td style="text-align: right;">0.2484670</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Tmed7</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-0.2631563</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-5.326377</td>
 <td style="text-align: right;">0.2239222</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Commd10</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-0.5981192</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-4.699061</td>
 <td style="text-align: right;">0.2983901</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Eif3j2</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-1.3353300</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-4.670281</td>
 <td style="text-align: right;">0.2128359</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Eif1a</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-0.2845949</td>
+<td style="text-align: right;">0.000000</td>
+<td style="text-align: right;">-2.435114</td>
 <td style="text-align: right;">0.0960097</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">18_46410922_G_A</td>
 <td style="text-align: left;">Tnfaip8</td>
 <td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0.0227273</td>
 <td style="text-align: right;">-3.78419</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">-1.5613909</td>
+<td style="text-align: right;">-0.000667</td>
+<td style="text-align: right;">-2.217297</td>
 <td style="text-align: right;">0.0958360</td>
-<td style="text-align: right;">NA</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">Gm3650</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">-3.78419</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">-1.3360175</td>
-<td style="text-align: right;">0.2165430</td>
-<td style="text-align: right;">NA</td>
+<td style="text-align: right;">0</td>
 </tr>
 </tbody>
 </table>
 </div>
-<details class="code-fold">
-<summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#df$log_odds &lt;-</span></span>
-<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co">#log_prior +</span></span>
-<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co">#df$logLR_coloc +</span></span>
-<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">#df$logLR_B +</span></span>
-<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="co">#df$logLR_dist +</span></span>
-<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co">#df$logLR_human</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
-</details>
 </div>
 </section>
 </section>
@@ -580,12 +901,12 @@ window.Quarto = {
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Tahoe 26.1
+Running under: macOS Tahoe 26.2
 
 Matrix products: default
 BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 

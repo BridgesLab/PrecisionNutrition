@@ -29,8 +29,51 @@ These data are found in `r qtl-analysis.Rmd`.
 
 After LD clumping, QTLs are assigned and analysed in `QTLs_of_interest.qmd`.
 
-| QTL | Direction | Specificity |
-|----------|----------|----------|
-| Chr1  | XXX | Both Diets  |
-| Value 4  | Value 5  | Value 6  |
-| Value 7  | Value 8  | Value 9  |
+| QTL | Direction | Specificity | Notes |
+|----------|----------|----------|--------| 
+| 1_170324641_H_C  | Increase | Both Diets  | Several QTLs on Chr1 |
+| 18_46410922_G_A  | Increase  | NCD-Specific  | |
+| 13_30180778_E_C  | Increase  | HFD-Specific  | |
+
+## 1_170324641_H_C (Not Diet Specific)
+
+:::: {.columns}
+
+::: {.column width="50%"}
+![Cholesterol levels at 1_170324641_H_C](QTL-barplots/1_170324641_H_C-hets.png)
+:::
+
+::: {.column width="50%"}
+![Locus plot](figures/chr1-peak-1.png)
+:::
+
+::::
+
+## 13_30180778_E_C (HFD Specific)
+
+:::: {.columns}
+
+::: {.column width="50%"}
+![Cholesterol levels at 13_30180778_E_C](QTL-barplots/13_30180778_E_C-hets.png)
+:::
+
+::: {.column width="50%"}
+![Locus plot](figures/chr13-46410922-1.png)
+:::
+
+::::
+
+## 18_46410922_G_A (NCD Specific)
+
+:::: {.columns}
+
+::: {.column width="50%"}
+![Cholesterol levels at 18_46410922_G_A](QTL-barplots/18_46410922_G_A-hets.png)
+:::
+
+::: {.column width="50%"}
+![Locus plot](figures/chr18-46410922-1.png)
+:::
+
+::::
+

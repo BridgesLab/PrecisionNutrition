@@ -628,7 +628,8 @@ ggplot(data=peak9,
 ![](figures-diet/cholesterol-chr9--all-1.png)<!-- -->
 
 
-##Chromosome 17
+## Chromosome 17
+
 
 ``` r
 snp.pos <- 80080939
@@ -664,6 +665,83 @@ peak17 <- filter(lmm.additive.data,
 ```
 
 ![](figures/chr17-75000000-90000000-1.png)<!-- -->
+
+
+## Chromosome 18 NCD Specific Peak
+
+
+``` r
+snp.pos <- 46410922
+peak17 <- filter(lmm.ncd.results,
+                  chromosome==18,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ ggplot(data=peak17,
+        aes(x=position,        
+        y=beta,
+        col=alt,
+        group=alt)) +
+   geom_line() +
+   geom_hline(yintercept=0,lty=2) +
+   labs(title="Strain Specific Effects",
+        y="Cholesterol Effect Size (mg/dL)",
+        x="Position on Chromosome 18") +
+   scale_color_discrete(name="") +
+   guides(col=guide_legend(ncol=2)) +
+   theme_classic(base_size=12) +
+   theme(legend.position=c(0.18,0.9),
+         legend.text=element_text(size=5))
+```
+
+![](figures/chr18-46410922-1.png)<!-- -->
+
+## Chromosome 13 HFD Specific Peak
+
+
+``` r
+snp.pos <- 30180778
+peak13 <- filter(lmm.hfd.results,
+                  chromosome==13,
+                  position>snp.pos-10000000,
+                  position<snp.pos+10000000) %>%
+  mutate(alt=fct_recode(as.factor(alt),
+                        "C57BL/6J"="A",
+                        "NZO"="B",
+                        "Sv129"="C",
+                        "PWK"="D",
+                        "A/J"="E",
+                        "NOD"="F",
+                        "CAST"="G",
+                        "WSB"="H"))
+
+ ggplot(data=peak13,
+        aes(x=position,        
+        y=beta,
+        col=alt,
+        group=alt)) +
+   geom_line() +
+   geom_hline(yintercept=0,lty=2) +
+   labs(title="Strain Specific Effects",
+        y="Cholesterol Effect Size (mg/dL)",
+        x="Position on Chromosome 13") +
+   scale_color_discrete(name="") +
+   guides(col=guide_legend(ncol=2)) +
+   theme_classic(base_size=12) +
+   theme(legend.position=c(0.9,0.9),
+         legend.text=element_text(size=5))
+```
+
+![](figures/chr13-46410922-1.png)<!-- -->
 
 
 
@@ -1092,7 +1170,7 @@ sessionInfo()
 ```
 ## R version 4.5.2 (2025-10-31)
 ## Platform: aarch64-apple-darwin20
-## Running under: macOS Tahoe 26.1
+## Running under: macOS Tahoe 26.2
 ## 
 ## Matrix products: default
 ## BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 

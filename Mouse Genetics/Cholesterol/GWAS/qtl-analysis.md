@@ -85,6 +85,11 @@ Where $$\epsilon$$ are the residuals and $$\mu$$ is the relationship matrix of t
 ``` r
 library(qqman)
 qq(lmm.additive.data$p_wald)
+```
+
+![](figures/lmm-additive-1.png)<!-- -->
+
+``` r
 suggestive.pval <- 1E-5
 genome.pval <- 5E-8
 
@@ -160,24 +165,17 @@ Table: Relaxed suggestive genome-wide significant associations from mixed linear
 
 ``` r
 library(ggmanh)
-```
-
-![](figures/lmm-additive-1.png)<!-- -->
-
-``` r
-manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on HFHS Diet (Additive Model)", y.label = "LOD Score")
+manhattan_plot(x = lmm.additive.data, pval.colname = "p_wald", chr.colname = "chromosome", pos.colname = "position", plot.title = "DO Mice on NCD or HFHS Diet (Additive Model)", y.label = "LOD Score")
 ```
 
 ![](figures/lmm-additive-2.png)<!-- -->
 
 ``` r
-library(GWASTools)
-with(lmm.additive.data,manhattanPlot(p=p_wald,
-                               chromosome=chromosome,
-                               signif=suggestive.pval))
+#library(GWASTools)
+#with(lmm.additive.data,manhattanPlot(p=p_wald,
+#                               chromosome=chromosome,
+#                               signif=suggestive.pval))
 ```
-
-![](figures/lmm-additive-3.png)<!-- -->
 
 ### Chromosome 1 Peak
 
@@ -1123,16 +1121,6 @@ Table: Genes near second SNP interval +/- 500000
 |gene_biotype |  n|genes |
 |:------------|--:|:-----|
 
-# Summary of Interesting SNPs
-
-
-``` r
-snps.of.interest <- bind_rows(top001.filtered,additive.snp.summary,hfhs.snp.summary,ncd.snp.summary)
-
-write_csv(snps.of.interest, file="SNPs_of_interest.csv")
-snps.of.interest %>% distinct(rs) %>% pull(rs) %>% write(file="SNPs_of_interest.txt") #just the rsids
-```
-
 # Session Information
 
 
@@ -1141,13 +1129,13 @@ sessionInfo()
 ```
 
 ```
-## R version 4.4.1 (2024-06-14)
-## Platform: x86_64-apple-darwin20
-## Running under: macOS Sonoma 14.7
+## R version 4.5.2 (2025-10-31)
+## Platform: aarch64-apple-darwin20
+## Running under: macOS Tahoe 26.2
 ## 
 ## Matrix products: default
-## BLAS:   /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRblas.0.dylib 
-## LAPACK: /Library/Frameworks/R.framework/Versions/4.4-x86_64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.0
+## BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
+## LAPACK: /Library/Frameworks/R.framework/Versions/4.5-arm64/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
@@ -1159,52 +1147,36 @@ sessionInfo()
 ## [1] stats     graphics  grDevices utils     datasets  methods   base     
 ## 
 ## other attached packages:
-##  [1] biomaRt_2.60.1      ggrepel_0.9.6       cowplot_1.1.3      
-##  [4] forcats_1.0.0       GWASTools_1.50.0    Biobase_2.64.0     
-##  [7] BiocGenerics_0.50.0 ggmanh_1.8.0        ggplot2_3.5.1      
-## [10] qqman_0.1.9         broom_1.0.6         dplyr_1.1.4        
-## [13] tidyr_1.3.1         readr_2.1.5         knitr_1.48         
+##  [1] biomaRt_2.64.0 ggrepel_0.9.6  cowplot_1.2.0  forcats_1.0.1  ggmanh_1.12.0 
+##  [6] ggplot2_4.0.1  qqman_0.1.9    broom_1.0.11   dplyr_1.1.4    tidyr_1.3.1   
+## [11] readr_2.1.6    knitr_1.50    
 ## 
 ## loaded via a namespace (and not attached):
-##   [1] DBI_1.2.3               gdsfmt_1.40.2           httr2_1.0.5            
-##   [4] sandwich_3.1-1          rlang_1.1.4             magrittr_2.0.3         
-##   [7] multcomp_1.4-26         compiler_4.4.1          RSQLite_2.3.7          
-##  [10] mgcv_1.9-1              png_0.1-8               vctrs_0.6.5            
-##  [13] stringr_1.5.1           quantreg_5.98           pkgconfig_2.0.3        
-##  [16] shape_1.4.6.1           crayon_1.5.3            fastmap_1.2.0          
-##  [19] dbplyr_2.5.0            XVector_0.44.0          backports_1.5.0        
-##  [22] labeling_0.4.3          utf8_1.2.4              rmarkdown_2.28         
-##  [25] tzdb_0.4.0              UCSC.utils_1.0.0        nloptr_2.1.1           
-##  [28] MatrixModels_0.5-3      purrr_1.0.2             bit_4.0.5              
-##  [31] xfun_0.47               glmnet_4.1-8            jomo_2.7-6             
-##  [34] zlibbioc_1.50.0         logistf_1.26.0          cachem_1.1.0           
-##  [37] GenomeInfoDb_1.40.1     jsonlite_1.8.8          progress_1.2.3         
-##  [40] blob_1.2.4              highr_0.11              pan_1.9                
-##  [43] prettyunits_1.2.0       parallel_4.4.1          R6_2.5.1               
-##  [46] stringi_1.8.4           bslib_0.8.0             RColorBrewer_1.1-3     
-##  [49] boot_1.3-31             DNAcopy_1.78.0          rpart_4.1.23           
-##  [52] lmtest_0.9-40           jquerylib_0.1.4         estimability_1.5.1     
-##  [55] Rcpp_1.0.13             iterators_1.0.14        zoo_1.8-12             
-##  [58] IRanges_2.38.1          Matrix_1.7-0            splines_4.4.1          
-##  [61] nnet_7.3-19             tidyselect_1.2.1        rstudioapi_0.16.0      
-##  [64] yaml_2.3.10             codetools_0.2-20        curl_5.2.2             
-##  [67] lattice_0.22-6          tibble_3.2.1            KEGGREST_1.44.1        
-##  [70] quantsmooth_1.70.0      withr_3.0.1             coda_0.19-4.1          
-##  [73] evaluate_0.24.0         survival_3.7-0          BiocFileCache_2.12.0   
-##  [76] xml2_1.3.6              Biostrings_2.72.1       filelock_1.0.3         
-##  [79] pillar_1.9.0            mice_3.16.0             foreach_1.5.2          
-##  [82] stats4_4.4.1            generics_0.1.3          vroom_1.6.5            
-##  [85] hms_1.1.3               S4Vectors_0.42.1        munsell_0.5.1          
-##  [88] scales_1.3.0            minqa_1.2.8             calibrate_1.7.7        
-##  [91] GWASExactHW_1.2         glue_1.7.0              emmeans_1.10.4         
-##  [94] tools_4.4.1             data.table_1.16.0       lme4_1.1-35.5          
-##  [97] SparseM_1.84-2          mvtnorm_1.3-1           grid_4.4.1             
-## [100] AnnotationDbi_1.66.0    colorspace_2.1-1        GenomeInfoDbData_1.2.12
-## [103] nlme_3.1-166            formula.tools_1.7.1     cli_3.6.3              
-## [106] rappdirs_0.3.3          fansi_1.0.6             gtable_0.3.5           
-## [109] sass_0.4.9              digest_0.6.37           operator.tools_1.6.3   
-## [112] TH.data_1.1-2           farver_2.1.2            memoise_2.0.1          
-## [115] htmltools_0.5.8.1       lifecycle_1.0.4         httr_1.4.7             
-## [118] mitml_0.4-5             bit64_4.0.5             MASS_7.3-61
+##  [1] KEGGREST_1.48.1         gtable_0.3.6            httr2_1.2.2            
+##  [4] xfun_0.54               bslib_0.9.0             Biobase_2.68.0         
+##  [7] tzdb_0.5.0              vctrs_0.6.5             tools_4.5.2            
+## [10] generics_0.1.4          curl_7.0.0              stats4_4.5.2           
+## [13] parallel_4.5.2          tibble_3.3.0            AnnotationDbi_1.70.0   
+## [16] RSQLite_2.4.5           blob_1.2.4              pkgconfig_2.0.3        
+## [19] dbplyr_2.5.1            RColorBrewer_1.1-3      S7_0.2.1               
+## [22] S4Vectors_0.46.0        GenomeInfoDbData_1.2.14 lifecycle_1.0.4        
+## [25] stringr_1.6.0           compiler_4.5.2          farver_2.1.2           
+## [28] progress_1.2.3          Biostrings_2.76.0       GenomeInfoDb_1.44.3    
+## [31] htmltools_0.5.9         sass_0.4.10             yaml_2.3.12            
+## [34] pillar_1.11.1           crayon_1.5.3            jquerylib_0.1.4        
+## [37] MASS_7.3-65             cachem_1.1.0            tidyselect_1.2.1       
+## [40] digest_0.6.39           stringi_1.8.7           purrr_1.2.0            
+## [43] labeling_0.4.3          fastmap_1.2.0           grid_4.5.2             
+## [46] cli_3.6.5               magrittr_2.0.4          dichromat_2.0-0.1      
+## [49] withr_3.0.2             filelock_1.0.3          rappdirs_0.3.3         
+## [52] prettyunits_1.2.0       UCSC.utils_1.4.0        scales_1.4.0           
+## [55] backports_1.5.0         bit64_4.6.0-1           calibrate_1.7.7        
+## [58] XVector_0.48.0          rmarkdown_2.30          httr_1.4.7             
+## [61] otel_0.2.0              bit_4.6.0               png_0.1-8              
+## [64] hms_1.1.4               memoise_2.0.1           evaluate_1.0.5         
+## [67] IRanges_2.42.0          BiocFileCache_2.16.2    rlang_1.1.6            
+## [70] Rcpp_1.1.0              glue_1.8.0              DBI_1.2.3              
+## [73] xml2_1.5.1              BiocGenerics_0.54.1     rstudioapi_0.17.1      
+## [76] vroom_1.6.7             jsonlite_2.0.0          R6_2.6.1
 ```
 

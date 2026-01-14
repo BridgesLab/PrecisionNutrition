@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Sun Nov 30 18:00:54 2025
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Jan 14 12:58:52 2026
 
 ## Data Entry
 
@@ -169,8 +169,8 @@ Table: MR Results for Total Cholesterol - Vitamin D Analysis
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| -0.063| 0.029| 0.02795864|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| -0.067| 0.034| 0.04513899|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.050| 0.91990151|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.054| 0.82921684|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.049| 0.91841693|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.049| 0.81408863|
 
 
 :::
@@ -320,6 +320,7 @@ FALSE  TRUE
 ```
 :::
 
+
 This second analysis is from lumbar spine data from the GEFOS 2015 release [@zhengWholegenomeSequencingIdentifies2015].
 
 
@@ -409,8 +410,8 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |   84| -0.061| 0.035| 0.07825289|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |   84| -0.041| 0.045| 0.36616562|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |   84| -0.060| 0.071| 0.40291614|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.064| 0.51575809|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.060| 0.88597898|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.061| 0.49711533|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.066| 0.89610408|
 
 
 :::
@@ -481,48 +482,108 @@ Used the 2018 GEFOS meta-analysis of fracture risk GWAS to test if total cholest
 ::: {.cell}
 
 ```{.r .cell-code}
-#gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
-#samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
+gwas.fractures.file <- 'PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz'
+samplesize.outcome.fractures <- 37857  # sample size from trajanoskaAssessmentGeneticClinical2018 (cases only)
 
-# gwas.fractures <- read_tsv(gwas.fractures.file)  |>
-#   rename(
-#     beta.outcome               = Effect,
-#     se.outcome                 = StdErr,
-#     pval.outcome               = `P-value`,
-#     eaf.outcome                = Freq1,
-#   ) |>
-#   mutate(id.outcome = "fractures",
-#          effect_allele.outcome = toupper(Allele1),
-#          other_allele.outcome = toupper(Allele2),
-#          outcome = "Fracture Risk (GEFOS)",
-#          samplesize.outcome = samplesize.outcome.fractures)  # sample size for MGI/BioVU for vitamin D)
-#   
-# gwas.fractures<-  
-#   left_join(gwas.bmd,bmd.snp.data, by=c("MarkerName"="refsnp_id")) 
-# # no overlapping SNPs, though both are in GRCh38
-# table(instruments.tc$SNP %in% gwas.bmd$SNP) |> kable(caption="Overlap of TC SNPs with GEFOS Fracture SNPs")
-#fracture.data <- harmonise_data(instruments.tc, gwas.fractures, action = 2)
-#fracture.data_steiger <- steiger_filtering(fracture.data)
-#fracture.mr <- mr(fracture.data_steiger,
-#                         method_list = c("mr_ivw", 
-#                                         "mr_egger_regression",
-#                                         "mr_weighted_median", 
-#                                         "mr_weighted_mode"))
+#need to convert instruments into rsids
 
-#fracture.mr |> 
-#  dplyr::select(-starts_with('id')) |> 
-#  kable(caption="MR Results for Total Cholesterol - Fracture Risk (GEFOS)",
-#        digits=c(0,0,0,0,3,3,99))
+# Get the SNP database
+library(SNPlocs.Hsapiens.dbSNP144.GRCh37)
+snpdb <- SNPlocs.Hsapiens.dbSNP144.GRCh37
 
-#ggplot(fracture.mr, aes(y=method,x=b)) +
-#  geom_point() +
-#  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
-#  theme_classic(base_size=16) +
-#  labs(title="Bone Mineral Density (GEFOS)",
-#       y="",
-#       x="Effect Size (Beta)") +
-#  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+# Prepare positions
+tc.positions <- instruments.tc |>
+  separate(SNP, into = c("CHR", "BP", "ALLELE0", "ALLELE1"), 
+           sep = ":", remove = FALSE) |>
+  mutate(CHR = as.integer(CHR), BP = as.integer(BP))
+
+# Query by chromosome
+get_rsids_by_chr <- function(chr, positions, snpdb) {
+  pos_ranges <- GPos(seqnames = chr, pos = positions)
+  snps <- snpsByOverlaps(snpdb, pos_ranges)
+  
+  data.frame(
+    CHR = chr,
+    BP = pos(snps),
+    RSID = snps$RefSNP_id
+  )
+}
+
+# Process each chromosome
+rsid_list <- list()
+for(chr in unique(tc.positions$CHR)) {
+  chr_data <- tc.positions |> filter(CHR == chr)
+  rsid_list[[chr]] <- get_rsids_by_chr(chr, chr_data$BP, snpdb)
+  message("Processed chr", chr)
+}
+
+all_rsids <- bind_rows(rsid_list)
+
+# Merge back
+instruments.tc.fractures <- tc.positions |>
+  left_join(all_rsids, by = c("CHR", "BP")) |>
+  dplyr::select(-SNP) |> #remove old snp id column
+  dplyr::rename('SNP' = 'RSID')  #rename rsid column to SNP
+
+ gwas.fractures <- read_tsv(gwas.fractures.file)  |>
+   dplyr::rename(
+     beta.outcome               = Effect,
+     se.outcome                 = StdErr,
+     pval.outcome               = `P-value`,
+     eaf.outcome                = Freq1,
+     SNP = MarkerName
+   ) |>
+   mutate(id.outcome = "fractures",
+          effect_allele.outcome = toupper(Allele1),
+          other_allele.outcome = toupper(Allele2),
+          outcome = "Fracture Risk (GEFOS)",
+          samplesize.outcome = samplesize.outcome.fractures)  
+
+
+ 
+fracture.data <- harmonise_data(instruments.tc.fractures, gwas.fractures, action = 2)
+fracture.data_steiger <- steiger_filtering(fracture.data)
+fracture.mr <- mr(fracture.data_steiger,
+                         method_list = c("mr_ivw", 
+                                         "mr_egger_regression",
+                                         "mr_weighted_median", 
+                                         "mr_weighted_mode"))
+
+fracture.mr |> 
+  dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Results for Total Cholesterol - Fracture Risk (GEFOS)",
+        digits=c(0,0,0,0,3,3,99))
 ```
+
+::: {.cell-output-display}
+
+
+Table: MR Results for Total Cholesterol - Fracture Risk (GEFOS)
+
+|outcome               |exposure                       |method                    | nsnp|     b|    se|       pval|
+|:---------------------|:------------------------------|:-------------------------|----:|-----:|-----:|----------:|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  181| 0.015| 0.032| 0.64096289|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  |  181| 0.076| 0.054| 0.16193689|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |  181| 0.057| 0.040| 0.15426559|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |  181| 0.082| 0.038| 0.03000866|
+
+
+:::
+
+```{.r .cell-code}
+ggplot(fracture.mr, aes(y=method,x=b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +
+  theme_classic(base_size=16) +
+  labs(title="Bone Mineral Density (GEFOS)",
+       y="",
+       x="Effect Size (Beta)") +
+  geom_vline(xintercept=0, linetype="dashed", color = "red") 
+```
+
+::: {.cell-output-display}
+![](figures/mr-fractures-1.png){width=672}
+:::
 :::
 
 
@@ -686,7 +747,7 @@ sessionInfo()
 ```
 R version 4.5.2 (2025-10-31)
 Platform: aarch64-apple-darwin20
-Running under: macOS Tahoe 26.1
+Running under: macOS Tahoe 26.2
 
 Matrix products: default
 BLAS:   /System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libBLAS.dylib 
@@ -699,43 +760,85 @@ time zone: America/Detroit
 tzcode source: internal
 
 attached base packages:
-[1] stats     graphics  grDevices utils     datasets  methods   base     
+[1] stats4    stats     graphics  grDevices utils     datasets  methods  
+[8] base     
 
 other attached packages:
- [1] biomaRt_2.64.0     TwoSampleMR_0.6.22 knitr_1.50         lubridate_1.9.4   
- [5] forcats_1.0.1      stringr_1.6.0      dplyr_1.1.4        purrr_1.2.0       
- [9] readr_2.1.6        tidyr_1.3.1        tibble_3.3.0       ggplot2_4.0.1     
-[13] tidyverse_2.0.0   
+ [1] SNPlocs.Hsapiens.dbSNP144.GRCh37_0.99.20
+ [2] BSgenome_1.76.0                         
+ [3] rtracklayer_1.68.0                      
+ [4] BiocIO_1.18.0                           
+ [5] Biostrings_2.76.0                       
+ [6] XVector_0.48.0                          
+ [7] GenomicRanges_1.60.0                    
+ [8] GenomeInfoDb_1.44.3                     
+ [9] IRanges_2.42.0                          
+[10] S4Vectors_0.46.0                        
+[11] BiocGenerics_0.54.1                     
+[12] generics_0.1.4                          
+[13] biomaRt_2.64.0                          
+[14] TwoSampleMR_0.6.29                      
+[15] knitr_1.51                              
+[16] lubridate_1.9.4                         
+[17] forcats_1.0.1                           
+[18] stringr_1.6.0                           
+[19] dplyr_1.1.4                             
+[20] purrr_1.2.1                             
+[21] readr_2.1.6                             
+[22] tidyr_1.3.2                             
+[23] tibble_3.3.1                            
+[24] ggplot2_4.0.1                           
+[25] tidyverse_2.0.0                         
 
 loaded via a namespace (and not attached):
- [1] tidyselect_1.2.1        psych_2.5.6             rootSolve_1.8.2.4      
- [4] farver_2.1.2            blob_1.2.4              filelock_1.0.3         
- [7] Biostrings_2.76.0       S7_0.2.1                fastmap_1.2.0          
-[10] BiocFileCache_2.16.2    digest_0.6.38           timechange_0.3.0       
-[13] lifecycle_1.0.4         KEGGREST_1.48.1         RSQLite_2.4.4          
-[16] magrittr_2.0.4          compiler_4.5.2          rlang_1.1.6            
-[19] progress_1.2.3          tools_4.5.2             yaml_2.3.10            
-[22] data.table_1.17.8       prettyunits_1.2.0       labeling_0.4.3         
-[25] mr.raps_0.4.2           htmlwidgets_1.6.4       bit_4.6.0              
-[28] mnormt_2.1.1            curl_7.0.0              xml2_1.5.0             
-[31] plyr_1.8.9              RColorBrewer_1.1-3      httpcode_0.3.0         
-[34] withr_3.0.2             BiocGenerics_0.54.1     grid_4.5.2             
-[37] stats4_4.5.2            scales_1.4.0            crul_1.6.0             
-[40] cli_3.6.5               rmarkdown_2.30          crayon_1.5.3           
-[43] generics_0.1.4          rstudioapi_0.17.1       httr_1.4.7             
-[46] tzdb_0.5.0              rsnps_0.6.1             DBI_1.2.3              
-[49] cachem_1.1.0            splines_4.5.2           parallel_4.5.2         
-[52] AnnotationDbi_1.70.0    XVector_0.48.0          vctrs_0.6.5            
-[55] jsonlite_2.0.0          IRanges_2.42.0          hms_1.1.4              
-[58] S4Vectors_0.46.0        bit64_4.6.0-1           ggrepel_0.9.6          
-[61] nortest_1.0-4           glue_1.8.0              stringi_1.8.7          
-[64] gtable_0.3.6            GenomeInfoDb_1.44.3     UCSC.utils_1.4.0       
-[67] pillar_1.11.1           rappdirs_0.3.3          htmltools_0.5.8.1      
-[70] GenomeInfoDbData_1.2.14 dbplyr_2.5.1            httr2_1.2.1            
-[73] R6_2.6.1                vroom_1.6.6             evaluate_1.0.5         
-[76] lattice_0.22-7          Biobase_2.68.0          png_0.1-8              
-[79] memoise_2.0.1           Rcpp_1.1.0              gridExtra_2.3          
-[82] nlme_3.1-168            xfun_0.54               pkgconfig_2.0.3        
+ [1] DBI_1.2.3                   mnormt_2.1.1               
+ [3] bitops_1.0-9                gridExtra_2.3              
+ [5] httr2_1.2.2                 rlang_1.1.7                
+ [7] magrittr_2.0.4              otel_0.2.0                 
+ [9] matrixStats_1.5.0           compiler_4.5.2             
+[11] RSQLite_2.4.5               png_0.1-8                  
+[13] vctrs_0.6.5                 httpcode_0.3.0             
+[15] pkgconfig_2.0.3             crayon_1.5.3               
+[17] fastmap_1.2.0               dbplyr_2.5.1               
+[19] labeling_0.4.3              Rsamtools_2.24.1           
+[21] rmarkdown_2.30              tzdb_0.5.0                 
+[23] UCSC.utils_1.4.0            bit_4.6.0                  
+[25] xfun_0.55                   cachem_1.1.0               
+[27] jsonlite_2.0.0              progress_1.2.3             
+[29] blob_1.2.4                  DelayedArray_0.34.1        
+[31] mr.raps_0.4.3               BiocParallel_1.42.2        
+[33] psych_2.5.6                 parallel_4.5.2             
+[35] prettyunits_1.2.0           R6_2.6.1                   
+[37] stringi_1.8.7               RColorBrewer_1.1-3         
+[39] SummarizedExperiment_1.38.1 Rcpp_1.1.1                 
+[41] Matrix_1.7-4                splines_4.5.2              
+[43] timechange_0.3.0            tidyselect_1.2.1           
+[45] abind_1.4-8                 rstudioapi_0.17.1          
+[47] dichromat_2.0-0.1           yaml_2.3.12                
+[49] codetools_0.2-20            curl_7.0.0                 
+[51] lattice_0.22-7              plyr_1.8.9                 
+[53] Biobase_2.68.0              withr_3.0.2                
+[55] KEGGREST_1.48.1             S7_0.2.1                   
+[57] evaluate_1.0.5              BiocFileCache_2.16.2       
+[59] xml2_1.5.1                  pillar_1.11.1              
+[61] filelock_1.0.3              MatrixGenerics_1.20.0      
+[63] nortest_1.0-4               vroom_1.6.7                
+[65] RCurl_1.98-1.17             hms_1.1.4                  
+[67] scales_1.4.0                rootSolve_1.8.2.4          
+[69] glue_1.8.0                  tools_4.5.2                
+[71] data.table_1.18.0           GenomicAlignments_1.44.0   
+[73] rsnps_0.6.1                 XML_3.99-0.20              
+[75] grid_4.5.2                  AnnotationDbi_1.70.0       
+[77] nlme_3.1-168                GenomeInfoDbData_1.2.14    
+[79] restfulr_0.0.16             cli_3.6.5                  
+[81] rappdirs_0.3.3              S4Arrays_1.8.1             
+[83] gtable_0.3.6                digest_0.6.39              
+[85] SparseArray_1.8.1           ggrepel_0.9.6              
+[87] crul_1.6.0                  rjson_0.2.23               
+[89] htmlwidgets_1.6.4           farver_2.1.2               
+[91] memoise_2.0.1               htmltools_0.5.9            
+[93] lifecycle_1.0.5             httr_1.4.7                 
+[95] bit64_4.6.0-1              
 ```
 
 

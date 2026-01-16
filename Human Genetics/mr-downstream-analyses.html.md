@@ -46,7 +46,7 @@ color_scheme <- c("#00274c", "#ffcb05")
 
 ## Purpose
 
-To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Jan 14 12:58:52 2026
+To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health.  This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Jan 16 13:12:17 2026
 
 ## Data Entry
 
@@ -169,8 +169,8 @@ Table: MR Results for Total Cholesterol - Vitamin D Analysis
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  280| -0.063| 0.029| 0.02795864|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  280| -0.067| 0.034| 0.04513899|
 |Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  280| -0.070| 0.053| 0.19017784|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.049| 0.91841693|
-|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.049| 0.81408863|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  280| -0.005| 0.052| 0.92206208|
+|Vitamin D (MGI-BioVU LabWAS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  280| -0.012| 0.052| 0.82246723|
 
 
 :::
@@ -300,7 +300,9 @@ FALSE  TRUE
 #bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
 #bmd.data_steiger <- steiger_filtering(bmd.data)
 #bmd.mr <- mr(bmd.data_steiger,
-#                         method_list = c("mr_ivw", 
+#                         method_list = c("mr_ivw_mre",
+#                                         "mr_ivw_fe",
+#                                         "mr_raps",
 #                                         "mr_egger_regression",
 #                                         "mr_weighted_median", 
 #                                         "mr_weighted_mode"))
@@ -410,8 +412,8 @@ Table: MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2015)
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |   84| -0.061| 0.035| 0.07825289|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |   84| -0.041| 0.045| 0.36616562|
 |LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |   84| -0.060| 0.071| 0.40291614|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.061| 0.49711533|
-|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.066| 0.89610408|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |   84|  0.042| 0.062| 0.50431937|
+|LS-BMD (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |   84|  0.009| 0.059| 0.88369819|
 
 
 :::
@@ -544,7 +546,9 @@ instruments.tc.fractures <- tc.positions |>
 fracture.data <- harmonise_data(instruments.tc.fractures, gwas.fractures, action = 2)
 fracture.data_steiger <- steiger_filtering(fracture.data)
 fracture.mr <- mr(fracture.data_steiger,
-                         method_list = c("mr_ivw", 
+                         method_list = c("mr_ivw_mre",
+                                         "mr_ivw_fe",
+                                         "mr_raps",
                                          "mr_egger_regression",
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
@@ -560,12 +564,14 @@ fracture.mr |>
 
 Table: MR Results for Total Cholesterol - Fracture Risk (GEFOS)
 
-|outcome               |exposure                       |method                    | nsnp|     b|    se|       pval|
-|:---------------------|:------------------------------|:-------------------------|----:|-----:|-----:|----------:|
-|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted |  181| 0.015| 0.032| 0.64096289|
-|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  |  181| 0.076| 0.054| 0.16193689|
-|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median           |  181| 0.057| 0.040| 0.15426559|
-|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode             |  181| 0.082| 0.038| 0.03000866|
+|outcome               |exposure                       |method                                                    | nsnp|     b|    se|       pval|
+|:---------------------|:------------------------------|:---------------------------------------------------------|----:|-----:|-----:|----------:|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (multiplicative random effects) |  181| 0.015| 0.032| 0.64096289|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted (fixed effects)                 |  181| 0.015| 0.024| 0.53024429|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Robust adjusted profile score (RAPS)                      |  181| 0.036| 0.033| 0.27643903|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                                                  |  181| 0.076| 0.054| 0.16193689|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Weighted median                                           |  181| 0.057| 0.041| 0.16358604|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Weighted mode                                             |  181| 0.082| 0.039| 0.03583824|
 
 
 :::
@@ -583,6 +589,47 @@ ggplot(fracture.mr, aes(y=method,x=b)) +
 
 ::: {.cell-output-display}
 ![](figures/mr-fractures-1.png){width=672}
+:::
+
+```{.r .cell-code}
+mr_pleiotropy_test(fracture.data) |>
+  dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Pleiotropy Results for Total Cholesterol - Fracture Risk")
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Pleiotropy Results for Total Cholesterol - Fracture Risk
+
+|outcome               |exposure                       | egger_intercept|        se|     pval|
+|:---------------------|:------------------------------|---------------:|---------:|--------:|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |      -0.0022811| 0.0016269| 0.162613|
+
+
+:::
+
+```{.r .cell-code}
+mr_heterogeneity(fracture.data) |>
+  dplyr::select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
+  kable(caption="MR Heterogeneity Results for Total Cholesterol - Fracture Risk",
+        digits=c(0,0,0,3,3,99))
+```
+
+::: {.cell-output-display}
+
+
+Table: MR Heterogeneity Results for Total Cholesterol - Fracture Risk
+
+|outcome               |exposure                       |method                    |       Q| Q_df|       Q_pval| I2|
+|:---------------------|:------------------------------|:-------------------------|-------:|----:|------------:|--:|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |MR Egger                  | 322.486|  179| 2.701386e-10| 44|
+|Fracture Risk (GEFOS) |Total Cholesterol (UK Biobank) |Inverse variance weighted | 326.028|  180| 1.623798e-10| 45|
+
+
 :::
 :::
 

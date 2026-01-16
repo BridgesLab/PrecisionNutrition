@@ -210,7 +210,7 @@ window.Quarto = {
 </div>
 <section id="purpose" class="level2">
 <h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
-<p>To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Wed Jan 14 12:58:52 2026</p>
+<p>To test if SNPs for total cholesterol GWAS identified using UK Biobank relate to other mechanistic or pathological outcomes related to calcium homeostasis and bone health. This script can be found in /Users/davebrid/Documents/GitHub/PrecisionNutrition/Human Genetics and was most recently run on Fri Jan 16 13:12:17 2026</p>
 </section>
 <section id="data-entry" class="level2">
 <h2 class="anchored" data-anchor-id="data-entry">Data Entry</h2>
@@ -409,8 +409,8 @@ window.Quarto = {
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">280</td>
 <td style="text-align: right;">-0.005</td>
-<td style="text-align: right;">0.049</td>
-<td style="text-align: right;">0.91841693</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.92206208</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Vitamin D (MGI-BioVU LabWAS)</td>
@@ -418,8 +418,8 @@ window.Quarto = {
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">280</td>
 <td style="text-align: right;">-0.012</td>
-<td style="text-align: right;">0.049</td>
-<td style="text-align: right;">0.81408863</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.82246723</td>
 </tr>
 </tbody>
 </table>
@@ -594,23 +594,25 @@ FALSE  TRUE
 <span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a><span class="co">#bmd.data &lt;- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)</span></span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="co">#bmd.data_steiger &lt;- steiger_filtering(bmd.data)</span></span>
 <span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="co">#bmd.mr &lt;- mr(bmd.data_steiger,</span></span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#                         method_list = c("mr_ivw", </span></span>
-<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_egger_regression",</span></span>
-<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_weighted_median", </span></span>
-<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_weighted_mode"))</span></span>
-<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#bmd.mr |&gt; dplyr::select(-starts_with('id')) |&gt; </span></span>
-<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a><span class="co">#  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",</span></span>
-<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#        digits=c(0,0,0,0,3,3,99))</span></span>
-<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ggplot(bmd.mr, aes(y=method,x=b)) +</span></span>
-<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_point() +</span></span>
-<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +</span></span>
-<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   theme_classic(base_size=16) +</span></span>
-<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co">#   labs(title="Bone Minderal Density (GEFOS)",</span></span>
-<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co">#        y="",</span></span>
-<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co">#        x="Effect Size (Beta)") +</span></span>
-<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_vline(xintercept=0, linetype="dashed", color = "red") </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="co">#                         method_list = c("mr_ivw_mre",</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_ivw_fe",</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_raps",</span></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_egger_regression",</span></span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_weighted_median", </span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a><span class="co">#                                         "mr_weighted_mode"))</span></span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a><span class="co">#bmd.mr |&gt; dplyr::select(-starts_with('id')) |&gt; </span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a><span class="co">#  kable(caption="MR Results for Total Cholesterol - Lumbar Spine BMD (GEFOS - 2012)",</span></span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a><span class="co">#        digits=c(0,0,0,0,3,3,99))</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a><span class="co"># ggplot(bmd.mr, aes(y=method,x=b)) +</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_point() +</span></span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_errorbar(aes(xmin=b-1.96*se, xmax=b+1.96*se), width=0.2) +</span></span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a><span class="co">#   theme_classic(base_size=16) +</span></span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a><span class="co">#   labs(title="Bone Minderal Density (GEFOS)",</span></span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a><span class="co">#        y="",</span></span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a><span class="co">#        x="Effect Size (Beta)") +</span></span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a><span class="co">#   geom_vline(xintercept=0, linetype="dashed", color = "red") </span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>This second analysis is from lumbar spine data from the GEFOS 2015 release <span class="citation" data-cites="zhengWholegenomeSequencingIdentifies2015">(<a href="#ref-zhengWholegenomeSequencingIdentifies2015" role="doc-biblioref">Zheng et al. 2015</a>)</span>.</p>
@@ -781,8 +783,8 @@ FALSE  TRUE
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">84</td>
 <td style="text-align: right;">0.042</td>
-<td style="text-align: right;">0.061</td>
-<td style="text-align: right;">0.49711533</td>
+<td style="text-align: right;">0.062</td>
+<td style="text-align: right;">0.50431937</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">LS-BMD (GEFOS)</td>
@@ -790,8 +792,8 @@ FALSE  TRUE
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">84</td>
 <td style="text-align: right;">0.009</td>
-<td style="text-align: right;">0.066</td>
-<td style="text-align: right;">0.89610408</td>
+<td style="text-align: right;">0.059</td>
+<td style="text-align: right;">0.88369819</td>
 </tr>
 </tbody>
 </table>
@@ -976,27 +978,29 @@ FALSE  TRUE
 <span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a>fracture.data <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(instruments.tc.fractures, gwas.fractures, <span class="at">action =</span> <span class="dv">2</span>)</span>
 <span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>fracture.data_steiger <span class="ot">&lt;-</span> <span class="fu">steiger_filtering</span>(fracture.data)</span>
 <span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a>fracture.mr <span class="ot">&lt;-</span> <span class="fu">mr</span>(fracture.data_steiger,</span>
-<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(<span class="st">"mr_ivw"</span>, </span>
-<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_egger_regression"</span>,</span>
-<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_median"</span>, </span>
-<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_mode"</span>))</span>
-<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>fracture.mr <span class="sc">|&gt;</span> </span>
-<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
-<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Total Cholesterol - Fracture Risk (GEFOS)"</span>,</span>
-<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>                         <span class="at">method_list =</span> <span class="fu">c</span>(<span class="st">"mr_ivw_mre"</span>,</span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_ivw_fe"</span>,</span>
+<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_raps"</span>,</span>
+<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_egger_regression"</span>,</span>
+<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_median"</span>, </span>
+<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"mr_weighted_mode"</span>))</span>
+<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>fracture.mr <span class="sc">|&gt;</span> </span>
+<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Results for Total Cholesterol - Fracture Risk (GEFOS)"</span>,</span>
+<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
 <caption>MR Results for Total Cholesterol - Fracture Risk (GEFOS)</caption>
 <colgroup>
-<col style="width: 20%">
-<col style="width: 28%">
-<col style="width: 24%">
+<col style="width: 15%">
+<col style="width: 22%">
+<col style="width: 41%">
+<col style="width: 3%">
 <col style="width: 4%">
-<col style="width: 5%">
-<col style="width: 5%">
-<col style="width: 10%">
+<col style="width: 4%">
+<col style="width: 7%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1013,11 +1017,29 @@ FALSE  TRUE
 <tr class="odd">
 <td style="text-align: left;">Fracture Risk (GEFOS)</td>
 <td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
-<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: left;">Inverse variance weighted (multiplicative random effects)</td>
 <td style="text-align: right;">181</td>
 <td style="text-align: right;">0.015</td>
 <td style="text-align: right;">0.032</td>
 <td style="text-align: right;">0.64096289</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fracture Risk (GEFOS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">Inverse variance weighted (fixed effects)</td>
+<td style="text-align: right;">181</td>
+<td style="text-align: right;">0.015</td>
+<td style="text-align: right;">0.024</td>
+<td style="text-align: right;">0.53024429</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Fracture Risk (GEFOS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">Robust adjusted profile score (RAPS)</td>
+<td style="text-align: right;">181</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: right;">0.033</td>
+<td style="text-align: right;">0.27643903</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Fracture Risk (GEFOS)</td>
@@ -1034,8 +1056,8 @@ FALSE  TRUE
 <td style="text-align: left;">Weighted median</td>
 <td style="text-align: right;">181</td>
 <td style="text-align: right;">0.057</td>
-<td style="text-align: right;">0.040</td>
-<td style="text-align: right;">0.15426559</td>
+<td style="text-align: right;">0.041</td>
+<td style="text-align: right;">0.16358604</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">Fracture Risk (GEFOS)</td>
@@ -1043,8 +1065,8 @@ FALSE  TRUE
 <td style="text-align: left;">Weighted mode</td>
 <td style="text-align: right;">181</td>
 <td style="text-align: right;">0.082</td>
-<td style="text-align: right;">0.038</td>
-<td style="text-align: right;">0.03000866</td>
+<td style="text-align: right;">0.039</td>
+<td style="text-align: right;">0.03583824</td>
 </tr>
 </tbody>
 </table>
@@ -1067,6 +1089,97 @@ FALSE  TRUE
 </figure>
 </div>
 </div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mr_pleiotropy_test</span>(fracture.data) <span class="sc">|&gt;</span></span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Pleiotropy Results for Total Cholesterol - Fracture Risk"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MR Pleiotropy Results for Total Cholesterol - Fracture Risk</caption>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 35%">
+<col style="width: 18%">
+<col style="width: 11%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">exposure</th>
+<th style="text-align: right;">egger_intercept</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">pval</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Fracture Risk (GEFOS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: right;">-0.0022811</td>
+<td style="text-align: right;">0.0016269</td>
+<td style="text-align: right;">0.162613</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">mr_heterogeneity</span>(fracture.data) <span class="sc">|&gt;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>  dplyr<span class="sc">::</span><span class="fu">select</span>(<span class="sc">-</span><span class="fu">starts_with</span>(<span class="st">'id'</span>)) <span class="sc">|&gt;</span> </span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">I2 =</span> <span class="fu">pmax</span>(<span class="dv">0</span>, (Q <span class="sc">-</span> Q_df) <span class="sc">/</span> Q) <span class="sc">*</span> <span class="dv">100</span> <span class="co"># </span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption=</span><span class="st">"MR Heterogeneity Results for Total Cholesterol - Fracture Risk"</span>,</span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>        <span class="at">digits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">0</span>,<span class="dv">3</span>,<span class="dv">3</span>,<span class="dv">99</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MR Heterogeneity Results for Total Cholesterol - Fracture Risk</caption>
+<colgroup>
+<col style="width: 20%">
+<col style="width: 28%">
+<col style="width: 24%">
+<col style="width: 7%">
+<col style="width: 4%">
+<col style="width: 12%">
+<col style="width: 2%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">Q</th>
+<th style="text-align: right;">Q_df</th>
+<th style="text-align: right;">Q_pval</th>
+<th style="text-align: right;">I2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Fracture Risk (GEFOS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">MR Egger</td>
+<td style="text-align: right;">322.486</td>
+<td style="text-align: right;">179</td>
+<td style="text-align: right;">2.701386e-10</td>
+<td style="text-align: right;">44</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Fracture Risk (GEFOS)</td>
+<td style="text-align: left;">Total Cholesterol (UK Biobank)</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">326.028</td>
+<td style="text-align: right;">180</td>
+<td style="text-align: right;">1.623798e-10</td>
+<td style="text-align: right;">45</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 </section>
 </section>
@@ -1075,15 +1188,15 @@ FALSE  TRUE
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(vitd.mr,bmd.mr<span class="fl">.2015</span>) <span class="sc">|&gt;</span></span>
-<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(method <span class="sc">==</span> <span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">|&gt;</span></span>
-<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> outcome, <span class="at">y =</span> b)) <span class="sc">+</span></span>
-<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
-<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se), <span class="at">width =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
-<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
-<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
-<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
-<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Cholesterol Effects"</span>, <span class="at">y =</span> <span class="st">"Beta Coefficient"</span>, <span class="at">x =</span> <span class="st">""</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(vitd.mr,bmd.mr<span class="fl">.2015</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(method <span class="sc">==</span> <span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> outcome, <span class="at">y =</span> b)) <span class="sc">+</span></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">stat =</span> <span class="st">"identity"</span>) <span class="sc">+</span></span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbar</span>(<span class="fu">aes</span>(<span class="at">ymin =</span> b <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">ymax =</span> b <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se), <span class="at">width =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">coord_flip</span>() <span class="sc">+</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">color =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"Cholesterol Effects"</span>, <span class="at">y =</span> <span class="st">"Beta Coefficient"</span>, <span class="at">x =</span> <span class="st">""</span>) </span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -1105,53 +1218,53 @@ FALSE  TRUE
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to compute posterior probability for a directional hypothesis</span></span>
-<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a><span class="co"># - beta_hat: point estimate</span></span>
-<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a><span class="co"># - se: standard error</span></span>
-<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="co"># - direction: "less" for P(beta &lt; 0), "greater" for P(beta &gt; 0)</span></span>
-<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>posterior_prob_direction <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_hat, se, <span class="at">direction =</span> <span class="fu">c</span>(<span class="st">"less"</span>, <span class="st">"greater"</span>)) {</span>
-<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a>  direction <span class="ot">&lt;-</span> <span class="fu">match.arg</span>(direction)</span>
-<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> (<span class="dv">0</span> <span class="sc">-</span> beta_hat) <span class="sc">/</span> se  <span class="co"># z-score for the boundary at 0</span></span>
-<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (direction <span class="sc">==</span> <span class="st">"less"</span>) {</span>
-<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">pnorm</span>(z))  <span class="co"># P(beta &lt; 0) = CDF(z)</span></span>
-<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
-<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pnorm</span>(z))  <span class="co"># P(beta &gt; 0) = 1 - CDF(z)</span></span>
-<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb19-13"><a href="#cb19-13" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb19-14"><a href="#cb19-14" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-15"><a href="#cb19-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Input MR point estimates and standard errors</span></span>
-<span id="cb19-16"><a href="#cb19-16" aria-hidden="true" tabindex="-1"></a>beta_bmd <span class="ot">&lt;-</span> <span class="fu">filter</span>(bmd.mr<span class="fl">.2015</span>,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(b)  <span class="co"># Point estimate for BMD effect on calcium</span></span>
-<span id="cb19-17"><a href="#cb19-17" aria-hidden="true" tabindex="-1"></a>se_bmd <span class="ot">&lt;-</span> <span class="fu">filter</span>(bmd.mr<span class="fl">.2015</span>,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(se)     <span class="co"># Standard error for BMD</span></span>
-<span id="cb19-18"><a href="#cb19-18" aria-hidden="true" tabindex="-1"></a>beta_vitd <span class="ot">&lt;-</span> <span class="fu">filter</span>(vitd.mr,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(b) <span class="co"># Point estimate for Vitamin D effect on calcium</span></span>
-<span id="cb19-19"><a href="#cb19-19" aria-hidden="true" tabindex="-1"></a>se_vitd <span class="ot">&lt;-</span> <span class="fu">filter</span>(vitd.mr,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(se)    <span class="co"># Standard error for Vitamin D</span></span>
-<span id="cb19-20"><a href="#cb19-20" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-21"><a href="#cb19-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute individual posterior probabilities</span></span>
-<span id="cb19-22"><a href="#cb19-22" aria-hidden="true" tabindex="-1"></a>p_h1_true <span class="ot">&lt;-</span> <span class="fu">posterior_prob_direction</span>(beta_bmd, se_bmd, <span class="st">"less"</span>)      <span class="co"># P(β_BMD &lt; 0) ~ supports H1 (lower BMD)</span></span>
-<span id="cb19-23"><a href="#cb19-23" aria-hidden="true" tabindex="-1"></a>p_h1_false <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_h1_true                                          <span class="co"># P(β_BMD &gt;= 0) ~ opposes H1</span></span>
-<span id="cb19-24"><a href="#cb19-24" aria-hidden="true" tabindex="-1"></a>p_h2_true <span class="ot">&lt;-</span> <span class="fu">posterior_prob_direction</span>(beta_vitd, se_vitd, <span class="st">"greater"</span>) <span class="co"># P(β_VitD &gt; 0) ~ supports H2 (higher Vit D)</span></span>
-<span id="cb19-25"><a href="#cb19-25" aria-hidden="true" tabindex="-1"></a>p_h2_false <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_h2_true                                          <span class="co"># P(β_VitD &lt;= 0) ~ opposes H2</span></span>
-<span id="cb19-26"><a href="#cb19-26" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-27"><a href="#cb19-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute joint probabilities (assuming independence)</span></span>
-<span id="cb19-28"><a href="#cb19-28" aria-hidden="true" tabindex="-1"></a>p_both_true <span class="ot">&lt;-</span> p_h1_true <span class="sc">*</span> p_h2_true</span>
-<span id="cb19-29"><a href="#cb19-29" aria-hidden="true" tabindex="-1"></a>p_only_h1_true <span class="ot">&lt;-</span> p_h1_true <span class="sc">*</span> p_h2_false</span>
-<span id="cb19-30"><a href="#cb19-30" aria-hidden="true" tabindex="-1"></a>p_only_h2_true <span class="ot">&lt;-</span> p_h1_false <span class="sc">*</span> p_h2_true</span>
-<span id="cb19-31"><a href="#cb19-31" aria-hidden="true" tabindex="-1"></a>p_neither_true <span class="ot">&lt;-</span> p_h1_false <span class="sc">*</span> p_h2_false</span>
-<span id="cb19-32"><a href="#cb19-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-33"><a href="#cb19-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a data frame for the table</span></span>
-<span id="cb19-34"><a href="#cb19-34" aria-hidden="true" tabindex="-1"></a>outcomes_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb19-35"><a href="#cb19-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">Outcome =</span> <span class="fu">c</span>(<span class="st">"Both True"</span>, <span class="st">"Only H1 True"</span>, <span class="st">"Only H2 True"</span>, <span class="st">"Neither True"</span>),</span>
-<span id="cb19-36"><a href="#cb19-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">Description =</span> <span class="fu">c</span>(</span>
-<span id="cb19-37"><a href="#cb19-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 true (β_BMD &lt; 0) and H2 true (β_VitD &gt; 0)"</span>,</span>
-<span id="cb19-38"><a href="#cb19-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 true (β_BMD &lt; 0) and H2 false (β_VitD &lt;= 0)"</span>,</span>
-<span id="cb19-39"><a href="#cb19-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 false (β_BMD &gt;= 0) and H2 true (β_VitD &gt; 0)"</span>,</span>
-<span id="cb19-40"><a href="#cb19-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 false (β_BMD &gt;= 0) and H2 false (β_VitD &lt;= 0)"</span></span>
-<span id="cb19-41"><a href="#cb19-41" aria-hidden="true" tabindex="-1"></a>  ),</span>
-<span id="cb19-42"><a href="#cb19-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">Posterior_Probability =</span> <span class="fu">c</span>(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true),</span>
-<span id="cb19-43"><a href="#cb19-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">Percentage =</span> <span class="fu">sprintf</span>(<span class="st">"%.2f%%"</span>, <span class="fu">c</span>(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true) <span class="sc">*</span> <span class="dv">100</span>)</span>
-<span id="cb19-44"><a href="#cb19-44" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb19-45"><a href="#cb19-45" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb19-46"><a href="#cb19-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Output the table using kable</span></span>
-<span id="cb19-47"><a href="#cb19-47" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(outcomes_df, <span class="at">format =</span> <span class="st">"simple"</span>, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">"Joint Posterior Probabilities for the Four Outcomes"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Function to compute posterior probability for a directional hypothesis</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># - beta_hat: point estimate</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a><span class="co"># - se: standard error</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a><span class="co"># - direction: "less" for P(beta &lt; 0), "greater" for P(beta &gt; 0)</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>posterior_prob_direction <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_hat, se, <span class="at">direction =</span> <span class="fu">c</span>(<span class="st">"less"</span>, <span class="st">"greater"</span>)) {</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  direction <span class="ot">&lt;-</span> <span class="fu">match.arg</span>(direction)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>  z <span class="ot">&lt;-</span> (<span class="dv">0</span> <span class="sc">-</span> beta_hat) <span class="sc">/</span> se  <span class="co"># z-score for the boundary at 0</span></span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (direction <span class="sc">==</span> <span class="st">"less"</span>) {</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">pnorm</span>(z))  <span class="co"># P(beta &lt; 0) = CDF(z)</span></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="dv">1</span> <span class="sc">-</span> <span class="fu">pnorm</span>(z))  <span class="co"># P(beta &gt; 0) = 1 - CDF(z)</span></span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a><span class="co"># Input MR point estimates and standard errors</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>beta_bmd <span class="ot">&lt;-</span> <span class="fu">filter</span>(bmd.mr<span class="fl">.2015</span>,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(b)  <span class="co"># Point estimate for BMD effect on calcium</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>se_bmd <span class="ot">&lt;-</span> <span class="fu">filter</span>(bmd.mr<span class="fl">.2015</span>,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(se)     <span class="co"># Standard error for BMD</span></span>
+<span id="cb21-18"><a href="#cb21-18" aria-hidden="true" tabindex="-1"></a>beta_vitd <span class="ot">&lt;-</span> <span class="fu">filter</span>(vitd.mr,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(b) <span class="co"># Point estimate for Vitamin D effect on calcium</span></span>
+<span id="cb21-19"><a href="#cb21-19" aria-hidden="true" tabindex="-1"></a>se_vitd <span class="ot">&lt;-</span> <span class="fu">filter</span>(vitd.mr,method<span class="sc">==</span><span class="st">"Inverse variance weighted (multiplicative random effects)"</span>) <span class="sc">%&gt;%</span> <span class="fu">pull</span>(se)    <span class="co"># Standard error for Vitamin D</span></span>
+<span id="cb21-20"><a href="#cb21-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-21"><a href="#cb21-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute individual posterior probabilities</span></span>
+<span id="cb21-22"><a href="#cb21-22" aria-hidden="true" tabindex="-1"></a>p_h1_true <span class="ot">&lt;-</span> <span class="fu">posterior_prob_direction</span>(beta_bmd, se_bmd, <span class="st">"less"</span>)      <span class="co"># P(β_BMD &lt; 0) ~ supports H1 (lower BMD)</span></span>
+<span id="cb21-23"><a href="#cb21-23" aria-hidden="true" tabindex="-1"></a>p_h1_false <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_h1_true                                          <span class="co"># P(β_BMD &gt;= 0) ~ opposes H1</span></span>
+<span id="cb21-24"><a href="#cb21-24" aria-hidden="true" tabindex="-1"></a>p_h2_true <span class="ot">&lt;-</span> <span class="fu">posterior_prob_direction</span>(beta_vitd, se_vitd, <span class="st">"greater"</span>) <span class="co"># P(β_VitD &gt; 0) ~ supports H2 (higher Vit D)</span></span>
+<span id="cb21-25"><a href="#cb21-25" aria-hidden="true" tabindex="-1"></a>p_h2_false <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">-</span> p_h2_true                                          <span class="co"># P(β_VitD &lt;= 0) ~ opposes H2</span></span>
+<span id="cb21-26"><a href="#cb21-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-27"><a href="#cb21-27" aria-hidden="true" tabindex="-1"></a><span class="co"># Compute joint probabilities (assuming independence)</span></span>
+<span id="cb21-28"><a href="#cb21-28" aria-hidden="true" tabindex="-1"></a>p_both_true <span class="ot">&lt;-</span> p_h1_true <span class="sc">*</span> p_h2_true</span>
+<span id="cb21-29"><a href="#cb21-29" aria-hidden="true" tabindex="-1"></a>p_only_h1_true <span class="ot">&lt;-</span> p_h1_true <span class="sc">*</span> p_h2_false</span>
+<span id="cb21-30"><a href="#cb21-30" aria-hidden="true" tabindex="-1"></a>p_only_h2_true <span class="ot">&lt;-</span> p_h1_false <span class="sc">*</span> p_h2_true</span>
+<span id="cb21-31"><a href="#cb21-31" aria-hidden="true" tabindex="-1"></a>p_neither_true <span class="ot">&lt;-</span> p_h1_false <span class="sc">*</span> p_h2_false</span>
+<span id="cb21-32"><a href="#cb21-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-33"><a href="#cb21-33" aria-hidden="true" tabindex="-1"></a><span class="co"># Create a data frame for the table</span></span>
+<span id="cb21-34"><a href="#cb21-34" aria-hidden="true" tabindex="-1"></a>outcomes_df <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb21-35"><a href="#cb21-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">Outcome =</span> <span class="fu">c</span>(<span class="st">"Both True"</span>, <span class="st">"Only H1 True"</span>, <span class="st">"Only H2 True"</span>, <span class="st">"Neither True"</span>),</span>
+<span id="cb21-36"><a href="#cb21-36" aria-hidden="true" tabindex="-1"></a>  <span class="at">Description =</span> <span class="fu">c</span>(</span>
+<span id="cb21-37"><a href="#cb21-37" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 true (β_BMD &lt; 0) and H2 true (β_VitD &gt; 0)"</span>,</span>
+<span id="cb21-38"><a href="#cb21-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 true (β_BMD &lt; 0) and H2 false (β_VitD &lt;= 0)"</span>,</span>
+<span id="cb21-39"><a href="#cb21-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 false (β_BMD &gt;= 0) and H2 true (β_VitD &gt; 0)"</span>,</span>
+<span id="cb21-40"><a href="#cb21-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">"H1 false (β_BMD &gt;= 0) and H2 false (β_VitD &lt;= 0)"</span></span>
+<span id="cb21-41"><a href="#cb21-41" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb21-42"><a href="#cb21-42" aria-hidden="true" tabindex="-1"></a>  <span class="at">Posterior_Probability =</span> <span class="fu">c</span>(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true),</span>
+<span id="cb21-43"><a href="#cb21-43" aria-hidden="true" tabindex="-1"></a>  <span class="at">Percentage =</span> <span class="fu">sprintf</span>(<span class="st">"%.2f%%"</span>, <span class="fu">c</span>(p_both_true, p_only_h1_true, p_only_h2_true, p_neither_true) <span class="sc">*</span> <span class="dv">100</span>)</span>
+<span id="cb21-44"><a href="#cb21-44" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb21-45"><a href="#cb21-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-46"><a href="#cb21-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Output the table using kable</span></span>
+<span id="cb21-47"><a href="#cb21-47" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(outcomes_df, <span class="at">format =</span> <span class="st">"simple"</span>, <span class="at">digits =</span> <span class="dv">4</span>, <span class="at">caption =</span> <span class="st">"Joint Posterior Probabilities for the Four Outcomes"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1255,7 +1368,7 @@ Zheng, Hou-Feng, Vincenzo Forgetta, Yi-Hsiang Hsu, Karol Estrada, Alberto Rosell
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.2 (2025-10-31)

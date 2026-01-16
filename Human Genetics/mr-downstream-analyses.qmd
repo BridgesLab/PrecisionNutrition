@@ -202,7 +202,9 @@ table(instruments.tc$SNP %in% gwas.bmd.combined$SNP)
 #bmd.data <- harmonise_data(instruments.tc, gwas.bmd.combined, action = 2)
 #bmd.data_steiger <- steiger_filtering(bmd.data)
 #bmd.mr <- mr(bmd.data_steiger,
-#                         method_list = c("mr_ivw", 
+#                         method_list = c("mr_ivw_mre",
+#                                         "mr_ivw_fe",
+#                                         "mr_raps",
 #                                         "mr_egger_regression",
 #                                         "mr_weighted_median", 
 #                                         "mr_weighted_mode"))
@@ -370,7 +372,9 @@ instruments.tc.fractures <- tc.positions |>
 fracture.data <- harmonise_data(instruments.tc.fractures, gwas.fractures, action = 2)
 fracture.data_steiger <- steiger_filtering(fracture.data)
 fracture.mr <- mr(fracture.data_steiger,
-                         method_list = c("mr_ivw", 
+                         method_list = c("mr_ivw_mre",
+                                         "mr_ivw_fe",
+                                         "mr_raps",
                                          "mr_egger_regression",
                                          "mr_weighted_median", 
                                          "mr_weighted_mode"))
@@ -388,6 +392,18 @@ ggplot(fracture.mr, aes(y=method,x=b)) +
        y="",
        x="Effect Size (Beta)") +
   geom_vline(xintercept=0, linetype="dashed", color = "red") 
+
+mr_pleiotropy_test(fracture.data) |>
+  dplyr::select(-starts_with('id')) |> 
+  kable(caption="MR Pleiotropy Results for Total Cholesterol - Fracture Risk")
+
+mr_heterogeneity(fracture.data) |>
+  dplyr::select(-starts_with('id')) |> 
+    mutate(
+    I2 = pmax(0, (Q - Q_df) / Q) * 100 # 
+  ) |>
+  kable(caption="MR Heterogeneity Results for Total Cholesterol - Fracture Risk",
+        digits=c(0,0,0,3,3,99))
 ```  
 
 ## Summary of Proposed Causal Mechanisms

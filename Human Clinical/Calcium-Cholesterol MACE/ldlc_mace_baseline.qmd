@@ -1,0 +1,854 @@
+---
+title: "Baseline LDL-C and MACE — Fixed Exposure Cox Model"
+author: "Dave Bridges"
+date: "2026-03-27"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+
+theme: journal
+
+execute:
+  echo: true
+  warning: false
+
+knitr:
+  opts_chunk:
+    fig-path: "figures-baseline/"
+    dev: ["png", "pdf"]
+    dpi: 300
+    dev.args:
+      png:
+        type: "cairo-png"
+      pdf:
+        family: "sans"
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+
+se <- function(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+
+library(tidyverse)
+library(knitr)
+library(broom)
+library(lubridate)
+library(survival)
+library(survminer)
+
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+This script implements a **baseline LDL-C exposure model** as a methodological companion to the primary time-varying LDL-C analysis (`ldlc_mace_analysis.qmd`). The two scripts answer related but distinct scientific questions:
+
+- **Primary script (time-varying)**: Does a patient's *current* LDL-C level predict near-term MACE risk? LDL-C is updated at each measurement visit using last-observation-carried-forward (LOCF).
+- **This script (baseline)**: Does a patient's LDL-C level *at the time they enter care* predict their long-term MACE risk? LDL-C is fixed at the first measurement and does not change over follow-up.
+
+The baseline approach is methodologically closer to landmark observational studies (Framingham, INTERHEART) that measured LDL-C once at enrollment. It avoids the treatment dilution problem inherent in time-varying models — post-treatment LDL-C values, which reflect statin response rather than underlying atherogenic burden, do not enter the exposure definition. The tradeoff is that baseline LDL-C may not represent the patient's lipid burden throughout the full follow-up period, particularly in a cohort with 14-year median follow-up.
+
+Because the exposure is fixed at time zero, statin adjustment requires a different approach than the primary model. We stratify on **baseline statin status** — whether the patient was already on a statin at the time of their first LDL-C measurement — rather than using a time-varying statin covariate. This is the most internally consistent approach: the exposure (LDL-C) and the primary confounder adjustment (statin use) are both anchored at the same time point. It cleanly separates patients whose baseline LDL-C reflects pre-treatment lipid biology from those already on treatment.
+
+The cohort derivation, exclusion criteria, and secondary covariates (diabetes, hypertension, age stratification, follow-up period) are identical to the primary script to ensure comparability.
+
+---
+
+## Raw Data
+
+All raw data files are loaded independently — this script is fully self-contained and does not depend on objects from the primary analysis script.
+
+```{r data-input}
+#| message: false
+
+# --- Full study population ---
+demographic.data <- read_csv("combined_data/DemographicInfo.csv",
+                             show_col_types = FALSE) %>%
+  mutate(DeID_PatientID = as.character(DeID_PatientID))
+
+# --- Diagnoses (MACE and Osteoporosis only) ---
+diagnosis.data <- read_csv("combined_data/DiagnosesCleaned.csv",
+                           show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    MACE.onset     = ymd(MACE.onset)
+  )
+
+# --- Labs ---
+lab.data <- read_csv("combined_data/LabResultsCleaned.csv",
+                     show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    lab_date = coalesce(
+      parse_date_time(DeID_COLLECTION_DATE,
+                      orders = c("ymd", "mdy", "ymd HMS", "mdy HM"),
+                      quiet  = TRUE),
+      parse_date_time(DeID_AdmitDate,
+                      orders = c("ymd", "mdy", "ymd HMS", "mdy HM"),
+                      quiet  = TRUE)
+    ))
+
+ldlc.data <- lab.data %>% filter(test_name == "LDL-C")
+```
+
+The full demographic file contains `r scales::comma(n_distinct(demographic.data$DeID_PatientID))` unique patients.
+
+---
+
+## Cohort Derivation
+
+The cohort derivation follows the identical pipeline as the primary script. Patients are included if they have at least one valid LDL-C measurement after age 18, a valid follow-up period, and a classifiable MACE outcome.
+
+```{r cohort-derivation}
+#| message: false
+
+# --- Build full cohort with MACE flag ---
+full_cohort <- demographic.data %>%
+  left_join(
+    diagnosis.data %>%
+      select(DeID_PatientID, MACE, MACE.onset,
+             Osteoporosis, Osteoporosis.onset),
+    by = "DeID_PatientID"
+  ) %>%
+  mutate(MACE_flag = if_else(MACE == TRUE, 1L, 0L, missing = 0L))
+
+ids_demo <- unique(full_cohort$DeID_PatientID)
+ids_ldlc <- unique(ldlc.data$DeID_PatientID)
+
+# --- Clean LDL-C data ---
+ldlc_clean <- ldlc.data %>%
+  filter(!is.na(lab_date), !is.na(AgeInYears)) %>%
+  filter(value > 0, value <= 400) %>%
+  mutate(BMI = if_else(BMI < 10 | BMI > 80, NA_real_, BMI)) %>%
+  filter(AgeInYears >= 18) %>%
+  group_by(DeID_PatientID, lab_date) %>%
+  summarise(
+    LDL_value  = mean(value,      na.rm = TRUE),
+    AgeInYears = mean(AgeInYears, na.rm = TRUE),
+    BMI        = mean(BMI,        na.rm = TRUE),
+    .groups    = "drop"
+  ) %>%
+  arrange(DeID_PatientID, lab_date)
+
+# --- Clean diagnosis data ---
+diag_clean <- full_cohort %>%
+  filter(!(MACE_flag == 1L & is.na(MACE.onset))) %>%
+  select(DeID_PatientID, MACE.onset, MACE_flag)
+
+# --- Restrict to shared patients ---
+shared_ids  <- intersect(diag_clean$DeID_PatientID,
+                         ldlc_clean$DeID_PatientID)
+diag_cohort <- diag_clean  %>% filter(DeID_PatientID %in% shared_ids)
+ldlc_cohort <- ldlc_clean  %>% filter(DeID_PatientID %in% shared_ids)
+
+# --- Encounter data for censoring ---
+encounter.data <- read_csv("combined_data/EncounterAll.csv",
+                           show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    EncounterDate  = mdy_hm(DeID_AdmitDate)
+  )
+
+last_encounter <- encounter.data %>%
+  filter(!is.na(EncounterDate), DeID_PatientID %in% shared_ids) %>%
+  group_by(DeID_PatientID) %>%
+  slice_max(EncounterDate, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, last_encounter_date = EncounterDate)
+
+# --- First LDL-C measurement = time zero and baseline exposure ---
+first_ldlc <- ldlc_cohort %>%
+  group_by(DeID_PatientID) %>%
+  slice_min(lab_date, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, t0 = lab_date,
+         baseline_LDL   = LDL_value,
+         baseline_age   = AgeInYears,
+         baseline_BMI   = BMI)
+
+# --- Build base cohort ---
+base_cohort_full <- diag_cohort %>%
+  left_join(first_ldlc,     by = "DeID_PatientID") %>%
+  left_join(last_encounter, by = "DeID_PatientID") %>%
+  mutate(
+    t_end = case_when(
+      MACE_flag == 1              ~ MACE.onset,
+      !is.na(last_encounter_date) ~ last_encounter_date,
+      TRUE                        ~ NA_POSIXct_
+    ),
+    follow_up_days = as.numeric(difftime(t_end, t0, units = "days"))
+  )
+
+base_cohort <- base_cohort_full %>%
+  filter(follow_up_days > 0) %>%
+  mutate(follow_up_days = pmin(follow_up_days, 14610))
+
+# --- CONSORT flow ---
+tibble(
+  Step = c(
+    "Full demographic cohort",
+    "No LDL-C data",
+    "MACE=TRUE with missing onset date",
+    "Negative or zero follow-up (prevalent MACE + invalid controls)",
+    "Final analytic cohort"
+  ),
+  N = c(
+    n_distinct(demographic.data$DeID_PatientID),
+    -length(setdiff(ids_demo, ids_ldlc)),
+    -(nrow(full_cohort %>% filter(MACE_flag == 1 & is.na(MACE.onset)))),
+    -(nrow(base_cohort_full %>% filter(follow_up_days <= 0))),
+    nrow(base_cohort)
+  )
+) %>% kable(caption = "CONSORT flow — cohort derivation")
+```
+
+The final analytic cohort contains **`r nrow(base_cohort)` patients** (`r sum(base_cohort$MACE_flag)` incident MACE cases and `r sum(base_cohort$MACE_flag == 0)` controls), identical to the primary script.
+
+---
+
+## Baseline LDL-C Characterisation
+
+Unlike the primary script, the exposure in this analysis is a single value per patient — the LDL-C measured at their first visit. It is important to characterise this value and understand how it relates to statin use at baseline, since statin-treated patients will have systematically lower measured LDL-C than statin-naive patients.
+
+```{r baseline-ldlc-characterisation}
+baseline_summary <- base_cohort %>%
+  summarise(
+    `N patients`              = n(),
+    `Min baseline LDL-C`      = round(min(baseline_LDL, na.rm = TRUE), 1),
+    `25th percentile`         = round(quantile(baseline_LDL, 0.25, na.rm = TRUE), 1),
+    `Median baseline LDL-C`   = round(median(baseline_LDL, na.rm = TRUE), 1),
+    `Mean baseline LDL-C`     = round(mean(baseline_LDL, na.rm = TRUE), 1),
+    `75th percentile`         = round(quantile(baseline_LDL, 0.75, na.rm = TRUE), 1),
+    `Max baseline LDL-C`      = round(max(baseline_LDL, na.rm = TRUE), 1),
+    `Missing baseline LDL-C`  = sum(is.na(baseline_LDL))
+  )
+
+baseline_summary %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  kable(caption = "Baseline LDL-C distribution across analytic cohort")
+
+# Distribution by MACE status
+base_cohort %>%
+  group_by(MACE_flag) %>%
+  summarise(
+    N      = n(),
+    Mean   = round(mean(baseline_LDL, na.rm = TRUE), 1),
+    Median = round(median(baseline_LDL, na.rm = TRUE), 1),
+    SD     = round(sd(baseline_LDL, na.rm = TRUE), 1),
+    .groups = "drop"
+  ) %>%
+  mutate(MACE_flag = if_else(MACE_flag == 1, "Cases (MACE=1)",
+                             "Controls (MACE=0)")) %>%
+  rename(Group = MACE_flag) %>%
+  kable(caption = "Baseline LDL-C by case/control status")
+
+# Histogram
+ggplot(base_cohort, aes(x = baseline_LDL,
+                         fill = factor(MACE_flag,
+                                       labels = c("Control", "MACE")))) +
+  geom_histogram(binwidth = 10, alpha = 0.7, position = "identity",
+                 colour = "white") +
+  scale_fill_manual(values = color_scheme) +
+  labs(title    = "Baseline LDL-C distribution by MACE status",
+       subtitle = "LDL-C at first measurement (time zero)",
+       x = "Baseline LDL-C (mg/dL)", y = "Count", fill = NULL) +
+  theme_classic() +
+  theme(legend.position = "bottom")
+```
+
+---
+
+## Baseline Statin Status
+
+The primary confounder adjustment for this model is baseline statin status — whether the patient was already on a statin at the time of their first LDL-C measurement. This is ascertained by checking whether any statin prescription interval was active at time zero.
+
+Patients already on a statin at baseline will have lower measured LDL-C that reflects treatment response rather than underlying atherogenic burden. Stratifying on this variable allows the model to estimate the LDL-C/MACE association separately within statin-naive and statin-treated patients, avoiding the assumption that the relationship is the same in both groups.
+
+```{r baseline-statin-status}
+#| message: false
+
+statin_intervals <- read_csv(
+  "combined_data/MedicationOrdersCleanedStatins.csv",
+  show_col_types = FALSE
+) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    period_start   = as_date(period_start),
+    period_end     = as_date(period_end),
+    intensity      = factor(intensity, levels = c("low", "moderate", "high"))
+  )
+
+# Convert statin intervals to days-since-t0
+statin_tv <- statin_intervals %>%
+  inner_join(first_ldlc %>% select(DeID_PatientID, t0),
+             by = "DeID_PatientID") %>%
+  mutate(
+    tstart_statin = as.numeric(period_start - as_date(t0)),
+    tstop_statin  = as.numeric(period_end   - as_date(t0))
+  ) %>%
+  filter(tstop_statin > 0) %>%
+  mutate(tstart_statin = pmax(tstart_statin, 0)) %>%
+  filter(tstop_statin > tstart_statin) %>%
+  select(DeID_PatientID, tstart_statin, tstop_statin, intensity)
+
+# Baseline statin status: was the patient on a statin at t=0?
+baseline_statin <- statin_intervals %>%
+  inner_join(first_ldlc %>% select(DeID_PatientID, t0),
+             by = "DeID_PatientID") %>%
+  mutate(
+    tstart_statin  = as.numeric(period_start - as_date(t0)),
+    tstop_statin   = as.numeric(period_end   - as_date(t0)),
+    on_at_baseline = tstart_statin <= 0 & tstop_statin > 0
+  ) %>%
+  group_by(DeID_PatientID) %>%
+  summarise(
+    baseline_statin    = as.integer(any(on_at_baseline, na.rm = TRUE)),
+    baseline_intensity = {
+      active <- as.character(intensity[on_at_baseline])
+      active <- active[!is.na(active)]
+      if (length(active) == 0) NA_character_
+      else {
+        lvls  <- c("low", "moderate", "high")
+        ranks <- match(active, lvls)
+        active[which.max(ranks)]
+      }
+    },
+    .groups = "drop"
+  )
+
+# Join baseline statin status onto base_cohort
+base_cohort <- base_cohort %>%
+  left_join(baseline_statin, by = "DeID_PatientID") %>%
+  mutate(
+    baseline_statin    = coalesce(baseline_statin, 0L),
+    baseline_intensity = factor(baseline_intensity,
+                                levels = c("low", "moderate", "high")),
+    baseline_LDL_40    = baseline_LDL / 40
+  )
+
+# Statin status summary
+base_cohort %>%
+  group_by(baseline_statin) %>%
+  summarise(
+    N                      = n(),
+    `Mean LDL-C (mg/dL)`   = round(mean(baseline_LDL, na.rm = TRUE), 1),
+    `Median LDL-C (mg/dL)` = round(median(baseline_LDL, na.rm = TRUE), 1),
+    `MACE events`          = sum(MACE_flag),
+    `MACE rate (%)`        = round(100 * mean(MACE_flag), 1),
+    .groups = "drop"
+  ) %>%
+  mutate(baseline_statin = if_else(baseline_statin == 1,
+                                   "On statin at baseline",
+                                   "Statin-naive at baseline")) %>%
+  rename(`Statin status` = baseline_statin) %>%
+  kable(caption = "Baseline LDL-C and MACE rates by baseline statin status")
+
+# Intensity distribution among baseline statin users
+base_cohort %>%
+  filter(baseline_statin == 1) %>%
+  count(baseline_intensity) %>%
+  kable(caption = "Statin intensity distribution among baseline statin users")
+```
+
+The difference in mean LDL-C between statin-naive and statin-treated patients at baseline quantifies the treatment dilution effect — the degree to which statin use at baseline depresses the measured LDL-C relative to underlying atherogenic burden.
+
+---
+
+## Comorbidity Data
+
+Comorbidity onset dates are loaded from the pre-processed file and converted to a baseline flag — whether each condition had been diagnosed *before or at time zero*. This is appropriate for the baseline model since we want to characterise the patient's comorbidity burden at the time of the first LDL-C measurement, not over follow-up.
+
+For consistency with the primary model, diabetes and hypertension are also modelled as time-varying covariates (turning on at first diagnosis date, whether before or after time zero). This avoids discarding post-baseline incident diagnoses.
+
+```{r load-comorbidities}
+#| message: false
+
+comorbidity_onset <- read_csv(
+  "combined_data/ComorbiditiesOnset.csv",
+  show_col_types = FALSE
+) %>%
+  mutate(
+    DeID_PatientID      = as.character(DeID_PatientID),
+    diabetes_onset      = as_datetime(diabetes_onset),
+    hypertension_onset  = as_datetime(hypertension_onset),
+    obesity_onset       = as_datetime(obesity_onset),
+    renal_failure_onset = as_datetime(renal_failure_onset)
+  )
+
+# Time-varying comorbidity covariates (days since t0, same as primary model)
+comorbidity_tv <- comorbidity_onset %>%
+  inner_join(first_ldlc %>% select(DeID_PatientID, t0),
+             by = "DeID_PatientID") %>%
+  mutate(
+    t_diabetes     = as.numeric(difftime(diabetes_onset,
+                                          t0, units = "days")),
+    t_hypertension = as.numeric(difftime(hypertension_onset,
+                                          t0, units = "days")),
+    t_renal        = as.numeric(difftime(renal_failure_onset,
+                                          t0, units = "days")),
+    t_obesity      = as.numeric(difftime(obesity_onset,
+                                          t0, units = "days"))
+  ) %>%
+  select(DeID_PatientID, t_diabetes, t_hypertension, t_renal, t_obesity)
+
+# Baseline comorbidity flags (diagnosed at or before t0)
+baseline_comorbidities <- comorbidity_onset %>%
+  inner_join(first_ldlc %>% select(DeID_PatientID, t0),
+             by = "DeID_PatientID") %>%
+  mutate(
+    baseline_diabetes     = as.integer(!is.na(diabetes_onset) &
+                                         diabetes_onset <= t0),
+    baseline_hypertension = as.integer(!is.na(hypertension_onset) &
+                                         hypertension_onset <= t0),
+    baseline_obesity      = as.integer(!is.na(obesity_onset) &
+                                         obesity_onset <= t0),
+    baseline_renal        = as.integer(!is.na(renal_failure_onset) &
+                                         renal_failure_onset <= t0)
+  ) %>%
+  select(DeID_PatientID, baseline_diabetes, baseline_hypertension,
+         baseline_obesity, baseline_renal)
+
+base_cohort <- base_cohort %>%
+  left_join(baseline_comorbidities, by = "DeID_PatientID") %>%
+  mutate(across(starts_with("baseline_d") | starts_with("baseline_h") |
+                  starts_with("baseline_o") | starts_with("baseline_r"),
+                ~ replace_na(.x, 0L)))
+
+# Baseline comorbidity prevalence
+tibble(
+  Condition = c("Diabetes", "Hypertension", "Obesity", "Renal failure"),
+  `N at baseline` = c(
+    sum(base_cohort$baseline_diabetes),
+    sum(base_cohort$baseline_hypertension),
+    sum(base_cohort$baseline_obesity),
+    sum(base_cohort$baseline_renal)
+  ),
+  `% of cohort` = round(100 * c(
+    mean(base_cohort$baseline_diabetes),
+    mean(base_cohort$baseline_hypertension),
+    mean(base_cohort$baseline_obesity),
+    mean(base_cohort$baseline_renal)
+  ), 1)
+) %>% kable(caption = "Comorbidity prevalence at baseline (time zero)")
+```
+
+---
+
+## Building the Cox Model Dataset
+
+The counting process structure is retained for consistency with the primary model and to allow time-varying comorbidity covariates to be included. The key difference is that `baseline_LDL` is joined as a fixed covariate — it does not change across intervals for a given patient.
+
+```{r tmerge-construction}
+surv_base <- base_cohort %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    tstart_days    = 0,
+    tstop_days     = as.numeric(follow_up_days)
+  )
+
+# Build tmerge structure — baseline LDL is fixed, no LOCF needed
+surv.data <- tmerge(
+  data1 = surv_base, data2 = surv_base,
+  id    = DeID_PatientID,
+  MACE  = event(tstop_days, MACE_flag)
+) %>%
+  filter(tstop - tstart >= 0.5)
+
+# Verify
+tibble(
+  Metric = c("Rows", "Patients", "MACE events",
+             "Patients with >1 event (must be 0)"),
+  Value  = c(
+    nrow(surv.data),
+    n_distinct(surv.data$DeID_PatientID),
+    sum(surv.data$MACE),
+    surv.data %>% group_by(DeID_PatientID) %>%
+      summarise(e = sum(MACE)) %>% filter(e > 1) %>% nrow()
+  )
+) %>% kable(caption = "tmerge dataset structure")
+```
+
+### Adding Time-Varying Comorbidity Covariates
+
+Diabetes and hypertension are added as time-varying covariates (turning on permanently at first diagnosis, whether that occurred before or after time zero) to match the primary model's covariate structure. This ensures the LDL-C HR is estimated under the same covariate conditions in both models.
+
+```{r add-tvc}
+comorbidity_tv_cohort <- comorbidity_tv %>%
+  filter(DeID_PatientID %in% base_cohort$DeID_PatientID)
+
+surv.data <- surv.data %>%
+  # Time-varying comorbidity onset dates only — baseline_LDL, baseline_statin
+  # etc. are already in surv.data carried through from surv_base via tmerge
+  left_join(comorbidity_tv_cohort, by = "DeID_PatientID") %>%
+  mutate(
+    on_diabetes     = as.integer(!is.na(t_diabetes)     & tstart >= t_diabetes),
+    on_hypertension = as.integer(!is.na(t_hypertension) & tstart >= t_hypertension),
+    on_renal        = as.integer(!is.na(t_renal)        & tstart >= t_renal),
+    on_obesity      = as.integer(!is.na(t_obesity)      & tstart >= t_obesity),
+    period = factor(
+      case_when(
+        tstart < 1825 ~ "0-5yr",
+        tstart < 3650 ~ "5-10yr",
+        TRUE          ~ "10yr+"
+      ),
+      levels = c("0-5yr", "5-10yr", "10yr+")
+    ),
+    age_cat = cut(baseline_age,
+                  breaks = c(18, 45, 55, 65, 75, Inf),
+                  labels = c("<45", "45-54", "55-64", "65-74", "75+"),
+                  right  = FALSE),
+    cardiomet = factor(
+      case_when(
+        on_diabetes == 1 & on_hypertension == 1 ~ "DM+HTN",
+        on_diabetes == 1 & on_hypertension == 0 ~ "DM only",
+        on_diabetes == 0 & on_hypertension == 1 ~ "HTN only",
+        TRUE                                     ~ "Neither"
+      ),
+      levels = c("Neither", "HTN only", "DM only", "DM+HTN")
+    )
+  ) %>%
+  select(-t_diabetes, -t_hypertension, -t_renal, -t_obesity)
+
+# Verify key columns present
+cat("Key columns present:\n")
+print(c("baseline_LDL", "baseline_LDL_40", "baseline_statin",
+        "cardiomet", "period", "age_cat") %in% names(surv.data))
+
+surv.data %>%
+  summarise(
+    `% intervals with diabetes Dx`  = round(100 * mean(on_diabetes == 1), 1),
+    `% intervals with HTN Dx`       = round(100 * mean(on_hypertension == 1), 1),
+    `% intervals statin at baseline` = round(100 * mean(baseline_statin == 1), 1)
+  ) %>%
+  pivot_longer(everything(),
+               names_to = "Covariate", values_to = "% of intervals") %>%
+  kable(caption = "Covariate coverage across intervals")
+
+surv.data %>%
+  filter(MACE == 1) %>%
+  count(period, baseline_statin, age_cat, cardiomet) %>%
+  arrange(n) %>%
+  head(20) %>%
+  kable(caption = "MACE events per stratum")
+```
+
+## Cox Proportional Hazards Models
+
+### Unadjusted Baseline LDL-C Model
+
+The unadjusted model estimates the crude association between baseline LDL-C and MACE risk with no covariate adjustment. As in the primary script, this is expected to show a paradoxical inverse association driven by confounding by indication — statin users have lower LDL-C and higher underlying MACE risk.
+
+```{r unadjusted-model}
+fit_unadj <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL,
+  data = surv.data, ties = "efron", id = DeID_PatientID
+)
+
+broom::tidy(fit_unadj, exponentiate = TRUE, conf.int = TRUE) %>%
+  select(Term = term, HR = estimate,
+         `95% CI low` = conf.low, `95% CI high` = conf.high,
+         `p-value` = p.value) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  kable(caption = "Unadjusted model — baseline LDL-C effect on MACE (per 1 mg/dL)")
+```
+
+### Proportional Hazards — Unadjusted
+
+```{r ph-unadjusted}
+ph_unadj <- cox.zph(fit_unadj)
+
+tibble(
+  Term      = rownames(ph_unadj$table),
+  `Chi-sq`  = round(ph_unadj$table[, "chisq"], 3),
+  df        = ph_unadj$table[, "df"],
+  `p-value` = round(ph_unadj$table[, "p"], 4)
+) %>% kable(caption = "Schoenfeld residuals — unadjusted model")
+
+ggcoxzph(ph_unadj, font.main = 12, ggtheme = theme_minimal())
+```
+
+### Primary Baseline Model — Stratified Cox
+
+The primary model stratifies on baseline statin status, age category, and follow-up period, and adjusts for diabetes and hypertension as time-varying regression terms. This is directly comparable to the primary time-varying LDL-C model in `ldlc_mace_analysis.qmd`.
+
+**Caveat on baseline statin stratification**: This approach estimates the LDL-C effect *within* statin-naive and statin-treated subgroups, which is appropriate for the baseline framing. It does not account for statin initiation during follow-up. Patients who were statin-naive at baseline and later initiated statins contribute person-time to the statin-naive stratum throughout their follow-up, which may attenuate the LDL-C association in that stratum if late statin initiation is common. This is an inherent limitation of the fixed-exposure design and is discussed in the comparison with the time-varying model.
+```{r primary-model}
+# Diabetes and hypertension combined into composite cardiomet stratum
+# to avoid sparse cells. Stratifying separately gives 120 strata
+# with multiple cells having <5 events; composite gives 60 strata.
+
+fit_primary <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL +
+    strata(period) + strata(baseline_statin) +
+    strata(age_cat) + strata(cardiomet),
+  data = surv.data, ties = "efron", id = DeID_PatientID
+)
+
+fit_primary_40 <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL_40 +
+    strata(period) + strata(baseline_statin) +
+    strata(age_cat) + strata(cardiomet),
+  data = surv.data, ties = "efron", id = DeID_PatientID
+)
+
+# All terms (per 1 mg/dL)
+broom::tidy(fit_primary, exponentiate = TRUE, conf.int = TRUE) %>%
+  select(Term = term, HR = estimate,
+         `95% CI low` = conf.low, `95% CI high` = conf.high,
+         `p-value` = p.value) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  kable(caption = "Primary baseline model — LDL-C HR per 1 mg/dL")
+
+# Per 40 mg/dL
+broom::tidy(fit_primary_40, exponentiate = TRUE, conf.int = TRUE) %>%
+  filter(term == "baseline_LDL_40") %>%
+  select(Term = term, HR = estimate,
+         `95% CI low` = conf.low, `95% CI high` = conf.high,
+         `p-value` = p.value) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  kable(caption = "Primary baseline model — LDL-C HR per 40 mg/dL")
+```
+
+### Proportional Hazards — Primary Baseline Model
+
+```{r ph-primary}
+ph_primary <- cox.zph(fit_primary)
+
+tibble(
+  Term      = rownames(ph_primary$table),
+  `Chi-sq`  = round(ph_primary$table[, "chisq"], 3),
+  df        = ph_primary$table[, "df"],
+  `p-value` = round(ph_primary$table[, "p"], 4)
+) %>% kable(caption = "Schoenfeld residuals — primary baseline model")
+
+ggcoxzph(ph_primary, font.main = 12, ggtheme = theme_minimal())
+```
+
+`r if(ph_primary$table["GLOBAL", "p"] > 0.05) "The proportional hazards assumption holds in the primary baseline model (global p > 0.05)." else paste0("**Warning:** PH assumption violated: global p = ", round(ph_primary$table['GLOBAL','p'], 4), ". Review individual terms.")`
+
+### Sensitivity Analyses
+
+```{r sensitivity-analyses}
+fit_no_comorbid <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL +
+    strata(period) + strata(baseline_statin) + strata(age_cat),
+  data = surv.data, ties = "efron", id = DeID_PatientID
+)
+
+fit_full <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL +
+    on_renal + on_obesity +
+    strata(period) + strata(baseline_statin) +
+    strata(age_cat) + strata(cardiomet),
+  data = surv.data, ties = "efron", id = DeID_PatientID
+)
+
+# Statin-naive: baseline_statin drops from strata (constant = 0)
+fit_statin_naive <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL +
+    strata(period) + strata(age_cat) + strata(cardiomet),
+  data = surv.data %>% filter(baseline_statin == 0),
+  ties = "efron", id = DeID_PatientID
+)
+
+fit_statin_naive_40 <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL_40 +
+    strata(period) + strata(age_cat) + strata(cardiomet),
+  data = surv.data %>% filter(baseline_statin == 0),
+  ties = "efron", id = DeID_PatientID
+)
+
+# Statin-treated: baseline_statin drops from strata (constant = 1)
+fit_statin_treated <- coxph(
+  Surv(tstart, tstop, MACE) ~ baseline_LDL +
+    strata(period) + strata(age_cat) + strata(cardiomet),
+  data = surv.data %>% filter(baseline_statin == 1),
+  ties = "efron", id = DeID_PatientID
+)
+
+extract_hr <- function(fit, label, term = "baseline_LDL") {
+  broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) %>%
+    filter(.data$term == .env$term) %>%
+    mutate(
+      Model      = label,
+      HR         = round(estimate, 4),
+      `95% CI`   = paste0("(", round(conf.low, 4),
+                          "–", round(conf.high, 4), ")"),
+      `p-value`  = round(p.value, 4),
+      `N obs`    = fit$n,
+      `N events` = fit$nevent
+    ) %>%
+    select(Model, HR, `95% CI`, `p-value`, `N obs`, `N events`)
+}
+
+bind_rows(
+  extract_hr(fit_unadj,          "Unadjusted"),
+  extract_hr(fit_no_comorbid,    "Stratified, no comorbidity"),
+  extract_hr(fit_primary,        "Stratified + cardiomet — PRIMARY"),
+  extract_hr(fit_full,           "Stratified + cardiomet + renal + obesity"),
+  extract_hr(fit_statin_naive,   "Statin-naive at baseline only"),
+  extract_hr(fit_statin_treated, "Statin-treated at baseline only")
+) %>%
+  kable(caption = "Baseline LDL-C HR per 1 mg/dL across model specifications")
+
+broom::tidy(fit_primary_40, exponentiate = TRUE, conf.int = TRUE) %>%
+  filter(term == "baseline_LDL_40") %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  select(HR = estimate, `95% CI low` = conf.low,
+         `95% CI high` = conf.high, `p-value` = p.value) %>%
+  kable(caption = "Primary baseline model — LDL-C HR per 40 mg/dL")
+```
+
+The statin-naive subgroup analysis (Sensitivity 3) is the most methodologically comparable to landmark studies such as Framingham, which enrolled largely untreated populations. If the LDL-C effect is strongest in this subgroup, it supports the interpretation that treatment dilution explains the null result in the full cohort.
+
+---
+
+## Comparison with Primary Time-Varying Model
+
+This section compiles the key results from both analytical approaches side by side. Differences in the LDL-C HR between the two models reflect the methodological distinction: baseline LDL-C captures pre-treatment lipid biology at a single point, while time-varying LDL-C reflects the current treated level throughout follow-up.
+
+```{r model-comparison}
+# Load primary model results for comparison
+# These values are taken from ldlc_mace_analysis.qmd output
+# Update these manually if the primary script is re-run
+
+primary_tvc_results <- tibble(
+  Model     = c("Time-varying LDL-C — primary (730d)",
+                "Time-varying LDL-C — sensitivity (1825d)"),
+  Approach  = "Time-varying (LOCF)",
+  HR        = c(0.9816, 0.9776),
+  CI_low    = c(0.9454, 0.9415),
+  CI_high   = c(1.0191, 1.0150),
+  `p-value` = c(0.3316, 0.2367)
+)
+
+# Extract baseline model results (per 40 mg/dL)
+baseline_results <- broom::tidy(fit_primary_40,
+                                 exponentiate = TRUE,
+                                 conf.int     = TRUE) %>%
+  filter(term == "baseline_LDL_40") %>%
+  transmute(
+    Model     = "Baseline LDL-C — primary",
+    Approach  = "Fixed baseline",
+    HR        = round(estimate, 4),
+    CI_low    = round(conf.low, 4),
+    CI_high   = round(conf.high, 4),
+    `p-value` = round(p.value, 4)
+  )
+
+# Statin-naive subgroup (per 40 mg/dL)
+fit_statin_naive_40 <- coxph(
+  Surv(tstart, tstop, MACE) ~ I(baseline_LDL / 40) +
+    on_diabetes + on_hypertension +
+    strata(period) + strata(age_cat),
+  data = surv.data %>% filter(baseline_statin == 0),
+  ties = "efron", id = DeID_PatientID
+)
+
+naive_results <- broom::tidy(fit_statin_naive_40,
+                              exponentiate = TRUE,
+                              conf.int     = TRUE) %>%
+  filter(str_detect(term, "baseline_LDL")) %>%
+  transmute(
+    Model     = "Baseline LDL-C — statin-naive subgroup",
+    Approach  = "Fixed baseline",
+    HR        = round(estimate, 4),
+    CI_low    = round(conf.low, 4),
+    CI_high   = round(conf.high, 4),
+    `p-value` = round(p.value, 4)
+  )
+
+bind_rows(primary_tvc_results, baseline_results, naive_results) %>%
+  mutate(`95% CI` = paste0("(", CI_low, "–", CI_high, ")")) %>%
+  select(Model, Approach, HR, `95% CI`, `p-value`) %>%
+  kable(caption = "LDL-C effect on MACE — per 40 mg/dL across analytical approaches")
+```
+
+---
+
+## Forest Plot
+
+```{r forest-plot}
+#| fig-width: 10
+#| fig-height: 6
+
+all_results <- bind_rows(
+  tibble(
+    Model    = c("Time-varying: full cohort (730d)",
+                 "Time-varying: full cohort (1825d)"),
+    Approach = "Time-varying LDL-C",
+    HR       = c(0.9816, 0.9776),
+    CI_low   = c(0.9454, 0.9415),
+    CI_high  = c(1.0191, 1.0150)
+  ),
+  broom::tidy(fit_primary_40, exponentiate = TRUE, conf.int = TRUE) %>%
+    filter(term == "baseline_LDL_40") %>%
+    transmute(
+      Model    = "Baseline: full cohort (primary)",
+      Approach = "Fixed baseline LDL-C",
+      HR       = round(estimate, 4),
+      CI_low   = round(conf.low, 4),
+      CI_high  = round(conf.high, 4)
+    ),
+  broom::tidy(fit_statin_naive_40, exponentiate = TRUE, conf.int = TRUE) %>%
+    filter(str_detect(term, "baseline_LDL")) %>%
+    transmute(
+      Model    = "Baseline: statin-naive subgroup",
+      Approach = "Fixed baseline LDL-C",
+      HR       = round(estimate, 4),
+      CI_low   = round(conf.low, 4),
+      CI_high  = round(conf.high, 4)
+    )
+) %>%
+  # Factor with levels in display order (bottom to top on y axis)
+  mutate(Model = factor(Model, levels = c(
+    "Time-varying: full cohort (1825d)",
+    "Time-varying: full cohort (730d)",
+    "Baseline: full cohort (primary)",
+    "Baseline: statin-naive subgroup"
+  )))
+
+ggplot(all_results,
+       aes(x = HR, xmin = CI_low, xmax = CI_high, y = Model,
+           colour = Approach, shape = Approach)) +
+  geom_vline(xintercept = 1,    linetype = "dashed", colour = "grey50") +
+  geom_vline(xintercept = 1.20, linetype = "dotted", colour = "red",
+             alpha = 0.6) +
+  annotate("text", x = 1.21, y = 4.3,
+           label = "RCT expected\n(~1.20/40mg/dL)",
+           size = 3, colour = "red", hjust = 0) +
+  geom_errorbarh(height = 0.2) +
+  geom_point(size = 3) +
+  scale_colour_manual(values = c("Time-varying LDL-C"   = "#888888",
+                                  "Fixed baseline LDL-C" = "#00274c")) +
+  scale_shape_manual(values  = c("Time-varying LDL-C"   = 16,
+                                  "Fixed baseline LDL-C" = 17)) +
+  scale_y_discrete() +
+  labs(
+    title    = "LDL-C effect on MACE — per 40 mg/dL",
+    subtitle = paste0("Stratified Cox models; red dotted line = ",
+                      "RCT-expected effect (~HR 1.20 per 40 mg/dL)"),
+    x = "Hazard Ratio (95% CI)", y = NULL,
+    colour = "Analytical approach", shape = "Analytical approach"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        legend.position  = "bottom")
+```
+
+The red dotted line at HR = 1.20 marks the effect size expected from RCT evidence (CTT Collaboration meta-analyses). Observational estimates falling substantially below this line suggest treatment dilution or other forms of confounding specific to real-world LDL-C measurement.
+
+---
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

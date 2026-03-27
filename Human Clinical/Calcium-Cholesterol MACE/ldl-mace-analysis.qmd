@@ -898,7 +898,7 @@ fit_no_comorbid_730 <- coxph(
 # Sensitivity 3: Add CHF and renal failure
 fit_full_730 <- coxph(
   Surv(tstart, tstop, MACE) ~ LDL_value +
-    on_diabetes + on_hypertension + on_chf + on_renal +
+    on_diabetes + on_hypertension + on_obesity + on_renal +
     strata(period) + strata(on_statin) + strata(age_cat),
   data = surv.data.730, ties = "efron", id = DeID_PatientID
 )

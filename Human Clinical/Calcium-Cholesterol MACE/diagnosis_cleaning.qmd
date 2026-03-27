@@ -142,7 +142,6 @@ After cleaning are `r distinct(diagnosis.data.osteoporosis, DeID_PatientID) |> n
 ### Comorbidity Data
 
 ```{r comorbidity-data-cleaning-loading-files}
-```{r load-data}
 library(tidyverse)
 library(lubridate)
 
@@ -362,7 +361,7 @@ combined.diagnoses <-
 cleaned.diagnoses.file <- 'combined_data/DiagnosesCleaned.csv'
 write_csv(combined.diagnoses, file=cleaned.diagnoses.file)
 
-comorbidity.outfile <- "combined_data/ComorbiditiesOnset.csv")
+comorbidity.outfile <- "combined_data/ComorbiditiesOnset.csv"
 write_csv(comorbidity_onset, comorbidity.outfile)
 ```
 

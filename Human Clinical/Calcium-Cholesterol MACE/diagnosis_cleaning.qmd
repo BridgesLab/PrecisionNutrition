@@ -1,0 +1,165 @@
+---
+title: "Cleaning of Diagnoses Data"
+author: "Dave Bridges"
+date: "2026-03-09"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+
+theme: journal
+
+execute:
+  echo: true
+  warning: false
+
+knitr:
+  opts_chunk:
+    fig-path: "figures/"          # folder for all figure files
+    dev: ["png", "pdf"]           # both formats for every plot
+    dpi: 300                      # ← this is the correct place for resolution
+    dev.args:
+      png:
+        type: "cairo-png"         # better anti-aliasing / font rendering (optional but recommended)
+      pdf:
+        family: "sans"            # font family (optional)
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+library(broom)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+Clean the data for various diagnoses, for use in other scripts
+
+## Raw Data
+
+```{r data-input}
+library(readr) #loads the readr package
+diagnosis.filename <- "combined_data/DiagnosesComprehensiveAll.csv" #input file(s)
+diagnosis.data <- read_csv(diagnosis.filename) |>
+  mutate(DeID_ProblemObservationDate = mdy_hm(DeID_ProblemObservationDate))
+
+#encounter.datafile <- 'combined_data/EncounterAll.csv'
+#encounter.anthro.datafile <- 'combined_data/EncounterAnthropometricsBMI.csv'
+
+#load in encounter metadata
+#encounter.data <- read_csv(encounter.datafile)
+#encounter.anthro.data <- read_csv(encounter.anthro.datafile)
+```
+
+These data can be found in `r getwd()` in a file named `r ifelse(diagnosis.filename %in% dir(), diagnosis.filename, "no file found")`.  This input file was most recently updated on `r ifelse(diagnosis.filename %in% dir(), format(file.info(diagnosis.filename)$mtime, "%Y-%m-%d"), "unknown")`.  This script was most recently updated on `r date()`.
+
+There are `r distinct(diagnosis.data, DeID_PatientID) |> nrow()` participants in this dataset with any diagnoses values.
+
+## Data Cleaning
+
+Will first clean the crude diagnosis data and then add in the elixhauser and charson data.
+
+### MACE Data
+
+```{r mace-data-cleaning}
+icd_pattern_mace <- paste0(
+  "^410",          # ICD-9 MI
+  "|^433\\.[0-9]1",# ICD-9 Occlusion of precerebral arteries (5th digit = 1)
+  "|^434",         # ICD-9 Occlusion of cerebral arteries
+  "|^436",         # ICD-9 Acute but ill-defined CVA
+  "|^430",         # ICD-9 Subarachnoid haemorrhage
+  "|^431",         # ICD-9 Intracerebral haemorrhage
+  "|^I21",         # ICD-10 Acute MI
+  "|^I22",         # ICD-10 Subsequent MI
+  "|^I63",         # ICD-10 Cerebral infarction
+  "|^I60",         # ICD-10 Subarachnoid haemorrhage
+  "|^I61",         # ICD-10 Intracerebral haemorrhage
+  "|^I46"          # ICD-10 Cardiac arrest
+)
+
+diagnosis.data.mace <- diagnosis.data %>%
+  filter(grepl(icd_pattern_mace, TermCodeMapped, ignore.case = FALSE)) 
+
+mace.diagnoses <-
+  diagnosis.data.mace |>
+  group_by(DeID_PatientID) |>
+  arrange(DeID_ProblemObservationDate) |>
+  summarize(MACE.onset = first(DeID_ProblemObservationDate)) |>
+  mutate(MACE = TRUE)
+
+library(ggplot2)
+ggplot(mace.diagnoses,
+       aes(x=MACE.onset)) +
+  geom_histogram() +
+  theme_classic(base_size=16) +
+  labs(x="Year of Incident MACE")
+```
+
+
+After cleaning are `r distinct(diagnosis.data.mace, DeID_PatientID) |> nrow()` participants in this dataset with MACE.
+
+
+### Osteoporosis Data
+
+```{r osteoporosis-data-cleaning}
+icd_pattern_osteoporosis <- paste0(
+  "^M80",       # ICD-10 Osteoporosis with pathological fracture
+  "|^M81",      # ICD-10 Osteoporosis without pathological fracture
+  "|^733\\.0"   # ICD-9 733.0x (covers 733.00–733.09)
+)
+
+diagnosis.data.osteoporosis <- diagnosis.data %>%
+  filter(grepl(icd_pattern_osteoporosis, TermCodeMapped, ignore.case = FALSE)) 
+
+osteoporosis.diagnoses <-
+  diagnosis.data.osteoporosis|>
+  group_by(DeID_PatientID) |>
+  arrange(DeID_ProblemObservationDate) |>
+  summarize(Osteoporosis.onset = first(DeID_ProblemObservationDate)) |>
+  mutate(Osteoporosis = TRUE)
+
+library(ggplot2)
+ggplot(osteoporosis.diagnoses,
+       aes(x=Osteoporosis.onset)) +
+  geom_histogram() +
+  theme_classic(base_size=16) +
+  labs(x="Year of Incident Osteoporosis")
+```
+
+After cleaning are `r distinct(diagnosis.data.osteoporosis, DeID_PatientID) |> nrow()` participants in this dataset with Osteoporosis
+
+## Writing Out Cleaned Files
+
+```{r writing-cleaned}
+combined.diagnoses <-
+  full_join(osteoporosis.diagnoses,mace.diagnoses, by='DeID_PatientID')
+
+cleaned.diagnoses.file <- 'combined_data/DiagnosesCleaned.csv'
+write_csv(combined.diagnoses, file=cleaned.diagnoses.file)
+```
+
+Wrote this out to `r cleaned.diagnoses.file`
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

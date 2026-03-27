@@ -1,0 +1,171 @@
+---
+title: "Combining of Raw Data Files"
+author: "Dave Bridges"
+date: "2026-03-24"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+
+theme: journal
+
+execute:
+  echo: true
+  warning: false
+
+knitr:
+  opts_chunk:
+    fig-path: "figures/"          # folder for all figure files
+    dev: ["png", "pdf"]           # both formats for every plot
+    dpi: 300                      # ← this is the correct place for resolution
+    dev.args:
+      png:
+        type: "cairo-png"         # better anti-aliasing / font rendering (optional but recommended)
+      pdf:
+        family: "sans"            # font family (optional)
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+library(broom)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+Combine the raw data files.  These had to be pulled in three separate batches each with t heir own folder `males`, `females_umarried` and `females_married.`  This script will take each csv file in each of those three subfolders, combine them and then write them into the `combined_data` folder.  There should be the same files in each subfolder.
+
+## Combining Data
+
+```{r combining}
+library(tidyverse)
+
+
+base_dir   <- "."    # folder containing males/, females_unmarried/, females_married/
+batch_dirs <- c("males", "females_unmarried", "females_married")
+output_dir <- file.path(base_dir, "combined_data")
+
+dir.create(output_dir, recursive = TRUE, showWarnings = FALSE)
+```
+
+### Identifying Files
+
+```{r identifying-files}
+
+# Use first batch folder as reference for expected filenames
+csv_files <- file.path(base_dir, batch_dirs[1]) %>%
+  list.files(pattern = "\\.csv$", ignore.case = TRUE, full.names = FALSE)
+
+cat("CSV files found:", length(csv_files), "\n")
+walk(csv_files, ~cat(" ", .x, "\n"))
+
+# Check all three folders have the same files
+walk(batch_dirs, function(batch) {
+  files_here <- file.path(base_dir, batch) %>%
+    list.files(pattern = "\\.csv$", ignore.case = TRUE, full.names = FALSE)
+  missing <- setdiff(csv_files, files_here)
+  extra   <- setdiff(files_here, csv_files)
+  cat(
+    batch, "—", length(files_here), "files |",
+    if (length(missing) == 0) "no missing" else paste("MISSING:", str_c(missing, collapse = ", ")), "|",
+    if (length(extra)   == 0) "no extra"   else paste("EXTRA:",   str_c(extra,   collapse = ", ")),
+    "\n"
+  )
+})
+```
+
+### Read Combine and Deduplicate
+
+```{r read-combine-deduplicate}
+audit_log <- map_dfr(csv_files, function(fname) {
+
+  cat("\nProcessing:", fname, "\n")
+
+  # Read all three batches into a named list
+  batch_list <- batch_dirs %>%
+    set_names() %>%
+    map(function(batch) {
+      fpath <- file.path(base_dir, batch, fname)
+      if (file.exists(fpath)) {
+        df <- read_csv(fpath, show_col_types = FALSE,
+                       col_types = cols(.default = col_character()))
+        cat(" ", batch, "—", nrow(df), "rows\n")
+        df
+      } else {
+        cat(" ", batch, "— not found, skipping\n")
+        NULL
+      }
+    }) %>%
+    compact()
+
+  if (length(batch_list) == 0) {
+    cat("  No data found — skipping\n")
+    return(NULL)
+  }
+
+  # Warn if column names differ across batches
+  col_sets <- map(batch_list, names)
+  if (n_distinct(map(col_sets, sort)) > 1) {
+    cat("  *** WARNING: column names differ across batches — check output\n")
+  }
+
+  # Bind all batches
+  combined <- bind_rows(batch_list)
+  cat("  Combined rows:", nrow(combined), "\n")
+
+  # Detect PatientID column
+  id_col <- names(combined) %>%
+    str_subset(regex("patientid|patient_id", ignore_case = TRUE)) %>%
+    first()
+
+  # Deduplicate if patient-level file (rows ≈ n_patients)
+  n_dups <- 0L
+  if (!is.na(id_col)) {
+    n_unique <- n_distinct(combined[[id_col]])
+    cat("  Unique patients:", n_unique, "\n")
+
+    # If total rows ≈ unique patients × n_batches, it's a patient-level file
+    if (nrow(combined) <= n_unique * length(batch_list)) {
+      combined <- combined %>%
+        distinct(across(all_of(id_col)), .keep_all = TRUE)
+      n_dups <- nrow(combined) - n_unique
+      if (n_dups > 0)
+        cat("  Deduplicated — rows after:", nrow(combined), "\n")
+    }
+  }
+
+  # Write combined file
+  out_path <- file.path(output_dir, fname)
+  write_csv(combined, out_path)
+  cat("  Written to:", out_path, "\n")
+  
+   # Free memory before next file
+  rm(batch_list, combined)
+  gc(verbose = FALSE)
+})
+```
+
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

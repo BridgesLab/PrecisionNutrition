@@ -1,0 +1,160 @@
+---
+title: "Cleaning of Lab Result Data"
+author: "Dave Bridges"
+date: "2026-03-03"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+
+theme: journal
+
+execute:
+  echo: true
+  warning: false
+
+knitr:
+  opts_chunk:
+    fig-path: "figures/"          # folder for all figure files
+    dev: ["png", "pdf"]           # both formats for every plot
+    dpi: 300                      # ← this is the correct place for resolution
+    dev.args:
+      png:
+        type: "cairo-png"         # better anti-aliasing / font rendering (optional but recommended)
+      pdf:
+        family: "sans"            # font family (optional)
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+library(broom)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+Clean the data for various lab results, for use in other scrupts
+
+## Raw Data
+
+```{r data-input}
+library(readr) #loads the readr package
+labs.filename <- "combined_data/LabResults.csv" #input file(s)
+
+lab.data <- read_csv(labs.filename)
+```
+
+These data can be found in `r getwd()` in a file named `r ifelse(labs.filename %in% dir(), labs.filename, "no file found")`.  This input file was most recently updated on `r ifelse(labs.filename %in% dir(), format(file.info(labs.filename)$mtime, "%Y-%m-%d"), "unknown")`.  This script was most recently updated on `r date()`.
+
+There are `r distinct(lab.data, DeID_PatientID) |> nrow()` participants in this dataset with lab values.
+
+## Data Cleaning
+
+```{r data-cleaning}
+#uncomment to see list of all labs
+lab.data |>
+  group_by(ORDER_NAME) |>
+  count() |>
+  arrange(-n) -> lab.summary.table
+
+lab.summary.table |>
+  kable(caption="All labs by test name")
+
+#lab.summary.table |>
+  #filter(grepl("ca", ORDER_NAME, ignore.case = TRUE)) #case insensitive has a ca in it
+  #filter(grepl("cho", ORDER_NAME, ignore.case = TRUE)) #case insensitive has a ca in it
+  #filter(grepl("tri", ORDER_NAME, ignore.case = TRUE)) 
+
+ionized.calcium.labs <- c('CALCIUM, IONIZED','Ionized Calcium EX')
+serum.calcium.labs <- c('Calcium EX','CALCIUM LEVEL')
+calcium.labs <- c(serum.calcium.labs,ionized.calcium.labs)
+tg.labs <- c('TRIGLYCERIDES','TRIGLYCERIDES, FLUID','Triglycerides EX')
+ldl.labs <- c('LDL CHOLESTEROL, DIRECT','LOW DENSITY LIPOPROTEIN CHOL')
+hdl.labs <- c('HDL EX','HIGH DENSITY LIPOPROTEIN CHOL')
+cholesterol.labs <- c('CHOLESTEROL','Cholesterol EX','CHOLESTEROL, TOTAL and HDL')#includes both total and HDL, so duplicate measures, total has to be definitively the higher of the two, they have the same DeID_EncounterID.  need to filter the HDLs into a different category
+
+lab.data.cleaned <-
+  lab.data |>
+  mutate(VALUE= as.numeric(VALUE)) |> #first make all the values into 
+  mutate(test_name = case_when(ORDER_NAME %in% ionized.calcium.labs ~ 'Ionized Calcium',
+                               ORDER_NAME %in% serum.calcium.labs ~ 'Serum Calcium',
+                               ORDER_NAME %in% tg.labs ~ 'Triglycerides',
+                               ORDER_NAME %in% hdl.labs ~ 'HDL-C',
+                               ORDER_NAME %in% ldl.labs ~ 'LDL-C',
+                               ORDER_NAME %in% cholesterol.labs ~ 'chol_temp' )) %>% #temporary placeholder for cholesterol
+  group_by(DeID_EncounterID, test_name) |>
+  mutate(test_name = case_when(test_name == 'chol_temp' ~ if_else(VALUE == max(VALUE, na.rm = TRUE),'Total Cholesterol','HDL-C'),
+    TRUE ~ test_name
+  )) |>
+  ungroup() |>
+  mutate(value = case_when(UNIT=="mmol/L"&ORDER_NAME %in% calcium.labs ~ VALUE*4.01,
+                           UNIT=="MMOL/L"&ORDER_NAME %in% calcium.labs ~ VALUE*4.01,
+                          UNIT=="mg/dL"&ORDER_NAME %in% calcium.labs ~ VALUE,
+                          ORDER_NAME %in% c(cholesterol.labs,tg.labs,hdl.labs,ldl.labs) ~ VALUE)) |> #always given in mg/dL for calcium
+  filter(!is.na(value)) |> #removes tests without values
+  filter(!is.na(test_name))  #removes non-cleaned tests
+
+# testing to count how many different units are present now for each test
+#lab.data.cleaned |>
+#  group_by(test_name, unit_upper = toupper(UNIT)) |>
+#  summarise(n = n(), .groups = "drop") |>
+#  arrange(test_name, desc(n)) |>
+#  kable(caption="Count of the units in each data type")
+
+lab.data.cleaned |>
+  group_by(test_name) |>
+  summarize(n = length(!is.na(value)),
+            mean=mean(value,na.rm=T),
+            sd = sd(value,na.rm=T),
+            min = min(value,na.rm=T),
+            max = max(value,na.rm=T)) |>
+  arrange(-n) |>
+  kable(caption="Lab results after cleaning and combining")
+```
+
+```{r merging-with-encounter-data}
+encounter.datafile <- 'combined_data/EncounterAll.csv'
+encounter.anthro.datafile <- 'combined_data/EncounterAnthropometricsBMI.csv'
+
+#load in encounter metadata
+encounter.data <- read_csv(encounter.datafile)
+encounter.anthro.data <- read_csv(encounter.anthro.datafile)
+
+merged.lab.data <-
+  lab.data.cleaned |>
+  left_join(encounter.data, by=c("DeID_PatientID","DeID_EncounterID")) |>
+  left_join(encounter.anthro.data, by=c("DeID_PatientID","DeID_EncounterID"))
+
+output.file <- "combined_data/LabResultsCleaned.csv"
+merged.lab.data |>
+  write_csv(file=output.file)
+```
+
+After cleaning are `r distinct(lab.data.cleaned, DeID_PatientID) |> nrow()` participants in this dataset with lab values.
+
+The cleaned results are output at **`r output.file`**.
+
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

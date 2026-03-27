@@ -1,0 +1,947 @@
+---
+title: "Analysis of MACE outcomes by LDL-C values"
+author: "Dave Bridges"
+date: "2026-03-09"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+
+theme: journal
+
+execute:
+  echo: true
+  warning: false
+
+knitr:
+  opts_chunk:
+    fig-path: "figures/"
+    dev: ["png", "pdf"]
+    dpi: 300
+    dev.args:
+      png:
+        type: "cairo-png"
+      pdf:
+        family: "sans"
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+
+se <- function(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+
+library(tidyverse)
+library(knitr)
+library(broom)
+library(lubridate)
+library(survival)
+library(survminer)
+
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+Analysis of LDL-C effects on major adverse cardiovascular events (MACE) using a time-varying covariate Cox proportional hazards model. The full study population is defined by `DemographicData.csv`; MACE and osteoporosis status are ascertained from `DiagnosesCleaned.csv`, which contains only patients with at least one of these diagnoses. All other patients in the demographic file are treated as controls.
+
+## Raw Data
+
+```{r data-input}
+#| message: false
+
+# --- Full study population ---
+demographic.data <- read_csv("combined_data/DemographicInfo.csv",
+                             show_col_types = FALSE) %>%
+  mutate(DeID_PatientID = as.character(DeID_PatientID))
+
+# --- Diagnoses (MACE and Osteoporosis only) ---
+diagnosis.data <- read_csv("combined_data/DiagnosesCleaned.csv",
+                           show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    MACE.onset     = ymd(MACE.onset)
+  )
+
+# --- Labs ---
+lab.data <- read_csv("combined_data/LabResultsCleaned.csv",
+                     show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    lab_date = coalesce(
+      parse_date_time(DeID_COLLECTION_DATE, orders = c("ymd", "mdy", "ymd HMS", "mdy HM"), quiet = TRUE),
+      parse_date_time(DeID_AdmitDate,       orders = c("ymd", "mdy", "ymd HMS", "mdy HM"), quiet = TRUE)
+    ))
+
+ldlc.data <- lab.data %>% filter(test_name == "LDL-C")
+```
+
+The full demographic file contains `r scales::comma(n_distinct(demographic.data$DeID_PatientID))` unique patients. The diagnosis file contains `r scales::comma(n_distinct(diagnosis.data$DeID_PatientID))` patients with at least one recorded diagnosis (MACE or osteoporosis).
+
+## Data Validation
+
+### Diagnosis Summary
+
+```{r diagnosis-summary}
+full_cohort <- demographic.data %>%
+  left_join(
+    diagnosis.data %>% select(DeID_PatientID, MACE, MACE.onset, Osteoporosis, Osteoporosis.onset),
+    by = "DeID_PatientID"
+  ) %>%
+  mutate(
+    MACE_flag = if_else(MACE == TRUE, 1L, 0L, missing = 0L)
+  )
+
+diag_summary <- full_cohort %>%
+  summarise(
+    `Total patients`                = n_distinct(DeID_PatientID),
+    `MACE cases`                    = sum(MACE_flag == 1),
+    `Controls (no MACE)`            = sum(MACE_flag == 0),
+    `MACE cases missing onset date` = sum(MACE_flag == 1 & is.na(MACE.onset)),
+    `MACE prevalence (%)`           = round(100 * mean(MACE_flag), 1)
+  )
+
+diag_summary %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  kable(caption = "Summary of study population and MACE diagnosis data")
+
+dup_diag <- diagnosis.data %>%
+  count(DeID_PatientID) %>%
+  filter(n > 1)
+```
+
+There are `r nrow(dup_diag)` duplicate PatientIDs in the diagnosis file.`r if(nrow(dup_diag) > 0) " *** WARNING: duplicates found — investigate before proceeding." else ""`
+
+### LDL-C Data Checks
+
+```{r ldlc-datachecks}
+meas_per_pt <- ldlc.data %>%
+  count(DeID_PatientID, name = "n_ldlc")
+
+ldlc_value_summary <- ldlc.data %>%
+  summarise(
+    `Total measurements`                   = n(),
+    `Unique patients`                      = n_distinct(DeID_PatientID),
+    `Patients with 1 measurement only`     = sum(meas_per_pt$n_ldlc == 1),
+    `Min LDL-C (mg/dL)`                   = min(value, na.rm = TRUE),
+    `Median LDL-C (mg/dL)`               = median(value, na.rm = TRUE),
+    `Mean LDL-C (mg/dL)`                 = round(mean(value, na.rm = TRUE), 1),
+    `Max LDL-C (mg/dL)`                   = max(value, na.rm = TRUE),
+    `LDL-C < 10 (implausible)`            = sum(value < 10, na.rm = TRUE),
+    `LDL-C > 400 (implausible)`           = sum(value > 400, na.rm = TRUE),
+    `LDL-C missing (NA)`                  = sum(is.na(value)),
+    `Age < 18`                            = sum(AgeInYears < 18, na.rm = TRUE),
+    `Age > 110`                           = sum(AgeInYears > 110, na.rm = TRUE),
+    `BMI < 10 (implausible)`              = sum(BMI < 10, na.rm = TRUE),
+    `BMI > 80 (implausible)`              = sum(BMI > 80, na.rm = TRUE),
+    `BMI missing (NA)`                    = sum(is.na(BMI))
+  )
+
+ldlc_value_summary %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  kable(caption = "LDL-C data quality summary")
+
+meas_per_pt %>%
+  summarise(
+    Min    = min(n_ldlc),
+    `10th` = quantile(n_ldlc, 0.10),
+    `25th` = quantile(n_ldlc, 0.25),
+    Median = median(n_ldlc),
+    `75th` = quantile(n_ldlc, 0.75),
+    `90th` = quantile(n_ldlc, 0.90),
+    `99th` = quantile(n_ldlc, 0.99),
+    Max    = max(n_ldlc)
+  ) %>%
+  kable(caption = "Distribution of LDL-C measurements per patient")
+
+ggplot(ldlc.data, aes(x = value)) +
+  geom_histogram(binwidth = 10, fill = "#00274c", colour = "white") +
+  geom_vline(xintercept = c(10, 400), colour = "red", linetype = "dashed") +
+  labs(
+    title    = "Distribution of LDL-C values",
+    subtitle = "Red dashed lines = implausibility thresholds (10, 400 mg/dL)",
+    x        = "LDL-C (mg/dL)", y = "Count"
+  ) +
+  theme_classic()
+```
+
+### Linkage Check
+
+```{r ldlc-mace-linkage}
+ids_demo <- unique(full_cohort$DeID_PatientID)
+ids_ldlc <- unique(ldlc.data$DeID_PatientID)
+
+linkage_summary <- tibble(
+  Metric = c(
+    "Patients in demographic file",
+    "Patients with LDL-C data",
+    "Patients in both (analysis-eligible)",
+    "Patients in demographic only (no LDL-C) — excluded",
+    "Patients with LDL-C only (not in demographic file) — investigate"
+  ),
+  N = c(
+    length(ids_demo),
+    length(ids_ldlc),
+    length(intersect(ids_demo, ids_ldlc)),
+    length(setdiff(ids_demo, ids_ldlc)),
+    length(setdiff(ids_ldlc, ids_demo))
+  )
+)
+
+linkage_summary %>% kable(caption = "Patient linkage across data files")
+```
+
+`r if(length(setdiff(ids_ldlc, ids_demo)) > 0) paste0("**Warning:** ", length(setdiff(ids_ldlc, ids_demo)), " patients have LDL-C data but are absent from the demographic file — investigate before proceeding.")`
+
+### Timing: LDL-C vs MACE Onset
+
+```{r ldlc-mace-timing}
+ldlc_with_mace <- ldlc.data %>%
+  left_join(full_cohort %>% select(DeID_PatientID, MACE, MACE.onset),
+            by = "DeID_PatientID")
+
+post_event <- ldlc_with_mace %>%
+  filter(MACE == TRUE, !is.na(MACE.onset)) %>%
+  mutate(is_post_event = lab_date > MACE.onset) %>%
+  summarise(
+    `MACE patients with LDL-C data` = n_distinct(DeID_PatientID),
+    `Post-event measurements`       = sum(is_post_event, na.rm = TRUE),
+    `% post-event`                  = round(100 * mean(is_post_event, na.rm = TRUE), 1)
+  )
+
+post_event %>% kable(caption = "LDL-C measurements after MACE onset (to be excluded)")
+
+last_pre_ldlc <- ldlc_with_mace %>%
+  filter(MACE == TRUE, !is.na(MACE.onset), lab_date <= MACE.onset) %>%
+  group_by(DeID_PatientID) %>%
+  slice_max(lab_date, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  mutate(days_to_mace = as.numeric(difftime(MACE.onset, lab_date, units = "days")))
+
+as.data.frame(t(round(quantile(last_pre_ldlc$days_to_mace,
+                               probs = c(0, 0.25, 0.5, 0.75, 1)), 1))) %>%
+  rename(Min = `0%`, Q1 = `25%`, Median = `50%`, Q3 = `75%`, Max = `100%`) %>%
+  kable(caption = "Days from last pre-MACE LDL-C to MACE onset (LOCF staleness)")
+```
+
+### Inter-Measurement Intervals
+
+```{r inter-measurement-intervals}
+ldlc_gaps <- ldlc.data %>%
+  arrange(DeID_PatientID, lab_date) %>%
+  group_by(DeID_PatientID) %>%
+  mutate(days_since_last = as.numeric(difftime(lab_date,
+                                               lag(lab_date),
+                                               units = "days"))) %>%
+  ungroup() %>%
+  filter(!is.na(days_since_last))
+
+ldlc_gaps %>%
+  summarise(
+    Min                                    = round(min(days_since_last), 1),
+    `25th percentile`                      = round(quantile(days_since_last, 0.25), 1),
+    Median                                 = round(median(days_since_last), 1),
+    Mean                                   = round(mean(days_since_last), 1),
+    `75th percentile`                      = round(quantile(days_since_last, 0.75), 1),
+    Max                                    = round(max(days_since_last), 1),
+    `Intervals > 730d (stale LOCF)`        = sum(days_since_last > 730),
+    `Intervals < 1d (possible duplicates)` = sum(days_since_last < 1)
+  ) %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  kable(caption = "Inter-measurement interval distribution (days)")
+```
+
+### QC Summary
+
+```{r qc-summary-flags}
+qc_flags <- tibble(
+  Check = c(
+    "Duplicate PatientIDs in diagnosis data",
+    "MACE=TRUE patients with missing onset date",
+    "LDL-C values < 10 or > 400 mg/dL",
+    "LDL-C missing values",
+    "Ages < 18 or > 110",
+    "Patients with LDL-C but not in demographic file",
+    "Post-event LDL-C measurements to drop"
+  ),
+  N = c(
+    nrow(dup_diag),
+    sum(full_cohort$MACE_flag == 1 & is.na(full_cohort$MACE.onset)),
+    sum(ldlc.data$value < 10, na.rm = TRUE) + sum(ldlc.data$value > 400, na.rm = TRUE),
+    sum(is.na(ldlc.data$value)),
+    sum(ldlc.data$AgeInYears < 18, na.rm = TRUE) + sum(ldlc.data$AgeInYears > 110, na.rm = TRUE),
+    length(setdiff(ids_ldlc, ids_demo)),
+    post_event$`Post-event measurements`
+  ),
+  Status = if_else(N == 0, "✓ OK", "⚠ Review")
+)
+
+qc_flags %>% kable(caption = "QC summary — review any flagged items before proceeding")
+```
+
+## Data Analysis
+
+### Cleaning Each Dataset
+
+```{r clean-datasets}
+diag_clean <- full_cohort %>%
+  filter(!(MACE_flag == 1L & is.na(MACE.onset))) %>%
+  select(DeID_PatientID, MACE.onset, MACE_flag)
+
+ldlc_clean <- ldlc.data %>%
+  filter(!is.na(lab_date), !is.na(AgeInYears)) %>%
+  filter(value > 0, value <= 400) %>%
+  mutate(BMI = if_else(BMI < 10 | BMI > 80, NA_real_, BMI)) %>%
+  filter(AgeInYears >= 18) %>%
+  group_by(DeID_PatientID, lab_date) %>%
+  summarise(
+    LDL_value  = mean(value,      na.rm = TRUE),
+    AgeInYears = mean(AgeInYears, na.rm = TRUE),
+    BMI        = mean(BMI,        na.rm = TRUE),
+    .groups    = "drop"
+  ) %>%
+  arrange(DeID_PatientID, lab_date)
+
+tibble(
+  Dataset             = c("Diagnosis / cohort base", "LDL-C"),
+  Rows                = c(nrow(diag_clean), nrow(ldlc_clean)),
+  `Unique patients`   = c(n_distinct(diag_clean$DeID_PatientID),
+                          n_distinct(ldlc_clean$DeID_PatientID)),
+  `Cases (MACE=1)`    = c(sum(diag_clean$MACE_flag), NA),
+  `Controls (MACE=0)` = c(sum(diag_clean$MACE_flag == 0), NA)
+) %>% kable(caption = "Dataset dimensions after cleaning")
+```
+
+### Restrict to Patients with LDL-C Data
+
+```{r restrict-ldlc-mace}
+shared_ids  <- intersect(diag_clean$DeID_PatientID, ldlc_clean$DeID_PatientID)
+diag_cohort <- diag_clean %>% filter(DeID_PatientID %in% shared_ids)
+ldlc_cohort <- ldlc_clean %>% filter(DeID_PatientID %in% shared_ids)
+
+tibble(
+  Metric = c("Patients with both LDL-C and demographic data",
+             "Cases (MACE=1)", "Controls (MACE=0)"),
+  N      = c(length(shared_ids),
+             sum(diag_cohort$MACE_flag == 1),
+             sum(diag_cohort$MACE_flag == 0))
+) %>% kable(caption = "Analysis cohort after linkage restriction")
+```
+
+### Defining Time Zero and Follow-up
+
+```{r define-time-zero-followup}
+#| message: false
+
+encounter.data <- read_csv("combined_data/EncounterAll.csv",
+                           show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    EncounterDate  = mdy_hm(DeID_AdmitDate)
+  )
+
+last_encounter <- encounter.data %>%
+  filter(!is.na(EncounterDate),
+         DeID_PatientID %in% shared_ids) %>%
+  group_by(DeID_PatientID) %>%
+  slice_max(EncounterDate, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, last_encounter_date = EncounterDate)
+
+first_ldlc <- ldlc_cohort %>%
+  group_by(DeID_PatientID) %>%
+  slice_min(lab_date, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, t0 = lab_date)
+
+base_cohort_full <- diag_cohort %>%
+  left_join(first_ldlc,     by = "DeID_PatientID") %>%
+  left_join(last_encounter, by = "DeID_PatientID") %>%
+  mutate(
+    t_end = case_when(
+      MACE_flag == 1              ~ MACE.onset,
+      !is.na(last_encounter_date) ~ last_encounter_date,
+      TRUE                        ~ NA_POSIXct_
+    ),
+    follow_up_days = as.numeric(difftime(t_end, t0, units = "days"))
+  )
+
+base_cohort_full %>%
+  mutate(fu_category = case_when(
+    follow_up_days <= 0 & MACE_flag == 1 ~ "Prevalent MACE (event before first LDL-C)",
+    follow_up_days <= 0 & MACE_flag == 0 ~ "Control with negative follow-up",
+    TRUE                                  ~ "Valid follow-up"
+  )) %>%
+  count(fu_category) %>%
+  rename(`Follow-up category` = fu_category, N = n) %>%
+  kable(caption = "Follow-up time breakdown before exclusions")
+
+# Drop zero/negative follow-up; cap implausible values at 40 years (one patient had
+# 106-year follow-up due to likely date coding error)
+base_cohort <- base_cohort_full %>%
+  filter(follow_up_days > 0) %>%
+  mutate(follow_up_days = pmin(follow_up_days, 14610))
+
+base_cohort %>%
+  group_by(MACE_flag) %>%
+  summarise(
+    N                         = n(),
+    `Median follow-up (days)` = round(median(follow_up_days), 1),
+    `Mean follow-up (days)`   = round(mean(follow_up_days), 1),
+    `Min follow-up (days)`    = round(min(follow_up_days), 1),
+    `Max follow-up (days)`    = round(max(follow_up_days), 1),
+    .groups = "drop"
+  ) %>%
+  mutate(MACE_flag = if_else(MACE_flag == 1, "Cases (MACE=1)", "Controls (MACE=0)")) %>%
+  rename(Group = MACE_flag) %>%
+  kable(caption = "Follow-up time by case/control status (after exclusions)")
+```
+
+The final analytic cohort after exclusions contains **`r nrow(base_cohort)` patients** (`r sum(base_cohort$MACE_flag)` incident MACE cases and `r sum(base_cohort$MACE_flag == 0)` controls).
+
+#### CONSORT Flow
+
+```{r consort-notes}
+tibble(
+  Step = c(
+    "Full demographic cohort",
+    "No LDL-C data",
+    "MACE=TRUE with missing onset date",
+    "Negative or zero follow-up (prevalent MACE + invalid controls)",
+    "Final analytic cohort"
+  ),
+  N = c(
+    n_distinct(demographic.data$DeID_PatientID),
+    -length(setdiff(ids_demo, ids_ldlc)),
+    -(nrow(full_cohort %>% filter(MACE_flag == 1 & is.na(MACE.onset)))),
+    -(nrow(base_cohort_full %>% filter(follow_up_days <= 0))),
+    nrow(base_cohort)
+  )
+) %>% kable(caption = "CONSORT flow — cohort derivation")
+```
+
+### Loading Statin Data
+
+Statin medication orders were pre-processed in a separate cleaning script (`statin_cleaning.R`) and saved as `MedicationOrdersCleanedStatins.csv`. Briefly, orders were filtered to known statin generic names, dose extracted from the medication name field, and classified by ACC/AHA 2013 intensity (low/moderate/high). Each prescription start event was assigned a 90-day supply window; consecutive overlapping windows were collapsed into continuous exposure periods. Full details of the cleaning procedure are described in the Methods.
+
+Statin exposure periods were converted to days since each patient's time zero (first LDL-C measurement) and merged onto the counting-process dataset via a range join, where an interval [tstart, tstop] was classified as statin-exposed if it overlapped any prescription period [tstart_statin, tstop_statin].
+
+```{r load-statin-intervals}
+#| message: false
+
+statin_intervals <- read_csv(
+  "combined_data/MedicationOrdersCleanedStatins.csv",
+  show_col_types = FALSE
+) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    period_start   = as_date(period_start),
+    period_end     = as_date(period_end),
+    intensity      = factor(intensity, levels = c("low", "moderate", "high"))
+  )
+
+statin_tv <- statin_intervals %>%
+  inner_join(first_ldlc, by = "DeID_PatientID") %>%
+  mutate(
+    tstart_statin = as.numeric(period_start - as_date(t0)),
+    tstop_statin  = as.numeric(period_end   - as_date(t0))
+  ) %>%
+  filter(tstop_statin > 0) %>%
+  mutate(tstart_statin = pmax(tstart_statin, 0)) %>%
+  filter(tstop_statin > tstart_statin) %>%
+  select(DeID_PatientID, tstart_statin, tstop_statin, intensity)
+
+tibble(
+  Metric = c(
+    "Patients with ≥1 statin interval (cleaned file)",
+    "Patients with statin use in analytic cohort",
+    "Total statin intervals in analytic cohort",
+    "Intervals clipped to t0 (pre-cohort statin starts)",
+    "Low intensity intervals",
+    "Moderate intensity intervals",
+    "High intensity intervals",
+    "Unclassified intensity (NA)"
+  ),
+  N = c(
+    n_distinct(statin_intervals$DeID_PatientID),
+    n_distinct(statin_tv$DeID_PatientID),
+    nrow(statin_tv),
+    sum(statin_intervals %>%
+          inner_join(first_ldlc, by = "DeID_PatientID") %>%
+          mutate(tstart_statin = as.numeric(period_start - as_date(t0))) %>%
+          pull(tstart_statin) < 0),
+    sum(statin_tv$intensity == "low",      na.rm = TRUE),
+    sum(statin_tv$intensity == "moderate", na.rm = TRUE),
+    sum(statin_tv$intensity == "high",     na.rm = TRUE),
+    sum(is.na(statin_tv$intensity))
+  )
+) %>% kable(caption = "Statin data — coverage in analytic cohort")
+```
+
+### Building LDL-C Time-Varying Intervals (LOCF)
+
+LDL-C staleness was handled by inserting synthetic missing-value markers at `t_last_measurement + cap_days` directly into the time-dependent covariate structure prior to `tmerge()` construction. This ensures interval splits occur at the exact point of staleness and correctly handles patients with a single LDL-C measurement, who would otherwise have their baseline value carried forward indefinitely. For event rows where LDL-C is stale, the last known value is carried forward as the best available estimate of lipid burden at the time of the event.
+
+```{r ldlc-tvi-locf}
+ldlc_intervals <- ldlc_cohort %>%
+  filter(DeID_PatientID %in% base_cohort$DeID_PatientID) %>%
+  left_join(base_cohort %>% select(DeID_PatientID, t0, t_end),
+            by = "DeID_PatientID") %>%
+  filter(lab_date <= t_end) %>%
+  mutate(
+    t_meas     = as.numeric(difftime(lab_date, t0, units = "days")),
+    LDL_value  = as.numeric(LDL_value),
+    AgeInYears = as.numeric(AgeInYears),
+    BMI        = as.numeric(BMI)
+  ) %>%
+  filter(t_meas >= 0) %>%
+  arrange(DeID_PatientID, t_meas)
+
+# Stale sentinel markers: tmerge carries -9999 forward via LOCF;
+# converted back to NA after dataset construction
+add_stale_markers <- function(intervals_df, cap_days, follow_up_df) {
+  intervals_df %>%
+    arrange(DeID_PatientID, t_meas) %>%
+    group_by(DeID_PatientID) %>%
+    mutate(next_meas = lead(t_meas)) %>%
+    ungroup() %>%
+    filter(is.na(next_meas) | next_meas > t_meas + cap_days) %>%
+    mutate(stale_t = t_meas + cap_days) %>%
+    left_join(follow_up_df %>% select(DeID_PatientID, follow_up_days),
+              by = "DeID_PatientID") %>%
+    filter(stale_t < follow_up_days) %>%
+    transmute(
+      DeID_PatientID,
+      t_meas     = stale_t,
+      LDL_value  = -9999,
+      AgeInYears = NA_real_,
+      BMI        = NA_real_
+    )
+}
+
+stale_730  <- add_stale_markers(ldlc_intervals, 730,  base_cohort)
+stale_1825 <- add_stale_markers(ldlc_intervals, 1825, base_cohort)
+
+ldlc_intervals_730  <- bind_rows(ldlc_intervals, stale_730)  %>% arrange(DeID_PatientID, t_meas)
+ldlc_intervals_1825 <- bind_rows(ldlc_intervals, stale_1825) %>% arrange(DeID_PatientID, t_meas)
+
+tibble(
+  Window        = c("730d", "1825d"),
+  Real_meas     = c(nrow(ldlc_intervals), nrow(ldlc_intervals)),
+  Stale_markers = c(nrow(stale_730), nrow(stale_1825)),
+  Total_rows    = c(nrow(ldlc_intervals_730), nrow(ldlc_intervals_1825))
+) %>% kable(caption = "LDL-C intervals with stale NA markers added")
+```
+
+There are **`r nrow(ldlc_intervals)` pre-event LDL-C measurements** across **`r n_distinct(ldlc_intervals$DeID_PatientID)` patients** available for the time-varying covariate model.
+
+### Constructing tmerge Dataset
+
+```{r tmerge-construction}
+surv_base <- base_cohort %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    tstart_days    = 0,
+    tstop_days     = as.numeric(follow_up_days)
+  )
+
+build_surv_data <- function(ldlc_int) {
+  sd <- tmerge(
+    data1 = surv_base,
+    data2 = surv_base,
+    id    = DeID_PatientID,
+    MACE  = event(tstop_days, MACE_flag)
+  )
+
+  sd <- tmerge(
+    data1 = sd,
+    data2 = ldlc_int %>% mutate(DeID_PatientID = as.character(DeID_PatientID)),
+    id    = DeID_PatientID,
+    LDL_value  = tdc(t_meas, LDL_value),
+    AgeInYears = tdc(t_meas, AgeInYears),
+    BMI        = tdc(t_meas, BMI)
+  )
+
+  sd %>%
+    group_by(DeID_PatientID) %>%
+    fill(BMI, AgeInYears, .direction = "downup") %>%
+    mutate(
+      # Convert sentinel to NA for stale intervals
+      LDL_value = if_else(LDL_value == -9999, NA_real_, LDL_value),
+      # For event rows, carry last known LDL forward regardless of staleness
+      LDL_value = if_else(
+        is.na(LDL_value) & MACE == 1,
+        last(na.omit(LDL_value)),
+        LDL_value
+      )
+    ) %>%
+    ungroup() %>%
+    filter(tstop - tstart >= 0.5)
+}
+
+surv.data.730  <- build_surv_data(ldlc_intervals_730)
+surv.data.1825 <- build_surv_data(ldlc_intervals_1825)
+
+map_dfr(
+  list(`730d` = surv.data.730, `1825d` = surv.data.1825),
+  ~ tibble(
+    Rows       = nrow(.x),
+    Patients   = n_distinct(.x$DeID_PatientID),
+    Events     = sum(.x$MACE),
+    NA_LDL     = sum(is.na(.x$LDL_value)),
+    Pct_NA_LDL = round(100 * mean(is.na(.x$LDL_value)), 1)
+  ),
+  .id = "Window"
+) %>% kable(caption = "tmerge datasets — LOCF cap via stale markers")
+```
+
+### Add Statin Time-Varying Covariate
+
+```{r add-statin-tdc}
+# Statin added via range join rather than tmerge() to avoid class attribute
+# instability after LOCF processing. An interval [tstart, tstop] is classified
+# as statin-exposed if it overlaps any prescription period [tstart_statin, tstop_statin].
+
+statin_intervals_cohort <- statin_tv %>%
+  filter(DeID_PatientID %in% base_cohort$DeID_PatientID) %>%
+  select(DeID_PatientID, tstart_statin, tstop_statin, intensity)
+
+add_statin_join <- function(df) {
+  df %>%
+    left_join(
+      statin_intervals_cohort,
+      by           = "DeID_PatientID",
+      relationship = "many-to-many"
+    ) %>%
+    mutate(
+      on_statin_overlap = !is.na(tstart_statin) &
+                          tstart < tstop_statin &
+                          tstop  > tstart_statin,
+      intensity_match   = if_else(on_statin_overlap,
+                                  as.character(intensity),
+                                  NA_character_)
+    ) %>%
+    group_by(DeID_PatientID, tstart, tstop) %>%
+    summarise(
+      across(c(MACE, LDL_value, AgeInYears, BMI, MACE.onset, MACE_flag,
+               t0, last_encounter_date, t_end, follow_up_days,
+               tstart_days, tstop_days),
+             ~ first(na.omit(.x))),
+      on_statin        = as.integer(any(on_statin_overlap, na.rm = TRUE)),
+      statin_intensity = {
+        vals <- na.omit(intensity_match)
+        if (length(vals) == 0) NA_character_
+        else names(which.max(table(vals)))
+      },
+      .groups = "drop"
+    ) %>%
+    distinct(DeID_PatientID, tstart, tstop, .keep_all = TRUE) %>%
+    mutate(
+      statin_intensity = factor(statin_intensity,
+                                levels = c("low", "moderate", "high"))
+    ) %>%
+    arrange(DeID_PatientID, tstart)
+}
+
+surv.data.730  <- add_statin_join(surv.data.730)
+surv.data.1825 <- add_statin_join(surv.data.1825)
+
+tibble(
+  Dataset    = c("730d", "1825d"),
+  Rows       = c(nrow(surv.data.730),     nrow(surv.data.1825)),
+  Events     = c(sum(surv.data.730$MACE),  sum(surv.data.1825$MACE)),
+  On_statin  = c(sum(surv.data.730$on_statin == 1),
+                 sum(surv.data.1825$on_statin == 1)),
+  Pct_statin = c(round(100 * mean(surv.data.730$on_statin == 1), 1),
+                 round(100 * mean(surv.data.1825$on_statin == 1), 1))
+) %>% kable(caption = "Dataset summary after statin addition")
+
+surv.data.730 %>%
+  filter(MACE == 1) %>%
+  count(on_statin) %>%
+  kable(caption = "MACE events by statin status (730d)")
+```
+
+### Baseline Age, Follow-up Period, and Stratification Variables
+
+Age at time zero (baseline age) is used as a fixed covariate rather than time-varying age, to avoid collinearity between age and follow-up time in a dataset with median follow-up of 13.8 years. Follow-up is divided into three periods (0–5, 5–10, 10+ years) and age into five clinical categories; both are used as stratification variables in the primary Cox model rather than regression terms, since Schoenfeld residuals tests confirmed severe proportional hazards violations for both age and statin use across the full follow-up.
+
+```{r baseline-covariates}
+baseline_age <- ldlc_intervals %>%
+  group_by(DeID_PatientID) %>%
+  slice_min(t_meas, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, baseline_age = AgeInYears)
+
+add_period_and_age <- function(df) {
+  df %>%
+    left_join(baseline_age, by = "DeID_PatientID") %>%
+    mutate(
+      period = factor(
+        case_when(
+          tstart < 1825 ~ "0-5yr",
+          tstart < 3650 ~ "5-10yr",
+          TRUE          ~ "10yr+"
+        ),
+        levels = c("0-5yr", "5-10yr", "10yr+")
+      ),
+      age_cat = cut(baseline_age,
+                    breaks = c(18, 45, 55, 65, 75, Inf),
+                    labels = c("<45", "45-54", "55-64", "65-74", "75+"),
+                    right  = FALSE),
+      LDL_40 = LDL_value / 40
+    )
+}
+
+surv.data.730  <- add_period_and_age(surv.data.730)
+surv.data.1825 <- add_period_and_age(surv.data.1825)
+
+surv.data.730 %>%
+  filter(MACE == 1) %>%
+  count(period, on_statin, age_cat) %>%
+  arrange(n) %>%
+  kable(caption = "MACE events per stratum (period × statin × age) — all cells ≥10 required")
+```
+
+### Final Dataset Checks
+
+```{r final-dataset-checks}
+surv.data.730 %>%
+  mutate(interval_length = tstop - tstart) %>%
+  summarise(
+    Min    = round(min(interval_length), 1),
+    `25th` = round(quantile(interval_length, 0.25), 1),
+    Median = round(median(interval_length), 1),
+    Mean   = round(mean(interval_length), 1),
+    `75th` = round(quantile(interval_length, 0.75), 1),
+    Max    = round(max(interval_length), 1)
+  ) %>%
+  kable(caption = "Interval length distribution in tmerge dataset (days, 730d cap)")
+
+surv.data.730 %>%
+  filter(!is.na(LDL_value)) %>%
+  summarise(
+    Min    = round(min(LDL_value), 1),
+    `25th` = round(quantile(LDL_value, 0.25), 1),
+    Median = round(median(LDL_value), 1),
+    Mean   = round(mean(LDL_value), 1),
+    `75th` = round(quantile(LDL_value, 0.75), 1),
+    Max    = round(max(LDL_value), 1)
+  ) %>%
+  kable(caption = "LDL-C distribution across valid intervals (mg/dL, 730d cap)")
+```
+
+## Cox Proportional Hazards Model
+
+### Unadjusted Model
+
+```{r coxph-unadjusted}
+fit_unadj_730 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value,
+  data = surv.data.730,
+  ties = "efron",
+  id   = DeID_PatientID
+)
+
+broom::tidy(fit_unadj_730, exponentiate = TRUE, conf.int = TRUE) %>%
+  select(Term = term, HR = estimate, `95% CI low` = conf.low,
+         `95% CI high` = conf.high, `p-value` = p.value) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  kable(caption = "Unadjusted Cox model — LDL-C effect on MACE (730d LOCF cap)")
+```
+
+The unadjusted model uses **`r sum(!is.na(surv.data.730$LDL_value))` intervals** from **`r n_distinct(surv.data.730$DeID_PatientID[!is.na(surv.data.730$LDL_value)])` patients** with **`r sum(surv.data.730$MACE[!is.na(surv.data.730$LDL_value)])` events**.
+
+### Proportional Hazards — Unadjusted Model
+
+```{r proportional-hazards-unadj}
+ph_unadj <- cox.zph(fit_unadj_730)
+
+tibble(
+  Term      = rownames(ph_unadj$table),
+  `Chi-sq`  = round(ph_unadj$table[, "chisq"], 3),
+  df        = ph_unadj$table[, "df"],
+  `p-value` = round(ph_unadj$table[, "p"], 4)
+) %>% kable(caption = "Schoenfeld residuals test — unadjusted model")
+
+ggcoxzph(ph_unadj, font.main = 12, ggtheme = theme_minimal())
+```
+
+`r if(ph_unadj$table["LDL_value", "p"] > 0.05) "The proportional hazards assumption holds (p > 0.05)." else "**Warning:** The proportional hazards assumption is violated (p < 0.05) — see primary stratified model below."`
+
+### Primary Model — Stratified Cox
+
+The primary analysis uses a stratified Cox model with strata defined by statin use (on/off), age category (<45, 45–54, 55–64, 65–74, 75+), and follow-up period (0–5, 5–10, 10+ years). Stratification absorbs non-proportional baseline hazard differences across these groups without requiring regression adjustment, and was motivated by severe PH violations for statin use (χ²=817, p<2×10⁻¹⁶) and age (χ²=60, p=8×10⁻¹⁵) in unadjusted and regression-adjusted models. LDL-C is parameterised both per 1 mg/dL and per 40 mg/dL.
+
+```{r primary-model}
+fit_primary_730 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value +
+    strata(period) + strata(on_statin) + strata(age_cat),
+  data = surv.data.730, ties = "efron", id = DeID_PatientID
+)
+
+fit_primary_1825 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value +
+    strata(period) + strata(on_statin) + strata(age_cat),
+  data = surv.data.1825, ties = "efron", id = DeID_PatientID
+)
+
+fit_primary_730_40 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_40 +
+    strata(period) + strata(on_statin) + strata(age_cat),
+  data = surv.data.730, ties = "efron", id = DeID_PatientID
+)
+
+fit_primary_1825_40 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_40 +
+    strata(period) + strata(on_statin) + strata(age_cat),
+  data = surv.data.1825, ties = "efron", id = DeID_PatientID
+)
+
+# Per 1 mg/dL
+bind_rows(
+  broom::tidy(fit_primary_730,  exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(Model = "Primary — 730d LOCF cap"),
+  broom::tidy(fit_primary_1825, exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(Model = "Sensitivity — 1825d LOCF cap")
+) %>%
+  select(Model, HR = estimate, `95% CI low` = conf.low,
+         `95% CI high` = conf.high, `p-value` = p.value) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  kable(caption = "Primary stratified Cox model — LDL-C HR per 1 mg/dL")
+
+# Per 40 mg/dL
+bind_rows(
+  broom::tidy(fit_primary_730_40,  exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(Model = "Primary — 730d LOCF cap"),
+  broom::tidy(fit_primary_1825_40, exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(Model = "Sensitivity — 1825d LOCF cap")
+) %>%
+  select(Model, HR = estimate, `95% CI low` = conf.low,
+         `95% CI high` = conf.high, `p-value` = p.value) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  kable(caption = "Primary stratified Cox model — LDL-C HR per 40 mg/dL")
+```
+
+### Proportional Hazards — Primary Model
+
+```{r ph-primary}
+ph_primary <- cox.zph(fit_primary_730)
+
+tibble(
+  Term      = rownames(ph_primary$table),
+  `Chi-sq`  = round(ph_primary$table[, "chisq"], 3),
+  df        = ph_primary$table[, "df"],
+  `p-value` = round(ph_primary$table[, "p"], 4)
+) %>% kable(caption = "Schoenfeld residuals — primary stratified model (730d)")
+
+ggcoxzph(ph_primary, font.main = 12, ggtheme = theme_minimal())
+```
+
+`r if(ph_primary$table["GLOBAL", "p"] > 0.05) "The proportional hazards assumption holds in the primary stratified model (global p > 0.05)." else paste0("**Warning:** PH assumption violated in primary model: global p = ", round(ph_primary$table['GLOBAL','p'], 4), ".")`
+
+### Progressive Adjustment Models (Reference Only)
+
+Provided for comparison. These models do not satisfy the proportional hazards assumption over long follow-up and should not be used for primary inference.
+
+```{r adjusted-models-reference}
+extract_ldlc_hr <- function(fit, label) {
+  broom::tidy(fit, exponentiate = TRUE, conf.int = TRUE) %>%
+    filter(term == "LDL_value") %>%
+    mutate(
+      Model      = label,
+      HR         = round(estimate, 4),
+      `95% CI`   = paste0("(", round(conf.low, 4), "–", round(conf.high, 4), ")"),
+      `p-value`  = round(p.value, 4),
+      `N obs`    = fit$n,
+      `N events` = fit$nevent
+    ) %>%
+    select(Model, HR, `95% CI`, `p-value`, `N obs`, `N events`)
+}
+
+fit_unadj_1825 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value,
+  data = surv.data.1825, ties = "efron", id = DeID_PatientID
+)
+
+fit_age_730 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value + AgeInYears,
+  data = surv.data.730, ties = "efron", id = DeID_PatientID
+)
+
+fit_statin_age_730 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value + on_statin + AgeInYears,
+  data = surv.data.730, ties = "efron", id = DeID_PatientID
+)
+
+fit_statin_age_bmi_730 <- coxph(
+  Surv(tstart, tstop, MACE) ~ LDL_value + on_statin + AgeInYears + BMI,
+  data = surv.data.730, ties = "efron", id = DeID_PatientID
+)
+
+bind_rows(
+  extract_ldlc_hr(fit_unadj_730,          "Unadjusted (730d)"),
+  extract_ldlc_hr(fit_age_730,            "Age-adjusted (730d)"),
+  extract_ldlc_hr(fit_statin_age_730,     "Statin + Age (730d)"),
+  extract_ldlc_hr(fit_statin_age_bmi_730, "Statin + Age + BMI (730d)"),
+  extract_ldlc_hr(fit_unadj_1825,         "Unadjusted (1825d)")
+) %>%
+  kable(caption = "Progressive adjustment models — reference only (PH assumption not satisfied)")
+```
+
+### Forest Plot
+
+```{r forest-plot}
+#| fig-width: 9
+#| fig-height: 5
+
+# Primary results (per 40 mg/dL) + reference models (per 1 mg/dL) for context
+primary_for_plot <- bind_rows(
+  broom::tidy(fit_primary_730_40,  exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(Model = "Primary: stratified (730d, per 40 mg/dL)",  model_type = "Primary"),
+  broom::tidy(fit_primary_1825_40, exponentiate = TRUE, conf.int = TRUE) %>%
+    mutate(Model = "Sensitivity: stratified (1825d, per 40 mg/dL)", model_type = "Primary")
+) %>%
+  select(Model, model_type, HR = estimate, CI_low = conf.low, CI_high = conf.high)
+
+reference_for_plot <- bind_rows(
+  extract_ldlc_hr(fit_unadj_730,      "Unadjusted (730d, per 1 mg/dL)"),
+  extract_ldlc_hr(fit_statin_age_730, "Statin + Age (730d, per 1 mg/dL)")
+) %>%
+  separate(`95% CI`, into = c("CI_low", "CI_high"), sep = "–", convert = TRUE) %>%
+  mutate(
+    CI_low     = as.numeric(str_remove(CI_low,  "\\(")),
+    CI_high    = as.numeric(str_remove(CI_high, "\\)")),
+    model_type = "Reference"
+  ) %>%
+  select(Model, model_type, HR, CI_low, CI_high)
+
+bind_rows(primary_for_plot, reference_for_plot) %>%
+  mutate(Model = factor(Model, levels = rev(unique(Model)))) %>%
+  ggplot(aes(x = HR, xmin = CI_low, xmax = CI_high, y = Model,
+             colour = model_type)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(height = 0.2) +
+  geom_point(size = 3) +
+  scale_colour_manual(values = c("Primary"   = "#00274c",
+                                 "Reference" = "#888888")) +
+  labs(
+    title    = "LDL-C effect on MACE",
+    subtitle = "Primary model per 40 mg/dL (stratified); reference models per 1 mg/dL",
+    x        = "Hazard Ratio (95% CI)", y = NULL, colour = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        legend.position  = "bottom")
+```
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

@@ -1,0 +1,371 @@
+---
+title: "Cleaning of Medication Data"
+author: "Dave Bridges"
+date: "2026-03-25"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+
+theme: journal
+
+execute:
+  echo: true
+  warning: false
+
+knitr:
+  opts_chunk:
+    fig-path: "figures/"          # folder for all figure files
+    dev: ["png", "pdf"]           # both formats for every plot
+    dpi: 300                      # ← this is the correct place for resolution
+    dev.args:
+      png:
+        type: "cairo-png"         # better anti-aliasing / font rendering (optional but recommended)
+      pdf:
+        family: "sans"            # font family (optional)
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+library(broom)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+Clean the data for various medication data, for use in other scrupts
+
+## Raw Data
+
+```{r data-input}
+library(readr) #loads the readr package
+meds.filename <- "combined_data/MedicationOrdersComprehensive.csv" #input file(s)
+
+meds_raw <- read_csv(meds.filename) |>
+  mutate(DeID_PatientID = as.character(DeID_PatientID)) 
+
+cat("Total medication rows loaded:", nrow(meds_raw), "\n")
+```
+
+These data can be found in `r getwd()` in a file named `r ifelse(meds.filename %in% dir(), meds.filename, "no file found")`.  This input file was most recently updated on `r ifelse(meds.filename %in% dir(), format(file.info(meds.filename)$mtime, "%Y-%m-%d"), "unknown")`.  This script was most recently updated on `r date()`.
+
+There are `r distinct(meds_raw, DeID_PatientID) |> nrow()` participants in this dataset with meds values.
+
+## Data Cleaning
+
+### Defining Statin Use
+
+```{r statin-use}
+# Match on known statin drug names ONLY — avoids nystatin, bystatin, etc.
+statin_pattern <- regex(
+  "\\b(atorvastatin|simvastatin|rosuvastatin|pravastatin|
+       lovastatin|fluvastatin|pitavastatin|cerivastatin)\\b",
+  ignore_case = TRUE
+)
+
+meds_statins_raw <- meds_raw |>
+  filter(str_detect(MedicationName, statin_pattern))
+
+cat("Statin rows identified:", nrow(meds_statins_raw), "\n")
+cat("Unique patients with any statin order:",
+    n_distinct(meds_statins_raw$DeID_PatientID), "\n")
+
+# Quick check — confirm nystatin not included
+cat("Nystatin rows (should be 0):",
+    sum(str_detect(meds_statins_raw$MedicationName,
+                   regex("nystatin", ignore_case = TRUE))), "\n")
+```
+
+### Parsing Name and Dose
+
+```{r name-dose-parsing}
+meds_statins <- meds_statins_raw |>
+  mutate(
+    # Standardised drug name (lowercase, no brand name parenthetical)
+    drug_name = str_extract(MedicationName,
+                            statin_pattern) |> str_to_lower(),
+
+    # Dose in mg — extract first number preceding "mg" (case-insensitive)
+    dose_mg = str_extract(MedicationName,
+                          regex("([0-9]+(?:\\.[0-9]+)?)\\s*mg",
+                                ignore_case = TRUE)) |>
+      str_extract("[0-9]+(?:\\.[0-9]+)?") |>
+      as.numeric(),
+
+    # Parse order date
+    order_date = mdy_hm(DeID_OrderStart) |> as_date()
+  )
+
+# ============================================================
+# BLOCK 1b: Patch dose_mg for the NA rows
+# ============================================================
+
+meds_statins <- meds_statins |>
+  mutate(
+    dose_mg = case_when(
+
+      # Already parsed — keep as-is
+      !is.na(dose_mg) ~ dose_mg,
+
+      # Vytorin / ezetimibe-simvastatin combos:
+      # "10/40" or "10-40" → second number is the simvastatin dose
+      str_detect(MedicationName,
+                 regex("ezetimibe.simvastatin|vytorin",
+                       ignore_case = TRUE)) ~
+        str_extract(MedicationName,
+                    regex("(?:[0-9]+[/\\-])([0-9]+)",
+                          ignore_case = TRUE)) |>
+        str_extract("[0-9]+$") |>
+        as.numeric(),
+
+      # Niacin-simvastatin — MinDose is ambiguous (could be niacin dose)
+      # Flag as NA and keep a marker column
+      str_detect(MedicationName,
+                 regex("niacin", ignore_case = TRUE)) ~ NA_real_,
+
+      # Bulk/misc formulations — not classifiable
+      str_detect(MedicationName,
+                 regex("bulk|misc", ignore_case = TRUE)) ~ NA_real_,
+
+      # Everything else with NA dose: try MinDose
+      # (simple "SIMVASTATIN ORAL", salt forms, amlodipine combo, etc.)
+      !is.na(MinDose) ~ as.numeric(MinDose),
+
+      # Still NA — leave as NA
+      TRUE ~ NA_real_
+    ),
+
+    # Flag combos where dose attribution is uncertain
+    dose_source = case_when(
+      str_detect(MedicationName, regex("ezetimibe.simvastatin|vytorin",
+                                       ignore_case = TRUE)) ~ "vytorin_name",
+      str_detect(MedicationName, regex("niacin",
+                                       ignore_case = TRUE))  ~ "niacin_ambiguous",
+      str_detect(MedicationName, regex("amlodipine",
+                                       ignore_case = TRUE))  ~ "mindose",
+      is.na(str_extract(MedicationName,
+                        regex("[0-9]+(?:\\.[0-9]+)?\\s*mg",
+                              ignore_case = TRUE)))           ~ "mindose",
+      TRUE                                                    ~ "name_parsed"
+    )
+  )
+
+# Check results
+cat("Remaining NA doses after patch:\n")
+meds_statins |>
+  filter(is.na(dose_mg)) |>
+  count(MedicationName, dose_source, sort = TRUE) |>
+  print(n = 20)
+
+cat("\nDose source breakdown:\n")
+meds_statins |> count(dose_source, sort = TRUE) |> print()
+
+cat("\nRe-run intensity classification check (spot-check combos):\n")
+meds_statins |>
+  filter(dose_source != "name_parsed") |>
+  count(drug_name, dose_mg, dose_source, sort = TRUE) |>
+  print(n = 30)
+```
+
+### Quality of Dose Extraction
+
+```{r dose-extraction-quality}
+cat("\n--- Dose extraction summary ---\n")
+meds_statins |>
+  count(drug_name, dose_mg, sort = TRUE) |>
+  print(n = 30)
+
+cat("\nRows with unparseable dose (NA):",
+    sum(is.na(meds_statins$dose_mg)), "\n")
+```
+
+### Statin Dose Intensity Quantification
+
+```{r statin-intensity}
+# ACC/AHA 2013 statin intensity categories
+# High:     reduces LDL ≥50%
+# Moderate: reduces LDL 30-49%
+# Low:      reduces LDL <30%
+
+classify_intensity <- function(drug, dose) {
+  case_when(
+    # High intensity
+    drug == "atorvastatin"  & dose >= 40              ~ "high",
+    drug == "rosuvastatin"  & dose >= 20              ~ "high",
+    # Moderate intensity
+    drug == "atorvastatin"  & dose %in% c(10, 20)    ~ "moderate",
+    drug == "rosuvastatin"  & dose %in% c(5, 10)     ~ "moderate",
+    drug == "simvastatin"   & dose %in% c(20, 40)    ~ "moderate",
+    drug == "pravastatin"   & dose >= 40              ~ "moderate",
+    drug == "lovastatin"    & dose >= 40              ~ "moderate",
+    drug == "fluvastatin"   & dose >= 80              ~ "moderate",
+    drug == "pitavastatin"  & dose %in% c(2, 4)      ~ "moderate",
+    # Low intensity
+    drug == "simvastatin"   & dose <= 10              ~ "low",
+    drug == "pravastatin"   & dose <= 20              ~ "low",
+    drug == "lovastatin"    & dose <= 20              ~ "low",
+    drug == "fluvastatin"   & dose <= 40              ~ "low",
+    drug == "pitavastatin"  & dose == 1               ~ "low",
+    # Cerivastatin (withdrawn 2001 — rare, treat as moderate if present)
+    drug == "cerivastatin"                            ~ "moderate",
+    # If dose is NA or doesn't match above, flag for review
+    TRUE                                              ~ NA_character_
+  )
+}
+
+meds_statins <- meds_statins |>
+  mutate(
+    intensity = classify_intensity(drug_name, dose_mg),
+    intensity = factor(intensity, levels = c("low", "moderate", "high"))
+  )
+
+cat("Intensity classification:\n")
+meds_statins |> count(intensity, drug_name, dose_mg) |> print(n = 40)
+cat("\nUnclassified (NA intensity):", sum(is.na(meds_statins$intensity)), "\n")
+
+# --- Status cleaning ---
+# Keep:    Sent, Dispensed, Verified → prescription start events
+# End:     Discontinued, Suspend     → prescription stop events
+# Exclude: Canceled                  → never filled
+# Exclude: Unknown                   → uninterpretable
+# Exclude: Completed                 → too rare (n=1304) and ambiguous
+
+meds_statins_clean <- meds_statins |>
+  filter(!Status %in% c("Canceled", "Unknown", "Completed")) |>
+  mutate(
+    event_type = case_when(
+      Status %in% c("Sent", "Dispensed", "Verified") ~ "start",
+      Status %in% c("Discontinued", "Suspend")       ~ "stop"
+    )
+  ) |>
+  filter(!is.na(order_date)) |>
+  arrange(DeID_PatientID, drug_name, order_date)
+
+cat("\nRows after status cleaning:", nrow(meds_statins_clean), "\n")
+cat("Start events:", sum(meds_statins_clean$event_type == "start"), "\n")
+cat("Stop events: ", sum(meds_statins_clean$event_type == "stop"), "\n")
+```
+
+### Patient-Level On/Off Intervals for Statins
+
+```{r on-off-intervals}
+
+SUPPLY_DAYS <- 90
+
+# Use integer levels for safe comparison inside the loop
+INTENSITY_LEVELS <- c("low" = 1L, "moderate" = 2L, "high" = 3L)
+
+build_statin_intervals <- function(df) {
+
+  starts <- df |>
+    filter(event_type == "start") |>
+    mutate(
+      intensity_int = INTENSITY_LEVELS[as.character(intensity)]
+    ) |>
+    select(order_date, drug_name, intensity_int)
+
+  stops <- df |>
+    filter(event_type == "stop") |>
+    pull(order_date)
+
+  if (nrow(starts) == 0) return(tibble())
+
+  intervals <- starts |>
+    mutate(
+      end_provisional = order_date + days(SUPPLY_DAYS),
+      stop_date = map(order_date, \(s) {
+        valid_stops <- stops[stops > s]
+        if (length(valid_stops) == 0) NA_Date_ else min(valid_stops)
+      }) |> map_vec(~ if (is.null(.x)) NA_Date_ else .x),
+      period_end = pmin(end_provisional,
+                        coalesce(stop_date, end_provisional))
+    ) |>
+    select(period_start = order_date, period_end, intensity_int)
+
+  # Collapse overlapping / abutting intervals
+  intervals <- intervals |> arrange(period_start)
+
+  merged    <- vector("list", nrow(intervals))
+  current   <- as.list(intervals[1, ])
+  merge_idx <- 1L
+
+  for (i in seq_len(nrow(intervals))[-1]) {
+    row <- intervals[i, ]
+    if (row$period_start <= current$period_end + days(1)) {
+      current$period_end    <- max(current$period_end, row$period_end)
+      current$intensity_int <- max(current$intensity_int,
+                                   row$intensity_int, na.rm = TRUE)
+    } else {
+      merged[[merge_idx]] <- as_tibble(current)
+      merge_idx <- merge_idx + 1L
+      current   <- as.list(row)
+    }
+  }
+  merged[[merge_idx]] <- as_tibble(current)
+
+  bind_rows(merged[seq_len(merge_idx)]) |>
+    mutate(
+      intensity = factor(
+        names(INTENSITY_LEVELS)[intensity_int],
+        levels = names(INTENSITY_LEVELS)
+      )
+    ) |>
+    select(period_start, period_end, intensity)
+}
+
+statin_intervals <- meds_statins_clean |>
+  group_by(DeID_PatientID) |>
+  group_modify(~ build_statin_intervals(.x)) |>
+  ungroup()
+
+cat("Statin interval rows built:", nrow(statin_intervals), "\n")
+cat("Patients with >=1 statin interval:",
+    n_distinct(statin_intervals$DeID_PatientID), "\n")
+
+cat("\nInterval duration summary (days):\n")
+statin_intervals |>
+  mutate(duration = as.numeric(period_end - period_start)) |>
+  summarise(
+    min    = min(duration),
+    median = median(duration),
+    mean   = round(mean(duration), 1),
+    p90    = quantile(duration, 0.9),
+    max    = max(duration)
+  ) |> print()
+
+cat("\nIntensity distribution across intervals:\n")
+statin_intervals |> count(intensity) |> print()
+```
+
+
+```{r output-writing}
+output.file <- 'combined_data/MedicationOrdersCleanedStatins.csv'
+write_csv(statin_intervals, output.file)
+```
+
+The cleaned results are output at **`r output.file`**.
+
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

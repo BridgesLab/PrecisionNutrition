@@ -2,11 +2,21 @@
 
 ## Filters
 
+### Calcium and Cholesterol
+
 - Initial: 5,529,222 patients
-- Michigan Medicine Primary Care and MGI: 111,011 (this is mostly to get the download to <100,000 participants)
+- MGI: 111,011 (this is mostly to get the download to <100,000 participants)
 - 18+ at Encounter (2000-2026): 109,820
 - Has some cholesterol or triglyceride measurement: 51,122
 - Also has some calcium measurement: 50,225
+
+### Cholesterol and Outcomes
+
+- Initial: 5,529,222 patients
+- Michigan Medicine at Primary Care: 352,177
+- Has at least one LDL measurement since 1/1/2000 201,073
+
+This was going to need to be done in multiple batches by parsing patient ID's and then resubmitting this query in multiple rounds (excluding the prior ones).  First query was males (91,653), second was females/unknown - married (50,042) and third was females/unknown - not married/unknown (59,378 patients).  These were combined prior to all scripts.
 
 ### Data
 

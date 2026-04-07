@@ -1,0 +1,2135 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.6.42">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges">
+<meta name="dcterms.date" content="2026-03-27">
+
+<title>Cumulative LDL-C Burden and MACE — LDL-Years Analysis</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { display: inline-block; text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="ldlc_mace_cumulative_files/libs/clipboard/clipboard.min.js"></script>
+<script src="ldlc_mace_cumulative_files/libs/quarto-html/quarto.js"></script>
+<script src="ldlc_mace_cumulative_files/libs/quarto-html/popper.min.js"></script>
+<script src="ldlc_mace_cumulative_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="ldlc_mace_cumulative_files/libs/quarto-html/anchor.min.js"></script>
+<link href="ldlc_mace_cumulative_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="ldlc_mace_cumulative_files/libs/quarto-html/quarto-syntax-highlighting-2f5df379a58b258e96c21c0638c20c03.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="ldlc_mace_cumulative_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="ldlc_mace_cumulative_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="ldlc_mace_cumulative_files/libs/bootstrap/bootstrap-4a89e897c6c80ba7461092d03526ee3e.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body>
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#raw-data" id="toc-raw-data" class="nav-link" data-scroll-target="#raw-data">Raw Data</a></li>
+  <li><a href="#cohort-derivation" id="toc-cohort-derivation" class="nav-link" data-scroll-target="#cohort-derivation">Cohort Derivation</a></li>
+  <li><a href="#building-ldl-c-intervals-with-locf" id="toc-building-ldl-c-intervals-with-locf" class="nav-link" data-scroll-target="#building-ldl-c-intervals-with-locf">Building LDL-C Intervals with LOCF</a></li>
+  <li><a href="#constructing-tmerge-dataset" id="toc-constructing-tmerge-dataset" class="nav-link" data-scroll-target="#constructing-tmerge-dataset">Constructing tmerge Dataset</a></li>
+  <li><a href="#computing-cumulative-ldl-years" id="toc-computing-cumulative-ldl-years" class="nav-link" data-scroll-target="#computing-cumulative-ldl-years">Computing Cumulative LDL-Years</a></li>
+  <li><a href="#adding-time-varying-covariates" id="toc-adding-time-varying-covariates" class="nav-link" data-scroll-target="#adding-time-varying-covariates">Adding Time-Varying Covariates</a></li>
+  <li><a href="#final-dataset-checks" id="toc-final-dataset-checks" class="nav-link" data-scroll-target="#final-dataset-checks">Final Dataset Checks</a></li>
+  <li><a href="#cox-proportional-hazards-models" id="toc-cox-proportional-hazards-models" class="nav-link" data-scroll-target="#cox-proportional-hazards-models">Cox Proportional Hazards Models</a>
+  <ul class="collapse">
+  <li><a href="#unadjusted-cumulative-ldl-years-model" id="toc-unadjusted-cumulative-ldl-years-model" class="nav-link" data-scroll-target="#unadjusted-cumulative-ldl-years-model">Unadjusted Cumulative LDL-Years Model</a></li>
+  <li><a href="#proportional-hazards-unadjusted" id="toc-proportional-hazards-unadjusted" class="nav-link" data-scroll-target="#proportional-hazards-unadjusted">Proportional Hazards — Unadjusted</a></li>
+  <li><a href="#primary-model-stratified-cox-with-statin-adjustment" id="toc-primary-model-stratified-cox-with-statin-adjustment" class="nav-link" data-scroll-target="#primary-model-stratified-cox-with-statin-adjustment">Primary Model — Stratified Cox with Statin Adjustment</a></li>
+  <li><a href="#proportional-hazards-primary-model" id="toc-proportional-hazards-primary-model" class="nav-link" data-scroll-target="#proportional-hazards-primary-model">Proportional Hazards — Primary Model</a></li>
+  <li><a href="#sensitivity-analyses" id="toc-sensitivity-analyses" class="nav-link" data-scroll-target="#sensitivity-analyses">Sensitivity Analyses</a></li>
+  </ul></li>
+  <li><a href="#comparison-across-all-three-analytical-approaches" id="toc-comparison-across-all-three-analytical-approaches" class="nav-link" data-scroll-target="#comparison-across-all-three-analytical-approaches">Comparison Across All Three Analytical Approaches</a></li>
+  <li><a href="#forest-plot-three-analytical-approaches" id="toc-forest-plot-three-analytical-approaches" class="nav-link" data-scroll-target="#forest-plot-three-analytical-approaches">Forest Plot — Three Analytical Approaches</a></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="ldlc_mace_cumulative.md"><i class="bi bi-file-code"></i>Github (GFM)</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Cumulative LDL-C Burden and MACE — LDL-Years Analysis</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">March 27, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>This script implements a <strong>cumulative LDL-C burden model</strong> as the third analytical approach in the MACE/LDL-C series, alongside the time-varying spot LDL-C model (<code>ldlc_mace_analysis.qmd</code>) and the fixed baseline LDL-C model (<code>ldlc_mace_baseline.qmd</code>).</p>
+<p>The three approaches answer progressively different questions:</p>
+<ul>
+<li><strong>Time-varying (primary script)</strong>: Does today’s LDL-C predict near-term MACE risk?</li>
+<li><strong>Baseline (second script)</strong>: Does LDL-C at cohort entry predict long-term MACE risk?</li>
+<li><strong>Cumulative (this script)</strong>: Does total lifetime LDL-C burden — integrated over the entire observation period — predict MACE risk?</li>
+</ul>
+<p>Cumulative LDL-C burden, expressed as <strong>LDL-years</strong> (mg/dL × years), is the most biologically motivated parameterisation. Atherosclerosis is driven by sustained exposure to atherogenic lipoproteins over decades, not by the LDL-C level at any single point. The LDL-years metric is directly analogous to pack-years for smoking and cumulative radiation dose in oncology — it captures the dose-time integral rather than the instantaneous dose.</p>
+<p><strong>Key methodological advantages over spot LDL-C:</strong></p>
+<ul>
+<li><strong>No LOCF staleness problem</strong>: gaps in LDL-C measurement are handled naturally by carrying forward the last known value within the cumulative sum. Single-measurement patients accumulate LDL-years from their one measurement without requiring an arbitrary cap.</li>
+<li><strong>Statin use is partially absorbed</strong>: patients on statins have lower LDL-C at each measurement and therefore accumulate LDL-years more slowly, naturally incorporating part of the statin effect without requiring explicit adjustment. Statin stratification is still included for completeness.</li>
+<li><strong>Less susceptible to time-zero selection bias</strong>: cumulative exposure aggregates information across the entire observation period, diluting the influence of any single measurement occasion.</li>
+</ul>
+<p><strong>Implementation</strong>: At each interval start (<code>tstart</code>), the cumulative LDL-years covariate is the area under the LDL-C versus time curve accumulated up to that point, calculated using a last-observation-carried-forward (LOCF) rectangular approximation. Where LDL-C is missing (stale beyond the 730-day cap), the last known value is carried forward within the cumulative sum. The exposure is parameterised per 40 mg/dL-years — one year of LDL-C 40 mg/dL above the reference level.</p>
+<hr>
+</section>
+<section id="raw-data" class="level2">
+<h2 class="anchored" data-anchor-id="raw-data">Raw Data</h2>
+<p>This script is fully self-contained and does not depend on objects from the other two scripts.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>demographic.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"combined_data/DemographicInfo.csv"</span>,</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>                             <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID))</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>diagnosis.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"combined_data/DiagnosesCleaned.csv"</span>,</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>                           <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID),</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">MACE.onset     =</span> <span class="fu">ymd</span>(MACE.onset)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>lab.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"combined_data/LabResultsCleaned.csv"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>                     <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID),</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">lab_date =</span> <span class="fu">coalesce</span>(</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">parse_date_time</span>(DeID_COLLECTION_DATE,</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>                      <span class="at">orders =</span> <span class="fu">c</span>(<span class="st">"ymd"</span>, <span class="st">"mdy"</span>, <span class="st">"ymd HMS"</span>, <span class="st">"mdy HM"</span>),</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>                      <span class="at">quiet  =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>      <span class="fu">parse_date_time</span>(DeID_AdmitDate,</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>                      <span class="at">orders =</span> <span class="fu">c</span>(<span class="st">"ymd"</span>, <span class="st">"mdy"</span>, <span class="st">"ymd HMS"</span>, <span class="st">"mdy HM"</span>),</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>                      <span class="at">quiet  =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>    ))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>ldlc.data <span class="ot">&lt;-</span> lab.data <span class="sc">%&gt;%</span> <span class="fu">filter</span>(test_name <span class="sc">==</span> <span class="st">"LDL-C"</span>)</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Demographic patients:"</span>, <span class="fu">n_distinct</span>(demographic.data<span class="sc">$</span>DeID_PatientID), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Demographic patients: 201073 </code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="cohort-derivation" class="level2">
+<h2 class="anchored" data-anchor-id="cohort-derivation">Cohort Derivation</h2>
+<p>Identical pipeline to the primary and baseline scripts.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>full_cohort <span class="ot">&lt;-</span> demographic.data <span class="sc">%&gt;%</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    diagnosis.data <span class="sc">%&gt;%</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">select</span>(DeID_PatientID, MACE, MACE.onset,</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>             Osteoporosis, Osteoporosis.onset),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"DeID_PatientID"</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">MACE_flag =</span> <span class="fu">if_else</span>(MACE <span class="sc">==</span> <span class="cn">TRUE</span>, <span class="dv">1</span>L, <span class="dv">0</span>L, <span class="at">missing =</span> <span class="dv">0</span>L))</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>ids_demo <span class="ot">&lt;-</span> <span class="fu">unique</span>(full_cohort<span class="sc">$</span>DeID_PatientID)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>ids_ldlc <span class="ot">&lt;-</span> <span class="fu">unique</span>(ldlc.data<span class="sc">$</span>DeID_PatientID)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>ldlc_clean <span class="ot">&lt;-</span> ldlc.data <span class="sc">%&gt;%</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(lab_date), <span class="sc">!</span><span class="fu">is.na</span>(AgeInYears)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(value <span class="sc">&gt;</span> <span class="dv">0</span>, value <span class="sc">&lt;=</span> <span class="dv">400</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">BMI =</span> <span class="fu">if_else</span>(BMI <span class="sc">&lt;</span> <span class="dv">10</span> <span class="sc">|</span> BMI <span class="sc">&gt;</span> <span class="dv">80</span>, <span class="cn">NA_real_</span>, BMI)) <span class="sc">%&gt;%</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(AgeInYears <span class="sc">&gt;=</span> <span class="dv">18</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DeID_PatientID, lab_date) <span class="sc">%&gt;%</span></span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">LDL_value  =</span> <span class="fu">mean</span>(value,      <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">AgeInYears =</span> <span class="fu">mean</span>(AgeInYears, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">BMI        =</span> <span class="fu">mean</span>(BMI,        <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups    =</span> <span class="st">"drop"</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(DeID_PatientID, lab_date)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>diag_clean <span class="ot">&lt;-</span> full_cohort <span class="sc">%&gt;%</span></span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span>(MACE_flag <span class="sc">==</span> <span class="dv">1</span>L <span class="sc">&amp;</span> <span class="fu">is.na</span>(MACE.onset))) <span class="sc">%&gt;%</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, MACE.onset, MACE_flag)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>shared_ids  <span class="ot">&lt;-</span> <span class="fu">intersect</span>(diag_clean<span class="sc">$</span>DeID_PatientID, ldlc_clean<span class="sc">$</span>DeID_PatientID)</span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>diag_cohort <span class="ot">&lt;-</span> diag_clean  <span class="sc">%&gt;%</span> <span class="fu">filter</span>(DeID_PatientID <span class="sc">%in%</span> shared_ids)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>ldlc_cohort <span class="ot">&lt;-</span> ldlc_clean  <span class="sc">%&gt;%</span> <span class="fu">filter</span>(DeID_PatientID <span class="sc">%in%</span> shared_ids)</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>encounter.data <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"combined_data/EncounterAll.csv"</span>,</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>                           <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID),</span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">EncounterDate  =</span> <span class="fu">mdy_hm</span>(DeID_AdmitDate)</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>last_encounter <span class="ot">&lt;-</span> encounter.data <span class="sc">%&gt;%</span></span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(EncounterDate), DeID_PatientID <span class="sc">%in%</span> shared_ids) <span class="sc">%&gt;%</span></span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_max</span>(EncounterDate, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, <span class="at">last_encounter_date =</span> EncounterDate)</span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>first_ldlc <span class="ot">&lt;-</span> ldlc_cohort <span class="sc">%&gt;%</span></span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(lab_date, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, <span class="at">t0 =</span> lab_date)</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>base_cohort_full <span class="ot">&lt;-</span> diag_cohort <span class="sc">%&gt;%</span></span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(first_ldlc,     <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(last_encounter, <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">t_end =</span> <span class="fu">case_when</span>(</span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>      MACE_flag <span class="sc">==</span> <span class="dv">1</span>              <span class="sc">~</span> MACE.onset,</span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>      <span class="sc">!</span><span class="fu">is.na</span>(last_encounter_date) <span class="sc">~</span> last_encounter_date,</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                        <span class="sc">~</span> NA_POSIXct_</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>    <span class="at">follow_up_days =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(t_end, t0, <span class="at">units =</span> <span class="st">"days"</span>))</span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>base_cohort <span class="ot">&lt;-</span> base_cohort_full <span class="sc">%&gt;%</span></span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(follow_up_days <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">follow_up_days =</span> <span class="fu">pmin</span>(follow_up_days, <span class="dv">14610</span>))</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>  <span class="at">Step =</span> <span class="fu">c</span>(</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Full demographic cohort"</span>,</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>    <span class="st">"No LDL-C data"</span>,</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MACE=TRUE with missing onset date"</span>,</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Negative or zero follow-up"</span>,</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Final analytic cohort"</span></span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>  <span class="at">N =</span> <span class="fu">c</span>(</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>    <span class="fu">n_distinct</span>(demographic.data<span class="sc">$</span>DeID_PatientID),</span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span><span class="fu">length</span>(<span class="fu">setdiff</span>(ids_demo, ids_ldlc)),</span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>(<span class="fu">nrow</span>(full_cohort <span class="sc">%&gt;%</span> <span class="fu">filter</span>(MACE_flag <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> <span class="fu">is.na</span>(MACE.onset)))),</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>    <span class="sc">-</span>(<span class="fu">nrow</span>(base_cohort_full <span class="sc">%&gt;%</span> <span class="fu">filter</span>(follow_up_days <span class="sc">&lt;=</span> <span class="dv">0</span>))),</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a>    <span class="fu">nrow</span>(base_cohort)</span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"CONSORT flow — cohort derivation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>CONSORT flow — cohort derivation</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Step</th>
+<th style="text-align: right;">N</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Full demographic cohort</td>
+<td style="text-align: right;">201073</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">No LDL-C data</td>
+<td style="text-align: right;">-177667</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MACE=TRUE with missing onset date</td>
+<td style="text-align: right;">-2867</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Negative or zero follow-up</td>
+<td style="text-align: right;">-556</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Final analytic cohort</td>
+<td style="text-align: right;">20015</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The final analytic cohort contains <strong>20015 patients</strong> (2871 incident MACE cases, 17144 controls), identical to the other two scripts.</p>
+<hr>
+</section>
+<section id="building-ldl-c-intervals-with-locf" class="level2">
+<h2 class="anchored" data-anchor-id="building-ldl-c-intervals-with-locf">Building LDL-C Intervals with LOCF</h2>
+<p>The LOCF implementation is identical to the primary script — stale sentinel markers are inserted at <code>t_last_measurement + 730 days</code> so that <code>tmerge</code> creates interval splits at the exact point of staleness. The 730-day primary window is used; the 1825-day sensitivity is run in parallel.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>ldlc_intervals <span class="ot">&lt;-</span> ldlc_cohort <span class="sc">%&gt;%</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(DeID_PatientID <span class="sc">%in%</span> base_cohort<span class="sc">$</span>DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(base_cohort <span class="sc">%&gt;%</span> <span class="fu">select</span>(DeID_PatientID, t0, t_end),</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>            <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(lab_date <span class="sc">&lt;=</span> t_end) <span class="sc">%&gt;%</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">t_meas     =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(lab_date, t0, <span class="at">units =</span> <span class="st">"days"</span>)),</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">LDL_value  =</span> <span class="fu">as.numeric</span>(LDL_value),</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">AgeInYears =</span> <span class="fu">as.numeric</span>(AgeInYears),</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">BMI        =</span> <span class="fu">as.numeric</span>(BMI)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(t_meas <span class="sc">&gt;=</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(DeID_PatientID, t_meas)</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>add_stale_markers <span class="ot">&lt;-</span> <span class="cf">function</span>(intervals_df, cap_days, follow_up_df) {</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  intervals_df <span class="sc">%&gt;%</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(DeID_PatientID, t_meas) <span class="sc">%&gt;%</span></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">next_meas =</span> <span class="fu">lead</span>(t_meas)) <span class="sc">%&gt;%</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">is.na</span>(next_meas) <span class="sc">|</span> next_meas <span class="sc">&gt;</span> t_meas <span class="sc">+</span> cap_days) <span class="sc">%&gt;%</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">stale_t =</span> t_meas <span class="sc">+</span> cap_days) <span class="sc">%&gt;%</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(follow_up_df <span class="sc">%&gt;%</span> <span class="fu">select</span>(DeID_PatientID, follow_up_days),</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>              <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(stale_t <span class="sc">&lt;</span> follow_up_days) <span class="sc">%&gt;%</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>      DeID_PatientID,</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">t_meas     =</span> stale_t,</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>      <span class="at">LDL_value  =</span> <span class="sc">-</span><span class="dv">9999</span>,</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">AgeInYears =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>      <span class="at">BMI        =</span> <span class="cn">NA_real_</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>stale_730  <span class="ot">&lt;-</span> <span class="fu">add_stale_markers</span>(ldlc_intervals, <span class="dv">730</span>,  base_cohort)</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>stale_1825 <span class="ot">&lt;-</span> <span class="fu">add_stale_markers</span>(ldlc_intervals, <span class="dv">1825</span>, base_cohort)</span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>ldlc_intervals_730  <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(ldlc_intervals, stale_730)  <span class="sc">%&gt;%</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(DeID_PatientID, t_meas)</span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>ldlc_intervals_1825 <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(ldlc_intervals, stale_1825) <span class="sc">%&gt;%</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(DeID_PatientID, t_meas)</span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Real LDL-C measurements:"</span>, <span class="fu">nrow</span>(ldlc_intervals), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Real LDL-C measurements: 34186 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Stale markers (730d):"</span>,    <span class="fu">nrow</span>(stale_730), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Stale markers (730d): 25740 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Stale markers (1825d):"</span>,   <span class="fu">nrow</span>(stale_1825), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Stale markers (1825d): 18748 </code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="constructing-tmerge-dataset" class="level2">
+<h2 class="anchored" data-anchor-id="constructing-tmerge-dataset">Constructing tmerge Dataset</h2>
+<p>The tmerge dataset is built identically to the primary script. The cumulative LDL-years covariate is computed <em>after</em> tmerge, directly from the interval structure.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>surv_base <span class="ot">&lt;-</span> base_cohort <span class="sc">%&gt;%</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID),</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">tstart_days    =</span> <span class="dv">0</span>,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">tstop_days     =</span> <span class="fu">as.numeric</span>(follow_up_days)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>build_surv_data <span class="ot">&lt;-</span> <span class="cf">function</span>(ldlc_int) {</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>  sd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">data1 =</span> surv_base, <span class="at">data2 =</span> surv_base,</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">id    =</span> DeID_PatientID,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">MACE  =</span> <span class="fu">event</span>(tstop_days, MACE_flag)</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>  sd <span class="ot">&lt;-</span> <span class="fu">tmerge</span>(</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">data1 =</span> sd,</span>
+<span id="cb10-16"><a href="#cb10-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">data2 =</span> ldlc_int <span class="sc">%&gt;%</span></span>
+<span id="cb10-17"><a href="#cb10-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">mutate</span>(<span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID)),</span>
+<span id="cb10-18"><a href="#cb10-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">id         =</span> DeID_PatientID,</span>
+<span id="cb10-19"><a href="#cb10-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">LDL_value  =</span> <span class="fu">tdc</span>(t_meas, LDL_value),</span>
+<span id="cb10-20"><a href="#cb10-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">AgeInYears =</span> <span class="fu">tdc</span>(t_meas, AgeInYears),</span>
+<span id="cb10-21"><a href="#cb10-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">BMI        =</span> <span class="fu">tdc</span>(t_meas, BMI)</span>
+<span id="cb10-22"><a href="#cb10-22" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb10-23"><a href="#cb10-23" aria-hidden="true" tabindex="-1"></a>  sd <span class="sc">%&gt;%</span></span>
+<span id="cb10-24"><a href="#cb10-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb10-25"><a href="#cb10-25" aria-hidden="true" tabindex="-1"></a>    <span class="fu">fill</span>(BMI, AgeInYears, <span class="at">.direction =</span> <span class="st">"downup"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb10-26"><a href="#cb10-26" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb10-27"><a href="#cb10-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">LDL_value =</span> <span class="fu">if_else</span>(LDL_value <span class="sc">==</span> <span class="sc">-</span><span class="dv">9999</span>, <span class="cn">NA_real_</span>, LDL_value),</span>
+<span id="cb10-28"><a href="#cb10-28" aria-hidden="true" tabindex="-1"></a>      <span class="at">LDL_value =</span> <span class="fu">if_else</span>(<span class="fu">is.na</span>(LDL_value) <span class="sc">&amp;</span> MACE <span class="sc">==</span> <span class="dv">1</span>,</span>
+<span id="cb10-29"><a href="#cb10-29" aria-hidden="true" tabindex="-1"></a>                          <span class="fu">last</span>(<span class="fu">na.omit</span>(LDL_value)), LDL_value)</span>
+<span id="cb10-30"><a href="#cb10-30" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb10-31"><a href="#cb10-31" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb10-32"><a href="#cb10-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(tstop <span class="sc">-</span> tstart <span class="sc">&gt;=</span> <span class="fl">0.5</span>)</span>
+<span id="cb10-33"><a href="#cb10-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb10-34"><a href="#cb10-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-35"><a href="#cb10-35" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span>  <span class="ot">&lt;-</span> <span class="fu">build_surv_data</span>(ldlc_intervals_730)</span>
+<span id="cb10-36"><a href="#cb10-36" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.1825</span> <span class="ot">&lt;-</span> <span class="fu">build_surv_data</span>(ldlc_intervals_1825)</span>
+<span id="cb10-37"><a href="#cb10-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-38"><a href="#cb10-38" aria-hidden="true" tabindex="-1"></a><span class="fu">map_dfr</span>(</span>
+<span id="cb10-39"><a href="#cb10-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="st">`</span><span class="at">730d</span><span class="st">`</span> <span class="ot">=</span> surv.data<span class="fl">.730</span>, <span class="st">`</span><span class="at">1825d</span><span class="st">`</span> <span class="ot">=</span> surv.data<span class="fl">.1825</span>),</span>
+<span id="cb10-40"><a href="#cb10-40" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span> <span class="fu">tibble</span>(</span>
+<span id="cb10-41"><a href="#cb10-41" aria-hidden="true" tabindex="-1"></a>    <span class="at">Rows       =</span> <span class="fu">nrow</span>(.x),</span>
+<span id="cb10-42"><a href="#cb10-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">Patients   =</span> <span class="fu">n_distinct</span>(.x<span class="sc">$</span>DeID_PatientID),</span>
+<span id="cb10-43"><a href="#cb10-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">Events     =</span> <span class="fu">sum</span>(.x<span class="sc">$</span>MACE),</span>
+<span id="cb10-44"><a href="#cb10-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">NA_LDL     =</span> <span class="fu">sum</span>(<span class="fu">is.na</span>(.x<span class="sc">$</span>LDL_value)),</span>
+<span id="cb10-45"><a href="#cb10-45" aria-hidden="true" tabindex="-1"></a>    <span class="at">Pct_NA_LDL =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(<span class="fu">is.na</span>(.x<span class="sc">$</span>LDL_value)), <span class="dv">1</span>)</span>
+<span id="cb10-46"><a href="#cb10-46" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb10-47"><a href="#cb10-47" aria-hidden="true" tabindex="-1"></a>  <span class="at">.id =</span> <span class="st">"Window"</span></span>
+<span id="cb10-48"><a href="#cb10-48" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"tmerge datasets before cumulative LDL computation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>tmerge datasets before cumulative LDL computation</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Window</th>
+<th style="text-align: right;">Rows</th>
+<th style="text-align: right;">Patients</th>
+<th style="text-align: right;">Events</th>
+<th style="text-align: right;">NA_LDL</th>
+<th style="text-align: right;">Pct_NA_LDL</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">730d</td>
+<td style="text-align: right;">59799</td>
+<td style="text-align: right;">20007</td>
+<td style="text-align: right;">2867</td>
+<td style="text-align: right;">23431</td>
+<td style="text-align: right;">39.2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1825d</td>
+<td style="text-align: right;">52818</td>
+<td style="text-align: right;">20007</td>
+<td style="text-align: right;">2866</td>
+<td style="text-align: right;">17129</td>
+<td style="text-align: right;">32.4</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+<section id="computing-cumulative-ldl-years" class="level2">
+<h2 class="anchored" data-anchor-id="computing-cumulative-ldl-years">Computing Cumulative LDL-Years</h2>
+<p>Cumulative LDL-years at each interval is the area under the LDL-C versus time curve accumulated up to <code>tstart</code>, using a LOCF rectangular approximation. Within each patient:</p>
+<ol type="1">
+<li>Sort intervals chronologically</li>
+<li>Carry forward the last known LDL-C value into stale (NA) intervals — this is the LOCF step within the cumulative calculation</li>
+<li>Compute each interval’s LDL contribution: <code>LDL_locf × interval_length_days / 365.25</code></li>
+<li>The cumulative sum up to (but not including) the current interval is the time-varying exposure at <code>tstart</code></li>
+</ol>
+<p>The cumulative sum is lagged by one interval so the exposure at <code>tstart</code> of interval <em>i</em> reflects only LDL-C accumulated <em>before</em> interval <em>i</em> begins — the current interval has not yet been observed by the patient at its start.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>add_cumulative_ldl <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(DeID_PatientID, tstart) <span class="sc">%&gt;%</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 1: fill NA LDL-C (stale intervals) with last known value</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>      <span class="co"># This is LOCF *within* the cumulative calculation</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>      <span class="at">LDL_locf =</span> {</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        x <span class="ot">&lt;-</span> LDL_value</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="co"># Forward fill only (never back-fill — future values unknown at tstart)</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_along</span>(x)) {</span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>          <span class="cf">if</span> (<span class="fu">is.na</span>(x[i]) <span class="sc">&amp;&amp;</span> i <span class="sc">&gt;</span> <span class="dv">1</span> <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(x[i <span class="sc">-</span> <span class="dv">1</span>])) x[i] <span class="ot">&lt;-</span> x[i <span class="sc">-</span> <span class="dv">1</span>]</span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>        x</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>      },</span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 2: contribution of each interval in mg/dL-years</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">interval_days    =</span> tstop <span class="sc">-</span> tstart,</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">ldl_contribution =</span> <span class="fu">if_else</span>(</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>        <span class="sc">!</span><span class="fu">is.na</span>(LDL_locf),</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>        LDL_locf <span class="sc">*</span> interval_days <span class="sc">/</span> <span class="fl">365.25</span>,</span>
+<span id="cb11-21"><a href="#cb11-21" aria-hidden="true" tabindex="-1"></a>        <span class="dv">0</span>  <span class="co"># no contribution if no LDL-C ever recorded yet</span></span>
+<span id="cb11-22"><a href="#cb11-22" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb11-23"><a href="#cb11-23" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 3: cumulative LDL-years at the START of each interval</span></span>
+<span id="cb11-24"><a href="#cb11-24" aria-hidden="true" tabindex="-1"></a>      <span class="co"># lag() shifts cumsum forward by 1 so current interval is not included</span></span>
+<span id="cb11-25"><a href="#cb11-25" aria-hidden="true" tabindex="-1"></a>      <span class="at">cumulative_ldl_years =</span> <span class="fu">lag</span>(<span class="fu">cumsum</span>(ldl_contribution), <span class="at">default =</span> <span class="dv">0</span>),</span>
+<span id="cb11-26"><a href="#cb11-26" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 4: time elapsed since t0 at interval start (years)</span></span>
+<span id="cb11-27"><a href="#cb11-27" aria-hidden="true" tabindex="-1"></a>      <span class="at">years_elapsed =</span> tstart <span class="sc">/</span> <span class="fl">365.25</span>,</span>
+<span id="cb11-28"><a href="#cb11-28" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 5: mean LDL-C rate (sensitivity) — cumulative / time</span></span>
+<span id="cb11-29"><a href="#cb11-29" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Add small epsilon to avoid division by zero at tstart = 0</span></span>
+<span id="cb11-30"><a href="#cb11-30" aria-hidden="true" tabindex="-1"></a>      <span class="at">mean_ldl_rate =</span> <span class="fu">if_else</span>(</span>
+<span id="cb11-31"><a href="#cb11-31" aria-hidden="true" tabindex="-1"></a>        years_elapsed <span class="sc">&gt;</span> <span class="dv">0</span>,</span>
+<span id="cb11-32"><a href="#cb11-32" aria-hidden="true" tabindex="-1"></a>        cumulative_ldl_years <span class="sc">/</span> years_elapsed,</span>
+<span id="cb11-33"><a href="#cb11-33" aria-hidden="true" tabindex="-1"></a>        LDL_locf  <span class="co"># at t=0, mean rate = first measurement</span></span>
+<span id="cb11-34"><a href="#cb11-34" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb11-35"><a href="#cb11-35" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 6: per-40 mg/dL-year parameterisation</span></span>
+<span id="cb11-36"><a href="#cb11-36" aria-hidden="true" tabindex="-1"></a>      <span class="at">cumldl_40 =</span> cumulative_ldl_years <span class="sc">/</span> <span class="dv">40</span>,</span>
+<span id="cb11-37"><a href="#cb11-37" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Step 7: per-40 mg/dL for mean rate</span></span>
+<span id="cb11-38"><a href="#cb11-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">mean_ldl_rate_40 =</span> mean_ldl_rate <span class="sc">/</span> <span class="dv">40</span></span>
+<span id="cb11-39"><a href="#cb11-39" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb11-40"><a href="#cb11-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ungroup</span>()</span>
+<span id="cb11-41"><a href="#cb11-41" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb11-42"><a href="#cb11-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-43"><a href="#cb11-43" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span>  <span class="ot">&lt;-</span> <span class="fu">add_cumulative_ldl</span>(surv.data<span class="fl">.730</span>)</span>
+<span id="cb11-44"><a href="#cb11-44" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.1825</span> <span class="ot">&lt;-</span> <span class="fu">add_cumulative_ldl</span>(surv.data<span class="fl">.1825</span>)</span>
+<span id="cb11-45"><a href="#cb11-45" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-46"><a href="#cb11-46" aria-hidden="true" tabindex="-1"></a><span class="co"># Sanity checks</span></span>
+<span id="cb11-47"><a href="#cb11-47" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"=== Cumulative LDL-years summary (730d dataset) ===</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>=== Cumulative LDL-years summary (730d dataset) ===</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Min cumulative LDL-years</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">min</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">25th percentile</span><span class="st">`</span>             <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">quantile</span>(cumulative_ldl_years, <span class="fl">0.25</span>), <span class="dv">1</span>),</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Median cumulative LDL-years</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">median</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Mean cumulative LDL-years</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">mean</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">75th percentile</span><span class="st">`</span>             <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">quantile</span>(cumulative_ldl_years, <span class="fl">0.75</span>), <span class="dv">1</span>),</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Max cumulative LDL-years</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">max</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Rows with 0 cumulative</span><span class="st">`</span>      <span class="ot">=</span> <span class="fu">sum</span>(cumulative_ldl_years <span class="sc">==</span> <span class="dv">0</span>),</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">% rows with 0 cumulative</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(cumulative_ldl_years <span class="sc">==</span> <span class="dv">0</span>), <span class="dv">1</span>)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">"Metric"</span>, <span class="at">values_to =</span> <span class="st">"Value"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Cumulative LDL-years distribution across intervals (730d)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Cumulative LDL-years distribution across intervals (730d)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Min cumulative LDL-years</td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">25th percentile</td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Median cumulative LDL-years</td>
+<td style="text-align: right;">203.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mean cumulative LDL-years</td>
+<td style="text-align: right;">403.0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">75th percentile</td>
+<td style="text-align: right;">464.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Max cumulative LDL-years</td>
+<td style="text-align: right;">6612.3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Rows with 0 cumulative</td>
+<td style="text-align: right;">20007.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">% rows with 0 cumulative</td>
+<td style="text-align: right;">33.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Cumulative LDL-years at time of MACE event</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(MACE <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Min at MACE</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">min</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">25th at MACE</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">quantile</span>(cumulative_ldl_years, <span class="fl">0.25</span>), <span class="dv">1</span>),</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Median at MACE</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">median</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Mean at MACE</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">mean</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">75th at MACE</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">quantile</span>(cumulative_ldl_years, <span class="fl">0.75</span>), <span class="dv">1</span>),</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Max at MACE</span><span class="st">`</span>    <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">max</span>(cumulative_ldl_years), <span class="dv">1</span>)</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pivot_longer</span>(<span class="fu">everything</span>(), <span class="at">names_to =</span> <span class="st">"Metric"</span>, <span class="at">values_to =</span> <span class="st">"Value"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Cumulative LDL-years at time of MACE event (730d)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Cumulative LDL-years at time of MACE event (730d)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Metric</th>
+<th style="text-align: right;">Value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Min at MACE</td>
+<td style="text-align: right;">0.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">25th at MACE</td>
+<td style="text-align: right;">158.9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Median at MACE</td>
+<td style="text-align: right;">245.8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mean at MACE</td>
+<td style="text-align: right;">435.9</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">75th at MACE</td>
+<td style="text-align: right;">506.4</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Max at MACE</td>
+<td style="text-align: right;">4098.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Visualise cumulative LDL-years distribution over follow-up time</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(years_elapsed <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">follow_up_band =</span> <span class="fu">cut</span>(years_elapsed,</span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>                              <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">0</span>, <span class="dv">2</span>, <span class="dv">5</span>, <span class="dv">10</span>, <span class="dv">15</span>, <span class="cn">Inf</span>),</span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>                              <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"0-2yr"</span>, <span class="st">"2-5yr"</span>, <span class="st">"5-10yr"</span>,</span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>                                         <span class="st">"10-15yr"</span>, <span class="st">"15yr+"</span>),</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>                              <span class="at">right  =</span> <span class="cn">FALSE</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(follow_up_band) <span class="sc">%&gt;%</span></span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">N                             =</span> <span class="fu">n</span>(),</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Median cumulative LDL-years</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">median</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Mean cumulative LDL-years</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">mean</span>(cumulative_ldl_years), <span class="dv">1</span>),</span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Cumulative LDL-years by follow-up time band — confirms monotonic accumulation"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Cumulative LDL-years by follow-up time band — confirms monotonic accumulation</caption>
+<colgroup>
+<col style="width: 20%">
+<col style="width: 8%">
+<col style="width: 37%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">follow_up_band</th>
+<th style="text-align: right;">N</th>
+<th style="text-align: right;">Median cumulative LDL-years</th>
+<th style="text-align: right;">Mean cumulative LDL-years</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">0-2yr</td>
+<td style="text-align: right;">19800</td>
+<td style="text-align: right;">211.9</td>
+<td style="text-align: right;">211.9</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">2-5yr</td>
+<td style="text-align: right;">5099</td>
+<td style="text-align: right;">331.9</td>
+<td style="text-align: right;">360.0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">6590</td>
+<td style="text-align: right;">706.0</td>
+<td style="text-align: right;">756.0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10-15yr</td>
+<td style="text-align: right;">4296</td>
+<td style="text-align: right;">1199.0</td>
+<td style="text-align: right;">1267.7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15yr+</td>
+<td style="text-align: right;">4028</td>
+<td style="text-align: right;">1785.6</td>
+<td style="text-align: right;">1896.8</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+<section id="adding-time-varying-covariates" class="level2">
+<h2 class="anchored" data-anchor-id="adding-time-varying-covariates">Adding Time-Varying Covariates</h2>
+<p>Statin use (via range join), comorbidities, follow-up period, age category, and the composite cardiometabolic stratum are added identically to the primary script.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Load statin intervals</span></span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>statin_intervals <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>  <span class="st">"combined_data/MedicationOrdersCleanedStatins.csv"</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">DeID_PatientID =</span> <span class="fu">as.character</span>(DeID_PatientID),</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">period_start   =</span> <span class="fu">as_date</span>(period_start),</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">period_end     =</span> <span class="fu">as_date</span>(period_end),</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">intensity      =</span> <span class="fu">factor</span>(intensity, <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"low"</span>, <span class="st">"moderate"</span>, <span class="st">"high"</span>))</span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>statin_tv <span class="ot">&lt;-</span> statin_intervals <span class="sc">%&gt;%</span></span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(first_ldlc, <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">tstart_statin =</span> <span class="fu">as.numeric</span>(period_start <span class="sc">-</span> <span class="fu">as_date</span>(t0)),</span>
+<span id="cb16-17"><a href="#cb16-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">tstop_statin  =</span> <span class="fu">as.numeric</span>(period_end   <span class="sc">-</span> <span class="fu">as_date</span>(t0))</span>
+<span id="cb16-18"><a href="#cb16-18" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-19"><a href="#cb16-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(tstop_statin <span class="sc">&gt;</span> <span class="dv">0</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-20"><a href="#cb16-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">tstart_statin =</span> <span class="fu">pmax</span>(tstart_statin, <span class="dv">0</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb16-21"><a href="#cb16-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(tstop_statin <span class="sc">&gt;</span> tstart_statin) <span class="sc">%&gt;%</span></span>
+<span id="cb16-22"><a href="#cb16-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, tstart_statin, tstop_statin, intensity)</span>
+<span id="cb16-23"><a href="#cb16-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-24"><a href="#cb16-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Load comorbidity onset dates</span></span>
+<span id="cb16-25"><a href="#cb16-25" aria-hidden="true" tabindex="-1"></a>comorbidity_onset <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb16-26"><a href="#cb16-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"combined_data/ComorbiditiesOnset.csv"</span>,</span>
+<span id="cb16-27"><a href="#cb16-27" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb16-28"><a href="#cb16-28" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-29"><a href="#cb16-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-30"><a href="#cb16-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">DeID_PatientID      =</span> <span class="fu">as.character</span>(DeID_PatientID),</span>
+<span id="cb16-31"><a href="#cb16-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">diabetes_onset      =</span> <span class="fu">as_datetime</span>(diabetes_onset),</span>
+<span id="cb16-32"><a href="#cb16-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">hypertension_onset  =</span> <span class="fu">as_datetime</span>(hypertension_onset),</span>
+<span id="cb16-33"><a href="#cb16-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">obesity_onset       =</span> <span class="fu">as_datetime</span>(obesity_onset),</span>
+<span id="cb16-34"><a href="#cb16-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">renal_failure_onset =</span> <span class="fu">as_datetime</span>(renal_failure_onset)</span>
+<span id="cb16-35"><a href="#cb16-35" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb16-36"><a href="#cb16-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-37"><a href="#cb16-37" aria-hidden="true" tabindex="-1"></a>comorbidity_tv <span class="ot">&lt;-</span> comorbidity_onset <span class="sc">%&gt;%</span></span>
+<span id="cb16-38"><a href="#cb16-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">inner_join</span>(first_ldlc, <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-39"><a href="#cb16-39" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb16-40"><a href="#cb16-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">t_diabetes     =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(diabetes_onset,</span>
+<span id="cb16-41"><a href="#cb16-41" aria-hidden="true" tabindex="-1"></a>                                         t0, <span class="at">units =</span> <span class="st">"days"</span>)),</span>
+<span id="cb16-42"><a href="#cb16-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">t_hypertension =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(hypertension_onset,</span>
+<span id="cb16-43"><a href="#cb16-43" aria-hidden="true" tabindex="-1"></a>                                         t0, <span class="at">units =</span> <span class="st">"days"</span>)),</span>
+<span id="cb16-44"><a href="#cb16-44" aria-hidden="true" tabindex="-1"></a>    <span class="at">t_renal        =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(renal_failure_onset,</span>
+<span id="cb16-45"><a href="#cb16-45" aria-hidden="true" tabindex="-1"></a>                                         t0, <span class="at">units =</span> <span class="st">"days"</span>)),</span>
+<span id="cb16-46"><a href="#cb16-46" aria-hidden="true" tabindex="-1"></a>    <span class="at">t_obesity      =</span> <span class="fu">as.numeric</span>(<span class="fu">difftime</span>(obesity_onset,</span>
+<span id="cb16-47"><a href="#cb16-47" aria-hidden="true" tabindex="-1"></a>                                         t0, <span class="at">units =</span> <span class="st">"days"</span>))</span>
+<span id="cb16-48"><a href="#cb16-48" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-49"><a href="#cb16-49" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, t_diabetes, t_hypertension, t_renal, t_obesity)</span>
+<span id="cb16-50"><a href="#cb16-50" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-51"><a href="#cb16-51" aria-hidden="true" tabindex="-1"></a><span class="co"># Baseline age for age_cat</span></span>
+<span id="cb16-52"><a href="#cb16-52" aria-hidden="true" tabindex="-1"></a>baseline_age <span class="ot">&lt;-</span> ldlc_intervals <span class="sc">%&gt;%</span></span>
+<span id="cb16-53"><a href="#cb16-53" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb16-54"><a href="#cb16-54" aria-hidden="true" tabindex="-1"></a>  <span class="fu">slice_min</span>(t_meas, <span class="at">n =</span> <span class="dv">1</span>, <span class="at">with_ties =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-55"><a href="#cb16-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ungroup</span>() <span class="sc">%&gt;%</span></span>
+<span id="cb16-56"><a href="#cb16-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, <span class="at">baseline_age =</span> AgeInYears)</span>
+<span id="cb16-57"><a href="#cb16-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-58"><a href="#cb16-58" aria-hidden="true" tabindex="-1"></a><span class="co"># Add all covariates in a single function applied to both datasets</span></span>
+<span id="cb16-59"><a href="#cb16-59" aria-hidden="true" tabindex="-1"></a>add_all_tvc <span class="ot">&lt;-</span> <span class="cf">function</span>(df) {</span>
+<span id="cb16-60"><a href="#cb16-60" aria-hidden="true" tabindex="-1"></a>  statin_cohort    <span class="ot">&lt;-</span> statin_tv <span class="sc">%&gt;%</span> <span class="fu">filter</span>(DeID_PatientID <span class="sc">%in%</span> base_cohort<span class="sc">$</span>DeID_PatientID)</span>
+<span id="cb16-61"><a href="#cb16-61" aria-hidden="true" tabindex="-1"></a>  comorbidity_cohort <span class="ot">&lt;-</span> comorbidity_tv <span class="sc">%&gt;%</span> <span class="fu">filter</span>(DeID_PatientID <span class="sc">%in%</span> base_cohort<span class="sc">$</span>DeID_PatientID)</span>
+<span id="cb16-62"><a href="#cb16-62" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-63"><a href="#cb16-63" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Step 1: statin via range join</span></span>
+<span id="cb16-64"><a href="#cb16-64" aria-hidden="true" tabindex="-1"></a>  df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb16-65"><a href="#cb16-65" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(statin_cohort,</span>
+<span id="cb16-66"><a href="#cb16-66" aria-hidden="true" tabindex="-1"></a>              <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>, <span class="at">relationship =</span> <span class="st">"many-to-many"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-67"><a href="#cb16-67" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb16-68"><a href="#cb16-68" aria-hidden="true" tabindex="-1"></a>      <span class="at">on_statin_overlap =</span> <span class="sc">!</span><span class="fu">is.na</span>(tstart_statin) <span class="sc">&amp;</span></span>
+<span id="cb16-69"><a href="#cb16-69" aria-hidden="true" tabindex="-1"></a>        tstart <span class="sc">&lt;</span> tstop_statin <span class="sc">&amp;</span></span>
+<span id="cb16-70"><a href="#cb16-70" aria-hidden="true" tabindex="-1"></a>        tstop  <span class="sc">&gt;</span> tstart_statin,</span>
+<span id="cb16-71"><a href="#cb16-71" aria-hidden="true" tabindex="-1"></a>      <span class="at">intensity_match   =</span> <span class="fu">if_else</span>(on_statin_overlap,</span>
+<span id="cb16-72"><a href="#cb16-72" aria-hidden="true" tabindex="-1"></a>                                  <span class="fu">as.character</span>(intensity), <span class="cn">NA_character_</span>)</span>
+<span id="cb16-73"><a href="#cb16-73" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-74"><a href="#cb16-74" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(DeID_PatientID, tstart, tstop) <span class="sc">%&gt;%</span></span>
+<span id="cb16-75"><a href="#cb16-75" aria-hidden="true" tabindex="-1"></a>    <span class="fu">summarise</span>(</span>
+<span id="cb16-76"><a href="#cb16-76" aria-hidden="true" tabindex="-1"></a>      <span class="fu">across</span>(<span class="fu">c</span>(MACE, LDL_value, AgeInYears, BMI, MACE.onset, MACE_flag,</span>
+<span id="cb16-77"><a href="#cb16-77" aria-hidden="true" tabindex="-1"></a>               t0, last_encounter_date, t_end, follow_up_days,</span>
+<span id="cb16-78"><a href="#cb16-78" aria-hidden="true" tabindex="-1"></a>               tstart_days, tstop_days,</span>
+<span id="cb16-79"><a href="#cb16-79" aria-hidden="true" tabindex="-1"></a>               LDL_locf, interval_days, ldl_contribution,</span>
+<span id="cb16-80"><a href="#cb16-80" aria-hidden="true" tabindex="-1"></a>               cumulative_ldl_years, years_elapsed,</span>
+<span id="cb16-81"><a href="#cb16-81" aria-hidden="true" tabindex="-1"></a>               mean_ldl_rate, cumldl_40, mean_ldl_rate_40),</span>
+<span id="cb16-82"><a href="#cb16-82" aria-hidden="true" tabindex="-1"></a>             <span class="sc">~</span> <span class="fu">first</span>(<span class="fu">na.omit</span>(.x))),</span>
+<span id="cb16-83"><a href="#cb16-83" aria-hidden="true" tabindex="-1"></a>      <span class="at">on_statin        =</span> <span class="fu">as.integer</span>(<span class="fu">any</span>(on_statin_overlap, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb16-84"><a href="#cb16-84" aria-hidden="true" tabindex="-1"></a>      <span class="at">statin_intensity =</span> {</span>
+<span id="cb16-85"><a href="#cb16-85" aria-hidden="true" tabindex="-1"></a>        vals <span class="ot">&lt;-</span> <span class="fu">na.omit</span>(intensity_match)</span>
+<span id="cb16-86"><a href="#cb16-86" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (<span class="fu">length</span>(vals) <span class="sc">==</span> <span class="dv">0</span>) <span class="cn">NA_character_</span></span>
+<span id="cb16-87"><a href="#cb16-87" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span> <span class="fu">names</span>(<span class="fu">which.max</span>(<span class="fu">table</span>(vals)))</span>
+<span id="cb16-88"><a href="#cb16-88" aria-hidden="true" tabindex="-1"></a>      },</span>
+<span id="cb16-89"><a href="#cb16-89" aria-hidden="true" tabindex="-1"></a>      <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb16-90"><a href="#cb16-90" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-91"><a href="#cb16-91" aria-hidden="true" tabindex="-1"></a>    <span class="fu">distinct</span>(DeID_PatientID, tstart, tstop, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-92"><a href="#cb16-92" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">statin_intensity =</span> <span class="fu">factor</span>(statin_intensity,</span>
+<span id="cb16-93"><a href="#cb16-93" aria-hidden="true" tabindex="-1"></a>                                     <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"low"</span>, <span class="st">"moderate"</span>, <span class="st">"high"</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb16-94"><a href="#cb16-94" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(DeID_PatientID, tstart)</span>
+<span id="cb16-95"><a href="#cb16-95" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb16-96"><a href="#cb16-96" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Step 2: comorbidities, baseline age, period, age_cat, cardiomet</span></span>
+<span id="cb16-97"><a href="#cb16-97" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb16-98"><a href="#cb16-98" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(comorbidity_cohort, <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-99"><a href="#cb16-99" aria-hidden="true" tabindex="-1"></a>    <span class="fu">left_join</span>(baseline_age,       <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb16-100"><a href="#cb16-100" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb16-101"><a href="#cb16-101" aria-hidden="true" tabindex="-1"></a>      <span class="at">on_diabetes     =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(t_diabetes)     <span class="sc">&amp;</span> tstart <span class="sc">&gt;=</span> t_diabetes),</span>
+<span id="cb16-102"><a href="#cb16-102" aria-hidden="true" tabindex="-1"></a>      <span class="at">on_hypertension =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(t_hypertension) <span class="sc">&amp;</span> tstart <span class="sc">&gt;=</span> t_hypertension),</span>
+<span id="cb16-103"><a href="#cb16-103" aria-hidden="true" tabindex="-1"></a>      <span class="at">on_renal        =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(t_renal)        <span class="sc">&amp;</span> tstart <span class="sc">&gt;=</span> t_renal),</span>
+<span id="cb16-104"><a href="#cb16-104" aria-hidden="true" tabindex="-1"></a>      <span class="at">on_obesity      =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(t_obesity)      <span class="sc">&amp;</span> tstart <span class="sc">&gt;=</span> t_obesity),</span>
+<span id="cb16-105"><a href="#cb16-105" aria-hidden="true" tabindex="-1"></a>      <span class="at">period =</span> <span class="fu">factor</span>(</span>
+<span id="cb16-106"><a href="#cb16-106" aria-hidden="true" tabindex="-1"></a>        <span class="fu">case_when</span>(</span>
+<span id="cb16-107"><a href="#cb16-107" aria-hidden="true" tabindex="-1"></a>          tstart <span class="sc">&lt;</span> <span class="dv">1825</span> <span class="sc">~</span> <span class="st">"0-5yr"</span>,</span>
+<span id="cb16-108"><a href="#cb16-108" aria-hidden="true" tabindex="-1"></a>          tstart <span class="sc">&lt;</span> <span class="dv">3650</span> <span class="sc">~</span> <span class="st">"5-10yr"</span>,</span>
+<span id="cb16-109"><a href="#cb16-109" aria-hidden="true" tabindex="-1"></a>          <span class="cn">TRUE</span>          <span class="sc">~</span> <span class="st">"10yr+"</span></span>
+<span id="cb16-110"><a href="#cb16-110" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb16-111"><a href="#cb16-111" aria-hidden="true" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"0-5yr"</span>, <span class="st">"5-10yr"</span>, <span class="st">"10yr+"</span>)</span>
+<span id="cb16-112"><a href="#cb16-112" aria-hidden="true" tabindex="-1"></a>      ),</span>
+<span id="cb16-113"><a href="#cb16-113" aria-hidden="true" tabindex="-1"></a>      <span class="at">age_cat =</span> <span class="fu">cut</span>(baseline_age,</span>
+<span id="cb16-114"><a href="#cb16-114" aria-hidden="true" tabindex="-1"></a>                    <span class="at">breaks =</span> <span class="fu">c</span>(<span class="dv">18</span>, <span class="dv">45</span>, <span class="dv">55</span>, <span class="dv">65</span>, <span class="dv">75</span>, <span class="cn">Inf</span>),</span>
+<span id="cb16-115"><a href="#cb16-115" aria-hidden="true" tabindex="-1"></a>                    <span class="at">labels =</span> <span class="fu">c</span>(<span class="st">"&lt;45"</span>, <span class="st">"45-54"</span>, <span class="st">"55-64"</span>, <span class="st">"65-74"</span>, <span class="st">"75+"</span>),</span>
+<span id="cb16-116"><a href="#cb16-116" aria-hidden="true" tabindex="-1"></a>                    <span class="at">right  =</span> <span class="cn">FALSE</span>),</span>
+<span id="cb16-117"><a href="#cb16-117" aria-hidden="true" tabindex="-1"></a>      <span class="at">cardiomet =</span> <span class="fu">factor</span>(</span>
+<span id="cb16-118"><a href="#cb16-118" aria-hidden="true" tabindex="-1"></a>        <span class="fu">case_when</span>(</span>
+<span id="cb16-119"><a href="#cb16-119" aria-hidden="true" tabindex="-1"></a>          on_diabetes <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> on_hypertension <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"DM+HTN"</span>,</span>
+<span id="cb16-120"><a href="#cb16-120" aria-hidden="true" tabindex="-1"></a>          on_diabetes <span class="sc">==</span> <span class="dv">1</span> <span class="sc">&amp;</span> on_hypertension <span class="sc">==</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"DM only"</span>,</span>
+<span id="cb16-121"><a href="#cb16-121" aria-hidden="true" tabindex="-1"></a>          on_diabetes <span class="sc">==</span> <span class="dv">0</span> <span class="sc">&amp;</span> on_hypertension <span class="sc">==</span> <span class="dv">1</span> <span class="sc">~</span> <span class="st">"HTN only"</span>,</span>
+<span id="cb16-122"><a href="#cb16-122" aria-hidden="true" tabindex="-1"></a>          <span class="cn">TRUE</span>                                     <span class="sc">~</span> <span class="st">"Neither"</span></span>
+<span id="cb16-123"><a href="#cb16-123" aria-hidden="true" tabindex="-1"></a>        ),</span>
+<span id="cb16-124"><a href="#cb16-124" aria-hidden="true" tabindex="-1"></a>        <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Neither"</span>, <span class="st">"HTN only"</span>, <span class="st">"DM only"</span>, <span class="st">"DM+HTN"</span>)</span>
+<span id="cb16-125"><a href="#cb16-125" aria-hidden="true" tabindex="-1"></a>      )</span>
+<span id="cb16-126"><a href="#cb16-126" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb16-127"><a href="#cb16-127" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(<span class="sc">-</span>t_diabetes, <span class="sc">-</span>t_hypertension, <span class="sc">-</span>t_renal, <span class="sc">-</span>t_obesity)</span>
+<span id="cb16-128"><a href="#cb16-128" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb16-129"><a href="#cb16-129" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-130"><a href="#cb16-130" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span>  <span class="ot">&lt;-</span> <span class="fu">add_all_tvc</span>(surv.data<span class="fl">.730</span>)</span>
+<span id="cb16-131"><a href="#cb16-131" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.1825</span> <span class="ot">&lt;-</span> <span class="fu">add_all_tvc</span>(surv.data<span class="fl">.1825</span>)</span>
+<span id="cb16-132"><a href="#cb16-132" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-133"><a href="#cb16-133" aria-hidden="true" tabindex="-1"></a><span class="co"># Verification</span></span>
+<span id="cb16-134"><a href="#cb16-134" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb16-135"><a href="#cb16-135" aria-hidden="true" tabindex="-1"></a>  <span class="at">Dataset   =</span> <span class="fu">c</span>(<span class="st">"730d"</span>, <span class="st">"1825d"</span>),</span>
+<span id="cb16-136"><a href="#cb16-136" aria-hidden="true" tabindex="-1"></a>  <span class="at">Rows      =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(surv.data<span class="fl">.730</span>),    <span class="fu">nrow</span>(surv.data<span class="fl">.1825</span>)),</span>
+<span id="cb16-137"><a href="#cb16-137" aria-hidden="true" tabindex="-1"></a>  <span class="at">Events    =</span> <span class="fu">c</span>(<span class="fu">sum</span>(surv.data<span class="fl">.730</span><span class="sc">$</span>MACE), <span class="fu">sum</span>(surv.data<span class="fl">.1825</span><span class="sc">$</span>MACE)),</span>
+<span id="cb16-138"><a href="#cb16-138" aria-hidden="true" tabindex="-1"></a>  <span class="at">On_statin =</span> <span class="fu">c</span>(<span class="fu">sum</span>(surv.data<span class="fl">.730</span><span class="sc">$</span>on_statin <span class="sc">==</span> <span class="dv">1</span>),</span>
+<span id="cb16-139"><a href="#cb16-139" aria-hidden="true" tabindex="-1"></a>                <span class="fu">sum</span>(surv.data<span class="fl">.1825</span><span class="sc">$</span>on_statin <span class="sc">==</span> <span class="dv">1</span>)),</span>
+<span id="cb16-140"><a href="#cb16-140" aria-hidden="true" tabindex="-1"></a>  <span class="at">Pct_statin =</span> <span class="fu">c</span>(<span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(surv.data<span class="fl">.730</span><span class="sc">$</span>on_statin <span class="sc">==</span> <span class="dv">1</span>), <span class="dv">1</span>),</span>
+<span id="cb16-141"><a href="#cb16-141" aria-hidden="true" tabindex="-1"></a>                 <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(surv.data<span class="fl">.1825</span><span class="sc">$</span>on_statin <span class="sc">==</span> <span class="dv">1</span>), <span class="dv">1</span>))</span>
+<span id="cb16-142"><a href="#cb16-142" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Dataset summary after all covariates added"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Dataset summary after all covariates added</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Dataset</th>
+<th style="text-align: right;">Rows</th>
+<th style="text-align: right;">Events</th>
+<th style="text-align: right;">On_statin</th>
+<th style="text-align: right;">Pct_statin</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">730d</td>
+<td style="text-align: right;">59799</td>
+<td style="text-align: right;">2867</td>
+<td style="text-align: right;">19001</td>
+<td style="text-align: right;">31.8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">1825d</td>
+<td style="text-align: right;">52818</td>
+<td style="text-align: right;">2866</td>
+<td style="text-align: right;">18349</td>
+<td style="text-align: right;">34.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm cumulative LDL columns survived the range join</span></span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Cumulative LDL columns in surv.data.730:</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Cumulative LDL columns in surv.data.730:</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="fu">print</span>(<span class="fu">c</span>(<span class="st">"cumulative_ldl_years"</span>, <span class="st">"cumldl_40"</span>, <span class="st">"mean_ldl_rate_40"</span>) <span class="sc">%in%</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>        <span class="fu">names</span>(surv.data<span class="fl">.730</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] TRUE TRUE TRUE</code></pre>
+</div>
+</div>
+<hr>
+</section>
+<section id="final-dataset-checks" class="level2">
+<h2 class="anchored" data-anchor-id="final-dataset-checks">Final Dataset Checks</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Confirm cumulative LDL-years is monotonically increasing per patient</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a><span class="co"># (a decrease would indicate a bug in the cumulative calculation)</span></span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>monotone_check <span class="ot">&lt;-</span> surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span></span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(DeID_PatientID, tstart) <span class="sc">%&gt;%</span></span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">any_decrease =</span> <span class="fu">any</span>(<span class="fu">diff</span>(cumulative_ldl_years) <span class="sc">&lt;</span> <span class="sc">-</span><span class="fl">0.001</span>),</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Patients with non-monotone cumulative LDL (should be 0):"</span>,</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">sum</span>(monotone_check<span class="sc">$</span>any_decrease), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Patients with non-monotone cumulative LDL (should be 0): 0 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Events per stratum</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span></span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(MACE <span class="sc">==</span> <span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(period, on_statin, age_cat) <span class="sc">%&gt;%</span></span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(n) <span class="sc">%&gt;%</span></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">head</span>(<span class="dv">15</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"MACE events per stratum (period × statin × age) — primary strata"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>MACE events per stratum (period × statin × age) — primary strata</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">period</th>
+<th style="text-align: right;">on_statin</th>
+<th style="text-align: left;">age_cat</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">75+</td>
+<td style="text-align: right;">13</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">&lt;45</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">75+</td>
+<td style="text-align: right;">19</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">65-74</td>
+<td style="text-align: right;">23</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">45-54</td>
+<td style="text-align: right;">26</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">&lt;45</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">&lt;45</td>
+<td style="text-align: right;">28</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">75+</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">&lt;45</td>
+<td style="text-align: right;">30</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">55-64</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">55-64</td>
+<td style="text-align: right;">34</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">65-74</td>
+<td style="text-align: right;">36</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">75+</td>
+<td style="text-align: right;">37</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">5-10yr</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">45-54</td>
+<td style="text-align: right;">52</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">10yr+</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">65-74</td>
+<td style="text-align: right;">52</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+<section id="cox-proportional-hazards-models" class="level2">
+<h2 class="anchored" data-anchor-id="cox-proportional-hazards-models">Cox Proportional Hazards Models</h2>
+<section id="unadjusted-cumulative-ldl-years-model" class="level3">
+<h3 class="anchored" data-anchor-id="unadjusted-cumulative-ldl-years-model">Unadjusted Cumulative LDL-Years Model</h3>
+<p>The unadjusted model is presented primarily as a methodological reference. Unlike spot LDL-C, cumulative LDL-years may not show the same paradoxical inverse association in the unadjusted model — higher cumulative burden will correlate with longer follow-up, which in turn correlates with more time at risk, partially counteracting the selection bias.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a>fit_unadj_730 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> cumldl_40,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.730</span>, <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>fit_unadj_1825 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> cumldl_40,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.1825</span>, <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>(fit_unadj_730,  <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Model =</span> <span class="st">"Unadjusted (730d)"</span>),</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>(fit_unadj_1825, <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-15"><a href="#cb24-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Model =</span> <span class="st">"Unadjusted (1825d)"</span>)</span>
+<span id="cb24-16"><a href="#cb24-16" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb24-17"><a href="#cb24-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Model, <span class="at">HR =</span> estimate, <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span> <span class="ot">=</span> conf.low,</span>
+<span id="cb24-18"><a href="#cb24-18" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span> <span class="ot">=</span> conf.high, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span> <span class="ot">=</span> p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb24-19"><a href="#cb24-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">4</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb24-20"><a href="#cb24-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Unadjusted model — cumulative LDL-C burden (per 40 mg/dL-years)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Unadjusted model — cumulative LDL-C burden (per 40 mg/dL-years)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">HR</th>
+<th style="text-align: right;">95% CI low</th>
+<th style="text-align: right;">95% CI high</th>
+<th style="text-align: right;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Unadjusted (730d)</td>
+<td style="text-align: right;">1.0112</td>
+<td style="text-align: right;">1.0080</td>
+<td style="text-align: right;">1.0144</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Unadjusted (1825d)</td>
+<td style="text-align: right;">1.0055</td>
+<td style="text-align: right;">1.0016</td>
+<td style="text-align: right;">1.0094</td>
+<td style="text-align: right;">0.006</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="proportional-hazards-unadjusted" class="level3">
+<h3 class="anchored" data-anchor-id="proportional-hazards-unadjusted">Proportional Hazards — Unadjusted</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>ph_unadj <span class="ot">&lt;-</span> <span class="fu">cox.zph</span>(fit_unadj_730)</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Term      =</span> <span class="fu">rownames</span>(ph_unadj<span class="sc">$</span>table),</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Chi-sq</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">round</span>(ph_unadj<span class="sc">$</span>table[, <span class="st">"chisq"</span>], <span class="dv">3</span>),</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">df        =</span> ph_unadj<span class="sc">$</span>table[, <span class="st">"df"</span>],</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">p-value</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(ph_unadj<span class="sc">$</span>table[, <span class="st">"p"</span>], <span class="dv">4</span>)</span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Schoenfeld residuals — unadjusted model (730d)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Schoenfeld residuals — unadjusted model (730d)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Term</th>
+<th style="text-align: right;">Chi-sq</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">cumldl_40</td>
+<td style="text-align: right;">8.829</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.003</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GLOBAL</td>
+<td style="text-align: right;">8.829</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.003</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggcoxzph</span>(ph_unadj, <span class="at">font.main =</span> <span class="dv">12</span>, <span class="at">ggtheme =</span> <span class="fu">theme_minimal</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures-cumulative/ph-unadjusted-1.png" class="img-fluid figure-img" width="2100"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="primary-model-stratified-cox-with-statin-adjustment" class="level3">
+<h3 class="anchored" data-anchor-id="primary-model-stratified-cox-with-statin-adjustment">Primary Model — Stratified Cox with Statin Adjustment</h3>
+<p>The primary model stratifies on statin use (time-varying on/off), age category, follow-up period, and composite cardiometabolic stratum. This matches the stratification structure of the primary time-varying LDL-C model, enabling direct comparison of the two approaches.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb27"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Primary: stratified including statin (time-varying on_statin)</span></span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a>fit_primary_730 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> cumldl_40 <span class="sc">+</span></span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(period) <span class="sc">+</span> <span class="fu">strata</span>(on_statin) <span class="sc">+</span></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(age_cat) <span class="sc">+</span> <span class="fu">strata</span>(cardiomet),</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.730</span>, <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>fit_primary_1825 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> cumldl_40 <span class="sc">+</span></span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(period) <span class="sc">+</span> <span class="fu">strata</span>(on_statin) <span class="sc">+</span></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(age_cat) <span class="sc">+</span> <span class="fu">strata</span>(cardiomet),</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.1825</span>, <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>(fit_primary_730,  <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Model =</span> <span class="st">"Primary — 730d LOCF cap"</span>),</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>(fit_primary_1825, <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">Model =</span> <span class="st">"Sensitivity — 1825d LOCF cap"</span>)</span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Model, <span class="at">HR =</span> estimate, <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span> <span class="ot">=</span> conf.low,</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span> <span class="ot">=</span> conf.high, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span> <span class="ot">=</span> p.value) <span class="sc">%&gt;%</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">4</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Primary model — cumulative LDL-C burden per 40 mg/dL-years"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Primary model — cumulative LDL-C burden per 40 mg/dL-years</caption>
+<colgroup>
+<col style="width: 43%">
+<col style="width: 10%">
+<col style="width: 16%">
+<col style="width: 17%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">HR</th>
+<th style="text-align: right;">95% CI low</th>
+<th style="text-align: right;">95% CI high</th>
+<th style="text-align: right;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Primary — 730d LOCF cap</td>
+<td style="text-align: right;">1.0038</td>
+<td style="text-align: right;">0.9975</td>
+<td style="text-align: right;">1.0100</td>
+<td style="text-align: right;">0.2357</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Sensitivity — 1825d LOCF cap</td>
+<td style="text-align: right;">1.0021</td>
+<td style="text-align: right;">0.9967</td>
+<td style="text-align: right;">1.0075</td>
+<td style="text-align: right;">0.4452</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="proportional-hazards-primary-model" class="level3">
+<h3 class="anchored" data-anchor-id="proportional-hazards-primary-model">Proportional Hazards — Primary Model</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>ph_primary <span class="ot">&lt;-</span> <span class="fu">cox.zph</span>(fit_primary_730)</span>
+<span id="cb28-2"><a href="#cb28-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb28-3"><a href="#cb28-3" aria-hidden="true" tabindex="-1"></a><span class="fu">tibble</span>(</span>
+<span id="cb28-4"><a href="#cb28-4" aria-hidden="true" tabindex="-1"></a>  <span class="at">Term      =</span> <span class="fu">rownames</span>(ph_primary<span class="sc">$</span>table),</span>
+<span id="cb28-5"><a href="#cb28-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">Chi-sq</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">round</span>(ph_primary<span class="sc">$</span>table[, <span class="st">"chisq"</span>], <span class="dv">3</span>),</span>
+<span id="cb28-6"><a href="#cb28-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">df        =</span> ph_primary<span class="sc">$</span>table[, <span class="st">"df"</span>],</span>
+<span id="cb28-7"><a href="#cb28-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">p-value</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(ph_primary<span class="sc">$</span>table[, <span class="st">"p"</span>], <span class="dv">4</span>)</span>
+<span id="cb28-8"><a href="#cb28-8" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Schoenfeld residuals — primary model (730d)"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Schoenfeld residuals — primary model (730d)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Term</th>
+<th style="text-align: right;">Chi-sq</th>
+<th style="text-align: right;">df</th>
+<th style="text-align: right;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">cumldl_40</td>
+<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5596</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">GLOBAL</td>
+<td style="text-align: right;">0.34</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">0.5596</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggcoxzph</span>(ph_primary, <span class="at">font.main =</span> <span class="dv">12</span>, <span class="at">ggtheme =</span> <span class="fu">theme_minimal</span>())</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures-cumulative/ph-primary-1.png" class="img-fluid figure-img" width="2100"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The proportional hazards assumption holds in the primary model (global p &gt; 0.05).</p>
+</section>
+<section id="sensitivity-analyses" class="level3">
+<h3 class="anchored" data-anchor-id="sensitivity-analyses">Sensitivity Analyses</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb30"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Sensitivity 1: No statin stratification</span></span>
+<span id="cb30-2"><a href="#cb30-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Statin effect absorbed into cumulative LDL-years — patients on statins</span></span>
+<span id="cb30-3"><a href="#cb30-3" aria-hidden="true" tabindex="-1"></a><span class="co"># accumulate LDL-years more slowly, so statin use is partially encoded</span></span>
+<span id="cb30-4"><a href="#cb30-4" aria-hidden="true" tabindex="-1"></a><span class="co"># in the exposure itself</span></span>
+<span id="cb30-5"><a href="#cb30-5" aria-hidden="true" tabindex="-1"></a>fit_no_statin_730 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb30-6"><a href="#cb30-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> cumldl_40 <span class="sc">+</span></span>
+<span id="cb30-7"><a href="#cb30-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(period) <span class="sc">+</span> <span class="fu">strata</span>(age_cat) <span class="sc">+</span> <span class="fu">strata</span>(cardiomet),</span>
+<span id="cb30-8"><a href="#cb30-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.730</span>, <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb30-9"><a href="#cb30-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-10"><a href="#cb30-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Sensitivity 2: Mean LDL-C rate instead of cumulative sum</span></span>
+<span id="cb30-12"><a href="#cb30-12" aria-hidden="true" tabindex="-1"></a><span class="co"># (cumulative / years elapsed) — answers "what is the average LDL-C</span></span>
+<span id="cb30-13"><a href="#cb30-13" aria-hidden="true" tabindex="-1"></a><span class="co"># level over follow-up" rather than the total burden</span></span>
+<span id="cb30-14"><a href="#cb30-14" aria-hidden="true" tabindex="-1"></a>fit_mean_rate_730 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb30-15"><a href="#cb30-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> mean_ldl_rate_40 <span class="sc">+</span></span>
+<span id="cb30-16"><a href="#cb30-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(period) <span class="sc">+</span> <span class="fu">strata</span>(on_statin) <span class="sc">+</span></span>
+<span id="cb30-17"><a href="#cb30-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(age_cat) <span class="sc">+</span> <span class="fu">strata</span>(cardiomet),</span>
+<span id="cb30-18"><a href="#cb30-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span> <span class="fu">filter</span>(years_elapsed <span class="sc">&gt;</span> <span class="dv">0</span>),</span>
+<span id="cb30-19"><a href="#cb30-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb30-20"><a href="#cb30-20" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-21"><a href="#cb30-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-22"><a href="#cb30-22" aria-hidden="true" tabindex="-1"></a><span class="co"># Sensitivity 3: Restrict to patients with &gt;=2 LDL-C measurements</span></span>
+<span id="cb30-23"><a href="#cb30-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Single-measurement patients have cumulative LDL that is entirely</span></span>
+<span id="cb30-24"><a href="#cb30-24" aria-hidden="true" tabindex="-1"></a><span class="co"># driven by one observation — this sensitivity checks robustness</span></span>
+<span id="cb30-25"><a href="#cb30-25" aria-hidden="true" tabindex="-1"></a>pts_ge2 <span class="ot">&lt;-</span> ldlc_intervals <span class="sc">%&gt;%</span></span>
+<span id="cb30-26"><a href="#cb30-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(DeID_PatientID) <span class="sc">%&gt;%</span></span>
+<span id="cb30-27"><a href="#cb30-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(n <span class="sc">&gt;=</span> <span class="dv">2</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-28"><a href="#cb30-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(DeID_PatientID)</span>
+<span id="cb30-29"><a href="#cb30-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-30"><a href="#cb30-30" aria-hidden="true" tabindex="-1"></a>fit_ge2_730 <span class="ot">&lt;-</span> <span class="fu">coxph</span>(</span>
+<span id="cb30-31"><a href="#cb30-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">Surv</span>(tstart, tstop, MACE) <span class="sc">~</span> cumldl_40 <span class="sc">+</span></span>
+<span id="cb30-32"><a href="#cb30-32" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(period) <span class="sc">+</span> <span class="fu">strata</span>(on_statin) <span class="sc">+</span></span>
+<span id="cb30-33"><a href="#cb30-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">strata</span>(age_cat) <span class="sc">+</span> <span class="fu">strata</span>(cardiomet),</span>
+<span id="cb30-34"><a href="#cb30-34" aria-hidden="true" tabindex="-1"></a>  <span class="at">data =</span> surv.data<span class="fl">.730</span> <span class="sc">%&gt;%</span> <span class="fu">filter</span>(DeID_PatientID <span class="sc">%in%</span> pts_ge2),</span>
+<span id="cb30-35"><a href="#cb30-35" aria-hidden="true" tabindex="-1"></a>  <span class="at">ties =</span> <span class="st">"efron"</span>, <span class="at">id =</span> DeID_PatientID</span>
+<span id="cb30-36"><a href="#cb30-36" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb30-37"><a href="#cb30-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-38"><a href="#cb30-38" aria-hidden="true" tabindex="-1"></a>extract_hr <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, label, <span class="at">term =</span> <span class="st">"cumldl_40"</span>) {</span>
+<span id="cb30-39"><a href="#cb30-39" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>(fit, <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-40"><a href="#cb30-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">str_detect</span>(.data<span class="sc">$</span>term, <span class="fu">str_replace</span>(term, <span class="st">"_"</span>, <span class="st">"."</span>))) <span class="sc">%&gt;%</span></span>
+<span id="cb30-41"><a href="#cb30-41" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-42"><a href="#cb30-42" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb30-43"><a href="#cb30-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">Model      =</span> label,</span>
+<span id="cb30-44"><a href="#cb30-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">HR         =</span> <span class="fu">round</span>(estimate, <span class="dv">4</span>),</span>
+<span id="cb30-45"><a href="#cb30-45" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">"("</span>, <span class="fu">round</span>(conf.low, <span class="dv">4</span>),</span>
+<span id="cb30-46"><a href="#cb30-46" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"–"</span>, <span class="fu">round</span>(conf.high, <span class="dv">4</span>), <span class="st">")"</span>),</span>
+<span id="cb30-47"><a href="#cb30-47" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">round</span>(p.value, <span class="dv">4</span>),</span>
+<span id="cb30-48"><a href="#cb30-48" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">N obs</span><span class="st">`</span>    <span class="ot">=</span> fit<span class="sc">$</span>n,</span>
+<span id="cb30-49"><a href="#cb30-49" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">N events</span><span class="st">`</span> <span class="ot">=</span> fit<span class="sc">$</span>nevent</span>
+<span id="cb30-50"><a href="#cb30-50" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb30-51"><a href="#cb30-51" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(Model, HR, <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>, <span class="st">`</span><span class="at">N obs</span><span class="st">`</span>, <span class="st">`</span><span class="at">N events</span><span class="st">`</span>)</span>
+<span id="cb30-52"><a href="#cb30-52" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb30-53"><a href="#cb30-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb30-54"><a href="#cb30-54" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb30-55"><a href="#cb30-55" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_hr</span>(fit_unadj_730,     <span class="st">"Unadjusted (730d)"</span>),</span>
+<span id="cb30-56"><a href="#cb30-56" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_hr</span>(fit_primary_730,   <span class="st">"Stratified + statin — PRIMARY (730d)"</span>),</span>
+<span id="cb30-57"><a href="#cb30-57" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_hr</span>(fit_primary_1825,  <span class="st">"Stratified + statin — sensitivity (1825d)"</span>),</span>
+<span id="cb30-58"><a href="#cb30-58" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_hr</span>(fit_no_statin_730, <span class="st">"Stratified, no statin — statin absorbed (730d)"</span>),</span>
+<span id="cb30-59"><a href="#cb30-59" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_hr</span>(fit_ge2_730,       <span class="st">"≥2 LDL-C measurements only (730d)"</span>),</span>
+<span id="cb30-60"><a href="#cb30-60" aria-hidden="true" tabindex="-1"></a>  broom<span class="sc">::</span><span class="fu">tidy</span>(fit_mean_rate_730, <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-61"><a href="#cb30-61" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="fu">str_detect</span>(term, <span class="st">"mean_ldl"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb30-62"><a href="#cb30-62" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice</span>(<span class="dv">1</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-63"><a href="#cb30-63" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb30-64"><a href="#cb30-64" aria-hidden="true" tabindex="-1"></a>      <span class="at">Model      =</span> <span class="st">"Mean LDL-C rate per 40 mg/dL (730d)"</span>,</span>
+<span id="cb30-65"><a href="#cb30-65" aria-hidden="true" tabindex="-1"></a>      <span class="at">HR         =</span> <span class="fu">round</span>(estimate, <span class="dv">4</span>),</span>
+<span id="cb30-66"><a href="#cb30-66" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>   <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">"("</span>, <span class="fu">round</span>(conf.low, <span class="dv">4</span>),</span>
+<span id="cb30-67"><a href="#cb30-67" aria-hidden="true" tabindex="-1"></a>                          <span class="st">"–"</span>, <span class="fu">round</span>(conf.high, <span class="dv">4</span>), <span class="st">")"</span>),</span>
+<span id="cb30-68"><a href="#cb30-68" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">round</span>(p.value, <span class="dv">4</span>),</span>
+<span id="cb30-69"><a href="#cb30-69" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">N obs</span><span class="st">`</span>    <span class="ot">=</span> fit_mean_rate_730<span class="sc">$</span>n,</span>
+<span id="cb30-70"><a href="#cb30-70" aria-hidden="true" tabindex="-1"></a>      <span class="st">`</span><span class="at">N events</span><span class="st">`</span> <span class="ot">=</span> fit_mean_rate_730<span class="sc">$</span>nevent</span>
+<span id="cb30-71"><a href="#cb30-71" aria-hidden="true" tabindex="-1"></a>    ) <span class="sc">%&gt;%</span></span>
+<span id="cb30-72"><a href="#cb30-72" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(Model, HR, <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>, <span class="st">`</span><span class="at">N obs</span><span class="st">`</span>, <span class="st">`</span><span class="at">N events</span><span class="st">`</span>)</span>
+<span id="cb30-73"><a href="#cb30-73" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb30-74"><a href="#cb30-74" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Cumulative LDL-C burden HR across model specifications"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Cumulative LDL-C burden HR across model specifications</caption>
+<colgroup>
+<col style="width: 50%">
+<col style="width: 7%">
+<col style="width: 17%">
+<col style="width: 8%">
+<col style="width: 6%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">HR</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">p-value</th>
+<th style="text-align: right;">N obs</th>
+<th style="text-align: right;">N events</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Unadjusted (730d)</td>
+<td style="text-align: right;">1.0112</td>
+<td style="text-align: left;">(1.008–1.0144)</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">59799</td>
+<td style="text-align: right;">2867</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stratified + statin — PRIMARY (730d)</td>
+<td style="text-align: right;">1.0038</td>
+<td style="text-align: left;">(0.9975–1.01)</td>
+<td style="text-align: right;">0.2357</td>
+<td style="text-align: right;">59799</td>
+<td style="text-align: right;">2867</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Stratified + statin — sensitivity (1825d)</td>
+<td style="text-align: right;">1.0021</td>
+<td style="text-align: left;">(0.9967–1.0075)</td>
+<td style="text-align: right;">0.4452</td>
+<td style="text-align: right;">52818</td>
+<td style="text-align: right;">2866</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Stratified, no statin — statin absorbed (730d)</td>
+<td style="text-align: right;">1.0045</td>
+<td style="text-align: left;">(0.9984–1.0106)</td>
+<td style="text-align: right;">0.1475</td>
+<td style="text-align: right;">59799</td>
+<td style="text-align: right;">2867</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">≥2 LDL-C measurements only (730d)</td>
+<td style="text-align: right;">1.0093</td>
+<td style="text-align: left;">(1.003–1.0157)</td>
+<td style="text-align: right;">0.0039</td>
+<td style="text-align: right;">31781</td>
+<td style="text-align: right;">1030</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Mean LDL-C rate per 40 mg/dL (730d)</td>
+<td style="text-align: right;">0.9714</td>
+<td style="text-align: left;">(0.9294–1.0154)</td>
+<td style="text-align: right;">0.1989</td>
+<td style="text-align: right;">39813</td>
+<td style="text-align: right;">2616</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The mean LDL-C rate sensitivity (Sensitivity 2) is particularly informative — it separates the <em>duration</em> component from the <em>level</em> component of cumulative burden. If the mean rate model gives a similar HR to the cumulative model, duration of follow-up is not driving the association. If they diverge, patients with longer follow-up are systematically different in their LDL-C trajectories.</p>
+<p>The ≥2-measurement sensitivity (Sensitivity 3) addresses whether single-measurement patients — who account for 71.7% of the cohort — are distorting the cumulative exposure distribution.</p>
+<hr>
+</section>
+</section>
+<section id="comparison-across-all-three-analytical-approaches" class="level2">
+<h2 class="anchored" data-anchor-id="comparison-across-all-three-analytical-approaches">Comparison Across All Three Analytical Approaches</h2>
+<p>This section places all three LDL-C parameterisations side by side. Values for the time-varying and baseline models are taken from the outputs of the other two scripts. Update if those scripts are re-run.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>comparison <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>  <span class="at">Model =</span> <span class="fu">c</span>(</span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Time-varying (from ldlc_mace_analysis.qmd)</span></span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Time-varying spot LDL-C (730d)"</span>,</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Time-varying spot LDL-C (1825d)"</span>,</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Baseline (from ldlc_mace_baseline.qmd)</span></span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Baseline LDL-C — full cohort"</span>,</span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Baseline LDL-C — statin-naive"</span>,</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Cumulative (this script — extracted below)</span></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Cumulative LDL-years — primary (730d)"</span>,</span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Cumulative LDL-years — sensitivity (1825d)"</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">Approach =</span> <span class="fu">c</span>(</span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Time-varying"</span>, <span class="st">"Time-varying"</span>,</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fixed baseline"</span>, <span class="st">"Fixed baseline"</span>,</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Cumulative"</span>, <span class="st">"Cumulative"</span></span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">HR per 40 units</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">0.9816</span>, <span class="fl">0.9776</span>, <span class="fl">0.941</span>, <span class="fl">0.941</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">CI_low            =</span> <span class="fu">c</span>(<span class="fl">0.9454</span>, <span class="fl">0.9415</span>, <span class="fl">0.904</span>, <span class="fl">0.904</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
+<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">CI_high           =</span> <span class="fu">c</span>(<span class="fl">1.0191</span>, <span class="fl">1.0150</span>, <span class="fl">0.980</span>, <span class="fl">0.980</span>, <span class="cn">NA</span>, <span class="cn">NA</span>),</span>
+<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>         <span class="ot">=</span> <span class="fu">c</span>(<span class="fl">0.3316</span>, <span class="fl">0.2367</span>, <span class="fl">0.0033</span>, <span class="fl">0.0040</span>, <span class="cn">NA</span>, <span class="cn">NA</span>)</span>
+<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a><span class="co"># Fill in cumulative results from live models</span></span>
+<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>cum_730  <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(fit_primary_730,  <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"cumldl_40"</span>)</span>
+<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>cum_1825 <span class="ot">&lt;-</span> broom<span class="sc">::</span><span class="fu">tidy</span>(fit_primary_1825, <span class="at">exponentiate =</span> <span class="cn">TRUE</span>, <span class="at">conf.int =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(term <span class="sc">==</span> <span class="st">"cumldl_40"</span>)</span>
+<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span><span class="st">`</span><span class="at">HR per 40 units</span><span class="st">`</span>[<span class="dv">5</span>] <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_730<span class="sc">$</span>estimate, <span class="dv">4</span>)</span>
+<span id="cb31-31"><a href="#cb31-31" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span>CI_low[<span class="dv">5</span>]             <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_730<span class="sc">$</span>conf.low, <span class="dv">4</span>)</span>
+<span id="cb31-32"><a href="#cb31-32" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span>CI_high[<span class="dv">5</span>]            <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_730<span class="sc">$</span>conf.high, <span class="dv">4</span>)</span>
+<span id="cb31-33"><a href="#cb31-33" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span><span class="st">`</span><span class="at">p-value</span><span class="st">`</span>[<span class="dv">5</span>]          <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_730<span class="sc">$</span>p.value, <span class="dv">4</span>)</span>
+<span id="cb31-34"><a href="#cb31-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-35"><a href="#cb31-35" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span><span class="st">`</span><span class="at">HR per 40 units</span><span class="st">`</span>[<span class="dv">6</span>] <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_1825<span class="sc">$</span>estimate, <span class="dv">4</span>)</span>
+<span id="cb31-36"><a href="#cb31-36" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span>CI_low[<span class="dv">6</span>]             <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_1825<span class="sc">$</span>conf.low, <span class="dv">4</span>)</span>
+<span id="cb31-37"><a href="#cb31-37" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span>CI_high[<span class="dv">6</span>]            <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_1825<span class="sc">$</span>conf.high, <span class="dv">4</span>)</span>
+<span id="cb31-38"><a href="#cb31-38" aria-hidden="true" tabindex="-1"></a>comparison<span class="sc">$</span><span class="st">`</span><span class="at">p-value</span><span class="st">`</span>[<span class="dv">6</span>]          <span class="ot">&lt;-</span> <span class="fu">round</span>(cum_1825<span class="sc">$</span>p.value, <span class="dv">4</span>)</span>
+<span id="cb31-39"><a href="#cb31-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-40"><a href="#cb31-40" aria-hidden="true" tabindex="-1"></a>comparison <span class="sc">%&gt;%</span></span>
+<span id="cb31-41"><a href="#cb31-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="st">`</span><span class="at">95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">paste0</span>(<span class="st">"("</span>, CI_low, <span class="st">"–"</span>, CI_high, <span class="st">")"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb31-42"><a href="#cb31-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(Model, Approach, <span class="st">`</span><span class="at">HR per 40 units</span><span class="st">`</span>, <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb31-43"><a href="#cb31-43" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"LDL-C effect on MACE — HR per 40 mg/dL (spot/baseline)"</span>,</span>
+<span id="cb31-44"><a href="#cb31-44" aria-hidden="true" tabindex="-1"></a>                         <span class="st">" or per 40 mg/dL-years (cumulative) across all approaches"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>LDL-C effect on MACE — HR per 40 mg/dL (spot/baseline) or per 40 mg/dL-years (cumulative) across all approaches</caption>
+<colgroup>
+<col style="width: 43%">
+<col style="width: 15%">
+<col style="width: 16%">
+<col style="width: 16%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: left;">Approach</th>
+<th style="text-align: right;">HR per 40 units</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Time-varying spot LDL-C (730d)</td>
+<td style="text-align: left;">Time-varying</td>
+<td style="text-align: right;">0.9816</td>
+<td style="text-align: left;">(0.9454–1.0191)</td>
+<td style="text-align: right;">0.3316</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Time-varying spot LDL-C (1825d)</td>
+<td style="text-align: left;">Time-varying</td>
+<td style="text-align: right;">0.9776</td>
+<td style="text-align: left;">(0.9415–1.015)</td>
+<td style="text-align: right;">0.2367</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Baseline LDL-C — full cohort</td>
+<td style="text-align: left;">Fixed baseline</td>
+<td style="text-align: right;">0.9410</td>
+<td style="text-align: left;">(0.904–0.98)</td>
+<td style="text-align: right;">0.0033</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Baseline LDL-C — statin-naive</td>
+<td style="text-align: left;">Fixed baseline</td>
+<td style="text-align: right;">0.9410</td>
+<td style="text-align: left;">(0.904–0.98)</td>
+<td style="text-align: right;">0.0040</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Cumulative LDL-years — primary (730d)</td>
+<td style="text-align: left;">Cumulative</td>
+<td style="text-align: right;">1.0038</td>
+<td style="text-align: left;">(0.9975–1.01)</td>
+<td style="text-align: right;">0.2357</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Cumulative LDL-years — sensitivity (1825d)</td>
+<td style="text-align: left;">Cumulative</td>
+<td style="text-align: right;">1.0021</td>
+<td style="text-align: left;">(0.9967–1.0075)</td>
+<td style="text-align: right;">0.4452</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+<section id="forest-plot-three-analytical-approaches" class="level2">
+<h2 class="anchored" data-anchor-id="forest-plot-three-analytical-approaches">Forest Plot — Three Analytical Approaches</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">theme_set</span>(<span class="fu">theme_minimal</span>())</span>
+<span id="cb32-2"><a href="#cb32-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-3"><a href="#cb32-3" aria-hidden="true" tabindex="-1"></a>forest_data <span class="ot">&lt;-</span> comparison <span class="sc">%&gt;%</span></span>
+<span id="cb32-4"><a href="#cb32-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb32-5"><a href="#cb32-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">Model =</span> <span class="fu">factor</span>(Model, <span class="at">levels =</span> <span class="fu">rev</span>(Model)),</span>
+<span id="cb32-6"><a href="#cb32-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">Approach =</span> <span class="fu">factor</span>(Approach,</span>
+<span id="cb32-7"><a href="#cb32-7" aria-hidden="true" tabindex="-1"></a>                      <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"Time-varying"</span>, <span class="st">"Fixed baseline"</span>, <span class="st">"Cumulative"</span>))</span>
+<span id="cb32-8"><a href="#cb32-8" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb32-9"><a href="#cb32-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb32-10"><a href="#cb32-10" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(forest_data,</span>
+<span id="cb32-11"><a href="#cb32-11" aria-hidden="true" tabindex="-1"></a>       <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">HR per 40 units</span><span class="st">`</span>, <span class="at">xmin =</span> CI_low, <span class="at">xmax =</span> CI_high,</span>
+<span id="cb32-12"><a href="#cb32-12" aria-hidden="true" tabindex="-1"></a>           <span class="at">y =</span> Model, <span class="at">colour =</span> Approach, <span class="at">shape =</span> Approach)) <span class="sc">+</span></span>
+<span id="cb32-13"><a href="#cb32-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">1</span>,    <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb32-14"><a href="#cb32-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fl">1.20</span>, <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">colour =</span> <span class="st">"red"</span>,</span>
+<span id="cb32-15"><a href="#cb32-15" aria-hidden="true" tabindex="-1"></a>             <span class="at">alpha =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb32-16"><a href="#cb32-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">annotate</span>(<span class="st">"text"</span>, <span class="at">x =</span> <span class="fl">1.21</span>, <span class="at">y =</span> <span class="fl">6.4</span>,</span>
+<span id="cb32-17"><a href="#cb32-17" aria-hidden="true" tabindex="-1"></a>           <span class="at">label =</span> <span class="st">"RCT expected</span><span class="sc">\n</span><span class="st">(~HR 1.20)"</span>,</span>
+<span id="cb32-18"><a href="#cb32-18" aria-hidden="true" tabindex="-1"></a>           <span class="at">size =</span> <span class="dv">3</span>, <span class="at">colour =</span> <span class="st">"red"</span>, <span class="at">hjust =</span> <span class="dv">0</span>) <span class="sc">+</span></span>
+<span id="cb32-19"><a href="#cb32-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">height =</span> <span class="fl">0.2</span>) <span class="sc">+</span></span>
+<span id="cb32-20"><a href="#cb32-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>) <span class="sc">+</span></span>
+<span id="cb32-21"><a href="#cb32-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb32-22"><a href="#cb32-22" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Time-varying"</span>   <span class="ot">=</span> <span class="st">"#888888"</span>,</span>
+<span id="cb32-23"><a href="#cb32-23" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fixed baseline"</span> <span class="ot">=</span> <span class="st">"#00274c"</span>,</span>
+<span id="cb32-24"><a href="#cb32-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Cumulative"</span>     <span class="ot">=</span> <span class="st">"#ffcb05"</span></span>
+<span id="cb32-25"><a href="#cb32-25" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb32-26"><a href="#cb32-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb32-27"><a href="#cb32-27" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Time-varying"</span>   <span class="ot">=</span> <span class="dv">16</span>,</span>
+<span id="cb32-28"><a href="#cb32-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Fixed baseline"</span> <span class="ot">=</span> <span class="dv">17</span>,</span>
+<span id="cb32-29"><a href="#cb32-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Cumulative"</span>     <span class="ot">=</span> <span class="dv">15</span></span>
+<span id="cb32-30"><a href="#cb32-30" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb32-31"><a href="#cb32-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_y_discrete</span>() <span class="sc">+</span></span>
+<span id="cb32-32"><a href="#cb32-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb32-33"><a href="#cb32-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"LDL-C effect on MACE — three analytical approaches"</span>,</span>
+<span id="cb32-34"><a href="#cb32-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Per 40 mg/dL (spot/baseline) or per 40 mg/dL-years (cumulative); "</span>,</span>
+<span id="cb32-35"><a href="#cb32-35" aria-hidden="true" tabindex="-1"></a>                      <span class="st">"red dotted line = RCT-expected HR ~1.20"</span>),</span>
+<span id="cb32-36"><a href="#cb32-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Hazard Ratio (95% CI)"</span>,</span>
+<span id="cb32-37"><a href="#cb32-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="cn">NULL</span>,</span>
+<span id="cb32-38"><a href="#cb32-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour   =</span> <span class="st">"Analytical approach"</span>,</span>
+<span id="cb32-39"><a href="#cb32-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape    =</span> <span class="st">"Analytical approach"</span></span>
+<span id="cb32-40"><a href="#cb32-40" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb32-41"><a href="#cb32-41" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb32-42"><a href="#cb32-42" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb32-43"><a href="#cb32-43" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position  =</span> <span class="st">"bottom"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures-cumulative/forest-plot-1.png" class="img-fluid figure-img" width="3300"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="session-information" class="level2">
+<h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.4.3 (2025-02-28)
+Platform: x86_64-pc-linux-gnu
+Running under: Red Hat Enterprise Linux 8.10 (Ootpa)
+
+Matrix products: default
+BLAS:   /sw/pkgs/arc/stacks/gcc/13.2.0/R/4.4.3/lib64/R/lib/libRblas.so 
+LAPACK: /sw/pkgs/arc/stacks/gcc/13.2.0/R/4.4.3/lib64/R/lib/libRlapack.so;  LAPACK version 3.12.0
+
+locale:
+ [1] LC_CTYPE=en_US.UTF-8       LC_NUMERIC=C              
+ [3] LC_TIME=en_US.UTF-8        LC_COLLATE=en_US.UTF-8    
+ [5] LC_MONETARY=en_US.UTF-8    LC_MESSAGES=en_US.UTF-8   
+ [7] LC_PAPER=en_US.UTF-8       LC_NAME=C                 
+ [9] LC_ADDRESS=C               LC_TELEPHONE=C            
+[11] LC_MEASUREMENT=en_US.UTF-8 LC_IDENTIFICATION=C       
+
+time zone: America/Detroit
+tzcode source: system (glibc)
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] survminer_0.4.9 ggpubr_0.6.0    survival_3.7-0  broom_1.0.12   
+ [5] knitr_1.48      lubridate_1.9.3 forcats_1.0.0   stringr_1.5.1  
+ [9] dplyr_1.2.0     purrr_1.0.2     readr_2.1.5     tidyr_1.3.1    
+[13] tibble_3.2.1    ggplot2_3.5.1   tidyverse_2.0.0
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6      xfun_0.45         htmlwidgets_1.6.4 rstatix_0.7.2    
+ [5] lattice_0.22-6    tzdb_0.4.0        vctrs_0.7.1       tools_4.4.3      
+ [9] generics_0.1.3    parallel_4.4.3    fansi_1.0.6       pkgconfig_2.0.3  
+[13] Matrix_1.7-2      data.table_1.17.8 lifecycle_1.0.5   farver_2.1.2     
+[17] compiler_4.4.3    munsell_0.5.1     carData_3.0-5     htmltools_0.5.8.1
+[21] yaml_2.3.9        Formula_1.2-5     crayon_1.5.3      pillar_1.9.0     
+[25] car_3.1-3         abind_1.4-8       km.ci_0.5-6       tidyselect_1.2.1 
+[29] digest_0.6.36     stringi_1.8.4     labeling_0.4.3    splines_4.4.3    
+[33] fastmap_1.2.0     grid_4.4.3        colorspace_2.1-0  cli_3.6.3        
+[37] magrittr_2.0.3    utf8_1.2.4        withr_3.0.0       scales_1.3.0     
+[41] backports_1.5.0   bit64_4.0.5       timechange_0.3.0  rmarkdown_2.27   
+[45] bit_4.0.5         gridExtra_2.3     ggsignif_0.6.4    zoo_1.8-12       
+[49] hms_1.1.3         evaluate_0.24.0   KMsurv_0.1-5      survMisc_0.5.6   
+[53] rlang_1.1.7       xtable_1.8-4      glue_1.8.0        rstudioapi_0.16.0
+[57] vroom_1.6.5       jsonlite_1.8.8    R6_2.5.1         </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const onCopySuccess = function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  }
+  const getTextToCopy = function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+    text: getTextToCopy
+  });
+  clipboard.on('success', onCopySuccess);
+  if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+    const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+      text: getTextToCopy,
+      container: window.document.getElementById('quarto-embedded-source-code-modal')
+    });
+    clipboardModal.on('success', onCopySuccess);
+  }
+    var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+    var mailtoRegex = new RegExp(/^mailto:/);
+      var filterRegex = new RegExp('/' + window.location.host + '/');
+    var isInternal = (href) => {
+        return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+    }
+    // Inspect non-navigation links and adorn them if external
+ 	var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+    for (var i=0; i<links.length; i++) {
+      const link = links[i];
+      if (!isInternal(link.href)) {
+        // undo the damage that might have been done by quarto-nav.js in the case of
+        // links that we want to consider external
+        if (link.dataset.originalHref !== undefined) {
+          link.href = link.dataset.originalHref;
+        }
+      }
+    }
+  function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+    const config = {
+      allowHTML: true,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start',
+    };
+    if (contentFn) {
+      config.content = contentFn;
+    }
+    if (onTriggerFn) {
+      config.onTrigger = onTriggerFn;
+    }
+    if (onUntriggerFn) {
+      config.onUntrigger = onUntriggerFn;
+    }
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      if (note) {
+        return note.innerHTML;
+      } else {
+        return "";
+      }
+    });
+  }
+  const xrefs = window.document.querySelectorAll('a.quarto-xref');
+  const processXRef = (id, note) => {
+    // Strip column container classes
+    const stripColumnClz = (el) => {
+      el.classList.remove("page-full", "page-columns");
+      if (el.children) {
+        for (const child of el.children) {
+          stripColumnClz(child);
+        }
+      }
+    }
+    stripColumnClz(note)
+    if (id === null || id.startsWith('sec-')) {
+      // Special case sections, only their first couple elements
+      const container = document.createElement("div");
+      if (note.children && note.children.length > 2) {
+        container.appendChild(note.children[0].cloneNode(true));
+        for (let i = 1; i < note.children.length; i++) {
+          const child = note.children[i];
+          if (child.tagName === "P" && child.innerText === "") {
+            continue;
+          } else {
+            container.appendChild(child.cloneNode(true));
+            break;
+          }
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(container);
+        }
+        return container.innerHTML
+      } else {
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        return note.innerHTML;
+      }
+    } else {
+      // Remove any anchor links if they are present
+      const anchorLink = note.querySelector('a.anchorjs-link');
+      if (anchorLink) {
+        anchorLink.remove();
+      }
+      if (window.Quarto?.typesetMath) {
+        window.Quarto.typesetMath(note);
+      }
+      if (note.classList.contains("callout")) {
+        return note.outerHTML;
+      } else {
+        return note.innerHTML;
+      }
+    }
+  }
+  for (var i=0; i<xrefs.length; i++) {
+    const xref = xrefs[i];
+    tippyHover(xref, undefined, function(instance) {
+      instance.disable();
+      let url = xref.getAttribute('href');
+      let hash = undefined; 
+      if (url.startsWith('#')) {
+        hash = url;
+      } else {
+        try { hash = new URL(url).hash; } catch {}
+      }
+      if (hash) {
+        const id = hash.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note !== null) {
+          try {
+            const html = processXRef(id, note.cloneNode(true));
+            instance.setContent(html);
+          } finally {
+            instance.enable();
+            instance.show();
+          }
+        } else {
+          // See if we can fetch this
+          fetch(url.split('#')[0])
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.getElementById(id);
+            if (note !== null) {
+              const html = processXRef(id, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      } else {
+        // See if we can fetch a full url (with no hash to target)
+        // This is a special case and we should probably do some content thinning / targeting
+        fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          const parser = new DOMParser();
+          const htmlDoc = parser.parseFromString(html, "text/html");
+          const note = htmlDoc.querySelector('main.content');
+          if (note !== null) {
+            // This should only happen for chapter cross references
+            // (since there is no id in the URL)
+            // remove the first header
+            if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+              note.children[0].remove();
+            }
+            const html = processXRef(null, note);
+            instance.setContent(html);
+          } 
+        }).finally(() => {
+          instance.enable();
+          instance.show();
+        });
+      }
+    }, function(instance) {
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            div.style.left = 0;
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+        // Handle positioning of the toggle
+    window.addEventListener(
+      "resize",
+      throttle(() => {
+        elRect = undefined;
+        if (selectedAnnoteEl) {
+          selectCodeLines(selectedAnnoteEl);
+        }
+      }, 10)
+    );
+    function throttle(fn, ms) {
+    let throttle = false;
+    let timer;
+      return (...args) => {
+        if(!throttle) { // first call gets through
+            fn.apply(this, args);
+            throttle = true;
+        } else { // all the others get throttled
+            if(timer) clearTimeout(timer); // cancel #2
+            timer = setTimeout(() => {
+              fn.apply(this, args);
+              timer = throttle = false;
+            }, ms);
+        }
+      };
+    }
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

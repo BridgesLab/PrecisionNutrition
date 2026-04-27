@@ -46,3 +46,17 @@ Did LD clumping (using `ld-clumping.slurm` script).  This script has two stages
 ## Filtering and Analysis of Instrument SNPS
 
 SNPS were clumped using plink as above and analyzed using the R script `ld_clump_analysis.qmd`.  We filtered to only include SNPS with a European MAF >= 0.01 and calculated summary statistics for both calcium and cholesterol SNPs.  Wrote out the list of filtered SNPs.
+
+## MR Analyses
+
+### Drug Target MR Analyses
+
+Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium results to evaluate the specific effects of HMGCR, PCKS9, and NPC1L1 on serum calcium but there was very low coverage of the latter two in MGI-BioVU GWAS (see `drug_target_mr_analysis.qmd`), so we repeated this analysis using UKBB-based calcium SNPs (see `drug_target_mr_ukb.qmd`)
+
+### Outcome GWAS
+
+To evaluate the effects of cholesterol on vitamin D and bone mineral density we performed another set of MR analyses using `r mr-downstream-analyses.qmd`.
+
+### Summary Figures and Tables
+
+Each script exported several files including instruments used, instrument summary statistics and a variety of model outputs.  These were combined for making figures and tables in the file `r summary-tables.qmd`.

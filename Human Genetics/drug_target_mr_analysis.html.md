@@ -1361,6 +1361,73 @@ harmonised_clean %>%
 :::
 :::
 
+## Instrument Strength Table
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# ── Cumulative F-statistic and R² for each instrument set ─────────────────────
+# Per-SNP R² approximation: 2 × MAF × (1 - MAF) × beta²
+# Overall F-statistic: F = R² × (n - k - 1) / ((1 - R²) × k)
+# (Burgess & Thompson 2017; Pierce et al. 2011)
+
+exposure_n <- c(
+  "LDL-C"             = 440546,    # ieu-b-110 (UKB Neale Lab)
+  "Total cholesterol" = 1320016    # ebi-a-GCST90025953 (GLGC 2021)
+)
+
+instrument_strength <- harmonised_clean %>%
+  group_by(exposure_name, gene) %>%
+  summarise(
+    n_SNPs        = n(),
+    median_F      = round(median(F_stat), 1),
+    min_F         = round(min(F_stat), 1),
+    max_F         = round(max(F_stat), 1),
+    cumulative_R2 = sum(2 * eaf * (1 - eaf) * beta_exp^2, na.rm = TRUE),
+    .groups       = "drop"
+  ) %>%
+  mutate(
+    n_gwas       = exposure_n[exposure_name],
+    overall_F    = round(
+      (cumulative_R2 * (n_gwas - n_SNPs - 1)) /
+        ((1 - cumulative_R2) * n_SNPs),
+      1
+    ),
+    cumulative_R2 = round(cumulative_R2, 4),
+    `R² (%)`     = round(cumulative_R2 * 100, 2)
+  ) %>%
+  select(exposure = exposure_name, gene,
+         n_SNPs, median_F, min_F, max_F,
+         `cumulative R²` = cumulative_R2, `R² (%)`,
+         `overall F` = overall_F) %>%
+  arrange(exposure, gene)
+
+kable(instrument_strength,
+      caption = paste0(
+        "Instrument strength after harmonisation — per-SNP F-statistics, ",
+        "cumulative R², and overall F-statistic. ",
+        "Per-SNP R² = 2 × EAF × (1 - EAF) × beta²; ",
+        "overall F = R²(n - k - 1) / [(1 - R²) × k]. ",
+        "Note: HMGCR allele score uses r²<0.30 clumping so cumulative R² ",
+        "is mildly overestimated due to residual LD."
+      ))
+```
+
+::: {.cell-output-display}
+
+
+Table: Instrument strength after harmonisation — per-SNP F-statistics, cumulative R², and overall F-statistic. Per-SNP R² = 2 × EAF × (1 - EAF) × beta²; overall F = R²(n - k - 1) / [(1 - R²) × k]. Note: HMGCR allele score uses r²<0.30 clumping so cumulative R² is mildly overestimated due to residual LD.
+
+|exposure          |gene  | n_SNPs| median_F| min_F| max_F| cumulative R²| R² (%)| overall F|
+|:-----------------|:-----|------:|--------:|-----:|-----:|-------------:|------:|---------:|
+|LDL-C             |HMGCR |     11|     45.5|  29.9| 852.8|        0.0037|   0.37|     149.2|
+|Total cholesterol |HMGCR |     11|     57.6|  32.3| 865.5|        0.0032|   0.32|     380.5|
+
+
+:::
+:::
+
 
 ### Final Instrument Summary
 

@@ -105,6 +105,9 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <ul class="collapse">
   <li><a href="#extracting-instrument-snps-from-calcium-gwas" id="toc-extracting-instrument-snps-from-calcium-gwas" class="nav-link" data-scroll-target="#extracting-instrument-snps-from-calcium-gwas">Extracting Instrument SNPs from Calcium GWAS</a></li>
   <li><a href="#allele-harmonisation" id="toc-allele-harmonisation" class="nav-link" data-scroll-target="#allele-harmonisation">Allele Harmonisation</a></li>
+  </ul></li>
+  <li><a href="#instrument-strength-table" id="toc-instrument-strength-table" class="nav-link" data-scroll-target="#instrument-strength-table">Instrument Strength Table</a>
+  <ul class="collapse">
   <li><a href="#final-instrument-summary" id="toc-final-instrument-summary" class="nav-link" data-scroll-target="#final-instrument-summary">Final Instrument Summary</a></li>
   </ul></li>
   <li><a href="#mr-analysis" id="toc-mr-analysis" class="nav-link" data-scroll-target="#mr-analysis">MR Analysis</a>
@@ -1756,23 +1759,129 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 </div>
 </div>
 </section>
+</section>
+<section id="instrument-strength-table" class="level2">
+<h2 class="anchored" data-anchor-id="instrument-strength-table">Instrument Strength Table</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Cumulative F-statistic and R² for each instrument set ─────────────────────</span></span>
+<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Per-SNP R² approximation: 2 × MAF × (1 - MAF) × beta²</span></span>
+<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Overall F-statistic: F = R² × (n - k - 1) / ((1 - R²) × k)</span></span>
+<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a><span class="co"># (Burgess &amp; Thompson 2017; Pierce et al. 2011)</span></span>
+<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>exposure_n <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDL-C"</span>             <span class="ot">=</span> <span class="dv">440546</span>,    <span class="co"># ieu-b-110 (UKB Neale Lab)</span></span>
+<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Total cholesterol"</span> <span class="ot">=</span> <span class="dv">1320016</span>    <span class="co"># ebi-a-GCST90025953 (GLGC 2021)</span></span>
+<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>instrument_strength <span class="ot">&lt;-</span> harmonised_clean <span class="sc">%&gt;%</span></span>
+<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(exposure_name, gene) <span class="sc">%&gt;%</span></span>
+<span id="cb73-13"><a href="#cb73-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb73-14"><a href="#cb73-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_SNPs        =</span> <span class="fu">n</span>(),</span>
+<span id="cb73-15"><a href="#cb73-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F      =</span> <span class="fu">round</span>(<span class="fu">median</span>(F_stat), <span class="dv">1</span>),</span>
+<span id="cb73-16"><a href="#cb73-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_F         =</span> <span class="fu">round</span>(<span class="fu">min</span>(F_stat), <span class="dv">1</span>),</span>
+<span id="cb73-17"><a href="#cb73-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">max_F         =</span> <span class="fu">round</span>(<span class="fu">max</span>(F_stat), <span class="dv">1</span>),</span>
+<span id="cb73-18"><a href="#cb73-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">cumulative_R2 =</span> <span class="fu">sum</span>(<span class="dv">2</span> <span class="sc">*</span> eaf <span class="sc">*</span> (<span class="dv">1</span> <span class="sc">-</span> eaf) <span class="sc">*</span> beta_exp<span class="sc">^</span><span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb73-19"><a href="#cb73-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups       =</span> <span class="st">"drop"</span></span>
+<span id="cb73-20"><a href="#cb73-20" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb73-21"><a href="#cb73-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb73-22"><a href="#cb73-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_gwas       =</span> exposure_n[exposure_name],</span>
+<span id="cb73-23"><a href="#cb73-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">overall_F    =</span> <span class="fu">round</span>(</span>
+<span id="cb73-24"><a href="#cb73-24" aria-hidden="true" tabindex="-1"></a>      (cumulative_R2 <span class="sc">*</span> (n_gwas <span class="sc">-</span> n_SNPs <span class="sc">-</span> <span class="dv">1</span>)) <span class="sc">/</span></span>
+<span id="cb73-25"><a href="#cb73-25" aria-hidden="true" tabindex="-1"></a>        ((<span class="dv">1</span> <span class="sc">-</span> cumulative_R2) <span class="sc">*</span> n_SNPs),</span>
+<span id="cb73-26"><a href="#cb73-26" aria-hidden="true" tabindex="-1"></a>      <span class="dv">1</span></span>
+<span id="cb73-27"><a href="#cb73-27" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb73-28"><a href="#cb73-28" aria-hidden="true" tabindex="-1"></a>    <span class="at">cumulative_R2 =</span> <span class="fu">round</span>(cumulative_R2, <span class="dv">4</span>),</span>
+<span id="cb73-29"><a href="#cb73-29" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">R² (%)</span><span class="st">`</span>     <span class="ot">=</span> <span class="fu">round</span>(cumulative_R2 <span class="sc">*</span> <span class="dv">100</span>, <span class="dv">2</span>)</span>
+<span id="cb73-30"><a href="#cb73-30" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb73-31"><a href="#cb73-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="at">exposure =</span> exposure_name, gene,</span>
+<span id="cb73-32"><a href="#cb73-32" aria-hidden="true" tabindex="-1"></a>         n_SNPs, median_F, min_F, max_F,</span>
+<span id="cb73-33"><a href="#cb73-33" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">cumulative R²</span><span class="st">`</span> <span class="ot">=</span> cumulative_R2, <span class="st">`</span><span class="at">R² (%)</span><span class="st">`</span>,</span>
+<span id="cb73-34"><a href="#cb73-34" aria-hidden="true" tabindex="-1"></a>         <span class="st">`</span><span class="at">overall F</span><span class="st">`</span> <span class="ot">=</span> overall_F) <span class="sc">%&gt;%</span></span>
+<span id="cb73-35"><a href="#cb73-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(exposure, gene)</span>
+<span id="cb73-36"><a href="#cb73-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb73-37"><a href="#cb73-37" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(instrument_strength,</span>
+<span id="cb73-38"><a href="#cb73-38" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="fu">paste0</span>(</span>
+<span id="cb73-39"><a href="#cb73-39" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Instrument strength after harmonisation — per-SNP F-statistics, "</span>,</span>
+<span id="cb73-40"><a href="#cb73-40" aria-hidden="true" tabindex="-1"></a>        <span class="st">"cumulative R², and overall F-statistic. "</span>,</span>
+<span id="cb73-41"><a href="#cb73-41" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Per-SNP R² = 2 × EAF × (1 - EAF) × beta²; "</span>,</span>
+<span id="cb73-42"><a href="#cb73-42" aria-hidden="true" tabindex="-1"></a>        <span class="st">"overall F = R²(n - k - 1) / [(1 - R²) × k]. "</span>,</span>
+<span id="cb73-43"><a href="#cb73-43" aria-hidden="true" tabindex="-1"></a>        <span class="st">"Note: HMGCR allele score uses r²&lt;0.30 clumping so cumulative R² "</span>,</span>
+<span id="cb73-44"><a href="#cb73-44" aria-hidden="true" tabindex="-1"></a>        <span class="st">"is mildly overestimated due to residual LD."</span></span>
+<span id="cb73-45"><a href="#cb73-45" aria-hidden="true" tabindex="-1"></a>      ))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Instrument strength after harmonisation — per-SNP F-statistics, cumulative R², and overall F-statistic. Per-SNP R² = 2 × EAF × (1 - EAF) × beta²; overall F = R²(n - k - 1) / [(1 - R²) × k]. Note: HMGCR allele score uses r²&lt;0.30 clumping so cumulative R² is mildly overestimated due to residual LD.</caption>
+<colgroup>
+<col style="width: 21%">
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 10%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 16%">
+<col style="width: 8%">
+<col style="width: 12%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">gene</th>
+<th style="text-align: right;">n_SNPs</th>
+<th style="text-align: right;">median_F</th>
+<th style="text-align: right;">min_F</th>
+<th style="text-align: right;">max_F</th>
+<th style="text-align: right;">cumulative R²</th>
+<th style="text-align: right;">R² (%)</th>
+<th style="text-align: right;">overall F</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">HMGCR</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">45.5</td>
+<td style="text-align: right;">29.9</td>
+<td style="text-align: right;">852.8</td>
+<td style="text-align: right;">0.0037</td>
+<td style="text-align: right;">0.37</td>
+<td style="text-align: right;">149.2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Total cholesterol</td>
+<td style="text-align: left;">HMGCR</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">57.6</td>
+<td style="text-align: right;">32.3</td>
+<td style="text-align: right;">865.5</td>
+<td style="text-align: right;">0.0032</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">380.5</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
 <section id="final-instrument-summary" class="level3">
 <h3 class="anchored" data-anchor-id="final-instrument-summary">Final Instrument Summary</h3>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb73"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb73-1"><a href="#cb73-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Instrument summary including outcome availability</span></span>
-<span id="cb73-2"><a href="#cb73-2" aria-hidden="true" tabindex="-1"></a>harmonised_clean <span class="sc">%&gt;%</span></span>
-<span id="cb73-3"><a href="#cb73-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(exposure_name, gene) <span class="sc">%&gt;%</span></span>
-<span id="cb73-4"><a href="#cb73-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
-<span id="cb73-5"><a href="#cb73-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_SNPs         =</span> <span class="fu">n</span>(),</span>
-<span id="cb73-6"><a href="#cb73-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F       =</span> <span class="fu">round</span>(<span class="fu">median</span>(F_stat), <span class="dv">1</span>),</span>
-<span id="cb73-7"><a href="#cb73-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_F          =</span> <span class="fu">round</span>(<span class="fu">min</span>(F_stat), <span class="dv">1</span>),</span>
-<span id="cb73-8"><a href="#cb73-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_in_outcome   =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(beta_out_h)),</span>
-<span id="cb73-9"><a href="#cb73-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">pct_in_outcome =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(<span class="sc">!</span><span class="fu">is.na</span>(beta_out_h)), <span class="dv">0</span>),</span>
-<span id="cb73-10"><a href="#cb73-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
-<span id="cb73-11"><a href="#cb73-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb73-12"><a href="#cb73-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Final harmonised instrument summary"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Instrument summary including outcome availability</span></span>
+<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a>harmonised_clean <span class="sc">%&gt;%</span></span>
+<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(exposure_name, gene) <span class="sc">%&gt;%</span></span>
+<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_SNPs         =</span> <span class="fu">n</span>(),</span>
+<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">median_F       =</span> <span class="fu">round</span>(<span class="fu">median</span>(F_stat), <span class="dv">1</span>),</span>
+<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">min_F          =</span> <span class="fu">round</span>(<span class="fu">min</span>(F_stat), <span class="dv">1</span>),</span>
+<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_in_outcome   =</span> <span class="fu">sum</span>(<span class="sc">!</span><span class="fu">is.na</span>(beta_out_h)),</span>
+<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">pct_in_outcome =</span> <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> <span class="fu">mean</span>(<span class="sc">!</span><span class="fu">is.na</span>(beta_out_h)), <span class="dv">0</span>),</span>
+<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb74-12"><a href="#cb74-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Final harmonised instrument summary"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -1836,128 +1945,128 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb74"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb74-1"><a href="#cb74-1" aria-hidden="true" tabindex="-1"></a>run_drug_target_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">exposure_col =</span> <span class="st">"exposure_name"</span>) {</span>
-<span id="cb74-2"><a href="#cb74-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-3"><a href="#cb74-3" aria-hidden="true" tabindex="-1"></a>  ivw_re <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_x, se_x, beta_y, se_y) {</span>
-<span id="cb74-4"><a href="#cb74-4" aria-hidden="true" tabindex="-1"></a>    ratio    <span class="ot">&lt;-</span> beta_y <span class="sc">/</span> beta_x</span>
-<span id="cb74-5"><a href="#cb74-5" aria-hidden="true" tabindex="-1"></a>    ratio_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(se_y <span class="sc">/</span> beta_x)</span>
-<span id="cb74-6"><a href="#cb74-6" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> ratio_se<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb74-7"><a href="#cb74-7" aria-hidden="true" tabindex="-1"></a>    theta    <span class="ot">&lt;-</span> <span class="fu">sum</span>(w <span class="sc">*</span> ratio) <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
-<span id="cb74-8"><a href="#cb74-8" aria-hidden="true" tabindex="-1"></a>    Q        <span class="ot">&lt;-</span> <span class="fu">sum</span>(w <span class="sc">*</span> (ratio <span class="sc">-</span> theta)<span class="sc">^</span><span class="dv">2</span>)</span>
-<span id="cb74-9"><a href="#cb74-9" aria-hidden="true" tabindex="-1"></a>    df_Q     <span class="ot">&lt;-</span> <span class="fu">length</span>(ratio) <span class="sc">-</span> <span class="dv">1</span></span>
-<span id="cb74-10"><a href="#cb74-10" aria-hidden="true" tabindex="-1"></a>    Q_p      <span class="ot">&lt;-</span> <span class="fu">pchisq</span>(Q, <span class="at">df =</span> df_Q, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>)</span>
-<span id="cb74-11"><a href="#cb74-11" aria-hidden="true" tabindex="-1"></a>    tau2     <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">0</span>, (Q <span class="sc">-</span> df_Q) <span class="sc">/</span> (<span class="fu">sum</span>(w) <span class="sc">-</span> <span class="fu">sum</span>(w<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>(w)))</span>
-<span id="cb74-12"><a href="#cb74-12" aria-hidden="true" tabindex="-1"></a>    w_re     <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (ratio_se<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> tau2)</span>
-<span id="cb74-13"><a href="#cb74-13" aria-hidden="true" tabindex="-1"></a>    theta_re <span class="ot">&lt;-</span> <span class="fu">sum</span>(w_re <span class="sc">*</span> ratio) <span class="sc">/</span> <span class="fu">sum</span>(w_re)</span>
-<span id="cb74-14"><a href="#cb74-14" aria-hidden="true" tabindex="-1"></a>    se_re    <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">/</span> <span class="fu">sum</span>(w_re))</span>
-<span id="cb74-15"><a href="#cb74-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">estimate =</span> theta_re, <span class="at">se =</span> se_re,</span>
-<span id="cb74-16"><a href="#cb74-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">Q =</span> Q, <span class="at">Q_df =</span> df_Q, <span class="at">Q_p =</span> Q_p, <span class="at">tau2 =</span> tau2)</span>
-<span id="cb74-17"><a href="#cb74-17" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb74-18"><a href="#cb74-18" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-19"><a href="#cb74-19" aria-hidden="true" tabindex="-1"></a>  weighted_median_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_x, se_x, beta_y, se_y, <span class="at">nboot =</span> <span class="dv">1000</span>) {</span>
-<span id="cb74-20"><a href="#cb74-20" aria-hidden="true" tabindex="-1"></a>    ratio    <span class="ot">&lt;-</span> beta_y <span class="sc">/</span> beta_x</span>
-<span id="cb74-21"><a href="#cb74-21" aria-hidden="true" tabindex="-1"></a>    ratio_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(se_y <span class="sc">/</span> beta_x)</span>
-<span id="cb74-22"><a href="#cb74-22" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> ratio_se<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb74-23"><a href="#cb74-23" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> w <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
-<span id="cb74-24"><a href="#cb74-24" aria-hidden="true" tabindex="-1"></a>    ord      <span class="ot">&lt;-</span> <span class="fu">order</span>(ratio)</span>
-<span id="cb74-25"><a href="#cb74-25" aria-hidden="true" tabindex="-1"></a>    wm       <span class="ot">&lt;-</span> ratio[ord][<span class="fu">which</span>(<span class="fu">cumsum</span>(w[ord]) <span class="sc">&gt;=</span> <span class="fl">0.5</span>)[<span class="dv">1</span>]]</span>
-<span id="cb74-26"><a href="#cb74-26" aria-hidden="true" tabindex="-1"></a>    boot_est <span class="ot">&lt;-</span> <span class="fu">replicate</span>(nboot, {</span>
-<span id="cb74-27"><a href="#cb74-27" aria-hidden="true" tabindex="-1"></a>      r_b <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(ratio), ratio, ratio_se)</span>
-<span id="cb74-28"><a href="#cb74-28" aria-hidden="true" tabindex="-1"></a>      r_b[<span class="fu">order</span>(r_b)][<span class="fu">which</span>(<span class="fu">cumsum</span>(<span class="fu">sample</span>(w)) <span class="sc">&gt;=</span> <span class="fl">0.5</span>)[<span class="dv">1</span>]]</span>
-<span id="cb74-29"><a href="#cb74-29" aria-hidden="true" tabindex="-1"></a>    })</span>
-<span id="cb74-30"><a href="#cb74-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">estimate =</span> wm, <span class="at">se =</span> <span class="fu">sd</span>(boot_est))</span>
-<span id="cb74-31"><a href="#cb74-31" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb74-32"><a href="#cb74-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-33"><a href="#cb74-33" aria-hidden="true" tabindex="-1"></a>  egger_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_x, beta_y, se_y) {</span>
-<span id="cb74-34"><a href="#cb74-34" aria-hidden="true" tabindex="-1"></a>    flip <span class="ot">&lt;-</span> beta_x <span class="sc">&lt;</span> <span class="dv">0</span></span>
-<span id="cb74-35"><a href="#cb74-35" aria-hidden="true" tabindex="-1"></a>    bx   <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(flip, <span class="sc">-</span>beta_x,  beta_x)</span>
-<span id="cb74-36"><a href="#cb74-36" aria-hidden="true" tabindex="-1"></a>    by   <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(flip, <span class="sc">-</span>beta_y,  beta_y)</span>
-<span id="cb74-37"><a href="#cb74-37" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> se_y<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb74-38"><a href="#cb74-38" aria-hidden="true" tabindex="-1"></a>    fit  <span class="ot">&lt;-</span> <span class="fu">lm</span>(by <span class="sc">~</span> bx, <span class="at">weights =</span> w)</span>
-<span id="cb74-39"><a href="#cb74-39" aria-hidden="true" tabindex="-1"></a>    s    <span class="ot">&lt;-</span> <span class="fu">summary</span>(fit)</span>
-<span id="cb74-40"><a href="#cb74-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(</span>
-<span id="cb74-41"><a href="#cb74-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">estimate  =</span> <span class="fu">coef</span>(fit)[[<span class="st">"bx"</span>]],</span>
-<span id="cb74-42"><a href="#cb74-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">se        =</span> <span class="fu">coef</span>(s)[[<span class="st">"bx"</span>, <span class="st">"Std. Error"</span>]],</span>
-<span id="cb74-43"><a href="#cb74-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">intercept =</span> <span class="fu">coef</span>(fit)[[<span class="st">"(Intercept)"</span>]],</span>
-<span id="cb74-44"><a href="#cb74-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">int_p     =</span> <span class="fu">coef</span>(s)[[<span class="st">"(Intercept)"</span>, <span class="st">"Pr(&gt;|t|)"</span>]]</span>
-<span id="cb74-45"><a href="#cb74-45" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb74-46"><a href="#cb74-46" aria-hidden="true" tabindex="-1"></a>  }</span>
-<span id="cb74-47"><a href="#cb74-47" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-48"><a href="#cb74-48" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
-<span id="cb74-49"><a href="#cb74-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(exposure_col, <span class="st">"gene"</span>)))) <span class="sc">%&gt;%</span></span>
-<span id="cb74-50"><a href="#cb74-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_map</span>(<span class="sc">~</span> {</span>
-<span id="cb74-51"><a href="#cb74-51" aria-hidden="true" tabindex="-1"></a>      d      <span class="ot">&lt;-</span> .x; key <span class="ot">&lt;-</span> .y</span>
-<span id="cb74-52"><a href="#cb74-52" aria-hidden="true" tabindex="-1"></a>      n_snps <span class="ot">&lt;-</span> <span class="fu">nrow</span>(d)</span>
-<span id="cb74-53"><a href="#cb74-53" aria-hidden="true" tabindex="-1"></a>      bx <span class="ot">&lt;-</span> d<span class="sc">$</span>beta_exp    <span class="co"># ← fixed: exposure beta</span></span>
-<span id="cb74-54"><a href="#cb74-54" aria-hidden="true" tabindex="-1"></a>      sx <span class="ot">&lt;-</span> d<span class="sc">$</span>se_exp      <span class="co"># ← fixed: exposure se</span></span>
-<span id="cb74-55"><a href="#cb74-55" aria-hidden="true" tabindex="-1"></a>      by <span class="ot">&lt;-</span> d<span class="sc">$</span>beta_out_h</span>
-<span id="cb74-56"><a href="#cb74-56" aria-hidden="true" tabindex="-1"></a>      sy <span class="ot">&lt;-</span> d<span class="sc">$</span>se_out_h</span>
-<span id="cb74-57"><a href="#cb74-57" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-58"><a href="#cb74-58" aria-hidden="true" tabindex="-1"></a>      rows <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
-<span id="cb74-59"><a href="#cb74-59" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (n_snps <span class="sc">==</span> <span class="dv">1</span>) {</span>
-<span id="cb74-60"><a href="#cb74-60" aria-hidden="true" tabindex="-1"></a>        wr_est <span class="ot">&lt;-</span> by <span class="sc">/</span> bx; wr_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(sy <span class="sc">/</span> bx)</span>
-<span id="cb74-61"><a href="#cb74-61" aria-hidden="true" tabindex="-1"></a>        rows[[<span class="st">"Wald ratio"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb74-62"><a href="#cb74-62" aria-hidden="true" tabindex="-1"></a>          <span class="at">method =</span> <span class="st">"Wald ratio"</span>,</span>
-<span id="cb74-63"><a href="#cb74-63" aria-hidden="true" tabindex="-1"></a>          <span class="at">estimate =</span> wr_est, <span class="at">se =</span> wr_se,</span>
-<span id="cb74-64"><a href="#cb74-64" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_lo =</span> wr_est <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> wr_se, <span class="at">ci_hi =</span> wr_est <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> wr_se,</span>
-<span id="cb74-65"><a href="#cb74-65" aria-hidden="true" tabindex="-1"></a>          <span class="at">p_value =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(wr_est <span class="sc">/</span> wr_se)),</span>
-<span id="cb74-66"><a href="#cb74-66" aria-hidden="true" tabindex="-1"></a>          <span class="at">n_snps =</span> <span class="dv">1</span>L, <span class="at">Q =</span> <span class="cn">NA_real_</span>, <span class="at">Q_p =</span> <span class="cn">NA_real_</span>, <span class="at">egger_int_p =</span> <span class="cn">NA_real_</span></span>
-<span id="cb74-67"><a href="#cb74-67" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb74-68"><a href="#cb74-68" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
-<span id="cb74-69"><a href="#cb74-69" aria-hidden="true" tabindex="-1"></a>        ivw <span class="ot">&lt;-</span> <span class="fu">ivw_re</span>(bx, sx, by, sy)</span>
-<span id="cb74-70"><a href="#cb74-70" aria-hidden="true" tabindex="-1"></a>        rows[[<span class="st">"IVW-RE"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb74-71"><a href="#cb74-71" aria-hidden="true" tabindex="-1"></a>          <span class="at">method   =</span> <span class="st">"IVW-RE"</span>,</span>
-<span id="cb74-72"><a href="#cb74-72" aria-hidden="true" tabindex="-1"></a>          <span class="at">estimate =</span> ivw<span class="sc">$</span>estimate, <span class="at">se =</span> ivw<span class="sc">$</span>se,</span>
-<span id="cb74-73"><a href="#cb74-73" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_lo    =</span> ivw<span class="sc">$</span>estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> ivw<span class="sc">$</span>se,</span>
-<span id="cb74-74"><a href="#cb74-74" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_hi    =</span> ivw<span class="sc">$</span>estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> ivw<span class="sc">$</span>se,</span>
-<span id="cb74-75"><a href="#cb74-75" aria-hidden="true" tabindex="-1"></a>          <span class="at">p_value  =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(ivw<span class="sc">$</span>estimate <span class="sc">/</span> ivw<span class="sc">$</span>se)),</span>
-<span id="cb74-76"><a href="#cb74-76" aria-hidden="true" tabindex="-1"></a>          <span class="at">n_snps   =</span> n_snps, <span class="at">Q =</span> <span class="fu">round</span>(ivw<span class="sc">$</span>Q, <span class="dv">2</span>),</span>
-<span id="cb74-77"><a href="#cb74-77" aria-hidden="true" tabindex="-1"></a>          <span class="at">Q_p      =</span> <span class="fu">round</span>(ivw<span class="sc">$</span>Q_p, <span class="dv">4</span>), <span class="at">egger_int_p =</span> <span class="cn">NA_real_</span></span>
-<span id="cb74-78"><a href="#cb74-78" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb74-79"><a href="#cb74-79" aria-hidden="true" tabindex="-1"></a>        wm <span class="ot">&lt;-</span> <span class="fu">weighted_median_mr</span>(bx, sx, by, sy)</span>
-<span id="cb74-80"><a href="#cb74-80" aria-hidden="true" tabindex="-1"></a>        rows[[<span class="st">"Weighted median"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb74-81"><a href="#cb74-81" aria-hidden="true" tabindex="-1"></a>          <span class="at">method   =</span> <span class="st">"Weighted median"</span>,</span>
-<span id="cb74-82"><a href="#cb74-82" aria-hidden="true" tabindex="-1"></a>          <span class="at">estimate =</span> wm<span class="sc">$</span>estimate, <span class="at">se =</span> wm<span class="sc">$</span>se,</span>
-<span id="cb74-83"><a href="#cb74-83" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_lo    =</span> wm<span class="sc">$</span>estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> wm<span class="sc">$</span>se,</span>
-<span id="cb74-84"><a href="#cb74-84" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_hi    =</span> wm<span class="sc">$</span>estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> wm<span class="sc">$</span>se,</span>
-<span id="cb74-85"><a href="#cb74-85" aria-hidden="true" tabindex="-1"></a>          <span class="at">p_value  =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(wm<span class="sc">$</span>estimate <span class="sc">/</span> wm<span class="sc">$</span>se)),</span>
-<span id="cb74-86"><a href="#cb74-86" aria-hidden="true" tabindex="-1"></a>          <span class="at">n_snps   =</span> n_snps, <span class="at">Q =</span> <span class="cn">NA_real_</span>, <span class="at">Q_p =</span> <span class="cn">NA_real_</span>, <span class="at">egger_int_p =</span> <span class="cn">NA_real_</span></span>
-<span id="cb74-87"><a href="#cb74-87" aria-hidden="true" tabindex="-1"></a>        )</span>
-<span id="cb74-88"><a href="#cb74-88" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (n_snps <span class="sc">&gt;=</span> <span class="dv">3</span>) {</span>
-<span id="cb74-89"><a href="#cb74-89" aria-hidden="true" tabindex="-1"></a>          eg <span class="ot">&lt;-</span> <span class="fu">egger_mr</span>(bx, by, sy)</span>
-<span id="cb74-90"><a href="#cb74-90" aria-hidden="true" tabindex="-1"></a>          rows[[<span class="st">"MR-Egger"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
-<span id="cb74-91"><a href="#cb74-91" aria-hidden="true" tabindex="-1"></a>            <span class="at">method      =</span> <span class="st">"MR-Egger"</span>,</span>
-<span id="cb74-92"><a href="#cb74-92" aria-hidden="true" tabindex="-1"></a>            <span class="at">estimate    =</span> eg<span class="sc">$</span>estimate, <span class="at">se =</span> eg<span class="sc">$</span>se,</span>
-<span id="cb74-93"><a href="#cb74-93" aria-hidden="true" tabindex="-1"></a>            <span class="at">ci_lo       =</span> eg<span class="sc">$</span>estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> eg<span class="sc">$</span>se,</span>
-<span id="cb74-94"><a href="#cb74-94" aria-hidden="true" tabindex="-1"></a>            <span class="at">ci_hi       =</span> eg<span class="sc">$</span>estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> eg<span class="sc">$</span>se,</span>
-<span id="cb74-95"><a href="#cb74-95" aria-hidden="true" tabindex="-1"></a>            <span class="at">p_value     =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(eg<span class="sc">$</span>estimate <span class="sc">/</span> eg<span class="sc">$</span>se)),</span>
-<span id="cb74-96"><a href="#cb74-96" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_snps      =</span> n_snps, <span class="at">Q =</span> <span class="cn">NA_real_</span>, <span class="at">Q_p =</span> <span class="cn">NA_real_</span>,</span>
-<span id="cb74-97"><a href="#cb74-97" aria-hidden="true" tabindex="-1"></a>            <span class="at">egger_int_p =</span> <span class="fu">round</span>(eg<span class="sc">$</span>int_p, <span class="dv">4</span>)</span>
-<span id="cb74-98"><a href="#cb74-98" aria-hidden="true" tabindex="-1"></a>          )</span>
-<span id="cb74-99"><a href="#cb74-99" aria-hidden="true" tabindex="-1"></a>        }</span>
-<span id="cb74-100"><a href="#cb74-100" aria-hidden="true" tabindex="-1"></a>      }</span>
-<span id="cb74-101"><a href="#cb74-101" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(rows) <span class="sc">%&gt;%</span></span>
-<span id="cb74-102"><a href="#cb74-102" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="at">exposure =</span> key[[exposure_col]], <span class="at">gene =</span> key[[<span class="st">"gene"</span>]])</span>
-<span id="cb74-103"><a href="#cb74-103" aria-hidden="true" tabindex="-1"></a>    }, <span class="at">.keep =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb74-104"><a href="#cb74-104" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bind_rows</span>()</span>
-<span id="cb74-105"><a href="#cb74-105" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb74-106"><a href="#cb74-106" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-107"><a href="#cb74-107" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
-<span id="cb74-108"><a href="#cb74-108" aria-hidden="true" tabindex="-1"></a>mr_results <span class="ot">&lt;-</span> <span class="fu">run_drug_target_mr</span>(harmonised_clean)</span>
-<span id="cb74-109"><a href="#cb74-109" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb74-110"><a href="#cb74-110" aria-hidden="true" tabindex="-1"></a>mr_results <span class="sc">%&gt;%</span></span>
-<span id="cb74-111"><a href="#cb74-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb74-112"><a href="#cb74-112" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(estimate, se, ci_lo, ci_hi), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">4</span>)),</span>
-<span id="cb74-113"><a href="#cb74-113" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value  =</span> <span class="fu">format.pval</span>(p_value, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">eps =</span> <span class="fl">0.001</span>),</span>
-<span id="cb74-114"><a href="#cb74-114" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_glue</span>(<span class="st">"({ci_lo}\u2013{ci_hi})"</span>)</span>
-<span id="cb74-115"><a href="#cb74-115" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
-<span id="cb74-116"><a href="#cb74-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, gene, method, n_snps, estimate, <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>,</span>
-<span id="cb74-117"><a href="#cb74-117" aria-hidden="true" tabindex="-1"></a>         p_value, Q, Q_p, egger_int_p) <span class="sc">%&gt;%</span></span>
-<span id="cb74-118"><a href="#cb74-118" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(exposure, gene, method) <span class="sc">%&gt;%</span></span>
-<span id="cb74-119"><a href="#cb74-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(</span>
-<span id="cb74-120"><a href="#cb74-120" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Drug-target MR — effect of genetically proxied LDL-C lowering "</span>,</span>
-<span id="cb74-121"><a href="#cb74-121" aria-hidden="true" tabindex="-1"></a>    <span class="st">"on serum calcium (SD units per SD LDL-C lowering)"</span></span>
-<span id="cb74-122"><a href="#cb74-122" aria-hidden="true" tabindex="-1"></a>  ))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a>run_drug_target_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(df, <span class="at">exposure_col =</span> <span class="st">"exposure_name"</span>) {</span>
+<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>  ivw_re <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_x, se_x, beta_y, se_y) {</span>
+<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>    ratio    <span class="ot">&lt;-</span> beta_y <span class="sc">/</span> beta_x</span>
+<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>    ratio_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(se_y <span class="sc">/</span> beta_x)</span>
+<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> ratio_se<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>    theta    <span class="ot">&lt;-</span> <span class="fu">sum</span>(w <span class="sc">*</span> ratio) <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
+<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>    Q        <span class="ot">&lt;-</span> <span class="fu">sum</span>(w <span class="sc">*</span> (ratio <span class="sc">-</span> theta)<span class="sc">^</span><span class="dv">2</span>)</span>
+<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>    df_Q     <span class="ot">&lt;-</span> <span class="fu">length</span>(ratio) <span class="sc">-</span> <span class="dv">1</span></span>
+<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a>    Q_p      <span class="ot">&lt;-</span> <span class="fu">pchisq</span>(Q, <span class="at">df =</span> df_Q, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>    tau2     <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="dv">0</span>, (Q <span class="sc">-</span> df_Q) <span class="sc">/</span> (<span class="fu">sum</span>(w) <span class="sc">-</span> <span class="fu">sum</span>(w<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> <span class="fu">sum</span>(w)))</span>
+<span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a>    w_re     <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (ratio_se<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> tau2)</span>
+<span id="cb75-13"><a href="#cb75-13" aria-hidden="true" tabindex="-1"></a>    theta_re <span class="ot">&lt;-</span> <span class="fu">sum</span>(w_re <span class="sc">*</span> ratio) <span class="sc">/</span> <span class="fu">sum</span>(w_re)</span>
+<span id="cb75-14"><a href="#cb75-14" aria-hidden="true" tabindex="-1"></a>    se_re    <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">/</span> <span class="fu">sum</span>(w_re))</span>
+<span id="cb75-15"><a href="#cb75-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">estimate =</span> theta_re, <span class="at">se =</span> se_re,</span>
+<span id="cb75-16"><a href="#cb75-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">Q =</span> Q, <span class="at">Q_df =</span> df_Q, <span class="at">Q_p =</span> Q_p, <span class="at">tau2 =</span> tau2)</span>
+<span id="cb75-17"><a href="#cb75-17" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb75-18"><a href="#cb75-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-19"><a href="#cb75-19" aria-hidden="true" tabindex="-1"></a>  weighted_median_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_x, se_x, beta_y, se_y, <span class="at">nboot =</span> <span class="dv">1000</span>) {</span>
+<span id="cb75-20"><a href="#cb75-20" aria-hidden="true" tabindex="-1"></a>    ratio    <span class="ot">&lt;-</span> beta_y <span class="sc">/</span> beta_x</span>
+<span id="cb75-21"><a href="#cb75-21" aria-hidden="true" tabindex="-1"></a>    ratio_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(se_y <span class="sc">/</span> beta_x)</span>
+<span id="cb75-22"><a href="#cb75-22" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> ratio_se<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb75-23"><a href="#cb75-23" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> w <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
+<span id="cb75-24"><a href="#cb75-24" aria-hidden="true" tabindex="-1"></a>    ord      <span class="ot">&lt;-</span> <span class="fu">order</span>(ratio)</span>
+<span id="cb75-25"><a href="#cb75-25" aria-hidden="true" tabindex="-1"></a>    wm       <span class="ot">&lt;-</span> ratio[ord][<span class="fu">which</span>(<span class="fu">cumsum</span>(w[ord]) <span class="sc">&gt;=</span> <span class="fl">0.5</span>)[<span class="dv">1</span>]]</span>
+<span id="cb75-26"><a href="#cb75-26" aria-hidden="true" tabindex="-1"></a>    boot_est <span class="ot">&lt;-</span> <span class="fu">replicate</span>(nboot, {</span>
+<span id="cb75-27"><a href="#cb75-27" aria-hidden="true" tabindex="-1"></a>      r_b <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="fu">length</span>(ratio), ratio, ratio_se)</span>
+<span id="cb75-28"><a href="#cb75-28" aria-hidden="true" tabindex="-1"></a>      r_b[<span class="fu">order</span>(r_b)][<span class="fu">which</span>(<span class="fu">cumsum</span>(<span class="fu">sample</span>(w)) <span class="sc">&gt;=</span> <span class="fl">0.5</span>)[<span class="dv">1</span>]]</span>
+<span id="cb75-29"><a href="#cb75-29" aria-hidden="true" tabindex="-1"></a>    })</span>
+<span id="cb75-30"><a href="#cb75-30" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(<span class="at">estimate =</span> wm, <span class="at">se =</span> <span class="fu">sd</span>(boot_est))</span>
+<span id="cb75-31"><a href="#cb75-31" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb75-32"><a href="#cb75-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-33"><a href="#cb75-33" aria-hidden="true" tabindex="-1"></a>  egger_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(beta_x, beta_y, se_y) {</span>
+<span id="cb75-34"><a href="#cb75-34" aria-hidden="true" tabindex="-1"></a>    flip <span class="ot">&lt;-</span> beta_x <span class="sc">&lt;</span> <span class="dv">0</span></span>
+<span id="cb75-35"><a href="#cb75-35" aria-hidden="true" tabindex="-1"></a>    bx   <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(flip, <span class="sc">-</span>beta_x,  beta_x)</span>
+<span id="cb75-36"><a href="#cb75-36" aria-hidden="true" tabindex="-1"></a>    by   <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(flip, <span class="sc">-</span>beta_y,  beta_y)</span>
+<span id="cb75-37"><a href="#cb75-37" aria-hidden="true" tabindex="-1"></a>    w    <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> se_y<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb75-38"><a href="#cb75-38" aria-hidden="true" tabindex="-1"></a>    fit  <span class="ot">&lt;-</span> <span class="fu">lm</span>(by <span class="sc">~</span> bx, <span class="at">weights =</span> w)</span>
+<span id="cb75-39"><a href="#cb75-39" aria-hidden="true" tabindex="-1"></a>    s    <span class="ot">&lt;-</span> <span class="fu">summary</span>(fit)</span>
+<span id="cb75-40"><a href="#cb75-40" aria-hidden="true" tabindex="-1"></a>    <span class="fu">list</span>(</span>
+<span id="cb75-41"><a href="#cb75-41" aria-hidden="true" tabindex="-1"></a>      <span class="at">estimate  =</span> <span class="fu">coef</span>(fit)[[<span class="st">"bx"</span>]],</span>
+<span id="cb75-42"><a href="#cb75-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">se        =</span> <span class="fu">coef</span>(s)[[<span class="st">"bx"</span>, <span class="st">"Std. Error"</span>]],</span>
+<span id="cb75-43"><a href="#cb75-43" aria-hidden="true" tabindex="-1"></a>      <span class="at">intercept =</span> <span class="fu">coef</span>(fit)[[<span class="st">"(Intercept)"</span>]],</span>
+<span id="cb75-44"><a href="#cb75-44" aria-hidden="true" tabindex="-1"></a>      <span class="at">int_p     =</span> <span class="fu">coef</span>(s)[[<span class="st">"(Intercept)"</span>, <span class="st">"Pr(&gt;|t|)"</span>]]</span>
+<span id="cb75-45"><a href="#cb75-45" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb75-46"><a href="#cb75-46" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb75-47"><a href="#cb75-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-48"><a href="#cb75-48" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb75-49"><a href="#cb75-49" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_by</span>(<span class="fu">across</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(exposure_col, <span class="st">"gene"</span>)))) <span class="sc">%&gt;%</span></span>
+<span id="cb75-50"><a href="#cb75-50" aria-hidden="true" tabindex="-1"></a>    <span class="fu">group_map</span>(<span class="sc">~</span> {</span>
+<span id="cb75-51"><a href="#cb75-51" aria-hidden="true" tabindex="-1"></a>      d      <span class="ot">&lt;-</span> .x; key <span class="ot">&lt;-</span> .y</span>
+<span id="cb75-52"><a href="#cb75-52" aria-hidden="true" tabindex="-1"></a>      n_snps <span class="ot">&lt;-</span> <span class="fu">nrow</span>(d)</span>
+<span id="cb75-53"><a href="#cb75-53" aria-hidden="true" tabindex="-1"></a>      bx <span class="ot">&lt;-</span> d<span class="sc">$</span>beta_exp    <span class="co"># ← fixed: exposure beta</span></span>
+<span id="cb75-54"><a href="#cb75-54" aria-hidden="true" tabindex="-1"></a>      sx <span class="ot">&lt;-</span> d<span class="sc">$</span>se_exp      <span class="co"># ← fixed: exposure se</span></span>
+<span id="cb75-55"><a href="#cb75-55" aria-hidden="true" tabindex="-1"></a>      by <span class="ot">&lt;-</span> d<span class="sc">$</span>beta_out_h</span>
+<span id="cb75-56"><a href="#cb75-56" aria-hidden="true" tabindex="-1"></a>      sy <span class="ot">&lt;-</span> d<span class="sc">$</span>se_out_h</span>
+<span id="cb75-57"><a href="#cb75-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-58"><a href="#cb75-58" aria-hidden="true" tabindex="-1"></a>      rows <span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb75-59"><a href="#cb75-59" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (n_snps <span class="sc">==</span> <span class="dv">1</span>) {</span>
+<span id="cb75-60"><a href="#cb75-60" aria-hidden="true" tabindex="-1"></a>        wr_est <span class="ot">&lt;-</span> by <span class="sc">/</span> bx; wr_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(sy <span class="sc">/</span> bx)</span>
+<span id="cb75-61"><a href="#cb75-61" aria-hidden="true" tabindex="-1"></a>        rows[[<span class="st">"Wald ratio"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb75-62"><a href="#cb75-62" aria-hidden="true" tabindex="-1"></a>          <span class="at">method =</span> <span class="st">"Wald ratio"</span>,</span>
+<span id="cb75-63"><a href="#cb75-63" aria-hidden="true" tabindex="-1"></a>          <span class="at">estimate =</span> wr_est, <span class="at">se =</span> wr_se,</span>
+<span id="cb75-64"><a href="#cb75-64" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_lo =</span> wr_est <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> wr_se, <span class="at">ci_hi =</span> wr_est <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> wr_se,</span>
+<span id="cb75-65"><a href="#cb75-65" aria-hidden="true" tabindex="-1"></a>          <span class="at">p_value =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(wr_est <span class="sc">/</span> wr_se)),</span>
+<span id="cb75-66"><a href="#cb75-66" aria-hidden="true" tabindex="-1"></a>          <span class="at">n_snps =</span> <span class="dv">1</span>L, <span class="at">Q =</span> <span class="cn">NA_real_</span>, <span class="at">Q_p =</span> <span class="cn">NA_real_</span>, <span class="at">egger_int_p =</span> <span class="cn">NA_real_</span></span>
+<span id="cb75-67"><a href="#cb75-67" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb75-68"><a href="#cb75-68" aria-hidden="true" tabindex="-1"></a>      } <span class="cf">else</span> {</span>
+<span id="cb75-69"><a href="#cb75-69" aria-hidden="true" tabindex="-1"></a>        ivw <span class="ot">&lt;-</span> <span class="fu">ivw_re</span>(bx, sx, by, sy)</span>
+<span id="cb75-70"><a href="#cb75-70" aria-hidden="true" tabindex="-1"></a>        rows[[<span class="st">"IVW-RE"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb75-71"><a href="#cb75-71" aria-hidden="true" tabindex="-1"></a>          <span class="at">method   =</span> <span class="st">"IVW-RE"</span>,</span>
+<span id="cb75-72"><a href="#cb75-72" aria-hidden="true" tabindex="-1"></a>          <span class="at">estimate =</span> ivw<span class="sc">$</span>estimate, <span class="at">se =</span> ivw<span class="sc">$</span>se,</span>
+<span id="cb75-73"><a href="#cb75-73" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_lo    =</span> ivw<span class="sc">$</span>estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> ivw<span class="sc">$</span>se,</span>
+<span id="cb75-74"><a href="#cb75-74" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_hi    =</span> ivw<span class="sc">$</span>estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> ivw<span class="sc">$</span>se,</span>
+<span id="cb75-75"><a href="#cb75-75" aria-hidden="true" tabindex="-1"></a>          <span class="at">p_value  =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(ivw<span class="sc">$</span>estimate <span class="sc">/</span> ivw<span class="sc">$</span>se)),</span>
+<span id="cb75-76"><a href="#cb75-76" aria-hidden="true" tabindex="-1"></a>          <span class="at">n_snps   =</span> n_snps, <span class="at">Q =</span> <span class="fu">round</span>(ivw<span class="sc">$</span>Q, <span class="dv">2</span>),</span>
+<span id="cb75-77"><a href="#cb75-77" aria-hidden="true" tabindex="-1"></a>          <span class="at">Q_p      =</span> <span class="fu">round</span>(ivw<span class="sc">$</span>Q_p, <span class="dv">4</span>), <span class="at">egger_int_p =</span> <span class="cn">NA_real_</span></span>
+<span id="cb75-78"><a href="#cb75-78" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb75-79"><a href="#cb75-79" aria-hidden="true" tabindex="-1"></a>        wm <span class="ot">&lt;-</span> <span class="fu">weighted_median_mr</span>(bx, sx, by, sy)</span>
+<span id="cb75-80"><a href="#cb75-80" aria-hidden="true" tabindex="-1"></a>        rows[[<span class="st">"Weighted median"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb75-81"><a href="#cb75-81" aria-hidden="true" tabindex="-1"></a>          <span class="at">method   =</span> <span class="st">"Weighted median"</span>,</span>
+<span id="cb75-82"><a href="#cb75-82" aria-hidden="true" tabindex="-1"></a>          <span class="at">estimate =</span> wm<span class="sc">$</span>estimate, <span class="at">se =</span> wm<span class="sc">$</span>se,</span>
+<span id="cb75-83"><a href="#cb75-83" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_lo    =</span> wm<span class="sc">$</span>estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> wm<span class="sc">$</span>se,</span>
+<span id="cb75-84"><a href="#cb75-84" aria-hidden="true" tabindex="-1"></a>          <span class="at">ci_hi    =</span> wm<span class="sc">$</span>estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> wm<span class="sc">$</span>se,</span>
+<span id="cb75-85"><a href="#cb75-85" aria-hidden="true" tabindex="-1"></a>          <span class="at">p_value  =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(wm<span class="sc">$</span>estimate <span class="sc">/</span> wm<span class="sc">$</span>se)),</span>
+<span id="cb75-86"><a href="#cb75-86" aria-hidden="true" tabindex="-1"></a>          <span class="at">n_snps   =</span> n_snps, <span class="at">Q =</span> <span class="cn">NA_real_</span>, <span class="at">Q_p =</span> <span class="cn">NA_real_</span>, <span class="at">egger_int_p =</span> <span class="cn">NA_real_</span></span>
+<span id="cb75-87"><a href="#cb75-87" aria-hidden="true" tabindex="-1"></a>        )</span>
+<span id="cb75-88"><a href="#cb75-88" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> (n_snps <span class="sc">&gt;=</span> <span class="dv">3</span>) {</span>
+<span id="cb75-89"><a href="#cb75-89" aria-hidden="true" tabindex="-1"></a>          eg <span class="ot">&lt;-</span> <span class="fu">egger_mr</span>(bx, by, sy)</span>
+<span id="cb75-90"><a href="#cb75-90" aria-hidden="true" tabindex="-1"></a>          rows[[<span class="st">"MR-Egger"</span>]] <span class="ot">&lt;-</span> <span class="fu">tibble</span>(</span>
+<span id="cb75-91"><a href="#cb75-91" aria-hidden="true" tabindex="-1"></a>            <span class="at">method      =</span> <span class="st">"MR-Egger"</span>,</span>
+<span id="cb75-92"><a href="#cb75-92" aria-hidden="true" tabindex="-1"></a>            <span class="at">estimate    =</span> eg<span class="sc">$</span>estimate, <span class="at">se =</span> eg<span class="sc">$</span>se,</span>
+<span id="cb75-93"><a href="#cb75-93" aria-hidden="true" tabindex="-1"></a>            <span class="at">ci_lo       =</span> eg<span class="sc">$</span>estimate <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> eg<span class="sc">$</span>se,</span>
+<span id="cb75-94"><a href="#cb75-94" aria-hidden="true" tabindex="-1"></a>            <span class="at">ci_hi       =</span> eg<span class="sc">$</span>estimate <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> eg<span class="sc">$</span>se,</span>
+<span id="cb75-95"><a href="#cb75-95" aria-hidden="true" tabindex="-1"></a>            <span class="at">p_value     =</span> <span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(eg<span class="sc">$</span>estimate <span class="sc">/</span> eg<span class="sc">$</span>se)),</span>
+<span id="cb75-96"><a href="#cb75-96" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_snps      =</span> n_snps, <span class="at">Q =</span> <span class="cn">NA_real_</span>, <span class="at">Q_p =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb75-97"><a href="#cb75-97" aria-hidden="true" tabindex="-1"></a>            <span class="at">egger_int_p =</span> <span class="fu">round</span>(eg<span class="sc">$</span>int_p, <span class="dv">4</span>)</span>
+<span id="cb75-98"><a href="#cb75-98" aria-hidden="true" tabindex="-1"></a>          )</span>
+<span id="cb75-99"><a href="#cb75-99" aria-hidden="true" tabindex="-1"></a>        }</span>
+<span id="cb75-100"><a href="#cb75-100" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb75-101"><a href="#cb75-101" aria-hidden="true" tabindex="-1"></a>      <span class="fu">bind_rows</span>(rows) <span class="sc">%&gt;%</span></span>
+<span id="cb75-102"><a href="#cb75-102" aria-hidden="true" tabindex="-1"></a>        <span class="fu">mutate</span>(<span class="at">exposure =</span> key[[exposure_col]], <span class="at">gene =</span> key[[<span class="st">"gene"</span>]])</span>
+<span id="cb75-103"><a href="#cb75-103" aria-hidden="true" tabindex="-1"></a>    }, <span class="at">.keep =</span> <span class="cn">TRUE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb75-104"><a href="#cb75-104" aria-hidden="true" tabindex="-1"></a>    <span class="fu">bind_rows</span>()</span>
+<span id="cb75-105"><a href="#cb75-105" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb75-106"><a href="#cb75-106" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-107"><a href="#cb75-107" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">42</span>)</span>
+<span id="cb75-108"><a href="#cb75-108" aria-hidden="true" tabindex="-1"></a>mr_results <span class="ot">&lt;-</span> <span class="fu">run_drug_target_mr</span>(harmonised_clean)</span>
+<span id="cb75-109"><a href="#cb75-109" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb75-110"><a href="#cb75-110" aria-hidden="true" tabindex="-1"></a>mr_results <span class="sc">%&gt;%</span></span>
+<span id="cb75-111"><a href="#cb75-111" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb75-112"><a href="#cb75-112" aria-hidden="true" tabindex="-1"></a>    <span class="fu">across</span>(<span class="fu">c</span>(estimate, se, ci_lo, ci_hi), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">4</span>)),</span>
+<span id="cb75-113"><a href="#cb75-113" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_value  =</span> <span class="fu">format.pval</span>(p_value, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">eps =</span> <span class="fl">0.001</span>),</span>
+<span id="cb75-114"><a href="#cb75-114" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">str_glue</span>(<span class="st">"({ci_lo}\u2013{ci_hi})"</span>)</span>
+<span id="cb75-115"><a href="#cb75-115" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb75-116"><a href="#cb75-116" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, gene, method, n_snps, estimate, <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span>,</span>
+<span id="cb75-117"><a href="#cb75-117" aria-hidden="true" tabindex="-1"></a>         p_value, Q, Q_p, egger_int_p) <span class="sc">%&gt;%</span></span>
+<span id="cb75-118"><a href="#cb75-118" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(exposure, gene, method) <span class="sc">%&gt;%</span></span>
+<span id="cb75-119"><a href="#cb75-119" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(</span>
+<span id="cb75-120"><a href="#cb75-120" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Drug-target MR — effect of genetically proxied LDL-C lowering "</span>,</span>
+<span id="cb75-121"><a href="#cb75-121" aria-hidden="true" tabindex="-1"></a>    <span class="st">"on serum calcium (SD units per SD LDL-C lowering)"</span></span>
+<span id="cb75-122"><a href="#cb75-122" aria-hidden="true" tabindex="-1"></a>  ))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -2071,44 +2180,44 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb75"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb75-1"><a href="#cb75-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
-<span id="cb75-2"><a href="#cb75-2" aria-hidden="true" tabindex="-1"></a>  mr_results <span class="sc">%&gt;%</span></span>
-<span id="cb75-3"><a href="#cb75-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
-<span id="cb75-4"><a href="#cb75-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">label  =</span> <span class="fu">str_glue</span>(<span class="st">"{gene}</span><span class="sc">\n</span><span class="st">({exposure})"</span>),</span>
-<span id="cb75-5"><a href="#cb75-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="fu">factor</span>(method,</span>
-<span id="cb75-6"><a href="#cb75-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"IVW-RE"</span>, <span class="st">"Weighted median"</span>,</span>
-<span id="cb75-7"><a href="#cb75-7" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"MR-Egger"</span>, <span class="st">"Wald ratio"</span>))</span>
-<span id="cb75-8"><a href="#cb75-8" aria-hidden="true" tabindex="-1"></a>    ),</span>
-<span id="cb75-9"><a href="#cb75-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">xmin =</span> ci_lo, <span class="at">xmax =</span> ci_hi,</span>
-<span id="cb75-10"><a href="#cb75-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> label, <span class="at">colour =</span> method, <span class="at">shape =</span> method)</span>
-<span id="cb75-11"><a href="#cb75-11" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
-<span id="cb75-12"><a href="#cb75-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
-<span id="cb75-13"><a href="#cb75-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">height =</span> <span class="fl">0.25</span>,</span>
-<span id="cb75-14"><a href="#cb75-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>)) <span class="sc">+</span></span>
-<span id="cb75-15"><a href="#cb75-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>,</span>
-<span id="cb75-16"><a href="#cb75-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>)) <span class="sc">+</span></span>
-<span id="cb75-17"><a href="#cb75-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
-<span id="cb75-18"><a href="#cb75-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"IVW-RE"</span>          <span class="ot">=</span> <span class="st">"#00274c"</span>,</span>
-<span id="cb75-19"><a href="#cb75-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Weighted median"</span> <span class="ot">=</span> <span class="st">"#CC6677"</span>,</span>
-<span id="cb75-20"><a href="#cb75-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MR-Egger"</span>        <span class="ot">=</span> <span class="st">"#4477AA"</span>,</span>
-<span id="cb75-21"><a href="#cb75-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Wald ratio"</span>      <span class="ot">=</span> <span class="st">"#888888"</span></span>
-<span id="cb75-22"><a href="#cb75-22" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
-<span id="cb75-23"><a href="#cb75-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
-<span id="cb75-24"><a href="#cb75-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"IVW-RE"</span> <span class="ot">=</span> <span class="dv">16</span>, <span class="st">"Weighted median"</span> <span class="ot">=</span> <span class="dv">17</span>,</span>
-<span id="cb75-25"><a href="#cb75-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MR-Egger"</span> <span class="ot">=</span> <span class="dv">15</span>, <span class="st">"Wald ratio"</span> <span class="ot">=</span> <span class="dv">18</span></span>
-<span id="cb75-26"><a href="#cb75-26" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
-<span id="cb75-27"><a href="#cb75-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>exposure, <span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">scales =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
-<span id="cb75-28"><a href="#cb75-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb75-29"><a href="#cb75-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Drug-target MR: effect of LDL-C lowering on serum calcium"</span>,</span>
-<span id="cb75-30"><a href="#cb75-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"HMGCR (statin proxy) and PCSK9 (PCSK9i proxy); NPC1L1 unavailable — see text"</span>,</span>
-<span id="cb75-31"><a href="#cb75-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Change in serum calcium (SD) per SD LDL-C reduction"</span>,</span>
-<span id="cb75-32"><a href="#cb75-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="cn">NULL</span>,</span>
-<span id="cb75-33"><a href="#cb75-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour   =</span> <span class="st">"MR method"</span>,</span>
-<span id="cb75-34"><a href="#cb75-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape    =</span> <span class="st">"MR method"</span></span>
-<span id="cb75-35"><a href="#cb75-35" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb75-36"><a href="#cb75-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
-<span id="cb75-37"><a href="#cb75-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position  =</span> <span class="st">"bottom"</span>,</span>
-<span id="cb75-38"><a href="#cb75-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(</span>
+<span id="cb76-2"><a href="#cb76-2" aria-hidden="true" tabindex="-1"></a>  mr_results <span class="sc">%&gt;%</span></span>
+<span id="cb76-3"><a href="#cb76-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(</span>
+<span id="cb76-4"><a href="#cb76-4" aria-hidden="true" tabindex="-1"></a>      <span class="at">label  =</span> <span class="fu">str_glue</span>(<span class="st">"{gene}</span><span class="sc">\n</span><span class="st">({exposure})"</span>),</span>
+<span id="cb76-5"><a href="#cb76-5" aria-hidden="true" tabindex="-1"></a>      <span class="at">method =</span> <span class="fu">factor</span>(method,</span>
+<span id="cb76-6"><a href="#cb76-6" aria-hidden="true" tabindex="-1"></a>                      <span class="at">levels =</span> <span class="fu">c</span>(<span class="st">"IVW-RE"</span>, <span class="st">"Weighted median"</span>,</span>
+<span id="cb76-7"><a href="#cb76-7" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"MR-Egger"</span>, <span class="st">"Wald ratio"</span>))</span>
+<span id="cb76-8"><a href="#cb76-8" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb76-9"><a href="#cb76-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">aes</span>(<span class="at">x =</span> estimate, <span class="at">xmin =</span> ci_lo, <span class="at">xmax =</span> ci_hi,</span>
+<span id="cb76-10"><a href="#cb76-10" aria-hidden="true" tabindex="-1"></a>      <span class="at">y =</span> label, <span class="at">colour =</span> method, <span class="at">shape =</span> method)</span>
+<span id="cb76-11"><a href="#cb76-11" aria-hidden="true" tabindex="-1"></a>) <span class="sc">+</span></span>
+<span id="cb76-12"><a href="#cb76-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb76-13"><a href="#cb76-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">height =</span> <span class="fl">0.25</span>,</span>
+<span id="cb76-14"><a href="#cb76-14" aria-hidden="true" tabindex="-1"></a>                 <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>)) <span class="sc">+</span></span>
+<span id="cb76-15"><a href="#cb76-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>,</span>
+<span id="cb76-16"><a href="#cb76-16" aria-hidden="true" tabindex="-1"></a>             <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>)) <span class="sc">+</span></span>
+<span id="cb76-17"><a href="#cb76-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb76-18"><a href="#cb76-18" aria-hidden="true" tabindex="-1"></a>    <span class="st">"IVW-RE"</span>          <span class="ot">=</span> <span class="st">"#00274c"</span>,</span>
+<span id="cb76-19"><a href="#cb76-19" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Weighted median"</span> <span class="ot">=</span> <span class="st">"#CC6677"</span>,</span>
+<span id="cb76-20"><a href="#cb76-20" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MR-Egger"</span>        <span class="ot">=</span> <span class="st">"#4477AA"</span>,</span>
+<span id="cb76-21"><a href="#cb76-21" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Wald ratio"</span>      <span class="ot">=</span> <span class="st">"#888888"</span></span>
+<span id="cb76-22"><a href="#cb76-22" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb76-23"><a href="#cb76-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_shape_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(</span>
+<span id="cb76-24"><a href="#cb76-24" aria-hidden="true" tabindex="-1"></a>    <span class="st">"IVW-RE"</span> <span class="ot">=</span> <span class="dv">16</span>, <span class="st">"Weighted median"</span> <span class="ot">=</span> <span class="dv">17</span>,</span>
+<span id="cb76-25"><a href="#cb76-25" aria-hidden="true" tabindex="-1"></a>    <span class="st">"MR-Egger"</span> <span class="ot">=</span> <span class="dv">15</span>, <span class="st">"Wald ratio"</span> <span class="ot">=</span> <span class="dv">18</span></span>
+<span id="cb76-26"><a href="#cb76-26" aria-hidden="true" tabindex="-1"></a>  )) <span class="sc">+</span></span>
+<span id="cb76-27"><a href="#cb76-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>exposure, <span class="at">ncol =</span> <span class="dv">1</span>, <span class="at">scales =</span> <span class="st">"free_y"</span>) <span class="sc">+</span></span>
+<span id="cb76-28"><a href="#cb76-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb76-29"><a href="#cb76-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Drug-target MR: effect of LDL-C lowering on serum calcium"</span>,</span>
+<span id="cb76-30"><a href="#cb76-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"HMGCR (statin proxy) and PCSK9 (PCSK9i proxy); NPC1L1 unavailable — see text"</span>,</span>
+<span id="cb76-31"><a href="#cb76-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"Change in serum calcium (SD) per SD LDL-C reduction"</span>,</span>
+<span id="cb76-32"><a href="#cb76-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="cn">NULL</span>,</span>
+<span id="cb76-33"><a href="#cb76-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour   =</span> <span class="st">"MR method"</span>,</span>
+<span id="cb76-34"><a href="#cb76-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">shape    =</span> <span class="st">"MR method"</span></span>
+<span id="cb76-35"><a href="#cb76-35" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb76-36"><a href="#cb76-36" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb76-37"><a href="#cb76-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">legend.position  =</span> <span class="st">"bottom"</span>,</span>
+<span id="cb76-38"><a href="#cb76-38" aria-hidden="true" tabindex="-1"></a>        <span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -2121,19 +2230,19 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb76"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb76-1"><a href="#cb76-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"PCSK9 harmonisation status after allele-pair fix:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb77"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb77-1"><a href="#cb77-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"PCSK9 harmonisation status after allele-pair fix:</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>PCSK9 harmonisation status after allele-pair fix:</code></pre>
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb78"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb78-1"><a href="#cb78-1" aria-hidden="true" tabindex="-1"></a>harmonised <span class="sc">%&gt;%</span></span>
-<span id="cb78-2"><a href="#cb78-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene <span class="sc">==</span> <span class="st">"PCSK9"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb78-3"><a href="#cb78-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure_name, rsid, position,</span>
-<span id="cb78-4"><a href="#cb78-4" aria-hidden="true" tabindex="-1"></a>         ea, nea, REF, ALT,</span>
-<span id="cb78-5"><a href="#cb78-5" aria-hidden="true" tabindex="-1"></a>         harmonise_status, beta_out_h) <span class="sc">%&gt;%</span></span>
-<span id="cb78-6"><a href="#cb78-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"PCSK9 allele matching after requiring both alleles to agree"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>harmonised <span class="sc">%&gt;%</span></span>
+<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene <span class="sc">==</span> <span class="st">"PCSK9"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure_name, rsid, position,</span>
+<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>         ea, nea, REF, ALT,</span>
+<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>         harmonise_status, beta_out_h) <span class="sc">%&gt;%</span></span>
+<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"PCSK9 allele matching after requiring both alleles to agree"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -2206,27 +2315,27 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb79"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb79-1"><a href="#cb79-1" aria-hidden="true" tabindex="-1"></a>harmonised_clean <span class="sc">%&gt;%</span></span>
-<span id="cb79-2"><a href="#cb79-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene <span class="sc">==</span> <span class="st">"HMGCR"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb79-3"><a href="#cb79-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> beta_exp, <span class="at">y =</span> beta_out_h)) <span class="sc">+</span></span>
-<span id="cb79-4"><a href="#cb79-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">size =</span> <span class="dv">1</span> <span class="sc">/</span> se_out_h<span class="sc">^</span><span class="dv">2</span>), <span class="at">shape =</span> <span class="dv">21</span>,</span>
-<span id="cb79-5"><a href="#cb79-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">fill =</span> <span class="st">"#00274c"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
-<span id="cb79-6"><a href="#cb79-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">weight =</span> <span class="dv">1</span> <span class="sc">/</span> se_out_h<span class="sc">^</span><span class="dv">2</span>),</span>
-<span id="cb79-7"><a href="#cb79-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">TRUE</span>,</span>
-<span id="cb79-8"><a href="#cb79-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">colour =</span> <span class="st">"#ffcb05"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
-<span id="cb79-9"><a href="#cb79-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
-<span id="cb79-10"><a href="#cb79-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
-<span id="cb79-11"><a href="#cb79-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>exposure_name, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
-<span id="cb79-12"><a href="#cb79-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_continuous</span>(<span class="at">guide =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
-<span id="cb79-13"><a href="#cb79-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb79-14"><a href="#cb79-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"HMGCR allele score — MR scatter plot"</span>,</span>
-<span id="cb79-15"><a href="#cb79-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Point size proportional to inverse variance; slope = IVW estimate"</span>,</span>
-<span id="cb79-16"><a href="#cb79-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"SNP effect on LDL-C (exposure beta)"</span>,</span>
-<span id="cb79-17"><a href="#cb79-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"SNP effect on serum calcium (outcome beta)"</span>,</span>
-<span id="cb79-18"><a href="#cb79-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption  =</span> <span class="st">"Shaded band = 95% CI of weighted regression"</span></span>
-<span id="cb79-19"><a href="#cb79-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb79-20"><a href="#cb79-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
-<span id="cb79-21"><a href="#cb79-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>harmonised_clean <span class="sc">%&gt;%</span></span>
+<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(gene <span class="sc">==</span> <span class="st">"HMGCR"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(<span class="at">x =</span> beta_exp, <span class="at">y =</span> beta_out_h)) <span class="sc">+</span></span>
+<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="fu">aes</span>(<span class="at">size =</span> <span class="dv">1</span> <span class="sc">/</span> se_out_h<span class="sc">^</span><span class="dv">2</span>), <span class="at">shape =</span> <span class="dv">21</span>,</span>
+<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>             <span class="at">fill =</span> <span class="st">"#00274c"</span>, <span class="at">alpha =</span> <span class="fl">0.7</span>) <span class="sc">+</span></span>
+<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>(<span class="fu">aes</span>(<span class="at">weight =</span> <span class="dv">1</span> <span class="sc">/</span> se_out_h<span class="sc">^</span><span class="dv">2</span>),</span>
+<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">method =</span> <span class="st">"lm"</span>, <span class="at">se =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">colour =</span> <span class="st">"#ffcb05"</span>, <span class="at">linewidth =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_hline</span>(<span class="at">yintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
+<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey60"</span>) <span class="sc">+</span></span>
+<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">facet_wrap</span>(<span class="sc">~</span>exposure_name, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
+<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_size_continuous</span>(<span class="at">guide =</span> <span class="st">"none"</span>) <span class="sc">+</span></span>
+<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"HMGCR allele score — MR scatter plot"</span>,</span>
+<span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Point size proportional to inverse variance; slope = IVW estimate"</span>,</span>
+<span id="cb80-16"><a href="#cb80-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">x        =</span> <span class="st">"SNP effect on LDL-C (exposure beta)"</span>,</span>
+<span id="cb80-17"><a href="#cb80-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">y        =</span> <span class="st">"SNP effect on serum calcium (outcome beta)"</span>,</span>
+<span id="cb80-18"><a href="#cb80-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption  =</span> <span class="st">"Shaded band = 95% CI of weighted regression"</span></span>
+<span id="cb80-19"><a href="#cb80-19" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb80-20"><a href="#cb80-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb80-21"><a href="#cb80-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
@@ -2242,43 +2351,43 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb80"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb80-1"><a href="#cb80-1" aria-hidden="true" tabindex="-1"></a>loo_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(df, exposure_name_filter, gene_filter) {</span>
-<span id="cb80-2"><a href="#cb80-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
-<span id="cb80-3"><a href="#cb80-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(exposure_name <span class="sc">==</span> exposure_name_filter, gene <span class="sc">==</span> gene_filter)</span>
-<span id="cb80-4"><a href="#cb80-4" aria-hidden="true" tabindex="-1"></a>  </span>
-<span id="cb80-5"><a href="#cb80-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="cf">function</span>(i) {</span>
-<span id="cb80-6"><a href="#cb80-6" aria-hidden="true" tabindex="-1"></a>    d_loo <span class="ot">&lt;-</span> d[<span class="sc">-</span>i, ]</span>
-<span id="cb80-7"><a href="#cb80-7" aria-hidden="true" tabindex="-1"></a>    bx <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>beta_exp; sx <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>se_exp</span>
-<span id="cb80-8"><a href="#cb80-8" aria-hidden="true" tabindex="-1"></a>    by <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>beta_out_h; sy <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>se_out_h</span>
-<span id="cb80-9"><a href="#cb80-9" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb80-10"><a href="#cb80-10" aria-hidden="true" tabindex="-1"></a>    ratio    <span class="ot">&lt;-</span> by <span class="sc">/</span> bx</span>
-<span id="cb80-11"><a href="#cb80-11" aria-hidden="true" tabindex="-1"></a>    ratio_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(sy <span class="sc">/</span> bx)</span>
-<span id="cb80-12"><a href="#cb80-12" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> ratio_se<span class="sc">^</span><span class="dv">2</span></span>
-<span id="cb80-13"><a href="#cb80-13" aria-hidden="true" tabindex="-1"></a>    theta    <span class="ot">&lt;-</span> <span class="fu">sum</span>(w <span class="sc">*</span> ratio) <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
-<span id="cb80-14"><a href="#cb80-14" aria-hidden="true" tabindex="-1"></a>    se_fe    <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">/</span> <span class="fu">sum</span>(w))</span>
-<span id="cb80-15"><a href="#cb80-15" aria-hidden="true" tabindex="-1"></a>    </span>
-<span id="cb80-16"><a href="#cb80-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
-<span id="cb80-17"><a href="#cb80-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">dropped_snp =</span> d<span class="sc">$</span>rsid[i],</span>
-<span id="cb80-18"><a href="#cb80-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">dropped_pos =</span> d<span class="sc">$</span>position[i],</span>
-<span id="cb80-19"><a href="#cb80-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">estimate    =</span> <span class="fu">round</span>(theta, <span class="dv">4</span>),</span>
-<span id="cb80-20"><a href="#cb80-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">se          =</span> <span class="fu">round</span>(se_fe, <span class="dv">4</span>),</span>
-<span id="cb80-21"><a href="#cb80-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">ci_lo       =</span> <span class="fu">round</span>(theta <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se_fe, <span class="dv">4</span>),</span>
-<span id="cb80-22"><a href="#cb80-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">ci_hi       =</span> <span class="fu">round</span>(theta <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se_fe, <span class="dv">4</span>),</span>
-<span id="cb80-23"><a href="#cb80-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">p_value     =</span> <span class="fu">round</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(theta <span class="sc">/</span> se_fe)), <span class="dv">4</span>)</span>
-<span id="cb80-24"><a href="#cb80-24" aria-hidden="true" tabindex="-1"></a>    )</span>
-<span id="cb80-25"><a href="#cb80-25" aria-hidden="true" tabindex="-1"></a>  })</span>
-<span id="cb80-26"><a href="#cb80-26" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb80-27"><a href="#cb80-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb80-28"><a href="#cb80-28" aria-hidden="true" tabindex="-1"></a>loo_ldlc <span class="ot">&lt;-</span> <span class="fu">loo_mr</span>(harmonised_clean, <span class="st">"LDL-C"</span>, <span class="st">"HMGCR"</span>)</span>
-<span id="cb80-29"><a href="#cb80-29" aria-hidden="true" tabindex="-1"></a>loo_tc   <span class="ot">&lt;-</span> <span class="fu">loo_mr</span>(harmonised_clean, <span class="st">"Total cholesterol"</span>, <span class="st">"HMGCR"</span>)</span>
-<span id="cb80-30"><a href="#cb80-30" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb80-31"><a href="#cb80-31" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
-<span id="cb80-32"><a href="#cb80-32" aria-hidden="true" tabindex="-1"></a>  loo_ldlc <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">exposure =</span> <span class="st">"LDL-C"</span>),</span>
-<span id="cb80-33"><a href="#cb80-33" aria-hidden="true" tabindex="-1"></a>  loo_tc   <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">exposure =</span> <span class="st">"Total cholesterol"</span>)</span>
-<span id="cb80-34"><a href="#cb80-34" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
-<span id="cb80-35"><a href="#cb80-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, dropped_snp, dropped_pos,</span>
-<span id="cb80-36"><a href="#cb80-36" aria-hidden="true" tabindex="-1"></a>         estimate, se, ci_lo, ci_hi, p_value) <span class="sc">%&gt;%</span></span>
-<span id="cb80-37"><a href="#cb80-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"HMGCR leave-one-out IVW — stability of estimate across instruments"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a>loo_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(df, exposure_name_filter, gene_filter) {</span>
+<span id="cb81-2"><a href="#cb81-2" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb81-3"><a href="#cb81-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(exposure_name <span class="sc">==</span> exposure_name_filter, gene <span class="sc">==</span> gene_filter)</span>
+<span id="cb81-4"><a href="#cb81-4" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb81-5"><a href="#cb81-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">map_dfr</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(d)), <span class="cf">function</span>(i) {</span>
+<span id="cb81-6"><a href="#cb81-6" aria-hidden="true" tabindex="-1"></a>    d_loo <span class="ot">&lt;-</span> d[<span class="sc">-</span>i, ]</span>
+<span id="cb81-7"><a href="#cb81-7" aria-hidden="true" tabindex="-1"></a>    bx <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>beta_exp; sx <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>se_exp</span>
+<span id="cb81-8"><a href="#cb81-8" aria-hidden="true" tabindex="-1"></a>    by <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>beta_out_h; sy <span class="ot">&lt;-</span> d_loo<span class="sc">$</span>se_out_h</span>
+<span id="cb81-9"><a href="#cb81-9" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb81-10"><a href="#cb81-10" aria-hidden="true" tabindex="-1"></a>    ratio    <span class="ot">&lt;-</span> by <span class="sc">/</span> bx</span>
+<span id="cb81-11"><a href="#cb81-11" aria-hidden="true" tabindex="-1"></a>    ratio_se <span class="ot">&lt;-</span> <span class="fu">abs</span>(sy <span class="sc">/</span> bx)</span>
+<span id="cb81-12"><a href="#cb81-12" aria-hidden="true" tabindex="-1"></a>    w        <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> ratio_se<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb81-13"><a href="#cb81-13" aria-hidden="true" tabindex="-1"></a>    theta    <span class="ot">&lt;-</span> <span class="fu">sum</span>(w <span class="sc">*</span> ratio) <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
+<span id="cb81-14"><a href="#cb81-14" aria-hidden="true" tabindex="-1"></a>    se_fe    <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">/</span> <span class="fu">sum</span>(w))</span>
+<span id="cb81-15"><a href="#cb81-15" aria-hidden="true" tabindex="-1"></a>    </span>
+<span id="cb81-16"><a href="#cb81-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(</span>
+<span id="cb81-17"><a href="#cb81-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">dropped_snp =</span> d<span class="sc">$</span>rsid[i],</span>
+<span id="cb81-18"><a href="#cb81-18" aria-hidden="true" tabindex="-1"></a>      <span class="at">dropped_pos =</span> d<span class="sc">$</span>position[i],</span>
+<span id="cb81-19"><a href="#cb81-19" aria-hidden="true" tabindex="-1"></a>      <span class="at">estimate    =</span> <span class="fu">round</span>(theta, <span class="dv">4</span>),</span>
+<span id="cb81-20"><a href="#cb81-20" aria-hidden="true" tabindex="-1"></a>      <span class="at">se          =</span> <span class="fu">round</span>(se_fe, <span class="dv">4</span>),</span>
+<span id="cb81-21"><a href="#cb81-21" aria-hidden="true" tabindex="-1"></a>      <span class="at">ci_lo       =</span> <span class="fu">round</span>(theta <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se_fe, <span class="dv">4</span>),</span>
+<span id="cb81-22"><a href="#cb81-22" aria-hidden="true" tabindex="-1"></a>      <span class="at">ci_hi       =</span> <span class="fu">round</span>(theta <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se_fe, <span class="dv">4</span>),</span>
+<span id="cb81-23"><a href="#cb81-23" aria-hidden="true" tabindex="-1"></a>      <span class="at">p_value     =</span> <span class="fu">round</span>(<span class="dv">2</span> <span class="sc">*</span> <span class="fu">pnorm</span>(<span class="sc">-</span><span class="fu">abs</span>(theta <span class="sc">/</span> se_fe)), <span class="dv">4</span>)</span>
+<span id="cb81-24"><a href="#cb81-24" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb81-25"><a href="#cb81-25" aria-hidden="true" tabindex="-1"></a>  })</span>
+<span id="cb81-26"><a href="#cb81-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb81-27"><a href="#cb81-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-28"><a href="#cb81-28" aria-hidden="true" tabindex="-1"></a>loo_ldlc <span class="ot">&lt;-</span> <span class="fu">loo_mr</span>(harmonised_clean, <span class="st">"LDL-C"</span>, <span class="st">"HMGCR"</span>)</span>
+<span id="cb81-29"><a href="#cb81-29" aria-hidden="true" tabindex="-1"></a>loo_tc   <span class="ot">&lt;-</span> <span class="fu">loo_mr</span>(harmonised_clean, <span class="st">"Total cholesterol"</span>, <span class="st">"HMGCR"</span>)</span>
+<span id="cb81-30"><a href="#cb81-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb81-31"><a href="#cb81-31" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb81-32"><a href="#cb81-32" aria-hidden="true" tabindex="-1"></a>  loo_ldlc <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">exposure =</span> <span class="st">"LDL-C"</span>),</span>
+<span id="cb81-33"><a href="#cb81-33" aria-hidden="true" tabindex="-1"></a>  loo_tc   <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">exposure =</span> <span class="st">"Total cholesterol"</span>)</span>
+<span id="cb81-34"><a href="#cb81-34" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb81-35"><a href="#cb81-35" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, dropped_snp, dropped_pos,</span>
+<span id="cb81-36"><a href="#cb81-36" aria-hidden="true" tabindex="-1"></a>         estimate, se, ci_lo, ci_hi, p_value) <span class="sc">%&gt;%</span></span>
+<span id="cb81-37"><a href="#cb81-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"HMGCR leave-one-out IVW — stability of estimate across instruments"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
@@ -2538,7 +2647,7 @@ F-statistic check (should be &gt;&gt; 10 for strong instruments):</code></pre>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb81"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb81-1"><a href="#cb81-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb82"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb82-1"><a href="#cb82-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.5.3 (2026-03-11)

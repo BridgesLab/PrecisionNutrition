@@ -1,0 +1,1012 @@
+---
+title: "Drug-Target MR Analysis — UKB Calcium Outcome"
+author: "Dave Bridges"
+date: today
+editor: source
+format: 
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-drug-target-mr-ukb/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+
+se <- function(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+
+library(tidyverse)
+library(knitr)
+
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+This script implements a **drug-target Mendelian Randomization (MR)** analysis
+testing whether genetically proxied reductions in LDL-cholesterol (LDL-C) and
+total cholesterol causally reduce serum calcium, using the three lipid-lowering
+drug targets **HMGCR** (statins), **PCSK9** (PCSK9 inhibitors), and
+**NPC1L1** (ezetimibe).
+
+This is a revised version of an earlier analysis. The previous version used
+the local MGI-BioVU PheWeb calcium GWAS as the outcome dataset and
+encountered substantive coverage problems at the PCSK9 and NPC1L1 loci. This
+version replaces the outcome GWAS with the larger, more densely imputed UK
+Biobank serum calcium GWAS (Barton et al. 2021, n≈400,000), which provides
+adequate coverage at all three drug-target loci. The MGI-BioVU GWAS is
+retained as a sensitivity replication for HMGCR.
+
+### Why the Prior Outcome GWAS Did Not Work
+
+The earlier analysis using the MGI-BioVU calcium GWAS as the outcome failed
+for two of the three drug targets due to **outcome variant coverage**, not
+exposure instrument strength. The exposure GWAS (UKB LDL-C, `ieu-b-110`)
+returned thousands of SNPs across all three regions — 1,839 in HMGCR, 348 in
+NPC1L1, and ~80 in PCSK9 at p<5×10⁻⁸. The exposure side was never the
+bottleneck. The problem was on the outcome side:
+
+- **NPC1L1** (chr7:44.1–44.6 Mb): The MGI-BioVU calcium GWAS had a localised
+  imputation gap in this region — ~1,166 SNPs per 5 Mb in the 40–45 Mb bin
+  versus ~1,800–1,900 in flanking bins. Of approximately 350 candidate
+  instrument positions, **zero** matched a calcium GWAS variant. The single
+  SNP that landed within 500 bp of an instrument position was a different
+  variant entirely (a T/G SNP at 44,384,273 vs an AT/A insertion-deletion
+  instrument at 44,383,921; effect allele frequency 0.036 vs 0.809). This
+  precluded any drug-target MR analysis of the ezetimibe target.
+
+- **PCSK9** (chr1:55.5 Mb): The canonical loss-of-function variant
+  rs11591147 (p.R46L), which is the workhorse instrument for PCSK9
+  drug-target MR, was nominally present in the MGI-BioVU GWAS at the correct
+  position but with **incompatible alleles** — exposure T/G versus outcome
+  T/C. These are different variants at the same coordinate, and harmonisation
+  correctly excluded them. After the allele-pair check, no PCSK9 instrument
+  could be retained.
+
+- **HMGCR** (chr5:74.6 Mb): Coverage was adequate; 11 instruments harmonised
+  cleanly and produced an interpretable result (IVW-RE b=0.163, p=0.035).
+
+The diagnosis was confirmed by tabulating SNP density across each
+drug-target window in the MGI-BioVU GWAS — only HMGCR had complete
+coverage. The chr7 40–45 Mb dropout in MGI-BioVU likely reflects difficult
+LD structure near the centromere combined with PheWeb's variant filtering,
+which disproportionately drops marginal-info-score SNPs in low-LD regions.
+
+### Why a UKB-Based Outcome Should Work
+
+The UK Biobank-based serum calcium GWAS (Barton et al. 2021, OpenGWAS
+ID `ebi-a-GCST90025990`) was selected as the new primary outcome because:
+
+- **Sample size**: n=400,792, the largest serum calcium GWAS available on
+  OpenGWAS, providing adequate power at the rare-variant frequencies where
+  PCSK9 instruments are concentrated (rs11591147 MAF ≈1–2%).
+- **Imputation density**: UK Biobank uses the Haplotype Reference Consortium
+  + UK10K + 1000 Genomes reference panel, which provides dense and uniform
+  coverage across the genome including the regions that were sparse in
+  MGI-BioVU.
+- **Variant availability**: rs11591147 and the major NPC1L1 variants are
+  routinely reported in UKB-based studies.
+
+A note on **sample overlap**: both the LDL-C exposure GWAS (`ieu-b-110`) and
+the new calcium outcome GWAS (`ebi-a-GCST90025990`) draw from UK Biobank.
+This means the analysis is effectively a *one-sample* MR rather than the
+ideal two-sample design. With strong instruments (F>>10), one-sample bias is
+generally toward the null — meaning estimates may be slightly attenuated but
+not falsely inflated, and significant findings remain interpretable. The
+total cholesterol exposure (`ebi-a-GCST90025953`, GLGC meta-analysis) is
+non-overlapping with UKB, so estimates from that exposure are immune to
+sample overlap concerns. The MGI-BioVU GWAS is run as a fully non-overlapping
+sensitivity replication for HMGCR.
+
+---
+
+## Setup
+
+```{r setup}
+#| label: setup
+#| message: false
+
+library(tidyverse)
+library(TwoSampleMR)
+library(ieugwasr)
+library(data.table)
+library(knitr)
+library(kableExtra)
+
+# ── Drug-target gene windows (GRCh37/hg19 ±500 kb around gene body) ──────────
+WINDOW_KB <- 500
+
+gene_windows <- tribble(
+  ~gene,    ~chr, ~gene_start,  ~gene_end,
+  "HMGCR",  5,    74632993,     74657941,
+  "PCSK9",  1,    55505221,     55530525,
+  "NPC1L1", 7,    44552971,     44604640
+) %>%
+  mutate(
+    region_start = pmax(0, gene_start - WINDOW_KB * 1000),
+    region_end   = gene_end + WINDOW_KB * 1000,
+    region_str   = str_glue("{chr}:{region_start}-{region_end}")
+  )
+
+kable(gene_windows %>% select(gene, chr, region_start, region_end, region_str),
+      caption = "Drug-target gene windows (GRCh37, ±500 kb)")
+
+# ── Outcome GWAS IDs ─────────────────────────────────────────────────────────
+outcome_ids <- c(
+  "UKB-Barton" = "ebi-a-GCST90025990",   # n=400,792 — primary
+  "MGI-BioVU"  = "local"                  # local file — sensitivity
+)
+
+cat("Outcome datasets:\n")
+cat("  Primary:     UKB Barton et al. 2021 (n=400,792) — ebi-a-GCST90025990\n")
+cat("  Replication: MGI-BioVU PheWeb (local file)\n")
+```
+
+---
+
+## Exposure: Instrument Extraction
+
+Instruments are drawn from two large GWAS:
+
+- **`ieu-b-110`**: LDL-C from UK Biobank (Neale Lab) — overlaps with UKB outcome
+- **`ebi-a-GCST90025953`**: Total cholesterol from the Global Lipids Genetics
+  Consortium meta-analysis — non-overlapping with UKB
+
+```{r extract-regional-snps}
+#| label: extract-regional-snps
+#| cache: true
+
+exposure_ids <- c(
+  "LDL-C"             = "ieu-b-110",
+  "Total cholesterol" = "ebi-a-GCST90025953"
+)
+
+extract_regional <- function(gwas_id, gene_df) {
+  map_dfr(seq_len(nrow(gene_df)), function(i) {
+    row <- gene_df[i, ]
+    cat("  Querying", gwas_id, "—", row$gene, "(", row$region_str, ")\n")
+    tryCatch({
+      res <- ieugwasr::associations(
+        variants = row$region_str,
+        id       = gwas_id,
+        proxies  = FALSE
+      )
+      if (nrow(res) == 0) return(tibble())
+      
+      res_tib <- res %>% as_tibble()
+      
+      # Normalise position column name (ieugwasr inconsistent across GWASs)
+      if ("pos" %in% names(res_tib) && !"position" %in% names(res_tib)) {
+        res_tib <- res_tib %>% rename(position = pos)
+      } else if (!"position" %in% names(res_tib)) {
+        res_tib <- res_tib %>% mutate(position = NA_integer_)
+      }
+      
+      res_tib %>%
+        mutate(
+          position = as.integer(position),
+          n        = as.character(n),
+          beta     = as.numeric(beta),
+          se       = as.numeric(se),
+          eaf      = as.numeric(eaf),
+          p        = as.numeric(p),
+          gene     = row$gene,
+          gwas_id  = gwas_id
+        ) %>%
+        select(-any_of("pos"))
+      
+    }, error = function(e) {
+      warning("Failed for ", gwas_id, " / ", row$gene, ": ", e$message)
+      tibble()
+    })
+  })
+}
+
+cat("Extracting regional SNPs from OpenGWAS...\n\n")
+regional_raw <- map_dfr(names(exposure_ids), function(name) {
+  cat("== Exposure:", name, "(", exposure_ids[name], ") ==\n")
+  extract_regional(exposure_ids[name], gene_windows) %>%
+    mutate(exposure_name = name)
+})
+
+regional_raw %>%
+  count(exposure_name, gene, name = "n_snps_raw") %>%
+  kable(caption = "Raw SNP counts per gene window (pre-filtering, pre-clumping)")
+```
+
+### P-value Threshold Evaluation
+
+```{r filter-snps}
+#| label: filter-snps
+
+p_thresholds <- c(5e-8, 1e-6, 1e-5, 1e-4)
+
+threshold_counts <- map_dfr(p_thresholds, function(p) {
+  regional_raw %>%
+    filter(p <= !!p) %>%
+    count(exposure_name, gene, name = "n_snps") %>%
+    mutate(p_threshold = p)
+}) %>%
+  pivot_wider(names_from   = p_threshold,
+              names_prefix = "p<",
+              values_from  = n_snps,
+              values_fill  = 0L)
+
+kable(threshold_counts,
+      caption = "SNP counts at different p-value thresholds (pre-clumping)")
+```
+
+### Clumping
+
+```{r clumping}
+#| label: clumping
+#| cache: true
+
+clump_gene <- function(df, gene_name, p_thresh, r2_thresh) {
+  df %>%
+    filter(gene == gene_name, p <= p_thresh) %>%
+    group_by(exposure_name, gene) %>%
+    group_modify(~ {
+      if (nrow(.x) < 2) return(.x)
+      tryCatch(
+        ieugwasr::ld_clump(
+          tibble(rsid = .x$rsid, pval = .x$p, id = .x$gwas_id),
+          clump_r2 = r2_thresh,
+          clump_kb = 10000,
+          pop      = "EUR"
+        ) %>% inner_join(.x, by = "rsid"),
+        error = function(e) { warning(e$message); .x }
+      )
+    }) %>%
+    ungroup()
+}
+```
+
+### Finalising Instruments
+
+Following the same approach as the previous analysis:
+
+- **HMGCR**: allele score at `r²<0.30` (recovers ~11 SNPs from a high-LD region;
+  standard for statin drug-target MR per Swerdlow et al. 2015 *Lancet*)
+- **PCSK9**: strict clumping at `r²<0.001` (conventional independent SNPs;
+  the rs11591147 LoF variant is the key instrument)
+- **NPC1L1**: strict clumping at `r²<0.001` (newly accessible with adequate
+  outcome coverage)
+
+```{r finalise-instruments}
+#| label: finalise-instruments
+#| cache: true
+
+instruments_hmgcr  <- clump_gene(regional_raw, "HMGCR",  5e-8, 0.30)
+instruments_pcsk9  <- clump_gene(regional_raw, "PCSK9",  5e-8, 0.001)
+instruments_npc1l1 <- clump_gene(regional_raw, "NPC1L1", 5e-8, 0.001)
+
+instruments_final <- bind_rows(instruments_hmgcr,
+                               instruments_pcsk9,
+                               instruments_npc1l1)
+
+instruments_final %>%
+  mutate(F_stat = (beta / se)^2) %>%
+  group_by(exposure_name, gene) %>%
+  summarise(
+    n_SNPs   = n(),
+    min_F    = round(min(F_stat), 1),
+    median_F = round(median(F_stat), 1),
+    max_F    = round(max(F_stat), 1),
+    min_p    = signif(min(p), 2),
+    .groups  = "drop"
+  ) %>%
+  kable(caption = "Final instrument sets across all three drug targets")
+```
+
+---
+
+## Outcome 1: UK Biobank Calcium GWAS (Primary)
+
+The UKB calcium GWAS is queried directly via the OpenGWAS API. This bypasses
+the local-file positional join issues entirely — instruments are matched by
+rsID, and the API handles harmonisation metadata.
+
+```{r extract-ukb-outcome}
+#| label: extract-ukb-outcome
+#| cache: true
+
+ukb_id <- "ebi-a-GCST90025990"
+
+# All instrument rsIDs across both exposures and all three genes
+all_rsids <- instruments_final %>%
+  distinct(rsid) %>%
+  pull(rsid)
+
+cat("Querying UKB calcium GWAS (", ukb_id, ") for",
+    length(all_rsids), "instrument SNPs...\n", sep = "")
+
+ukb_outcome_raw <- tryCatch({
+  ieugwasr::associations(
+    variants = all_rsids,
+    id       = ukb_id,
+    proxies  = FALSE
+  ) %>%
+    as_tibble()
+}, error = function(e) {
+  cat("Direct rsID query failed:", e$message, "\n")
+  cat("Falling back to regional queries...\n")
+  
+  map_dfr(seq_len(nrow(gene_windows)), function(i) {
+    row <- gene_windows[i, ]
+    tryCatch(
+      ieugwasr::associations(
+        variants = row$region_str,
+        id       = ukb_id,
+        proxies  = FALSE
+      ) %>% as_tibble() %>% mutate(gene_window = row$gene),
+      error = function(e2) { warning(e2$message); tibble() }
+    )
+  })
+})
+
+# Normalise column names
+if ("pos" %in% names(ukb_outcome_raw) &&
+    !"position" %in% names(ukb_outcome_raw)) {
+  ukb_outcome_raw <- ukb_outcome_raw %>% rename(position = pos)
+}
+
+ukb_outcome_raw <- ukb_outcome_raw %>%
+  mutate(
+    position = as.integer(position),
+    chr      = as.character(chr),
+    beta     = as.numeric(beta),
+    se       = as.numeric(se),
+    eaf      = as.numeric(eaf),
+    p        = as.numeric(p)
+  )
+
+cat("\nUKB outcome SNPs returned:", nrow(ukb_outcome_raw), "\n")
+cat("Of", length(all_rsids), "instrument SNPs queried,",
+    sum(all_rsids %in% ukb_outcome_raw$rsid),
+    "found in UKB calcium GWAS\n")
+```
+
+```{r ukb-coverage-check}
+#| label: ukb-coverage-check
+
+# How many instruments per gene are in the UKB calcium GWAS?
+instruments_final %>%
+  left_join(ukb_outcome_raw %>%
+              select(rsid, found_in_ukb = position),
+            by = "rsid") %>%
+  group_by(exposure_name, gene) %>%
+  summarise(
+    n_instruments = n(),
+    n_in_ukb      = sum(!is.na(found_in_ukb)),
+    pct_in_ukb    = round(100 * mean(!is.na(found_in_ukb)), 0),
+    .groups       = "drop"
+  ) %>%
+  kable(caption = "UKB calcium GWAS coverage of instrument SNPs by gene")
+```
+
+### Standardising UKB Outcome to Working Format
+
+```{r format-ukb-outcome}
+#| label: format-ukb-outcome
+
+# UKB OpenGWAS returns 'ea' (effect allele) and 'nea' (non-effect allele)
+# We rename to ALT/REF convention used by the harmonisation function
+ukb_gwas <- ukb_outcome_raw %>%
+  rename(
+    REF      = nea,    # non-effect allele = reference
+    ALT      = ea,     # effect allele = alternate
+    pval     = p,
+    eaf_out  = eaf
+  ) %>%
+  mutate(
+    CHR = as.integer(chr),
+    POS = as.integer(position)
+  ) %>%
+  filter(!is.na(CHR), !is.na(POS)) %>%
+  select(rsid, CHR, POS, REF, ALT,
+         beta_ukb = beta, se_ukb = se, pval_ukb = pval, eaf_ukb = eaf_out)
+
+cat("UKB calcium GWAS standardised:",
+    scales::comma(nrow(ukb_gwas)), "SNPs ready for harmonisation\n")
+```
+
+---
+
+## Outcome 2: MGI-BioVU PheWeb Calcium GWAS (Replication)
+
+```{r load-mgi-outcome}
+#| label: load-mgi-outcome
+#| cache: true
+
+cat("Loading MGI-BioVU calcium GWAS...\n")
+
+mgi_gwas_raw <- read_tsv(
+  gzfile("PheWeb Summary Statistics/phenocode-Ca.tsv.gz"),
+  show_col_types = FALSE
+)
+setDT(mgi_gwas_raw)
+
+cat("Columns:\n"); print(names(mgi_gwas_raw))
+
+# Standardise to the same format as UKB outcome
+mgi_gwas <- mgi_gwas_raw %>%
+  as_tibble() %>%
+  rename(
+    CHR  = chrom,
+    POS  = pos,
+    REF  = ref,
+    ALT  = alt,
+    pval = pval,
+    beta = beta,
+    se   = sebeta,
+    eaf  = maf       # PheWeb uses 'maf'; change if needed
+  ) %>%
+  mutate(CHR = as.integer(str_remove(as.character(CHR), "^chr")),
+         POS = as.integer(POS)) %>%
+  select(CHR, POS, REF, ALT,
+         beta_mgi = beta, se_mgi = se, pval_mgi = pval, eaf_mgi = eaf)
+
+cat("\nMGI-BioVU calcium GWAS:",
+    scales::comma(nrow(mgi_gwas)), "SNPs\n")
+```
+
+---
+
+## Outcome Extraction and Harmonisation
+
+A single helper extracts and harmonises against either outcome GWAS.
+
+```{r extract-outcome-helper}
+#| label: extract-outcome-helper
+
+# Generalised extraction function — works with either outcome GWAS format
+# UKB matches by rsID; MGI matches by CHR + POS
+
+extract_outcome_ukb <- function(instruments_df, ukb_outcome_df) {
+  instruments_df %>%
+    distinct(rsid, chr, position, ea, nea, eaf, gene, exposure_name,
+             beta_exp = beta, se_exp = se) %>%
+    inner_join(
+      ukb_outcome_df %>%
+        rename(beta_out = beta_ukb,
+               se_out   = se_ukb,
+               pval_out = pval_ukb,
+               eaf_out  = eaf_ukb),
+      by = "rsid"
+    )
+}
+
+extract_outcome_mgi <- function(instruments_df, mgi_outcome_df, window_bp = 50) {
+  instruments_df %>%
+    distinct(rsid, chr, position, ea, nea, eaf, gene, exposure_name,
+             beta_exp = beta, se_exp = se) %>%
+    mutate(CHR = as.integer(chr), POS = as.integer(position)) %>%
+    filter(!is.na(POS)) %>%
+    left_join(
+      mgi_outcome_df %>%
+        filter(!is.na(CHR), !is.na(POS)) %>%
+        rename(beta_out = beta_mgi,
+               se_out   = se_mgi,
+               pval_out = pval_mgi,
+               eaf_out  = eaf_mgi),
+      by = c("CHR", "POS")
+    ) %>%
+    {
+      matched   <- filter(., !is.na(beta_out))
+      unmatched <- filter(., is.na(beta_out))
+      
+      if (nrow(unmatched) > 0 && window_bp > 0) {
+        fallback <- map_dfr(seq_len(nrow(unmatched)), function(i) {
+          row <- unmatched[i, ]
+          hit <- mgi_outcome_df %>%
+            filter(!is.na(CHR), !is.na(POS),
+                   CHR == row$CHR,
+                   POS >= row$POS - window_bp,
+                   POS <= row$POS + window_bp) %>%
+            slice_min(abs(POS - row$POS), n = 1, with_ties = FALSE)
+          
+          if (nrow(hit) == 0) return(tibble())
+          
+          tibble(
+            rsid          = row$rsid,
+            chr           = row$chr,
+            position      = row$position,
+            ea            = row$ea,
+            nea           = row$nea,
+            eaf           = row$eaf,
+            gene          = row$gene,
+            exposure_name = row$exposure_name,
+            beta_exp      = row$beta_exp,
+            se_exp        = row$se_exp,
+            CHR           = row$CHR,
+            POS           = row$POS,
+            REF           = hit$REF,
+            ALT           = hit$ALT,
+            beta_out      = hit$beta_mgi,
+            se_out        = hit$se_mgi,
+            pval_out      = hit$pval_mgi,
+            eaf_out       = hit$eaf_mgi
+          )
+        })
+        bind_rows(matched, fallback)
+      } else {
+        matched
+      }
+    }
+}
+```
+
+```{r harmonise-helper}
+#| label: harmonise-helper
+
+# Strict allele-pair harmonisation — both alleles must match (or both
+# strand-flipped). EA-only matching produced spurious -1 ratios in the
+# previous version of this analysis.
+
+harmonise_alleles <- function(df) {
+  df %>%
+    filter(!is.na(beta_out)) %>%
+    mutate(
+      ea_comp  = chartr("ACGT", "TGCA", ea),
+      nea_comp = chartr("ACGT", "TGCA", nea),
+      
+      direct_match    = (ea  == ALT & nea  == REF),
+      flipped_match   = (ea  == REF & nea  == ALT),
+      comp_match      = (ea_comp == ALT & nea_comp == REF),
+      comp_flip_match = (ea_comp == REF & nea_comp == ALT),
+      
+      ambiguous = (
+        (ea == "A" & nea == "T") | (ea == "T" & nea == "A") |
+        (ea == "C" & nea == "G") | (ea == "G" & nea == "C")
+      ),
+      eaf_incompatible = ambiguous & abs(eaf - eaf_out) > 0.3,
+      
+      needs_flip = case_when(
+        direct_match    ~ FALSE,
+        flipped_match   ~ TRUE,
+        comp_match      ~ FALSE,
+        comp_flip_match ~ TRUE,
+        TRUE            ~ NA
+      ),
+      beta_out_h = case_when(
+        is.na(needs_flip) | eaf_incompatible ~ NA_real_,
+        needs_flip                           ~ -beta_out,
+        TRUE                                 ~ beta_out
+      ),
+      se_out_h = if_else(is.na(beta_out_h), NA_real_, se_out),
+      harmonise_status = case_when(
+        is.na(needs_flip)  ~ "incompatible_alleles",
+        eaf_incompatible   ~ "ambiguous_eaf_mismatch",
+        needs_flip         ~ "flipped",
+        TRUE               ~ "direct"
+      )
+    )
+}
+
+# Wrapper: run extraction + harmonisation + cleaning in one call
+build_harmonised <- function(instruments_df, outcome_df, outcome_label,
+                              outcome_kind = c("ukb", "mgi")) {
+  outcome_kind <- match.arg(outcome_kind)
+  
+  hits <- if (outcome_kind == "ukb") {
+    extract_outcome_ukb(instruments_df, outcome_df)
+  } else {
+    extract_outcome_mgi(instruments_df, outcome_df, window_bp = 50)
+  }
+  
+  cat("\n=== Harmonising for", outcome_label, "===\n")
+  cat("Instruments matched in outcome:", nrow(hits), "\n")
+  
+  harm <- harmonise_alleles(hits)
+  
+  cat("\nHarmonisation status:\n")
+  harm %>% count(gene, harmonise_status) %>% print()
+  
+  harm_clean <- harm %>%
+    filter(!is.na(beta_out_h)) %>%
+    mutate(
+      beta_exp   = as.numeric(beta_exp),
+      se_exp     = as.numeric(se_exp),
+      beta_out_h = as.numeric(beta_out_h),
+      se_out_h   = as.numeric(se_out_h),
+      F_stat     = (beta_exp / se_exp)^2,
+      outcome    = outcome_label
+    )
+  
+  cat("\nSNPs retained per exposure × gene:\n")
+  harm_clean %>% count(exposure_name, gene) %>% print()
+  
+  harm_clean
+}
+```
+
+### Run Harmonisation for Both Outcomes
+
+```{r harmonise-both}
+#| label: harmonise-both
+
+harm_ukb <- build_harmonised(instruments_final, ukb_gwas,
+                              outcome_label = "UKB-Barton",
+                              outcome_kind  = "ukb")
+
+harm_mgi <- build_harmonised(instruments_final, mgi_gwas,
+                              outcome_label = "MGI-BioVU",
+                              outcome_kind  = "mgi")
+```
+
+## Instrument Strength Assessment
+
+```{r instrument-strength-table}
+#| label: instrument-strength-table
+
+# ── Cumulative F-statistic and R² for each instrument set ─────────────────────
+# Per-SNP R² approximation: 2 × MAF × (1 - MAF) × beta²
+# Overall F-statistic: F = R² × (n - k - 1) / ((1 - R²) × k)
+# (Burgess & Thompson 2017; Pierce et al. 2011)
+
+harm_combined <- bind_rows(harm_ukb, harm_mgi)
+
+exposure_n <- c(
+  "LDL-C"             = 440546,    # ieu-b-110 (UKB Neale Lab)
+  "Total cholesterol" = 1320016    # ebi-a-GCST90025953 (GLGC 2021)
+)
+
+instrument_strength <- harm_combined %>%
+  group_by(outcome, exposure_name, gene) %>%
+  summarise(
+    num_snps           = n(),
+    samplesize.exposure = first(exposure_n[exposure_name]),
+    cumulative_R2      = sum(2 * eaf * (1 - eaf) * beta_exp^2, na.rm = TRUE),
+    mean_F             = mean(F_stat, na.rm = TRUE),
+    median_F           = median(F_stat, na.rm = TRUE),
+    mean_maf           = mean(pmin(eaf, 1 - eaf), na.rm = TRUE),
+    mean_beta          = mean(beta_exp, na.rm = TRUE),
+    .groups            = "drop"
+  ) %>%
+  mutate(
+    overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) /
+                ((1 - cumulative_R2) * num_snps)
+  ) %>%
+  select(outcome, exposure = exposure_name, gene,
+         num_snps, samplesize.exposure, cumulative_R2,
+         mean_F, median_F, mean_maf, mean_beta, overall_F) %>%
+  arrange(exposure, gene, outcome)
+
+kable(instrument_strength,
+      digits  = c(NA, NA, NA, 0, 0, 4, 1, 1, 4, 4, 1),
+      caption = paste0(
+        "Summary of instruments after harmonisation. ",
+        "Per-SNP R² = 2 × EAF × (1 - EAF) × beta²; ",
+        "overall F = R²(n - k - 1) / [(1 - R²) × k]. ",
+        "Note: HMGCR allele score uses r²<0.30 clumping so cumulative R² ",
+        "is mildly overestimated due to residual LD."
+      ))
+
+write_csv(instrument_strength, "Instrument Metrics - Drug Target MR.csv")
+```
+
+### Comparing Coverage Across Outcomes
+
+```{r coverage-comparison}
+#| label: coverage-comparison
+
+bind_rows(
+  harm_ukb %>% count(exposure_name, gene, name = "n_ukb"),
+  harm_mgi %>% count(exposure_name, gene, name = "n_mgi") %>%
+    rename(n_ukb = n_mgi) %>% mutate(outcome = "MGI"),
+  .id = "src"
+) %>%
+  pivot_wider(id_cols = c(exposure_name, gene),
+              names_from = src,
+              values_from = n_ukb,
+              values_fill = 0L) %>%
+  rename(`n in UKB` = `1`, `n in MGI` = `2`) %>%
+  kable(caption = "Instrument coverage across the two outcome cohorts")
+```
+
+This is the key diagnostic — if UKB now has PCSK9 and NPC1L1 instruments
+where MGI did not, the new outcome dataset has solved the coverage problem.
+
+---
+
+## MR Analysis
+
+```{r mr-engine}
+#| label: mr-engine
+
+run_drug_target_mr <- function(df, exposure_col = "exposure_name") {
+  
+  ivw_re <- function(beta_x, se_x, beta_y, se_y) {
+    ratio    <- beta_y / beta_x
+    ratio_se <- abs(se_y / beta_x)
+    w        <- 1 / ratio_se^2
+    theta    <- sum(w * ratio) / sum(w)
+    Q        <- sum(w * (ratio - theta)^2)
+    df_Q     <- length(ratio) - 1
+    Q_p      <- pchisq(Q, df = df_Q, lower.tail = FALSE)
+    tau2     <- max(0, (Q - df_Q) / (sum(w) - sum(w^2) / sum(w)))
+    w_re     <- 1 / (ratio_se^2 + tau2)
+    theta_re <- sum(w_re * ratio) / sum(w_re)
+    se_re    <- sqrt(1 / sum(w_re))
+    list(estimate = theta_re, se = se_re,
+         Q = Q, Q_df = df_Q, Q_p = Q_p, tau2 = tau2)
+  }
+  
+  weighted_median_mr <- function(beta_x, se_x, beta_y, se_y, nboot = 1000) {
+    ratio    <- beta_y / beta_x
+    ratio_se <- abs(se_y / beta_x)
+    w        <- 1 / ratio_se^2
+    w        <- w / sum(w)
+    ord      <- order(ratio)
+    wm       <- ratio[ord][which(cumsum(w[ord]) >= 0.5)[1]]
+    boot_est <- replicate(nboot, {
+      r_b <- rnorm(length(ratio), ratio, ratio_se)
+      r_b[order(r_b)][which(cumsum(sample(w)) >= 0.5)[1]]
+    })
+    list(estimate = wm, se = sd(boot_est))
+  }
+  
+  egger_mr <- function(beta_x, beta_y, se_y) {
+    flip <- beta_x < 0
+    bx   <- ifelse(flip, -beta_x, beta_x)
+    by   <- ifelse(flip, -beta_y,  beta_y)
+    w    <- 1 / se_y^2
+    fit  <- lm(by ~ bx, weights = w)
+    s    <- summary(fit)
+    list(
+      estimate  = coef(fit)[["bx"]],
+      se        = coef(s)[["bx", "Std. Error"]],
+      intercept = coef(fit)[["(Intercept)"]],
+      int_p     = coef(s)[["(Intercept)", "Pr(>|t|)"]]
+    )
+  }
+  
+  df %>%
+    group_by(across(all_of(c("outcome", exposure_col, "gene")))) %>%
+    group_map(~ {
+      d      <- .x; key <- .y
+      n_snps <- nrow(d)
+      bx <- d$beta_exp; sx <- d$se_exp
+      by <- d$beta_out_h; sy <- d$se_out_h
+      
+      rows <- list()
+      
+      if (n_snps == 1) {
+        wr_est <- by / bx; wr_se <- abs(sy / bx)
+        rows[["Wald ratio"]] <- tibble(
+          method = "Wald ratio",
+          estimate = wr_est, se = wr_se,
+          ci_lo = wr_est - 1.96 * wr_se, ci_hi = wr_est + 1.96 * wr_se,
+          p_value = 2 * pnorm(-abs(wr_est / wr_se)),
+          n_snps = 1L, Q = NA_real_, Q_p = NA_real_, egger_int_p = NA_real_
+        )
+      } else {
+        ivw <- ivw_re(bx, sx, by, sy)
+        rows[["IVW-RE"]] <- tibble(
+          method   = "IVW-RE",
+          estimate = ivw$estimate, se = ivw$se,
+          ci_lo    = ivw$estimate - 1.96 * ivw$se,
+          ci_hi    = ivw$estimate + 1.96 * ivw$se,
+          p_value  = 2 * pnorm(-abs(ivw$estimate / ivw$se)),
+          n_snps   = n_snps, Q = round(ivw$Q, 2),
+          Q_p      = round(ivw$Q_p, 4), egger_int_p = NA_real_
+        )
+        wm <- weighted_median_mr(bx, sx, by, sy)
+        rows[["Weighted median"]] <- tibble(
+          method   = "Weighted median",
+          estimate = wm$estimate, se = wm$se,
+          ci_lo    = wm$estimate - 1.96 * wm$se,
+          ci_hi    = wm$estimate + 1.96 * wm$se,
+          p_value  = 2 * pnorm(-abs(wm$estimate / wm$se)),
+          n_snps   = n_snps, Q = NA_real_, Q_p = NA_real_, egger_int_p = NA_real_
+        )
+        if (n_snps >= 3) {
+          eg <- egger_mr(bx, by, sy)
+          rows[["MR-Egger"]] <- tibble(
+            method      = "MR-Egger",
+            estimate    = eg$estimate, se = eg$se,
+            ci_lo       = eg$estimate - 1.96 * eg$se,
+            ci_hi       = eg$estimate + 1.96 * eg$se,
+            p_value     = 2 * pnorm(-abs(eg$estimate / eg$se)),
+            n_snps      = n_snps, Q = NA_real_, Q_p = NA_real_,
+            egger_int_p = round(eg$int_p, 4)
+          )
+        }
+      }
+      bind_rows(rows) %>%
+        mutate(outcome  = key[["outcome"]],
+               exposure = key[[exposure_col]],
+               gene     = key[["gene"]])
+    }, .keep = TRUE) %>%
+    bind_rows()
+}
+```
+
+### Running Across Both Outcomes
+
+```{r run-mr-both}
+#| label: run-mr-both
+
+set.seed(42)
+
+mr_results <- run_drug_target_mr(harm_combined)
+
+mr_results %>%
+  mutate(
+    across(c(estimate, se, ci_lo, ci_hi), ~round(.x, 4)),
+    p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+    `95% CI` = str_glue("({ci_lo}\u2013{ci_hi})")
+  ) %>%
+  select(outcome, exposure, gene, method, n_snps,
+         estimate, `95% CI`, p_value, Q, Q_p, egger_int_p) %>%
+  arrange(exposure, gene, outcome, method) %>%
+  kable(caption = paste0(
+    "Drug-target MR — UKB-Barton (primary) and MGI-BioVU (replication); ",
+    "estimates are SD calcium per SD cholesterol increase"
+  ))
+```
+
+### Primary Estimates Only — Summary Table
+
+```{r primary-summary}
+#| label: primary-summary
+
+mr_results %>%
+  filter(method == "IVW-RE" | method == "Wald ratio") %>%
+  mutate(
+    across(c(estimate, ci_lo, ci_hi), ~round(.x, 4)),
+    p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+    `95% CI` = str_glue("({ci_lo}\u2013{ci_hi})")
+  ) %>%
+  select(outcome, exposure, gene, n_snps, method,
+         estimate, `95% CI`, p_value) %>%
+  arrange(exposure, gene, outcome) %>%
+  kable(caption = "Primary MR estimates (IVW-RE or Wald ratio) across both outcomes")
+```
+
+### Leave-One-Out Sensitivity (HMGCR Allele Score)
+
+The HMGCR allele score uses SNPs at `r²<0.30` so leave-one-out is the
+appropriate sensitivity check for whether any single SNP drives the result.
+
+```{r leave-one-out-hmgcr}
+#| label: leave-one-out-hmgcr
+
+loo_mr <- function(df, outcome_label, exposure_label, gene_label) {
+  d <- df %>%
+    filter(outcome == outcome_label,
+           exposure_name == exposure_label,
+           gene == gene_label)
+  
+  if (nrow(d) < 2) return(tibble())
+  
+  map_dfr(seq_len(nrow(d)), function(i) {
+    d_loo <- d[-i, ]
+    bx <- d_loo$beta_exp; sx <- d_loo$se_exp
+    by <- d_loo$beta_out_h; sy <- d_loo$se_out_h
+    ratio    <- by / bx
+    ratio_se <- abs(sy / bx)
+    w        <- 1 / ratio_se^2
+    theta    <- sum(w * ratio) / sum(w)
+    se_fe    <- sqrt(1 / sum(w))
+    
+    tibble(
+      outcome     = outcome_label,
+      exposure    = exposure_label,
+      dropped_snp = d$rsid[i],
+      estimate    = round(theta, 4),
+      ci_lo       = round(theta - 1.96 * se_fe, 4),
+      ci_hi       = round(theta + 1.96 * se_fe, 4),
+      p_value     = round(2 * pnorm(-abs(theta / se_fe)), 4)
+    )
+  })
+}
+
+loo_results <- bind_rows(
+  loo_mr(harm_combined, "UKB-Barton", "LDL-C",             "HMGCR"),
+  loo_mr(harm_combined, "UKB-Barton", "Total cholesterol", "HMGCR"),
+  loo_mr(harm_combined, "MGI-BioVU",  "LDL-C",             "HMGCR"),
+  loo_mr(harm_combined, "MGI-BioVU",  "Total cholesterol", "HMGCR")
+)
+
+loo_results %>%
+  group_by(outcome, exposure) %>%
+  summarise(
+    n_iterations = n(),
+    range_lo     = round(min(estimate), 4),
+    range_hi     = round(max(estimate), 4),
+    `% iterations p<0.05` = round(100 * mean(p_value < 0.05), 0),
+    .groups = "drop"
+  ) %>%
+  kable(caption = "HMGCR leave-one-out IVW summary — robustness across instruments")
+```
+
+---
+
+## Visualisation
+
+### Forest Plot — Two-Outcome Comparison
+
+```{r forest-plot}
+#| label: forest-plot
+#| fig-width: 11
+#| fig-height: 8
+
+mr_results %>%
+  filter(method %in% c("IVW-RE", "Wald ratio")) %>%
+  mutate(
+    label   = str_glue("{gene}\n({exposure})"),
+    outcome = factor(outcome, levels = c("UKB-Barton", "MGI-BioVU"))
+  ) %>%
+  ggplot(aes(x = estimate, xmin = ci_lo, xmax = ci_hi,
+             y = label, colour = outcome, shape = outcome)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(height = 0.3,
+                 position = position_dodge(width = 0.6)) +
+  geom_point(size = 3,
+             position = position_dodge(width = 0.6)) +
+  scale_colour_manual(values = c(
+    "UKB-Barton" = "#00274c",
+    "MGI-BioVU"  = "#ffcb05"
+  )) +
+  scale_shape_manual(values = c("UKB-Barton" = 16, "MGI-BioVU" = 17)) +
+  facet_wrap(~exposure, ncol = 1, scales = "free_y") +
+  labs(
+    title    = "Drug-target MR — UKB primary vs MGI-BioVU replication",
+    subtitle = "IVW-RE shown (Wald ratio for single-SNP cases)",
+    x        = "Change in serum calcium (SD) per SD cholesterol increase",
+    y        = NULL,
+    colour   = "Outcome cohort",
+    shape    = "Outcome cohort"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position  = "bottom",
+        panel.grid.minor = element_blank())
+```
+
+### HMGCR Scatter — UKB Outcome
+
+```{r hmgcr-scatter-ukb}
+#| label: hmgcr-scatter-ukb
+#| fig-width: 10
+#| fig-height: 5
+
+harm_combined %>%
+  filter(outcome == "UKB-Barton", gene == "HMGCR") %>%
+  ggplot(aes(x = beta_exp, y = beta_out_h)) +
+  geom_point(aes(size = 1 / se_out_h^2), shape = 21,
+             fill = "#00274c", alpha = 0.7) +
+  geom_smooth(aes(weight = 1 / se_out_h^2),
+              method = "lm", se = TRUE,
+              colour = "#ffcb05", linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey60") +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
+  facet_wrap(~exposure_name, scales = "free_x") +
+  scale_size_continuous(guide = "none") +
+  labs(
+    title    = "HMGCR allele score — MR scatter (UKB calcium outcome)",
+    subtitle = "Point size proportional to inverse variance; slope = IVW estimate",
+    x        = "SNP effect on cholesterol exposure",
+    y        = "SNP effect on serum calcium",
+    caption  = "Shaded band = 95% CI of weighted regression"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+---
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

@@ -1,0 +1,996 @@
+---
+title: "Drug-Target MR Analysis — Bone Outcomes"
+author: "Dave Bridges"
+date: today
+editor: source
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-drug-target-mr-bmd/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+
+se <- function(x) sd(x, na.rm = TRUE) / sqrt(length(x))
+
+library(tidyverse)
+library(knitr)
+
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+This script implements a **drug-target Mendelian Randomization (MR)** analysis
+testing whether genetically proxied reductions in LDL-cholesterol (LDL-C) and
+total cholesterol causally affect bone mineral density (BMD), fracture risk,
+and (as a negative control) vitamin D. The three lipid-lowering drug targets
+evaluated are **HMGCR** (statins), **PCSK9** (PCSK9 inhibitors), and
+**NPC1L1** (ezetimibe).
+
+This analysis is a parallel extension of the previously completed
+drug-target MR for serum calcium. The motivating hypothesis is that the
+cholesterol → bone demineralization → calcium release pathway is
+**mevalonate-pathway-mediated** rather than LDL-C-mediated. If true, this
+predicts:
+
+- **HMGCR cis-instruments**: significant negative effect on BMD (effect on
+  bone phenotype is direct via mevalonate-pathway intermediates such as
+  farnesyl pyrophosphate and geranylgeranyl pyrophosphate)
+- **PCSK9 cis-instruments**: null effect on BMD with tight CI
+  (PCSK9 inhibition lowers LDL-C via increased LDLR-mediated uptake without
+  engaging the mevalonate pathway in non-hepatic tissues)
+- **NPC1L1 cis-instruments**: null effect on BMD with wider CI
+  (ezetimibe lowers cholesterol via intestinal absorption inhibition; bypasses
+  mevalonate pathway entirely)
+
+The pattern of HMGCR-significant but PCSK9-null effects, if observed, would
+provide positive evidence that the cholesterol → BMD pathway is mevalonate-
+mediated rather than LDL-C-mediated. This parallels the drug-target MR
+finding for serum calcium and motivates the cell-specific HMGCR knockout
+experiments proposed in Aim 1A2.
+
+### Outcomes
+
+This script evaluates four outcomes:
+
+- **Heel BMD** (Morris et al. 2019, UK Biobank quantitative ultrasound,
+  n = 426,824): primary BMD outcome
+- **Femoral neck BMD** (Zheng et al. 2015, GEFOS, n = 32,735): secondary
+  lower-powered BMD outcome
+- **Fractures** (Dönertaş et al. 2021, UK Biobank, n = 484,598):
+  clinical endpoint
+- **25-hydroxyvitamin D** (MGI-BioVU LabWAS, n = 12,250): negative control
+
+### Sample Overlap Considerations
+
+The LDL-C exposure GWAS (`ieu-b-110`, UKB Neale Lab, n ≈ 440,546) overlaps
+with the UK Biobank-derived outcome GWAS for both heel BMD (Morris 2019,
+UKB) and fractures (Dönertaş 2021, UKB). This means the analysis is
+effectively a *one-sample* MR for those outcome × exposure combinations.
+With strong instruments (F >> 10), one-sample bias is generally toward the
+null. The total cholesterol exposure (`ebi-a-GCST90025953`, GLGC
+meta-analysis) is non-overlapping with UKB, so estimates from that
+exposure are immune to sample overlap concerns. Zheng 2015 femoral neck
+BMD (GEFOS) and the MGI-BioVU vitamin D GWAS are non-overlapping with
+both exposures.
+
+---
+
+## Setup
+
+```{r setup}
+#| label: setup
+#| message: false
+
+library(tidyverse)
+library(TwoSampleMR)
+library(ieugwasr)
+library(data.table)
+library(knitr)
+library(kableExtra)
+
+# ── Drug-target gene windows (GRCh37/hg19 ±500 kb around gene body) ──────────
+WINDOW_KB <- 500
+
+gene_windows <- tribble(
+  ~gene,    ~chr, ~gene_start,  ~gene_end,
+  "HMGCR",  5,    74632993,     74657941,
+  "PCSK9",  1,    55505221,     55530525,
+  "NPC1L1", 7,    44552971,     44604640
+) %>%
+  mutate(
+    region_start = pmax(0, gene_start - WINDOW_KB * 1000),
+    region_end   = gene_end + WINDOW_KB * 1000,
+    region_str   = str_glue("{chr}:{region_start}-{region_end}")
+  )
+
+kable(gene_windows %>% select(gene, chr, region_start, region_end, region_str),
+      caption = "Drug-target gene windows (GRCh37, ±500 kb)")
+
+# ── Outcome GWAS IDs ─────────────────────────────────────────────────────────
+outcome_gwas <- tribble(
+  ~label,                              ~gwas_id,              ~n,       ~year, ~pmid,    ~kind,
+  "Heel BMD (Morris 2019)",            "ebi-a-GCST006979",    426824,   2019,  30598549, "ukb",
+  "Femoral neck BMD (Zheng 2015)",     "ieu-a-980",           32735,    2015,  26367794, "ukb",
+  "Fractures (Donertas 2021)",         "ebi-a-GCST90038703",  484598,   2021,  34187969, "ukb",
+  "Vitamin D (MGI-BioVU)",             "local",               12250,    2020,  32907938, "mgi"
+)
+
+kable(outcome_gwas %>% select(label, gwas_id, n, year, pmid),
+      caption = "Outcome GWAS for drug-target MR")
+```
+
+---
+
+## Exposure: Instrument Extraction
+
+Instruments are drawn from two large GWAS:
+
+- **`ieu-b-110`**: LDL-C from UK Biobank (Neale Lab) — overlaps with UKB outcomes
+- **`ebi-a-GCST90025953`**: Total cholesterol from the Global Lipids Genetics
+  Consortium meta-analysis — non-overlapping with UKB
+
+```{r extract-regional-snps}
+#| label: extract-regional-snps
+#| cache: true
+
+exposure_ids <- c(
+  "LDL-C"             = "ieu-b-110",
+  "Total cholesterol" = "ebi-a-GCST90025953"
+)
+
+extract_regional <- function(gwas_id, gene_df) {
+  map_dfr(seq_len(nrow(gene_df)), function(i) {
+    row <- gene_df[i, ]
+    cat("  Querying", gwas_id, "—", row$gene, "(", row$region_str, ")\n")
+    tryCatch({
+      res <- ieugwasr::associations(
+        variants = row$region_str,
+        id       = gwas_id,
+        proxies  = FALSE
+      )
+      if (nrow(res) == 0) return(tibble())
+
+      res_tib <- res %>% as_tibble()
+
+      if ("pos" %in% names(res_tib) && !"position" %in% names(res_tib)) {
+        res_tib <- res_tib %>% dplyr::rename(position = pos)
+      } else if (!"position" %in% names(res_tib)) {
+        res_tib <- res_tib %>% mutate(position = NA_integer_)
+      }
+
+      res_tib %>%
+        mutate(
+          position = as.integer(position),
+          n        = as.character(n),
+          beta     = as.numeric(beta),
+          se       = as.numeric(se),
+          eaf      = as.numeric(eaf),
+          p        = as.numeric(p),
+          gene     = row$gene,
+          gwas_id  = gwas_id
+        ) %>%
+        select(-any_of("pos"))
+
+    }, error = function(e) {
+      warning("Failed for ", gwas_id, " / ", row$gene, ": ", e$message)
+      tibble()
+    })
+  })
+}
+
+cat("Extracting regional SNPs from OpenGWAS...\n\n")
+regional_raw <- map_dfr(names(exposure_ids), function(name) {
+  cat("== Exposure:", name, "(", exposure_ids[name], ") ==\n")
+  extract_regional(exposure_ids[name], gene_windows) %>%
+    mutate(exposure_name = name)
+})
+
+regional_raw %>%
+  count(exposure_name, gene, name = "n_snps_raw") %>%
+  kable(caption = "Raw SNP counts per gene window (pre-filtering, pre-clumping)")
+```
+
+### Clumping and Instrument Finalisation
+
+Following the same approach as the calcium drug-target MR:
+
+- **HMGCR**: allele score at `r²<0.30` (Swerdlow et al. 2015 *Lancet*)
+- **PCSK9**: strict clumping at `r²<0.001`
+- **NPC1L1**: strict clumping at `r²<0.001`
+
+```{r finalise-instruments}
+#| label: finalise-instruments
+#| cache: true
+
+clump_gene <- function(df, gene_name, p_thresh, r2_thresh) {
+  df %>%
+    filter(gene == gene_name, p <= p_thresh) %>%
+    group_by(exposure_name, gene) %>%
+    group_modify(~ {
+      if (nrow(.x) < 2) return(.x)
+      tryCatch(
+        ieugwasr::ld_clump(
+          tibble(rsid = .x$rsid, pval = .x$p, id = .x$gwas_id),
+          clump_r2 = r2_thresh,
+          clump_kb = 10000,
+          pop      = "EUR"
+        ) %>% inner_join(.x, by = "rsid"),
+        error = function(e) { warning(e$message); .x }
+      )
+    }) %>%
+    ungroup()
+}
+
+instruments_hmgcr  <- clump_gene(regional_raw, "HMGCR",  5e-8, 0.30)
+instruments_pcsk9  <- clump_gene(regional_raw, "PCSK9",  5e-8, 0.001)
+instruments_npc1l1 <- clump_gene(regional_raw, "NPC1L1", 5e-8, 0.001)
+
+instruments_final <- bind_rows(instruments_hmgcr,
+                               instruments_pcsk9,
+                               instruments_npc1l1)
+
+instruments_final %>%
+  mutate(F_stat = (beta / se)^2) %>%
+  group_by(exposure_name, gene) %>%
+  summarise(
+    n_SNPs   = n(),
+    min_F    = round(min(F_stat), 1),
+    median_F = round(median(F_stat), 1),
+    max_F    = round(max(F_stat), 1),
+    min_p    = signif(min(p), 2),
+    .groups  = "drop"
+  ) %>%
+  kable(caption = "Final instrument sets across all three drug targets")
+```
+
+---
+
+## Outcomes: Fetching from OpenGWAS
+
+For the three OpenGWAS-hosted outcomes (Heel BMD, Femoral neck BMD,
+Fractures), we query directly via the API using the instrument rsIDs.
+Vitamin D is loaded from a local PheWeb file.
+
+```{r extract-opengwas-outcomes}
+#| label: extract-opengwas-outcomes
+#| cache: true
+
+all_rsids <- instruments_final %>% distinct(rsid) %>% pull(rsid)
+
+cat("Total unique instrument SNPs to query:", length(all_rsids), "\n\n")
+
+# Outcomes hosted on OpenGWAS
+opengwas_outcomes <- outcome_gwas %>% filter(kind == "ukb", gwas_id != "local")
+
+fetch_opengwas_outcome <- function(gwas_id, label) {
+  cat("  Fetching", label, "(", gwas_id, ")...\n")
+  res <- tryCatch({
+    ieugwasr::associations(
+      variants = all_rsids,
+      id       = gwas_id,
+      proxies  = FALSE
+    ) %>% as_tibble()
+  }, error = function(e) { cat("    Failed:", e$message, "\n"); tibble() })
+
+  if (nrow(res) == 0) return(tibble())
+
+  if ("pos" %in% names(res) && !"position" %in% names(res)) {
+    res <- res %>% dplyr::rename(position = pos)
+  }
+
+  res %>%
+    mutate(
+      position = as.integer(position),
+      chr      = as.character(chr),
+      beta     = as.numeric(beta),
+      se       = as.numeric(se),
+      eaf      = as.numeric(eaf),
+      p        = as.numeric(p),
+      outcome_label = label,
+      outcome_gwas_id = gwas_id
+    )
+}
+
+opengwas_outcome_raw <- pmap_dfr(
+  list(opengwas_outcomes$gwas_id, opengwas_outcomes$label),
+  fetch_opengwas_outcome
+)
+
+# Coverage check
+opengwas_outcome_raw %>%
+  count(outcome_label, name = "n_snps_returned") %>%
+  mutate(n_instruments = length(all_rsids),
+         pct_recovered = round(100 * n_snps_returned / n_instruments, 1)) %>%
+  kable(caption = "OpenGWAS outcome SNP recovery (direct rsID match)")
+```
+
+### Coverage by Gene
+
+```{r opengwas-coverage-by-gene}
+#| label: opengwas-coverage-by-gene
+
+opengwas_coverage <- instruments_final %>%
+  distinct(rsid, exposure_name, gene) %>%
+  left_join(
+    opengwas_outcome_raw %>% distinct(rsid, outcome_label) %>% mutate(found = TRUE),
+    by = "rsid",
+    relationship = "many-to-many"
+  ) %>%
+  filter(!is.na(outcome_label)) %>%
+  count(outcome_label, exposure_name, gene, name = "n_in_outcome")
+
+# Compare to instrument counts
+instruments_final %>%
+  count(exposure_name, gene, name = "n_instruments") %>%
+  left_join(opengwas_coverage,
+            by = c("exposure_name", "gene"),
+            relationship = "many-to-many") %>%
+  pivot_wider(names_from = outcome_label,
+              values_from = n_in_outcome,
+              values_fill = 0L) %>%
+  kable(caption = "OpenGWAS outcome coverage by drug target and exposure")
+```
+
+### Standardising OpenGWAS Outcomes
+
+```{r format-opengwas-outcomes}
+#| label: format-opengwas-outcomes
+
+opengwas_outcome_std <- opengwas_outcome_raw %>%
+  dplyr::rename(
+    REF      = nea,
+    ALT      = ea,
+    pval     = p,
+    eaf_out  = eaf
+  ) %>%
+  mutate(
+    CHR = as.integer(chr),
+    POS = as.integer(position)
+  ) %>%
+  filter(!is.na(CHR), !is.na(POS)) %>%
+  select(rsid, CHR, POS, REF, ALT,
+         beta_out = beta, se_out = se, pval_out = pval, eaf_out,
+         outcome_label, outcome_gwas_id)
+
+cat("OpenGWAS outcomes standardised:",
+    scales::comma(nrow(opengwas_outcome_std)),
+    "SNP-outcome pairs ready for harmonisation\n")
+```
+
+---
+
+## Outcome: Vitamin D (MGI-BioVU LabWAS, Negative Control)
+
+The Vitamin D analysis acts as a negative control. We do NOT expect any of
+the drug-target instruments to affect vitamin D, since the genome-wide MR
+already rejected cholesterol → vitamin D as a mediator of the
+cholesterol → calcium effect.
+
+```{r load-vitd-outcome}
+#| label: load-vitd-outcome
+#| cache: true
+
+cat("Loading MGI-BioVU vitamin D GWAS...\n")
+
+vitd_gwas_raw <- read_tsv(
+  gzfile("PheWeb Summary Statistics/phenocode-Vit-D.tsv.gz"),
+  show_col_types = FALSE
+)
+
+cat("Columns:\n"); print(names(vitd_gwas_raw))
+
+vitd_gwas <- vitd_gwas_raw %>%
+  as_tibble() %>%
+  dplyr::rename(
+    CHR  = chrom,
+    POS  = pos,
+    REF  = ref,
+    ALT  = alt,
+    pval = pval,
+    beta = beta,
+    se   = sebeta,
+    eaf  = maf
+  ) %>%
+  mutate(CHR = as.integer(str_remove(as.character(CHR), "^chr")),
+         POS = as.integer(POS)) %>%
+  select(CHR, POS, REF, ALT,
+         beta_vitd = beta, se_vitd = se, pval_vitd = pval, eaf_vitd = eaf)
+
+cat("\nMGI-BioVU vitamin D GWAS:",
+    scales::comma(nrow(vitd_gwas)), "SNPs\n")
+```
+
+---
+
+## Outcome Extraction and Harmonisation
+
+We use two helpers that handle the OpenGWAS (rsID-keyed) and MGI-BioVU
+(position-keyed) outcomes. The MGI helper includes a ±50 bp positional
+window fallback to recover SNPs not exactly matched.
+
+```{r extract-outcome-helpers}
+#| label: extract-outcome-helpers
+
+# OpenGWAS outcomes: matched by rsID across multiple outcomes
+extract_outcome_opengwas <- function(instruments_df, opengwas_std,
+                                     outcome_label_filter) {
+  instruments_df %>%
+    distinct(rsid, chr, position, ea, nea, eaf, gene, exposure_name,
+             beta_exp = beta, se_exp = se) %>%
+    inner_join(
+      opengwas_std %>% filter(outcome_label == outcome_label_filter),
+      by = "rsid"
+    )
+}
+
+# MGI-BioVU vitamin D outcome: matched by CHR + POS with ±50 bp fallback
+extract_outcome_vitd <- function(instruments_df, vitd_df, window_bp = 50) {
+  instruments_df %>%
+    distinct(rsid, chr, position, ea, nea, eaf, gene, exposure_name,
+             beta_exp = beta, se_exp = se) %>%
+    mutate(CHR = as.integer(chr), POS = as.integer(position)) %>%
+    filter(!is.na(POS)) %>%
+    left_join(
+      vitd_df %>%
+        filter(!is.na(CHR), !is.na(POS)) %>%
+        dplyr::rename(beta_out = beta_vitd,
+                      se_out   = se_vitd,
+                      pval_out = pval_vitd,
+                      eaf_out  = eaf_vitd),
+      by = c("CHR", "POS")
+    ) %>%
+    {
+      matched   <- filter(., !is.na(beta_out))
+      unmatched <- filter(., is.na(beta_out))
+
+      if (nrow(unmatched) > 0 && window_bp > 0) {
+        fallback <- map_dfr(seq_len(nrow(unmatched)), function(i) {
+          row <- unmatched[i, ]
+          hit <- vitd_df %>%
+            filter(!is.na(CHR), !is.na(POS),
+                   CHR == row$CHR,
+                   POS >= row$POS - window_bp,
+                   POS <= row$POS + window_bp) %>%
+            slice_min(abs(POS - row$POS), n = 1, with_ties = FALSE)
+
+          if (nrow(hit) == 0) return(tibble())
+
+          tibble(
+            rsid          = row$rsid,
+            chr           = row$chr,
+            position      = row$position,
+            ea            = row$ea,
+            nea           = row$nea,
+            eaf           = row$eaf,
+            gene          = row$gene,
+            exposure_name = row$exposure_name,
+            beta_exp      = row$beta_exp,
+            se_exp        = row$se_exp,
+            CHR           = row$CHR,
+            POS           = row$POS,
+            REF           = hit$REF,
+            ALT           = hit$ALT,
+            beta_out      = hit$beta_vitd,
+            se_out        = hit$se_vitd,
+            pval_out      = hit$pval_vitd,
+            eaf_out       = hit$eaf_vitd
+          )
+        })
+        bind_rows(matched, fallback)
+      } else {
+        matched
+      }
+    } %>%
+    mutate(outcome_label = "Vitamin D (MGI-BioVU)")
+}
+```
+
+```{r harmonise-helper}
+#| label: harmonise-helper
+
+# Strict allele-pair harmonisation — both alleles must match (or both
+# strand-flipped).
+harmonise_alleles <- function(df) {
+  df %>%
+    filter(!is.na(beta_out)) %>%
+    mutate(
+      ea_comp  = chartr("ACGT", "TGCA", ea),
+      nea_comp = chartr("ACGT", "TGCA", nea),
+
+      direct_match    = (ea  == ALT & nea  == REF),
+      flipped_match   = (ea  == REF & nea  == ALT),
+      comp_match      = (ea_comp == ALT & nea_comp == REF),
+      comp_flip_match = (ea_comp == REF & nea_comp == ALT),
+
+      ambiguous = (
+        (ea == "A" & nea == "T") | (ea == "T" & nea == "A") |
+        (ea == "C" & nea == "G") | (ea == "G" & nea == "C")
+      ),
+      eaf_incompatible = ambiguous & abs(eaf - eaf_out) > 0.3,
+
+      needs_flip = case_when(
+        direct_match    ~ FALSE,
+        flipped_match   ~ TRUE,
+        comp_match      ~ FALSE,
+        comp_flip_match ~ TRUE,
+        TRUE            ~ NA
+      ),
+      beta_out_h = case_when(
+        is.na(needs_flip) | eaf_incompatible ~ NA_real_,
+        needs_flip                           ~ -beta_out,
+        TRUE                                 ~ beta_out
+      ),
+      se_out_h = if_else(is.na(beta_out_h), NA_real_, se_out),
+      harmonise_status = case_when(
+        is.na(needs_flip)  ~ "incompatible_alleles",
+        eaf_incompatible   ~ "ambiguous_eaf_mismatch",
+        needs_flip         ~ "flipped",
+        TRUE               ~ "direct"
+      )
+    )
+}
+
+build_harmonised <- function(instruments_df, outcome_df, outcome_label,
+                              outcome_kind = c("opengwas", "vitd")) {
+  outcome_kind <- match.arg(outcome_kind)
+
+  hits <- if (outcome_kind == "opengwas") {
+    extract_outcome_opengwas(instruments_df, outcome_df, outcome_label)
+  } else {
+    extract_outcome_vitd(instruments_df, outcome_df, window_bp = 50)
+  }
+
+  cat("\n=== Harmonising for", outcome_label, "===\n")
+  cat("Instruments matched in outcome:", nrow(hits), "\n")
+
+  harm <- harmonise_alleles(hits)
+
+  cat("\nHarmonisation status:\n")
+  harm %>% count(gene, harmonise_status) %>% print()
+
+  harm_clean <- harm %>%
+    filter(!is.na(beta_out_h)) %>%
+    mutate(
+      beta_exp   = as.numeric(beta_exp),
+      se_exp     = as.numeric(se_exp),
+      beta_out_h = as.numeric(beta_out_h),
+      se_out_h   = as.numeric(se_out_h),
+      F_stat     = (beta_exp / se_exp)^2,
+      outcome    = outcome_label
+    )
+
+  cat("\nSNPs retained per exposure × gene:\n")
+  harm_clean %>% count(exposure_name, gene) %>% print()
+
+  harm_clean
+}
+```
+
+### Run Harmonisation for All Four Outcomes
+
+```{r harmonise-all-outcomes}
+#| label: harmonise-all-outcomes
+
+harm_heelbmd <- build_harmonised(instruments_final, opengwas_outcome_std,
+                                  outcome_label = "Heel BMD (Morris 2019)",
+                                  outcome_kind  = "opengwas")
+
+harm_fembmd  <- build_harmonised(instruments_final, opengwas_outcome_std,
+                                  outcome_label = "Femoral neck BMD (Zheng 2015)",
+                                  outcome_kind  = "opengwas")
+
+harm_frac    <- build_harmonised(instruments_final, opengwas_outcome_std,
+                                  outcome_label = "Fractures (Donertas 2021)",
+                                  outcome_kind  = "opengwas")
+
+harm_vitd    <- build_harmonised(instruments_final, vitd_gwas,
+                                  outcome_label = "Vitamin D (MGI-BioVU)",
+                                  outcome_kind  = "vitd")
+
+harm_combined <- bind_rows(harm_heelbmd, harm_fembmd, harm_frac, harm_vitd)
+```
+
+### Coverage Comparison Across Outcomes
+
+```{r coverage-comparison}
+#| label: coverage-comparison
+
+harm_combined %>%
+  count(outcome, exposure_name, gene, name = "n_harmonised") %>%
+  pivot_wider(names_from = outcome, values_from = n_harmonised, values_fill = 0L) %>%
+  kable(caption = "Harmonised SNP counts per drug target across outcomes")
+```
+
+---
+
+## MR Analysis
+
+```{r mr-engine}
+#| label: mr-engine
+
+run_drug_target_mr <- function(df, exposure_col = "exposure_name") {
+
+  ivw_re <- function(beta_x, se_x, beta_y, se_y) {
+    ratio    <- beta_y / beta_x
+    ratio_se <- abs(se_y / beta_x)
+    w        <- 1 / ratio_se^2
+    theta    <- sum(w * ratio) / sum(w)
+    Q        <- sum(w * (ratio - theta)^2)
+    df_Q     <- length(ratio) - 1
+    Q_p      <- pchisq(Q, df = df_Q, lower.tail = FALSE)
+    tau2     <- max(0, (Q - df_Q) / (sum(w) - sum(w^2) / sum(w)))
+    w_re     <- 1 / (ratio_se^2 + tau2)
+    theta_re <- sum(w_re * ratio) / sum(w_re)
+    se_re    <- sqrt(1 / sum(w_re))
+    list(estimate = theta_re, se = se_re,
+         Q = Q, Q_df = df_Q, Q_p = Q_p, tau2 = tau2)
+  }
+
+  weighted_median_mr <- function(beta_x, se_x, beta_y, se_y, nboot = 1000) {
+    ratio    <- beta_y / beta_x
+    ratio_se <- abs(se_y / beta_x)
+    w        <- 1 / ratio_se^2
+    w        <- w / sum(w)
+    ord      <- order(ratio)
+    wm       <- ratio[ord][which(cumsum(w[ord]) >= 0.5)[1]]
+    boot_est <- replicate(nboot, {
+      r_b <- rnorm(length(ratio), ratio, ratio_se)
+      r_b[order(r_b)][which(cumsum(sample(w)) >= 0.5)[1]]
+    })
+    list(estimate = wm, se = sd(boot_est))
+  }
+
+  egger_mr <- function(beta_x, beta_y, se_y) {
+    flip <- beta_x < 0
+    bx   <- ifelse(flip, -beta_x, beta_x)
+    by   <- ifelse(flip, -beta_y,  beta_y)
+    w    <- 1 / se_y^2
+    fit  <- lm(by ~ bx, weights = w)
+    s    <- summary(fit)
+    list(
+      estimate  = coef(fit)[["bx"]],
+      se        = coef(s)[["bx", "Std. Error"]],
+      intercept = coef(fit)[["(Intercept)"]],
+      int_p     = coef(s)[["(Intercept)", "Pr(>|t|)"]]
+    )
+  }
+
+  df %>%
+    group_by(across(all_of(c("outcome", exposure_col, "gene")))) %>%
+    group_map(~ {
+      d      <- .x; key <- .y
+      n_snps <- nrow(d)
+      bx <- d$beta_exp; sx <- d$se_exp
+      by <- d$beta_out_h; sy <- d$se_out_h
+
+      rows <- list()
+
+      if (n_snps == 1) {
+        wr_est <- by / bx; wr_se <- abs(sy / bx)
+        rows[["Wald ratio"]] <- tibble(
+          method = "Wald ratio",
+          estimate = wr_est, se = wr_se,
+          ci_lo = wr_est - 1.96 * wr_se, ci_hi = wr_est + 1.96 * wr_se,
+          p_value = 2 * pnorm(-abs(wr_est / wr_se)),
+          n_snps = 1L, Q = NA_real_, Q_p = NA_real_, egger_int_p = NA_real_
+        )
+      } else {
+        ivw <- ivw_re(bx, sx, by, sy)
+        rows[["IVW-RE"]] <- tibble(
+          method   = "IVW-RE",
+          estimate = ivw$estimate, se = ivw$se,
+          ci_lo    = ivw$estimate - 1.96 * ivw$se,
+          ci_hi    = ivw$estimate + 1.96 * ivw$se,
+          p_value  = 2 * pnorm(-abs(ivw$estimate / ivw$se)),
+          n_snps   = n_snps, Q = round(ivw$Q, 2),
+          Q_p      = round(ivw$Q_p, 4), egger_int_p = NA_real_
+        )
+        wm <- weighted_median_mr(bx, sx, by, sy)
+        rows[["Weighted median"]] <- tibble(
+          method   = "Weighted median",
+          estimate = wm$estimate, se = wm$se,
+          ci_lo    = wm$estimate - 1.96 * wm$se,
+          ci_hi    = wm$estimate + 1.96 * wm$se,
+          p_value  = 2 * pnorm(-abs(wm$estimate / wm$se)),
+          n_snps   = n_snps, Q = NA_real_, Q_p = NA_real_, egger_int_p = NA_real_
+        )
+        if (n_snps >= 3) {
+          eg <- egger_mr(bx, by, sy)
+          rows[["MR-Egger"]] <- tibble(
+            method      = "MR-Egger",
+            estimate    = eg$estimate, se = eg$se,
+            ci_lo       = eg$estimate - 1.96 * eg$se,
+            ci_hi       = eg$estimate + 1.96 * eg$se,
+            p_value     = 2 * pnorm(-abs(eg$estimate / eg$se)),
+            n_snps      = n_snps, Q = NA_real_, Q_p = NA_real_,
+            egger_int_p = round(eg$int_p, 4)
+          )
+        }
+      }
+      bind_rows(rows) %>%
+        mutate(outcome  = key[["outcome"]],
+               exposure = key[[exposure_col]],
+               gene     = key[["gene"]])
+    }, .keep = TRUE) %>%
+    bind_rows()
+}
+```
+
+### Running Across All Outcomes
+
+```{r run-mr-all}
+#| label: run-mr-all
+
+set.seed(42)
+
+mr_results <- run_drug_target_mr(harm_combined)
+
+mr_results %>%
+  mutate(
+    across(c(estimate, se, ci_lo, ci_hi), ~round(.x, 4)),
+    p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+    `95% CI` = str_glue("({ci_lo}\u2013{ci_hi})")
+  ) %>%
+  select(outcome, exposure, gene, method, n_snps,
+         estimate, `95% CI`, p_value, Q, Q_p, egger_int_p) %>%
+  arrange(exposure, gene, outcome, method) %>%
+  kable(caption = paste0(
+    "Drug-target MR — all outcomes; estimates are SD outcome ",
+    "(or log-OR for fracture) per SD cholesterol increase"
+  ))
+```
+
+### Primary Estimates Only — Summary Table
+
+```{r primary-summary}
+#| label: primary-summary
+
+mr_results %>%
+  filter(method == "IVW-RE" | method == "Wald ratio") %>%
+  mutate(
+    across(c(estimate, ci_lo, ci_hi), ~round(.x, 4)),
+    p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+    `95% CI` = str_glue("({ci_lo}\u2013{ci_hi})")
+  ) %>%
+  select(outcome, exposure, gene, n_snps, method,
+         estimate, `95% CI`, p_value) %>%
+  arrange(exposure, gene, outcome) %>%
+  kable(caption = "Primary MR estimates (IVW-RE or Wald ratio) across all outcomes")
+```
+
+### Heel BMD — Primary Focus
+
+```{r heelbmd-primary}
+#| label: heelbmd-primary
+
+mr_results %>%
+  filter(outcome == "Heel BMD (Morris 2019)") %>%
+  mutate(
+    across(c(estimate, ci_lo, ci_hi), ~round(.x, 4)),
+    p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+    `95% CI` = str_glue("({ci_lo}\u2013{ci_hi})")
+  ) %>%
+  select(exposure, gene, method, n_snps,
+         estimate, `95% CI`, p_value, Q, Q_p, egger_int_p) %>%
+  arrange(exposure, gene, method) %>%
+  kable(caption = "Heel BMD — all methods across drug targets and exposures")
+```
+
+### Leave-One-Out Sensitivity (HMGCR for Heel BMD)
+
+The HMGCR allele score uses SNPs at `r²<0.30` so leave-one-out is the
+appropriate sensitivity check for whether any single SNP drives the result.
+
+```{r leave-one-out-hmgcr}
+#| label: leave-one-out-hmgcr
+
+loo_mr <- function(df, outcome_label, exposure_label, gene_label) {
+  d <- df %>%
+    filter(outcome == outcome_label,
+           exposure_name == exposure_label,
+           gene == gene_label)
+
+  if (nrow(d) < 2) return(tibble())
+
+  map_dfr(seq_len(nrow(d)), function(i) {
+    d_loo <- d[-i, ]
+    bx <- d_loo$beta_exp; sx <- d_loo$se_exp
+    by <- d_loo$beta_out_h; sy <- d_loo$se_out_h
+    ratio    <- by / bx
+    ratio_se <- abs(sy / bx)
+    w        <- 1 / ratio_se^2
+    theta    <- sum(w * ratio) / sum(w)
+    se_fe    <- sqrt(1 / sum(w))
+
+    tibble(
+      outcome     = outcome_label,
+      exposure    = exposure_label,
+      dropped_snp = d$rsid[i],
+      estimate    = round(theta, 4),
+      ci_lo       = round(theta - 1.96 * se_fe, 4),
+      ci_hi       = round(theta + 1.96 * se_fe, 4),
+      p_value     = round(2 * pnorm(-abs(theta / se_fe)), 4)
+    )
+  })
+}
+
+loo_outcomes <- c("Heel BMD (Morris 2019)",
+                  "Femoral neck BMD (Zheng 2015)",
+                  "Fractures (Donertas 2021)",
+                  "Vitamin D (MGI-BioVU)")
+
+loo_results <- map_dfr(loo_outcomes, function(o) {
+  bind_rows(
+    loo_mr(harm_combined, o, "LDL-C",             "HMGCR"),
+    loo_mr(harm_combined, o, "Total cholesterol", "HMGCR")
+  )
+})
+
+loo_results %>%
+  group_by(outcome, exposure) %>%
+  summarise(
+    n_iterations = n(),
+    range_lo     = round(min(estimate), 4),
+    range_hi     = round(max(estimate), 4),
+    `% iterations p<0.05` = round(100 * mean(p_value < 0.05), 0),
+    .groups = "drop"
+  ) %>%
+  kable(caption = paste0(
+    "HMGCR leave-one-out IVW summary across outcomes — ",
+    "robustness across instruments"
+  ))
+```
+
+---
+
+## Visualisation
+
+### Forest Plot — All Outcomes × All Targets
+
+```{r forest-plot-all}
+#| label: forest-plot-all
+#| fig-width: 12
+#| fig-height: 9
+
+mr_results %>%
+  filter(method %in% c("IVW-RE", "Wald ratio")) %>%
+  mutate(
+    label   = str_glue("{gene}\n({exposure})"),
+    outcome = factor(outcome, levels = c(
+      "Heel BMD (Morris 2019)",
+      "Femoral neck BMD (Zheng 2015)",
+      "Fractures (Donertas 2021)",
+      "Vitamin D (MGI-BioVU)"
+    ))
+  ) %>%
+  ggplot(aes(x = estimate, xmin = ci_lo, xmax = ci_hi,
+             y = label, colour = outcome, shape = outcome)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(height = 0.3,
+                 position = position_dodge(width = 0.7)) +
+  geom_point(size = 3,
+             position = position_dodge(width = 0.7)) +
+  scale_colour_manual(values = c(
+    "Heel BMD (Morris 2019)"        = "#00274c",
+    "Femoral neck BMD (Zheng 2015)" = "#5e92a8",
+    "Fractures (Donertas 2021)"     = "#ffcb05",
+    "Vitamin D (MGI-BioVU)"         = "#a0a0a0"
+  )) +
+  scale_shape_manual(values = c(
+    "Heel BMD (Morris 2019)"        = 16,
+    "Femoral neck BMD (Zheng 2015)" = 17,
+    "Fractures (Donertas 2021)"     = 15,
+    "Vitamin D (MGI-BioVU)"         = 18
+  )) +
+  facet_wrap(~exposure, ncol = 1, scales = "free_y") +
+  labs(
+    title    = "Drug-target MR — bone and vitamin D outcomes",
+    subtitle = "IVW-RE (Wald ratio for single-SNP cases)",
+    x        = "Change in outcome (SD, or log-OR for fracture) per SD cholesterol increase",
+    y        = NULL,
+    colour   = "Outcome",
+    shape    = "Outcome"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position  = "bottom",
+        panel.grid.minor = element_blank())
+```
+
+### Forest Plot — Heel BMD Only (Primary)
+
+```{r forest-plot-heelbmd}
+#| label: forest-plot-heelbmd
+#| fig-width: 10
+#| fig-height: 5
+
+mr_results %>%
+  filter(outcome == "Heel BMD (Morris 2019)",
+         method %in% c("IVW-RE", "Wald ratio")) %>%
+  mutate(label = str_glue("{gene}\n({exposure})")) %>%
+  ggplot(aes(x = estimate, xmin = ci_lo, xmax = ci_hi,
+             y = label)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(height = 0.3, colour = color_scheme[1]) +
+  geom_point(size = 3, colour = color_scheme[1]) +
+  labs(
+    title    = "Drug-target MR — Heel BMD (Morris 2019, n = 426,824)",
+    subtitle = "IVW-RE (Wald ratio for single-SNP cases); 95% CI",
+    x        = "Change in Heel BMD (SD) per SD cholesterol increase",
+    y        = NULL
+  ) +
+  theme_minimal(base_size = 13) +
+  theme(panel.grid.minor = element_blank())
+```
+
+### HMGCR Scatter — Heel BMD
+
+```{r hmgcr-scatter-heelbmd}
+#| label: hmgcr-scatter-heelbmd
+#| fig-width: 10
+#| fig-height: 5
+
+harm_combined %>%
+  filter(outcome == "Heel BMD (Morris 2019)", gene == "HMGCR") %>%
+  ggplot(aes(x = beta_exp, y = beta_out_h)) +
+  geom_point(aes(size = 1 / se_out_h^2), shape = 21,
+             fill = "#00274c", alpha = 0.7) +
+  geom_smooth(aes(weight = 1 / se_out_h^2),
+              method = "lm", se = TRUE,
+              colour = "#ffcb05", linewidth = 1) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey60") +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey60") +
+  facet_wrap(~exposure_name, scales = "free_x") +
+  scale_size_continuous(guide = "none") +
+  labs(
+    title    = "HMGCR allele score — MR scatter (Heel BMD outcome)",
+    subtitle = "Point size proportional to inverse variance; slope = IVW estimate",
+    x        = "SNP effect on cholesterol exposure",
+    y        = "SNP effect on Heel BMD",
+    caption  = "Shaded band = 95% CI of weighted regression"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank())
+```
+
+---
+
+## Combined Results Export
+
+```{r write-results}
+#| label: write-results
+
+mr_results_out <- mr_results %>%
+  mutate(
+    across(c(estimate, se, ci_lo, ci_hi), ~round(.x, 5)),
+    p_value = signif(p_value, 3)
+  ) %>%
+  select(outcome, exposure, gene, method, n_snps,
+         estimate, se, ci_lo, ci_hi, p_value,
+         Q, Q_p, egger_int_p)
+
+mr_results_out %>%
+  write_csv("MR Results - Drug Target BMD.csv")
+
+cat("Wrote", nrow(mr_results_out),
+    "rows to 'MR Results - Drug Target BMD.csv'\n")
+```
+
+---
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

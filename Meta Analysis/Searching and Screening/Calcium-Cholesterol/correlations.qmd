@@ -1,0 +1,85 @@
+---
+title: "Analysis of Screening Logs"
+author: "Kai-Lin Jen, Kaelin Loftus and Dave Bridges"
+date: "May 1, 2026"
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]  # Remove !expr, just use array syntax
+    fig.keep: "all"
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+# hide this code chunk
+#| echo: false
+#| message: false
+
+# defines the se function
+se <- function(x) {
+  sd(x, na.rm = TRUE) / sqrt(length(x))
+}
+
+#load these packages, nearly always needed
+library(tidyverse)
+library(knitr)
+
+# sets maize and blue color scheme
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+To quantify screening efforts for the calcium-cholesterol meta-analysis
+
+## Data Entry
+
+```{r data-entry}
+log.file <- 'Screening Log for Calcium and Cholesterol Meta-Analysis - Screening Log.csv'
+screening.log <- read_csv(log.file,
+                          col_types = cols(
+  Key = col_character(),
+  Title = col_character(),
+  DOI = col_character(),
+  `Abstract Note` = col_character(),
+  DateScreened = col_date(format = "%m/%d/%y"),
+  Screener = col_factor(),
+  Decision = col_character(),
+  FullTextView = col_factor(),
+  ExclusionReason = col_factor(),
+  Notes = col_character()
+))
+```
+
+## Analysis
+
+I wanted to identify papers with the words correlation, association in the title or abstract
+
+```{r correlation-finding}
+correlation.association.papers <- screening.log %>%
+  filter(str_detect(Title, regex("correlation|association", ignore_case = TRUE)) |
+           str_detect(`Abstract Note`, regex("correlation|association", ignore_case = TRUE)))
+
+#and papers with just hte word correlation in the title or abstract
+correlation.papers <- screening.log %>%
+  filter(str_detect(Title, regex("correlation", ignore_case = TRUE)) |
+           str_detect(`Abstract Note`, regex("correlation", ignore_case = TRUE)))
+```
+
+There were `r nrow(correlation.association.papers)` papers with the words correlation or association in the title or abstract.`. There were `r nrow(correlation.papers)` papers with the word correlation in the title or abstract.
+
+## Session Information
+
+```{r session-information}
+sessionInfo()
+```

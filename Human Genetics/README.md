@@ -2,9 +2,54 @@
 
 We wanted to be able to download summary statistics for some traits, and do clumping analysis using plink2.
 
+## Reproducibility Notes
+
+The LD reference panel and clumped instrument files are stored on GreatLakes/DataDen and are not part of this repository. The MGI-BioVU LabWAS summary statistics (`PheWeb Summary Statistics/`) are restricted to University of Michigan researchers and cannot be shared publicly; external users would need to substitute comparable publicly available GWAS summary statistics. Exact software versions for bcftools, samtools, and tabix are not pinned in the SLURM scripts (loaded via the GreatLakes module system); check `sessionInfo()` output in each rendered `.qmd` for the R environment used at time of analysis.
+
+## Script Execution Order
+
+The analyses must be run in the following order:
+
+1. `reference-build.sh` (via `reference-build.slurm`) — builds 1000G EUR LD reference panel on HPC
+2. `ld-clumping.slurm` — downloads Pan-UKBB summary statistics and performs LD clumping against the reference panel
+3. `ld_clump_analysis.qmd` — filters instruments by MAF and writes out final SNP lists
+4. Main MR analyses (independent, can be run in any order):
+   - `mr-tc-calcium.qmd`
+   - `mr-ldlc-calcium.qmd`
+   - `mr-calcium-tc.qmd`
+   - `mr-calcium-ldlc.qmd`
+5. `drug_target_mr_analysis.qmd` — requires internet access to OpenGWAS API
+6. `drug_target_mr_ukb.qmd` — requires internet access to OpenGWAS API
+7. `mr-downstream-analyses.qmd` — requires internet access to OpenGWAS API
+8. `summary-tables.qmd` — collates outputs from all MR scripts above
+
 ## Software Requirements
 
-* Downloaded and installed plink2 (v2.00a5.12LM AVX2 AMD (25 Jun 2024))
+* plink2 (v2.00a5.12LM AVX2 AMD (25 Jun 2024))
+* bcftools (version not pinned; loaded via GreatLakes module system)
+* samtools (version not pinned; loaded via GreatLakes module system)
+* tabix (version not pinned; loaded via GreatLakes module system)
+
+### R Packages
+
+The following R packages are required for the `.qmd` analysis scripts.  CRAN packages can be installed with `install.packages()`; Bioconductor packages require `BiocManager::install()`:
+
+**CRAN:**
+* `TwoSampleMR`
+* `ieugwasr` (used for OpenGWAS API queries in drug target and downstream analyses)
+* `cause`
+* `MRPRESSO`
+* `tidyverse`
+* `data.table`
+* `cowplot`
+* `ggrepel`
+* `knitr`
+* `kableExtra`
+* `forcats`
+
+**Bioconductor:**
+* `GenomicRanges`
+* `SNPlocs.Hsapiens.dbSNP144.GRCh37`
 
 ## Downloading and Parsing Chromosomes
 
@@ -49,9 +94,44 @@ SNPS were clumped using plink as above and analyzed using the R script `ld_clump
 
 ## MR Analyses
 
+### Calcium-Calcium MR Analyses
+
+As a a positive control we analysed UKBB predicted calcium versus MGI-BioVU calcium in `mr-ldlc-calcium.qmd`.  This was a proof of concept that MR analyses could predict calcium levels across these datasets.  This will not be presented in a paper
+
+### Calcium-Cholesterol/LDLC MR Analyses
+
+We next peformed a series of MR and sensitivity analyses testing the directionality of the calcium/cholesterol associations:
+
+- `mr-tc-calcium.qmd` testing the effects of total cholesterol (UKBB) on calcium (MGI-BioVU)
+- `mr-ldlc-calcium.qmd` testing the effects of LDL cholesterol (UKBB) on calcium (MGI-BioVU)
+- `mr-calcium-tc.qmd` testing the effects of serum calcium (UKBB) on total cholesterol (MGI-BioVU)
+- `mr-calcium-ldlc.qmd` testing the effects of serum calcium (UKBB) on LDL-C (MGI-BioVU)
+
 ### Drug Target MR Analyses
 
-Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium results to evaluate the specific effects of HMGCR, PCKS9, and NPC1L1 on serum calcium but there was very low coverage of the latter two in MGI-BioVU GWAS (see `drug_target_mr_analysis.qmd`), so we repeated this analysis using UKBB-based calcium SNPs (see `drug_target_mr_ukb.qmd`)
+Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium results to evaluate the specific effects of HMGCR, PCKS9, and NPC1L1 on serum calcium but there was very low coverage of the latter two in MGI-BioVU GWAS (see `drug_target_mr_analysis.qmd`), so we repeated this analysis using UKBB-based calcium SNPs (see `drug_target_mr_ukb.qmd`).  The LDL-C exposures were from ebi-a-GCST90025953, a GLGC meta-analysis
+
+### Datasets Summary
+
+| Experiment | Exposure/Outcome | Variable | Dataset | ID | n |
+|---|---|---|---|---|---|
+| mr-tc-calcium | Exposure | Total Cholesterol | UK Biobank | 30690 | 420,607 |
+| mr-tc-calcium | Outcome | Serum Calcium | MGI-BioVU LabWAS | | 46,100 |
+| mr-ldlc-calcium | Exposure | LDL Cholesterol | UK Biobank | 30780 | 419,831 |
+| mr-ldlc-calcium | Outcome | Serum Calcium | MGI-BioVU LabWAS | | 46,100 |
+| mr-calcium-tc | Exposure | Serum Calcium | UK Biobank | 30680 | 385,066 |
+| mr-calcium-tc | Outcome | Total Cholesterol | MGI-BioVU LabWAS | | 46,100 |
+| mr-calcium-ldlc | Exposure | Serum Calcium | UK Biobank | 30680 | 385,066 |
+| mr-calcium-ldlc | Outcome | LDL Cholesterol | MGI-BioVU LabWAS | | 46,100 |
+| drug_target_mr_analysis | Exposure | Total Cholesterol | GLGC meta-analysis | ebi-a-GCST90025953 | 1,320,016 |
+| drug_target_mr_analysis | Outcome | Serum Calcium | MGI-BioVU LabWAS | | 46,100 |
+| drug_target_mr_ukb | Exposure | Total Cholesterol | GLGC meta-analysis | ebi-a-GCST90025953 | 1,320,016 |
+| drug_target_mr_ukb | Outcome | Serum Calcium | UKB Barton et al. 2021 | ebi-a-GCST90025990 | 400,792 |
+| mr-downstream-analyses | Exposure | Total Cholesterol | UK Biobank | 30690 | 420,607 |
+| mr-downstream-analyses | Outcome | Vitamin D | MGI-BioVU LabWAS | | 12,250 |
+| mr-downstream-analyses | Outcome | Heel BMD | Morris 2019, UK Biobank | ebi-a-GCST006979 | 426,824 |
+| mr-downstream-analyses | Outcome | Femoral Neck BMD | Zheng 2015, GEFOS | ieu-a-980 | 32,735 |
+| mr-downstream-analyses | Outcome | Fractures | Dönertaş 2021, UK Biobank | ebi-a-GCST90038703 | 484,598 |
 
 ### Outcome GWAS
 

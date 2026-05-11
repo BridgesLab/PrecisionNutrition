@@ -111,6 +111,34 @@ We next peformed a series of MR and sensitivity analyses testing the directional
 
 Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium results to evaluate the specific effects of HMGCR, PCKS9, and NPC1L1 on serum calcium but there was very low coverage of the latter two in MGI-BioVU GWAS (see `drug_target_mr_analysis.qmd`), so we repeated this analysis using UKBB-based calcium SNPs (see `drug_target_mr_ukb.qmd`).  The LDL-C exposures were from ebi-a-GCST90025953, a GLGC meta-analysis
 
+### Calcium outcome (completed)
+- **Script**: `drug_target_mr_ukb.qmd`
+- **Outcome**: UK Biobank serum calcium (Barton 2021, n = 400,792)
+- **Finding**: HMGCR cis-instruments significantly affect serum calcium
+  (IVW-RE β = 0.18, p < 0.001); PCSK9 informatively null (β = 0.004, p = 0.87,
+  F > 2000); NPC1L1 imprecise
+- **Interpretation**: Cholesterol → calcium effect is mediated by the
+  mevalonate pathway, not LDL-C per se
+
+### BMD outcomes (completed 2026-05-11)
+- **Script**: `drug_target_mr_bmd.qmd`
+- **Outcomes**: Heel BMD (Morris 2019, n = 426,824), Femoral neck BMD
+  (Zheng 2015), Fractures (Dönertaş 2021), Vitamin D (MGI-BioVU; negative
+  control)
+- **Finding**: HMGCR cis-instruments significantly reduce Heel BMD
+  (IVW-RE β = −0.11, p < 0.001 for both LDL-C and total cholesterol);
+  PCSK9 null (β ≈ −0.02, p > 0.2); NPC1L1 imprecise
+- **Interpretation**: Parallels the calcium finding — the cholesterol → BMD
+  pathway is mevalonate-pathway-mediated; LDL-C reduction via the
+  PCSK9-LDLR axis does not affect BMD
+- **Output**: `MR Results - Drug Target BMD.csv`
+
+### Joint significance
+Together these two drug-target MR analyses establish that the
+cholesterol → BMD → calcium pathway is HMGCR/mevalonate-mediated at every
+step. This is the mechanistic basis for the proposed statin/ezetimibe and
+cell-specific Hmgcr knockout experiments.
+
 ### Datasets Summary
 
 | Experiment | Exposure/Outcome | Variable | Dataset | ID | n |

@@ -1,0 +1,1016 @@
+---
+title: "Calcium as a Modifier of the LDL-C → MACE Relationship"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+theme: journal
+execute:
+  echo: true
+  warning: false
+knitr:
+  opts_chunk:
+    fig-path: "figures-calcium-int/"
+    dev: ["png", "pdf"]
+    dpi: 300
+    dev.args:
+      png:
+        type: "cairo-png"
+      pdf:
+        family: "sans"
+---
+
+```{r setup}
+#| label: setup
+#| message: false
+
+library(tidyverse)
+library(lubridate)
+library(survival)
+library(survminer)
+library(cmprsk)
+library(broom)
+library(knitr)
+
+# ── CONFIGURATION ──────────────────────────────────────────────────────────
+# There is a single combined_data folder (the 2026-03-23 pull). The data-pull
+# notes describing a separate "Calcium and Cholesterol" (MGI) extraction appear
+# to be a documentation artefact — there is no distinct calcium-rich cohort to
+# point at. Serum calcium is therefore sparse here (~4,000 patients with any
+# value), which makes calcium coverage the binding constraint on this analysis.
+# See the "Calcium Feasibility Diagnostic" section below before trusting any
+# interaction estimate.
+DATA_DIR      <- "combined_data"
+SEX_COL       <- "GenderCode"
+RACE_COL      <- "RaceCode"
+ETHNICITY_COL <- "EthnicityCode"
+LDL_SCALE     <- 10             # LDL-C HR expressed per this many mg/dL
+CAL_WINDOW    <- 730            # baseline-calcium search window (days around t0)
+                                # 365 → N=219/97ev/EPV 8.1 (underpowered for 12-coef model);
+                                # 730 → N=367/154ev/EPV 12.8 ✓. See feasibility table.
+                                # Widening trades baseline-timing precision for power.
+
+# ── CALCIUM MODIFIER CHOICE ─────────────────────────────────────────────────
+# Two calcium measures exist in LabResultsCleaned.csv, both in mg/dL:
+#   "Ionized Calcium" — ~20,089 patients here; bioactive fraction; NO albumin
+#                       correction needed; tends to be ordered in more acute/
+#                       inpatient settings. Far better coverage → primary.
+#   "Serum Calcium"   — ~4,009 patients here; conventional total calcium; would
+#                       benefit from albumin correction (not available); sparse
+#                       → run as a sensitivity by setting CALCIUM_TEST below.
+CALCIUM_TEST  <- "Ionized Calcium"   # or "Serum Calcium"
+
+# Physiologic guardrails (mg/dL) and reporting scale differ by measure.
+if (CALCIUM_TEST == "Ionized Calcium") {
+  CAL_LOW <- 2; CAL_HIGH <- 8;  CAL_SCALE <- 0.5  # ionized normal ~4.5–5.3
+} else {
+  CAL_LOW <- 4; CAL_HIGH <- 20; CAL_SCALE <- 1    # total normal ~8.5–10.5
+}
+
+theme_set(theme_minimal(base_size = 12))
+
+# Michigan colors for plots
+color_mace   <- "#00274c"
+color_accent <- "#ffcb05"
+color_death  <- "#CC6677"
+color_censor <- "#888888"
+```
+
+## Purpose
+
+This script tests the central scientific question of the project: **does serum
+calcium modify the relationship between time-averaged LDL-C and incident MACE?**
+
+It re-uses the v3 unified competing-risks framework
+(`ldlc_mace_competing_risks.qmd`) — Fine-Gray subdistribution hazard, death as
+the competing event, time-averaged LDL-C (trapezoid AUC ÷ follow-up years) per
+`r LDL_SCALE` mg/dL, adjusted for age, sex, race/ethnicity, ever statin,
+diabetes, and hypertension — and adds **serum calcium** as a candidate effect
+modifier.
+
+The main effects of LDL-C on MACE were null in the v3 analysis (Sub-HR ≈ 1.00).
+A null *main* effect can nonetheless mask real effects that are concentrated in a
+particular metabolic context. Serum calcium indexes that context (vascular
+calcification, parathyroid/vitamin-D axis), motivating a formal interaction test.
+
+**Modifier definition.** Calcium (`test_name == "`r CALCIUM_TEST`"`, already
+unit-harmonised to mg/dL in `labs_cleaning.qmd`) characterised at **baseline**
+(the measurement nearest to time zero, within ±`r CAL_WINDOW` days). Calcium is
+tightly homeostatically regulated, so a baseline value is a reasonable summary
+and avoids requiring ≥2 calcium measurements. A **time-averaged** calcium
+(trapezoid, parallel to the LDL-C exposure) is used as a sensitivity analysis.
+
+> **Choice of calcium measure (`CALCIUM_TEST`).** Two measures exist in this
+> dataset. **Ionized calcium** (~20,089 patients) is the default: it is the
+> physiologically active fraction, needs no albumin correction, and — critically
+> — has ~5× the coverage of **serum/total calcium** (~4,009 patients), which is
+> too sparse to support a powered interaction here. The trade-off is that ionized
+> calcium is ordered more often in acute/inpatient contexts, so it indexes a
+> somewhat different physiologic state than routine outpatient total calcium.
+> Re-run with `CALCIUM_TEST <- "Serum Calcium"` as a sensitivity; total calcium
+> would additionally benefit from albumin correction (albumin is in the raw pull
+> but not yet cleaned into `test_name` — add an `Albumin` branch to
+> `labs_cleaning.qmd`, then corrected = total + 0.8 × (4.0 − albumin)).
+
+**Interaction strategy (three complementary views).**
+
+1. **Continuous × continuous** — product of time-averaged LDL-C (per `r LDL_SCALE`
+   mg/dL) and mean-centred baseline calcium (per `r CAL_SCALE` mg/dL). This is
+   the primary formal test (Wald on the product coefficient; LRT in the Cox
+   sensitivity).
+2. **LDL-C × calcium-tertile** — product of LDL-C with calcium-tertile dummies;
+   the LDL-C sub-HR is then recovered *within each tertile* via linear
+   combinations of coefficients.
+3. **Fully stratified Fine-Gray** — the primary model refit separately within
+   each calcium tertile. Most intuitive; not a formal interaction test but a
+   transparent description of how the LDL-C effect varies.
+
+---
+
+## Data Input
+
+```{r data-input}
+#| label: data-input
+
+demographic.data <- read_csv(file.path(DATA_DIR, "DemographicInfo.csv"),
+                             show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    ehr_death_date = mdy_hm(DeID_DeceasedDate)
+  )
+
+# Michigan Death Index
+mdi.data <- read_csv(file.path(DATA_DIR, "MichiganDeathIndex.csv"),
+                     show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    mdi_death_date = mdy_hm(DeID_MDIDeceasedDate)
+  ) %>%
+  select(DeID_PatientID, mdi_death_date)
+
+# Diagnoses
+diagnosis.data <- read_csv(file.path(DATA_DIR, "DiagnosesCleaned.csv"),
+                           show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    MACE.onset     = ymd(MACE.onset)
+  )
+
+# Labs (shared parse for LDL-C and serum calcium)
+lab.data <- read_csv(file.path(DATA_DIR, "LabResultsCleaned.csv"),
+                     show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    lab_date = coalesce(
+      parse_date_time(DeID_COLLECTION_DATE,
+                      orders = c("ymd", "mdy", "ymd HMS", "mdy HM"),
+                      quiet  = TRUE),
+      parse_date_time(DeID_AdmitDate,
+                      orders = c("ymd", "mdy", "ymd HMS", "mdy HM"),
+                      quiet  = TRUE)
+    )
+  )
+
+ldlc.data    <- lab.data %>% filter(test_name == "LDL-C")
+calcium.data <- lab.data %>% filter(test_name == CALCIUM_TEST)
+
+cat("Distinct test_name values in lab file:\n")
+print(sort(unique(lab.data$test_name)))
+cat("\nCalcium modifier =", CALCIUM_TEST, ":", scales::comma(nrow(calcium.data)),
+    "measurements across",
+    scales::comma(n_distinct(calcium.data$DeID_PatientID)), "patients\n")
+
+# Encounters
+encounter.data <- read_csv(file.path(DATA_DIR, "EncounterAll.csv"),
+                           show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    EncounterDate  = mdy_hm(DeID_AdmitDate)
+  )
+
+# Statin intervals
+statin_intervals <- read_csv(
+  file.path(DATA_DIR, "MedicationOrdersCleanedStatins.csv"),
+  show_col_types = FALSE
+) %>%
+  mutate(
+    DeID_PatientID = as.character(DeID_PatientID),
+    period_start   = as_date(period_start),
+    period_end     = as_date(period_end),
+    intensity      = factor(intensity, levels = c("low", "moderate", "high"))
+  )
+
+# Comorbidities
+comorbidity_onset <- read_csv(file.path(DATA_DIR, "ComorbiditiesOnset.csv"),
+                              show_col_types = FALSE) %>%
+  mutate(
+    DeID_PatientID      = as.character(DeID_PatientID),
+    diabetes_onset      = as_datetime(diabetes_onset),
+    hypertension_onset  = as_datetime(hypertension_onset)
+  )
+```
+
+---
+
+## Cohort Construction
+
+Identical to `ldlc_mace_competing_risks.qmd` — reproduced so this script is
+self-contained.
+
+```{r cohort-construction}
+#| label: cohort-construction
+
+# --- Unified death date (earliest of EHR + MDI) ---
+death_dates <- demographic.data %>%
+  select(DeID_PatientID, ehr_death_date) %>%
+  left_join(mdi.data, by = "DeID_PatientID") %>%
+  mutate(death_date = pmin(ehr_death_date, mdi_death_date, na.rm = TRUE))
+
+# --- Full cohort with sex + race/ethnicity ---
+full_cohort <- demographic.data %>%
+  select(DeID_PatientID, all_of(c(SEX_COL, RACE_COL, ETHNICITY_COL))) %>%
+  left_join(death_dates %>% select(DeID_PatientID, death_date),
+            by = "DeID_PatientID") %>%
+  left_join(diagnosis.data %>% select(DeID_PatientID, MACE, MACE.onset),
+            by = "DeID_PatientID") %>%
+  mutate(
+    MACE_flag = if_else(MACE == TRUE, 1L, 0L, missing = 0L),
+    sex_raw   = as.character(.data[[SEX_COL]]),
+    sex       = case_when(
+      str_detect(sex_raw, regex("^f", ignore_case = TRUE)) ~ "Female",
+      str_detect(sex_raw, regex("^m", ignore_case = TRUE)) ~ "Male",
+      TRUE ~ NA_character_
+    ),
+    race_eth = case_when(
+      .data[[ETHNICITY_COL]] == "HL"          ~ "Hispanic",
+      .data[[RACE_COL]] == "C"                ~ "White",
+      .data[[RACE_COL]] == "AA"               ~ "Black",
+      .data[[RACE_COL]] == "A"                ~ "Asian",
+      TRUE                                    ~ "Other/Unknown"
+    ),
+    race_eth = factor(race_eth,
+                      levels = c("White", "Black", "Asian",
+                                 "Hispanic", "Other/Unknown"))
+  )
+
+# --- Clean diagnoses (exclude MACE=TRUE with missing onset) ---
+diag_clean <- full_cohort %>%
+  filter(!(MACE_flag == 1L & is.na(MACE.onset))) %>%
+  select(DeID_PatientID, sex, race_eth, MACE.onset, MACE_flag, death_date)
+
+# --- Clean LDL-C ---
+ldlc_clean <- ldlc.data %>%
+  filter(!is.na(lab_date), !is.na(AgeInYears)) %>%
+  filter(value > 0, value <= 400) %>%
+  filter(AgeInYears >= 18) %>%
+  group_by(DeID_PatientID, lab_date) %>%
+  summarise(
+    LDL_value  = mean(value,      na.rm = TRUE),
+    AgeInYears = mean(AgeInYears, na.rm = TRUE),
+    .groups    = "drop"
+  ) %>%
+  arrange(DeID_PatientID, lab_date)
+
+# --- Shared IDs (cohort base = LDL-C ∩ diagnoses) ---
+shared_ids  <- intersect(diag_clean$DeID_PatientID, ldlc_clean$DeID_PatientID)
+diag_cohort <- diag_clean %>% filter(DeID_PatientID %in% shared_ids)
+ldlc_cohort <- ldlc_clean %>% filter(DeID_PatientID %in% shared_ids)
+
+# --- Last encounter (censoring) ---
+last_encounter <- encounter.data %>%
+  filter(!is.na(EncounterDate), DeID_PatientID %in% shared_ids) %>%
+  group_by(DeID_PatientID) %>%
+  slice_max(EncounterDate, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, last_encounter_date = EncounterDate)
+
+# --- First LDL-C = time zero ---
+first_ldlc <- ldlc_cohort %>%
+  group_by(DeID_PatientID) %>%
+  slice_min(lab_date, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID,
+         t0           = lab_date,
+         LDL_baseline = LDL_value,
+         Age_baseline = AgeInYears)
+
+# --- Base cohort with competing risks status ---
+base_cohort_full <- diag_cohort %>%
+  left_join(first_ldlc,     by = "DeID_PatientID") %>%
+  left_join(last_encounter, by = "DeID_PatientID") %>%
+  mutate(
+    t_end = case_when(
+      MACE_flag == 1              ~ MACE.onset,
+      !is.na(last_encounter_date) ~ last_encounter_date,
+      TRUE                        ~ NA_POSIXct_
+    ),
+    follow_up_days  = as.numeric(difftime(t_end, t0, units = "days")),
+    follow_up_years = follow_up_days / 365.25,
+    fg_status = case_when(
+      MACE_flag == 1                                   ~ 1L,  # MACE
+      !is.na(death_date) & death_date <= t_end &
+        MACE_flag == 0                                 ~ 2L,  # death w/o MACE
+      TRUE                                             ~ 0L   # censored
+    )
+  )
+
+base_cohort <- base_cohort_full %>% filter(follow_up_days > 0)
+
+cat("Base cohort:", scales::comma(nrow(base_cohort)), "patients\n")
+```
+
+---
+
+## LDL-C Exposure (time-averaged, trapezoid)
+
+```{r compute-ldl-exposure}
+#| label: compute-ldl-exposure
+
+ldlc_with_time <- ldlc_cohort %>%
+  filter(DeID_PatientID %in% base_cohort$DeID_PatientID) %>%
+  left_join(base_cohort %>% select(DeID_PatientID, t0, t_end),
+            by = "DeID_PatientID") %>%
+  filter(lab_date >= t0, lab_date <= t_end) %>%
+  mutate(t_years = as.numeric(difftime(lab_date, t0, units = "days")) / 365.25) %>%
+  arrange(DeID_PatientID, t_years)
+
+n_measurements <- ldlc_with_time %>%
+  count(DeID_PatientID, name = "n_measurements")
+
+auc_trapezoid <- ldlc_with_time %>%
+  group_by(DeID_PatientID) %>%
+  mutate(
+    t_next   = lead(t_years),
+    ldl_next = lead(LDL_value),
+    t_end_yr = as.numeric(difftime(first(t_end), first(t0),
+                                   units = "days")) / 365.25,
+    interval_area = case_when(
+      !is.na(t_next) ~ (LDL_value + ldl_next) / 2 * (t_next - t_years),
+      TRUE           ~ LDL_value * (t_end_yr - t_years)
+    )
+  ) %>%
+  summarise(
+    cumLDL_trap = sum(interval_area, na.rm = TRUE),
+    fu_years    = first(t_end_yr),
+    .groups     = "drop"
+  ) %>%
+  mutate(meanLDL_trap = cumLDL_trap / fu_years)
+
+base_cohort <- base_cohort %>%
+  left_join(n_measurements, by = "DeID_PatientID") %>%
+  left_join(auc_trapezoid %>% select(DeID_PatientID, meanLDL_trap),
+            by = "DeID_PatientID") %>%
+  mutate(
+    LDL_baseline_s = LDL_baseline / LDL_SCALE,
+    meanLDL_trap_s = meanLDL_trap / LDL_SCALE
+  )
+```
+
+---
+
+## Calcium Modifier
+
+Baseline calcium = the `r CALCIUM_TEST` measurement nearest to t0 within
+±`r CAL_WINDOW` days. Time-averaged calcium (trapezoid, over follow-up) is also
+computed for the sensitivity analysis.
+
+```{r compute-calcium}
+#| label: compute-calcium
+
+# --- Clean serum calcium (drop implausible values) ---
+calcium_clean <- calcium.data %>%
+  filter(!is.na(lab_date), !is.na(value)) %>%
+  filter(value >= CAL_LOW, value <= CAL_HIGH) %>%   # measure-specific guardrails (mg/dL)
+  group_by(DeID_PatientID, lab_date) %>%
+  summarise(Ca_value = mean(value, na.rm = TRUE), .groups = "drop") %>%
+  semi_join(base_cohort, by = "DeID_PatientID") %>%
+  left_join(base_cohort %>% select(DeID_PatientID, t0, t_end),
+            by = "DeID_PatientID")
+
+# --- Baseline calcium: nearest measurement to t0 within window ---
+calcium_baseline <- calcium_clean %>%
+  filter(lab_date >= t0 - days(CAL_WINDOW), lab_date <= t_end) %>%
+  mutate(gap_days = abs(as.numeric(difftime(lab_date, t0, units = "days")))) %>%
+  filter(gap_days <= CAL_WINDOW) %>%
+  group_by(DeID_PatientID) %>%
+  slice_min(gap_days, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, Ca_baseline = Ca_value, Ca_gap_days = gap_days)
+
+# --- Time-averaged calcium (trapezoid) over follow-up; sensitivity ---
+calcium_avg <- calcium_clean %>%
+  filter(lab_date >= t0, lab_date <= t_end) %>%
+  mutate(t_years = as.numeric(difftime(lab_date, t0, units = "days")) / 365.25) %>%
+  arrange(DeID_PatientID, t_years) %>%
+  group_by(DeID_PatientID) %>%
+  mutate(
+    t_next  = lead(t_years),
+    ca_next = lead(Ca_value),
+    t_end_yr = as.numeric(difftime(first(t_end), first(t0),
+                                   units = "days")) / 365.25,
+    n_ca     = n(),
+    interval_area = case_when(
+      !is.na(t_next) ~ (Ca_value + ca_next) / 2 * (t_next - t_years),
+      TRUE           ~ Ca_value * (t_end_yr - t_years)
+    )
+  ) %>%
+  summarise(
+    cumCa  = sum(interval_area, na.rm = TRUE),
+    fu_yr  = first(t_end_yr),
+    n_ca   = first(n_ca),
+    .groups = "drop"
+  ) %>%
+  mutate(Ca_meanavg = cumCa / fu_yr) %>%
+  select(DeID_PatientID, Ca_meanavg, n_ca)
+
+base_cohort <- base_cohort %>%
+  left_join(calcium_baseline, by = "DeID_PatientID") %>%
+  left_join(calcium_avg,      by = "DeID_PatientID")
+
+# --- Coverage ---
+base_cohort %>%
+  summarise(
+    `Base cohort N`                  = n(),
+    `With baseline calcium`          = sum(!is.na(Ca_baseline)),
+    `With baseline calcium (%)`      = round(100 * mean(!is.na(Ca_baseline)), 1),
+    `Median Ca gap to t0 (days)`     = round(median(Ca_gap_days, na.rm = TRUE), 0),
+    `With ≥1 time-avg calcium`       = sum(!is.na(Ca_meanavg)),
+    `Median baseline Ca (mg/dL)`     = round(median(Ca_baseline, na.rm = TRUE), 2)
+  ) %>%
+  pivot_longer(everything(), names_to = "Metric", values_to = "Value") %>%
+  kable(caption = paste(CALCIUM_TEST, "coverage in the base cohort"))
+```
+
+### Calcium Feasibility Diagnostic
+
+Calcium co-measurement is the binding constraint. Before trusting any interaction
+estimate, this table shows the **achievable analytic cohort** — patient N, MACE
+events, and events-per-variable for the ~12-coefficient full model — crossing
+the LDL-measurement requirement against the baseline-calcium window (how close
+to t0 a calcium value must fall to count as "baseline"). Read it to choose a
+defensible (window, LDL) combination, or to conclude the question is
+underpowered in this dataset.
+
+```{r calcium-feasibility}
+#| label: calcium-feasibility
+
+# Nearest serum calcium to t0 (on/before t_end) for every base-cohort patient
+ca_nearest <- calcium_clean %>%
+  filter(lab_date <= t_end) %>%
+  mutate(gap_days = abs(as.numeric(difftime(lab_date, t0, units = "days")))) %>%
+  group_by(DeID_PatientID) %>%
+  slice_min(gap_days, n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(DeID_PatientID, gap_days)
+
+ldl_sets <- list(
+  "≥2 LDL"       = base_cohort %>% filter(n_measurements >= 2),
+  "≥1 LDL (all)" = base_cohort %>% filter(n_measurements >= 1)
+)
+window_grid <- c(180, 365, 730, 1095, 1826, Inf)
+
+feasibility <- map_dfr(names(ldl_sets), function(ldl_lab) {
+  base_sub <- ldl_sets[[ldl_lab]] %>%
+    left_join(ca_nearest, by = "DeID_PatientID")
+  map_dfr(window_grid, function(w) {
+    sub <- base_sub %>% filter(!is.na(gap_days), gap_days <= w)
+    ev  <- sum(sub$fg_status == 1)
+    tibble(
+      `LDL requirement` = ldl_lab,
+      `Ca window (days)` = if (is.infinite(w)) "any" else as.character(w),
+      `N`                = nrow(sub),
+      `MACE events`      = ev,
+      `EPV (12-coef)`    = round(ev / 12, 1),
+      `Adequate?`        = if (ev / 12 >= 10) "✓" else "⚠ low"
+    )
+  })
+})
+
+feasibility %>%
+  kable(caption = "Achievable calcium-interaction cohort (N, MACE events, events-per-variable)")
+```
+
+---
+
+## Covariates
+
+```{r covariates}
+#| label: covariates
+
+# Ever/never statin (any prescription overlapping [t0, t_end])
+ever_statin <- statin_intervals %>%
+  inner_join(base_cohort %>% select(DeID_PatientID, t0, t_end),
+             by = "DeID_PatientID") %>%
+  filter(period_end >= as_date(t0), period_start <= as_date(t_end)) %>%
+  distinct(DeID_PatientID) %>%
+  mutate(ever_statin = 1L)
+
+comorbidity_fixed <- comorbidity_onset %>%
+  inner_join(base_cohort %>% select(DeID_PatientID, t0, t_end),
+             by = "DeID_PatientID") %>%
+  mutate(
+    ever_diabetes     = as.integer(!is.na(diabetes_onset) &
+                                     diabetes_onset <= t_end),
+    ever_hypertension = as.integer(!is.na(hypertension_onset) &
+                                     hypertension_onset <= t_end)
+  ) %>%
+  select(DeID_PatientID, ever_diabetes, ever_hypertension)
+
+base_cohort <- base_cohort %>%
+  left_join(ever_statin,       by = "DeID_PatientID") %>%
+  left_join(comorbidity_fixed, by = "DeID_PatientID") %>%
+  mutate(
+    ever_statin       = replace_na(ever_statin, 0L),
+    ever_diabetes     = replace_na(ever_diabetes, 0L),
+    ever_hypertension = replace_na(ever_hypertension, 0L),
+    sex               = factor(sex),
+    race_eth          = factor(race_eth,
+                               levels = c("White", "Black", "Asian",
+                                          "Hispanic", "Other/Unknown"))
+  )
+```
+
+---
+
+## Analytic Cohort & Calcium Tertiles
+
+Primary analytic cohort: ≥2 LDL-C measurements **and** a baseline serum-calcium
+value. Tertiles are defined within this cohort so they are balanced for the
+stratified analysis.
+
+```{r analytic-cohort}
+#| label: analytic-cohort
+
+analytic <- base_cohort %>%
+  filter(n_measurements >= 2,
+         !is.na(meanLDL_trap_s), !is.na(Ca_baseline),
+         !is.na(Age_baseline), !is.na(sex), !is.na(race_eth)) %>%
+  mutate(
+    # mean-centred calcium (continuous interaction, per CAL_SCALE mg/dL)
+    Ca_center  = mean(Ca_baseline),
+    Ca_c       = (Ca_baseline - Ca_center) / CAL_SCALE,
+    # tertiles
+    Ca_tertile = cut(Ca_baseline,
+                     breaks = quantile(Ca_baseline, probs = c(0, 1/3, 2/3, 1),
+                                       na.rm = TRUE),
+                     include.lowest = TRUE,
+                     labels = c("T1 (low)", "T2 (mid)", "T3 (high)")),
+    cal_mid    = as.integer(Ca_tertile == "T2 (mid)"),
+    cal_high   = as.integer(Ca_tertile == "T3 (high)"),
+    # dummy-coded covariates for crr()
+    sex_female = as.integer(sex == "Female"),
+    race_black = as.integer(race_eth == "Black"),
+    race_asian = as.integer(race_eth == "Asian"),
+    race_hisp  = as.integer(race_eth == "Hispanic"),
+    race_other = as.integer(race_eth == "Other/Unknown"),
+    # interaction columns
+    ldl_x_cac  = meanLDL_trap_s * Ca_c,
+    ldl_x_mid  = meanLDL_trap_s * cal_mid,
+    ldl_x_high = meanLDL_trap_s * cal_high
+  )
+
+n_mace_events <- sum(analytic$fg_status == 1)
+cat("Analytic cohort N:", nrow(analytic),
+    "| MACE events:", n_mace_events,
+    "| competing deaths:", sum(analytic$fg_status == 2), "\n")
+
+# --- Events-per-variable guard ---------------------------------------------
+# The full interaction model fits ~12 coefficients. With <10 events per
+# coefficient, Fine-Gray estimates are unstable / prone to quasi-complete
+# separation (sub-HRs of 0 or 1e+17, p-values that look "significant" but are
+# artefactual). This guard makes underpowering loud rather than silent — it is
+# the lesson from the earlier N=19 render.
+n_coefs_full <- 12L
+epv <- n_mace_events / n_coefs_full
+if (epv < 10) {
+  warning(sprintf(
+    paste0("LOW POWER: %d MACE events for ~%d coefficients (%.1f events/var). ",
+           "Interpret the fully adjusted interaction with great caution — ",
+           "favour the parsimonious/continuous models and check coefficients ",
+           "for separation (sub-HRs near 0 or astronomically large)."),
+    n_mace_events, n_coefs_full, epv))
+}
+cat(sprintf("Events per variable (full model): %.1f %s\n", epv,
+            if (epv < 10) "⚠ UNDERPOWERED" else "✓ adequate"))
+
+# Tertile cutpoints + per-tertile description
+analytic %>%
+  group_by(Ca_tertile) %>%
+  summarise(
+    N                = n(),
+    `MACE events`    = sum(fg_status == 1),
+    `Ca range`       = paste0(round(min(Ca_baseline), 2), "–",
+                              round(max(Ca_baseline), 2)),
+    `Median Ca`      = round(median(Ca_baseline), 2),
+    `Median time-avg LDL-C` = round(median(meanLDL_trap, na.rm = TRUE), 1),
+    `Female (%)`     = round(100 * mean(sex == "Female"), 1),
+    `Ever statin (%)`= round(100 * mean(ever_statin), 1),
+    `Diabetes (%)`   = round(100 * mean(ever_diabetes), 1),
+    .groups = "drop"
+  ) %>%
+  kable(caption = "Baseline serum-calcium tertiles (analytic cohort)")
+```
+
+---
+
+## Helper Functions
+
+```{r helpers}
+#| label: helpers
+
+# Fit crr() passing vectors directly (NOT with(); see ANALYSIS_NOTES.md).
+# Robustness for subgroup/stratified fits: drop columns that are zero-variance
+# OR binary indicators with too few minority cases (these cause quasi-separation
+# and a computationally singular information matrix). A retry loop then drops the
+# sparsest remaining indicator if crr() still fails to converge.
+minority_count <- function(x) {
+  ux <- unique(na.omit(x))
+  if (length(ux) <= 2) min(table(x)) else Inf   # Inf = treat as continuous
+}
+
+safe_crr <- function(ftime, fstatus, cov_mat, failcode = 1, min_minor = 5) {
+  # 1. pre-screen: zero variance or sparse indicators
+  vars   <- apply(cov_mat, 2, var, na.rm = TRUE)
+  minors <- apply(cov_mat, 2, minority_count)
+  bad    <- which(is.na(vars) | vars == 0 | minors < min_minor)
+  if (length(bad) > 0) {
+    cat("  Dropping zero-variance/sparse columns:",
+        paste(colnames(cov_mat)[bad], collapse = ", "), "\n")
+    cov_mat <- cov_mat[, -bad, drop = FALSE]
+  }
+  # 2. fit, retrying on singularity by dropping the sparsest indicator
+  repeat {
+    fit <- tryCatch(
+      crr(ftime = ftime, fstatus = fstatus, cov1 = cov_mat,
+          failcode = failcode, cencode = 0),
+      error = function(e) e
+    )
+    if (!inherits(fit, "error")) return(fit)
+    if (!grepl("singular", conditionMessage(fit), ignore.case = TRUE) ||
+        ncol(cov_mat) <= 1) stop(fit)
+    m <- apply(cov_mat, 2, minority_count)
+    if (all(is.infinite(m))) stop(fit)   # only continuous left; give up
+    drop_j <- which.min(m)
+    cat("  Singular fit — dropping sparsest indicator:",
+        colnames(cov_mat)[drop_j], "\n")
+    cov_mat <- cov_mat[, -drop_j, drop = FALSE]
+  }
+}
+
+# Tidy a crr fit's full coefficient table
+format_fg <- function(fg_fit, caption) {
+  s <- summary(fg_fit)
+  tibble(
+    Term          = rownames(s$coef),
+    `Sub-HR`      = round(exp(s$coef[, "coef"]), 4),
+    `95% CI low`  = round(exp(s$coef[, "coef"] - 1.96 * s$coef[, "se(coef)"]), 4),
+    `95% CI high` = round(exp(s$coef[, "coef"] + 1.96 * s$coef[, "se(coef)"]), 4),
+    `p-value`     = format.pval(s$coef[, "p-value"], digits = 3, eps = 0.001)
+  ) %>% kable(caption = caption)
+}
+
+# Sub-HR for an arbitrary linear combination of crr coefficients.
+# `weights` is a named numeric vector keyed by coefficient name.
+fg_lincom <- function(fg_fit, weights, label) {
+  b <- fg_fit$coef
+  V <- fg_fit$var
+  cvec <- setNames(rep(0, length(b)), names(b))
+  cvec[names(weights)] <- weights
+  est <- sum(cvec * b)
+  se  <- sqrt(as.numeric(t(cvec) %*% V %*% cvec))
+  tibble(
+    Stratum       = label,
+    `Sub-HR`      = round(exp(est), 4),
+    `95% CI low`  = round(exp(est - 1.96 * se), 4),
+    `95% CI high` = round(exp(est + 1.96 * se), 4),
+    `p-value`     = format.pval(2 * pnorm(-abs(est / se)), digits = 3, eps = 0.001)
+  )
+}
+
+# Shared covariate block (everything except the LDL/calcium terms)
+adj_cols <- c("Age_baseline", "sex_female",
+              "race_black", "race_asian", "race_hisp", "race_other",
+              "ever_statin", "ever_diabetes", "ever_hypertension")
+```
+
+---
+
+## Model 0: LDL-C and Calcium Main Effects (no interaction)
+
+For reference — the additive model before adding any interaction term.
+
+```{r model-main}
+#| label: model-main
+
+cov_main <- as.matrix(analytic %>%
+  select(meanLDL_trap_s, Ca_c, all_of(adj_cols)))
+
+fg_main <- safe_crr(analytic$follow_up_days, analytic$fg_status, cov_main)
+
+format_fg(fg_main,
+  paste0("Main-effects Fine-Gray: time-avg LDL-C (per ", LDL_SCALE,
+         " mg/dL) + baseline calcium (per ", CAL_SCALE,
+         " mg/dL), death competing"))
+```
+
+---
+
+## Model 1: Continuous LDL-C × Calcium Interaction (PRIMARY TEST)
+
+Product of time-averaged LDL-C and mean-centred baseline calcium. Because
+calcium is centred, the `meanLDL_trap_s` coefficient is the LDL-C sub-HR **at
+mean calcium**, and `ldl_x_cac` is the multiplicative change in that sub-HR per
+`r CAL_SCALE` mg/dL higher calcium.
+
+```{r model-interaction-cont}
+#| label: model-interaction-cont
+
+cov_int <- as.matrix(analytic %>%
+  select(meanLDL_trap_s, Ca_c, ldl_x_cac, all_of(adj_cols)))
+
+fg_int <- safe_crr(analytic$follow_up_days, analytic$fg_status, cov_int)
+
+format_fg(fg_int,
+  "Fine-Gray with continuous LDL-C × calcium interaction (death competing)")
+
+# Explicit interaction test
+s_int    <- summary(fg_int)
+int_p    <- s_int$coef["ldl_x_cac", "p-value"]
+int_beta <- s_int$coef["ldl_x_cac", "coef"]
+int_se   <- s_int$coef["ldl_x_cac", "se(coef)"]
+
+tibble(
+  Quantity = c(sprintf("Interaction sub-HR ratio (per %g mg/dL %s, per %g mg/dL LDL-C)",
+                        CAL_SCALE, CALCIUM_TEST, LDL_SCALE),
+               "95% CI",
+               "Wald p-value"),
+  Value = c(
+    sprintf("%.4f", exp(int_beta)),
+    sprintf("(%.4f–%.4f)", exp(int_beta - 1.96 * int_se),
+            exp(int_beta + 1.96 * int_se)),
+    format.pval(int_p, digits = 3, eps = 0.001)
+  )
+) %>% kable(caption = "PRIMARY interaction test (continuous × continuous)")
+```
+
+### LDL-C sub-HR across the observed calcium range
+
+Predicted LDL-C sub-HR (per `r LDL_SCALE` mg/dL) as a function of baseline
+calcium, from Model 1. Ribbon is the 95% CI from the 2×2 covariance block of the
+LDL-C main and interaction coefficients.
+
+```{r interaction-curve}
+#| label: fig-interaction-curve
+#| fig-width: 8
+#| fig-height: 5
+
+b   <- fg_int$coef
+V   <- fg_int$var
+# crr()'s $var has no dimnames; $coef does — propagate them so we can index by name
+cov_names <- names(b)
+if (is.null(cov_names)) cov_names <- colnames(cov_int)
+names(b)   <- cov_names
+dimnames(V) <- list(cov_names, cov_names)
+idx <- c("meanLDL_trap_s", "ldl_x_cac")
+
+ca_grid <- tibble(
+  Ca_baseline = seq(quantile(analytic$Ca_baseline, 0.02),
+                    quantile(analytic$Ca_baseline, 0.98),
+                    length.out = 100)
+) %>%
+  mutate(
+    Ca_c   = (Ca_baseline - mean(analytic$Ca_baseline)) / CAL_SCALE,
+    loghr  = b["meanLDL_trap_s"] + b["ldl_x_cac"] * Ca_c,
+    se     = sqrt(V[idx[1], idx[1]] +
+                  Ca_c^2 * V[idx[2], idx[2]] +
+                  2 * Ca_c * V[idx[1], idx[2]]),
+    SubHR  = exp(loghr),
+    lo     = exp(loghr - 1.96 * se),
+    hi     = exp(loghr + 1.96 * se)
+  )
+
+ggplot(ca_grid, aes(Ca_baseline, SubHR)) +
+  geom_hline(yintercept = 1, linetype = "dashed", colour = "grey50") +
+  geom_ribbon(aes(ymin = lo, ymax = hi), alpha = 0.15, fill = color_mace) +
+  geom_line(colour = color_mace, linewidth = 1) +
+  geom_rug(data = analytic, aes(x = Ca_baseline), inherit.aes = FALSE,
+           alpha = 0.08, sides = "b") +
+  labs(
+    title    = paste0("LDL-C effect on MACE across ", tolower(CALCIUM_TEST)),
+    subtitle = paste0("Fine-Gray sub-HR per ", LDL_SCALE,
+                      " mg/dL LDL-C, by baseline ", tolower(CALCIUM_TEST)),
+    x = paste0("Baseline ", tolower(CALCIUM_TEST), " (mg/dL)"),
+    y = paste0("LDL-C sub-HR per ", LDL_SCALE, " mg/dL (95% CI)")
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        plot.title = element_text(face = "bold"))
+```
+
+---
+
+## Model 2: LDL-C × Calcium-Tertile Interaction
+
+Product of LDL-C with calcium-tertile dummies (reference = T1 low). The LDL-C
+sub-HR within each tertile is recovered via linear combinations.
+
+```{r model-interaction-tertile}
+#| label: model-interaction-tertile
+
+cov_tert <- as.matrix(analytic %>%
+  select(meanLDL_trap_s, cal_mid, cal_high, ldl_x_mid, ldl_x_high,
+         all_of(adj_cols)))
+
+fg_tert <- safe_crr(analytic$follow_up_days, analytic$fg_status, cov_tert)
+
+format_fg(fg_tert,
+  "Fine-Gray with LDL-C × calcium-tertile interaction (death competing)")
+
+# LDL-C sub-HR within each tertile via linear combinations
+ldl_by_tertile <- bind_rows(
+  fg_lincom(fg_tert, c(meanLDL_trap_s = 1),                   "T1 (low)"),
+  fg_lincom(fg_tert, c(meanLDL_trap_s = 1, ldl_x_mid  = 1),   "T2 (mid)"),
+  fg_lincom(fg_tert, c(meanLDL_trap_s = 1, ldl_x_high = 1),   "T3 (high)")
+)
+
+ldl_by_tertile %>%
+  kable(caption = paste0(
+    "LDL-C sub-HR per ", LDL_SCALE,
+    " mg/dL within calcium tertiles (interaction model, linear combinations)"))
+```
+
+---
+
+## Model 3: Fully Stratified Fine-Gray (within each calcium tertile)
+
+The primary model refit separately within each tertile. Most transparent view of
+effect modification.
+
+Within a single tertile some covariates become sparse (e.g. minority
+race/ethnicity groups, comorbidities), which can render the Fine-Gray
+information matrix singular. The stratified models therefore use a **lean,
+fixed** covariate set (age, sex, ever statin) so the adjustment is identical
+across strata and nothing is dropped. The fully adjusted interaction tests above
+(Models 1–2, Cox LRT) remain the formal analyses; this is a descriptive view.
+Any stratum that still fails to converge is reported as `NA`.
+
+```{r model-stratified}
+#| label: model-stratified
+
+adj_cols_lean <- c("Age_baseline", "sex_female", "ever_statin")
+
+fit_in_tertile <- function(df, label) {
+  base_row <- tibble(Stratum = label, N = nrow(df),
+                     `MACE events` = sum(df$fg_status == 1))
+  cov <- as.matrix(df %>% select(meanLDL_trap_s, all_of(adj_cols_lean)))
+  out <- tryCatch(
+    fg_lincom(safe_crr(df$follow_up_days, df$fg_status, cov),
+              c(meanLDL_trap_s = 1), label),
+    error = function(e) {
+      cat("  Stratum", label, "did not converge:",
+          conditionMessage(e), "\n")
+      tibble(Stratum = label, `Sub-HR` = NA_real_,
+             `95% CI low` = NA_real_, `95% CI high` = NA_real_,
+             `p-value` = NA_character_)
+    }
+  )
+  base_row %>% left_join(out, by = "Stratum")
+}
+
+stratified_ldl <- analytic %>%
+  group_split(Ca_tertile) %>%
+  map2_dfr(levels(analytic$Ca_tertile), ~ fit_in_tertile(.x, .y))
+
+stratified_ldl %>%
+  kable(caption = paste0(
+    "LDL-C sub-HR per ", LDL_SCALE,
+    " mg/dL — fully stratified Fine-Gray within calcium tertiles"))
+```
+
+---
+
+## Sensitivity A: Cox Interaction with Likelihood-Ratio Test
+
+Fine-Gray gives a Wald test for the interaction; Cox additionally permits a clean
+LRT (nested-model comparison), which is generally preferred for interaction
+terms.
+
+```{r sensitivity-cox-lrt}
+#| label: sensitivity-cox-lrt
+
+cox_main <- coxph(
+  Surv(follow_up_days, MACE_flag) ~ meanLDL_trap_s + Ca_c + Age_baseline +
+    sex + race_eth + ever_statin + ever_diabetes + ever_hypertension,
+  data = analytic, ties = "efron"
+)
+
+cox_int <- update(cox_main, . ~ . + meanLDL_trap_s:Ca_c)
+
+# LRT
+lrt <- anova(cox_main, cox_int)
+
+broom::tidy(cox_int, exponentiate = TRUE, conf.int = TRUE) %>%
+  filter(term %in% c("meanLDL_trap_s", "Ca_c", "meanLDL_trap_s:Ca_c")) %>%
+  mutate(across(where(is.numeric), ~round(.x, 4))) %>%
+  select(term, estimate, conf.low, conf.high, p.value) %>%
+  kable(caption = "Cox interaction model — key terms (sensitivity)")
+
+tibble(
+  Test = "LRT: main-effects vs interaction (Cox)",
+  `Chi-sq` = round(lrt$Chisq[2], 3),
+  df = lrt$Df[2],
+  `p-value` = format.pval(lrt$`Pr(>|Chi|)`[2], digits = 3, eps = 0.001)
+) %>% kable(caption = "Likelihood-ratio test for the LDL-C × calcium interaction")
+```
+
+---
+
+## Sensitivity B: Time-Averaged Calcium as the Modifier
+
+Re-runs the continuous interaction using time-averaged calcium (trapezoid)
+instead of baseline calcium, restricted to patients with a computable
+time-averaged value.
+
+```{r sensitivity-timeavg-ca}
+#| label: sensitivity-timeavg-ca
+
+analytic_avg <- analytic %>%
+  filter(!is.na(Ca_meanavg)) %>%
+  mutate(
+    Cavg_c    = (Ca_meanavg - mean(Ca_meanavg)) / CAL_SCALE,
+    ldl_x_cavg = meanLDL_trap_s * Cavg_c
+  )
+
+cov_avg <- as.matrix(analytic_avg %>%
+  select(meanLDL_trap_s, Cavg_c, ldl_x_cavg, all_of(adj_cols)))
+
+fg_avg <- safe_crr(analytic_avg$follow_up_days, analytic_avg$fg_status, cov_avg)
+
+format_fg(fg_avg,
+  paste0("Fine-Gray interaction using TIME-AVERAGED calcium (N = ",
+         nrow(analytic_avg), ")"))
+```
+
+---
+
+## Summary: Effect Modification
+
+```{r summary}
+#| label: fig-summary
+#| fig-width: 8
+#| fig-height: 4.5
+
+interaction_p <- format.pval(int_p, digits = 3, eps = 0.001)
+
+forest <- ldl_by_tertile %>%
+  mutate(Source = "Interaction model") %>%
+  bind_rows(stratified_ldl %>%
+              select(Stratum, `Sub-HR`, `95% CI low`, `95% CI high`, `p-value`) %>%
+              mutate(Source = "Stratified model")) %>%
+  mutate(Stratum = factor(Stratum,
+                          levels = rev(c("T1 (low)", "T2 (mid)", "T3 (high)"))))
+
+ggplot(forest, aes(x = `Sub-HR`, y = Stratum,
+                   xmin = `95% CI low`, xmax = `95% CI high`,
+                   colour = Source)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(height = 0.25, position = position_dodge(width = 0.5)) +
+  geom_point(size = 3, position = position_dodge(width = 0.5)) +
+  scale_colour_manual(values = c("Interaction model" = color_mace,
+                                 "Stratified model"  = color_accent)) +
+  labs(
+    title    = paste0("LDL-C → MACE sub-HR by ", tolower(CALCIUM_TEST), " tertile"),
+    subtitle = paste0("Per ", LDL_SCALE, " mg/dL LDL-C; continuous interaction p = ",
+                      interaction_p),
+    x = paste0("LDL-C sub-HR per ", LDL_SCALE, " mg/dL (95% CI)"),
+    y = paste0("Baseline ", tolower(CALCIUM_TEST), " tertile"),
+    colour = NULL
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        legend.position = "bottom",
+        plot.title = element_text(face = "bold"))
+```
+
+**Reading the results.** The continuous interaction (Model 1) is the primary
+test: a `ldl_x_cac` sub-HR ratio meaningfully above 1 with a small p-value would
+indicate the LDL-C → MACE effect *strengthens* at higher calcium; below 1, it
+weakens. Models 2 and 3 localise any such pattern to specific tertiles, and the
+Cox LRT (Sensitivity A) provides a complementary significance test. Concordance
+between the baseline-calcium (primary) and time-averaged-calcium (Sensitivity B)
+results indicates robustness to how the modifier is summarised.
+
+---
+
+## Session Information
+
+```{r session-info}
+sessionInfo()
+```

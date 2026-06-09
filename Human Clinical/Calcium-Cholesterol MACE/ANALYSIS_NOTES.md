@@ -200,6 +200,7 @@ different exclusion criteria apply (MACE-missing-onset vs osteo-missing-onset).
 | `combine_batches_v2.R` | Active | Combines 3 data pull batches into `combined_data/` |
 | `ldlc_mace_competing_risks.qmd` | **ACTIVE — v3** | MACE primary analysis with competing risks |
 | `ldlc_osteoporosis_competing_risks.qmd` | **ACTIVE — v3** | Osteoporosis primary analysis with competing risks |
+| `ldlc_calcium_interaction_mace.qmd` | **NEW — feasibility-limited** | Serum calcium × LDL-C effect modification on MACE (Fine-Gray), built on v3 framework. Calcium is sparse in the single combined_data pull; see the in-script "Calcium Feasibility Diagnostic" before trusting estimates. |
 | `ldlc_mace_analysis.qmd` | Superseded (v1) | Time-varying spot LDL-C with stratification |
 | `ldlc_mace_baseline.qmd` | Superseded (v1) | Fixed baseline LDL-C |
 | `ldlc_mace_cumulative.qmd` | Superseded (v2) | Raw cumulative LDL-years |
@@ -355,11 +356,51 @@ risks adjustment.
 
 ### Near-term
 
-- [ ] **Serum calcium interaction**: add serum calcium as effect modifier
-  (LDL-C × calcium interaction term) in the MACE model. This is the main
-  scientific question. Requires pulling calcium lab data and deciding on
-  parameterisation (continuous vs tertiles). Particularly important given
-  null main effects — the LDL-C effect may be conditional on metabolic context.
+- [~] **Serum calcium interaction**: SCRIPT BUILT (`ldlc_calcium_interaction_mace.qmd`,
+  2026-06-08). Modifier = baseline serum calcium (`test_name == "Serum Calcium"`,
+  mg/dL; nearest to t0 within ±365d); time-averaged calcium as sensitivity. Three
+  views: continuous LDL×Ca product (primary Wald test), LDL×Ca-tertile (sub-HR per
+  tertile via linear combos), fully stratified Fine-Gray. Cox LRT + time-avg-Ca as
+  sensitivities.
+  - ⚠ **COHORT LESSON (2026-06-08)**: only 66/20,015 base-cohort patients had a
+    baseline calcium, so the analytic cohort collapsed to **N=19, 3 MACE events**.
+    The resulting "interaction p=0.0015, sub-HR 65.7" was a QUASI-COMPLETE-
+    SEPARATION ARTIFACT (sub-HRs of 0 and 1e+17, Cox LRT p=1 with Inf CIs) — NOT
+    signal. Discarded.
+  - ⚠ **DATA REALITY (2026-06-08)**: there is only ONE combined_data (the
+    2026-03-23 pull). The data-pull notes describing a separate 50,225 "Calcium
+    and Cholesterol" MGI extraction appear to be a documentation error — no
+    distinct calcium-rich cohort exists to switch to. Serum calcium (~4,000
+    patients with any value) is the binding constraint.
+  - ✅ **COVERAGE FIX (2026-06-08)**: `ca-chol-correlations.qmd` shows IONIZED
+    calcium has ~20,089 patients vs serum/total ~4,009 (LDL-C ~23,406). Script
+    now has `CALCIUM_TEST` config defaulting to **"Ionized Calcium"** (bioactive,
+    no albumin correction, ~5× coverage; but more inpatient/acute context).
+    Serum calcium = sensitivity. Scales differ (ionized ~4.5–5.3, total ~8.5–10.5
+    mg/dL) so guardrails + CAL_SCALE auto-switch by measure. The project's own
+    correlation work (Gamma/brms) already used ionized calcium.
+  - **CURRENT STATE**: script has `CALCIUM_TEST`/`DATA_DIR` config, an events-per-
+    variable guard, and a "Calcium Feasibility Diagnostic" table (N / MACE events
+    / EPV crossing LDL requirement × baseline-calcium window).
+  - 🔵 **FIRST REAL RESULT (2026-06-08, ionized calcium, ≥2 LDL, ±365d window,
+    N=219/97 MACE events)**: a SIGNIFICANT positive LDL-C × baseline-ionized-Ca
+    interaction on MACE. Continuous interaction sub-HR ratio 1.061 (1.020–1.105)
+    per [0.5 mg/dL Ca × 10 mg/dL LDL], p=0.0036. Monotonic by tertile: LDL sub-HR
+    T1(low) 0.96 ns → T2 1.07 ns → T3(high) 1.09–1.10, p≈0.001. Cox LRT χ²=7.47,
+    p=0.0063. LDL main effect at mean Ca null (~1.03), consistent with v3.
+    Interpretation: LDL-C harmful only at high ionized calcium.
+  - ⚠ **CAVEATS (do not over-claim)**: (1) Time-averaged-Ca sensitivity does NOT
+    replicate (ldl_x_cavg 0.986, p=0.31, N=176) — interaction is specific to
+    BASELINE calcium. (2) Ionized calcium is ordered in acute/inpatient settings,
+    so baseline ionized Ca may mark acuity at index → possible confounding by
+    illness severity, not stable biology. (3) EPV was 8.1 (<10) at ±365d.
+  - **NEXT**: default window bumped to 730d (N=367/154ev/EPV 12.8 ✓) — confirm the
+    interaction holds powered. Then: re-run CALCIUM_TEST="Serum Calcium" sensitivity;
+    consider adjusting for an acuity proxy (inpatient index encounter?) to probe
+    the confounding-by-acuity concern; consider albumin correction for serum Ca.
+  - TODO: from the diagnostic, pick a defensible (window, LDL) combo or document
+    underpowering; consider albumin correction (albumin not yet in
+    `labs_cleaning.qmd` test_name — would need a new branch).
 - [ ] **LDL-C × diabetes and LDL-C × hypertension interactions**: the strong
   covariate effects for diabetes (MACE Sub-HR 1.22) and hypertension (MACE
   Sub-HR 1.89) suggest potential effect modification. Diabetic dyslipidemia

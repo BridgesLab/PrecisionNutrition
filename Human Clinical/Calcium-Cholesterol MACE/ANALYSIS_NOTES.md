@@ -394,10 +394,20 @@ risks adjustment.
     BASELINE calcium. (2) Ionized calcium is ordered in acute/inpatient settings,
     so baseline ionized Ca may mark acuity at index → possible confounding by
     illness severity, not stable biology. (3) EPV was 8.1 (<10) at ±365d.
-  - **NEXT**: default window bumped to 730d (N=367/154ev/EPV 12.8 ✓) — confirm the
-    interaction holds powered. Then: re-run CALCIUM_TEST="Serum Calcium" sensitivity;
-    consider adjusting for an acuity proxy (inpatient index encounter?) to probe
-    the confounding-by-acuity concern; consider albumin correction for serum Ca.
+  - 🔵 **POWERED RESULT (730d, N=367/154ev/EPV 12.8)**: interaction attenuated vs
+    365d but persists — ldl_x_cac 1.032 (1.002–1.063), p=0.039; tertile T3 LDL
+    sub-HR 1.06 (1.00–1.13) p=0.049; Cox LRT p=0.049. Borderline.
+  - ✅ **SEVERITY ADJUSTMENT (Sensitivity C)**: added Charlson baseline score +
+    renal disease (no encounter-type field exists for true acute acuity). Interaction
+    UNCHANGED across Primary→C1→C2 (1.0317→1.0319→1.0330, p~0.04). Charlson itself
+    predicted MACE (1.21/pt, p=0.018) and renal disease was 50% prevalent, so the
+    covariates were live — argues AGAINST chronic-severity confounding. Charlson×LDL
+    null (p=0.36). Caveat: Charlson baseline sparse (median 0); acute index-state
+    still untestable without encounter-type data.
+  - **STATUS**: promising, severity-robust, but NOT confirmatory — still borderline
+    (p~0.04) and absent for time-averaged calcium. NEXT: serum-calcium concordance
+    check (+albumin correction); pursue encounter-type field for acute-acuity test;
+    pre-specify window; consider larger calcium-enriched pull for definitive power.
   - TODO: from the diagnostic, pick a defensible (window, LDL) combo or document
     underpowering; consider albumin correction (albumin not yet in
     `labs_cleaning.qmd` test_name — would need a new branch).

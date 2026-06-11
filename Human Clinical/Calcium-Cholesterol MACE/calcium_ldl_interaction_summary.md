@@ -59,23 +59,41 @@ only in the highest calcium tertile. Fully stratified models agree (T3 sub-HR 1.
 - **Not replicated with time-averaged calcium.** Using time-averaged rather than
   baseline ionized calcium, the interaction disappeared (sub-HR ratio 0.997,
   p=0.79). The signal is specific to *baseline* calcium.
-- **Possible confounding by acuity.** Ionized calcium is preferentially ordered in
-  acute/inpatient settings, so a baseline value may partly mark illness severity at
-  the index encounter rather than stable calcium physiology — a plausible alternative
-  explanation for a baseline-only, timing-sensitive association.
+- **Robust to comorbidity/severity adjustment.** Ionized calcium is preferentially
+  ordered in acute/inpatient settings, raising concern that baseline calcium marks
+  illness severity rather than calcium physiology. Adjusting for Charlson comorbidity
+  score and renal disease left the interaction essentially unchanged:
+
+  | Model | Calcium×LDL-C sub-HR | 95% CI | p |
+  |---|---|---|---|
+  | Primary (no severity adj.) | 1.032 | 1.002–1.063 | 0.039 |
+  | + Charlson score + renal disease | 1.032 | 1.001–1.064 | 0.046 |
+  | + Charlson × LDL-C interaction | 1.033 | 1.001–1.066 | 0.040 |
+
+  Charlson score was itself an independent predictor of MACE (sub-HR 1.21/point,
+  p=0.018) and renal disease was present in 50% of the cohort — i.e. these were
+  informative covariates, yet they did not account for the calcium interaction.
+  Severity did **not** modify the LDL-C effect (Charlson×LDL-C p=0.36). This argues
+  against *chronic*-comorbidity confounding as the explanation.
+- **Acute-acuity confounding remains untestable.** The data carry no encounter-type
+  (inpatient/ED/ICU) field, so the purely acute index-state cannot be adjusted for;
+  the Charlson proxy is also sparse (median 0). Acute-illness confounding at the
+  calcium draw therefore cannot be fully excluded.
 
 ## Interpretation
-There is a **direction-consistent but statistically fragile** signal that LDL-C is
-more harmful at higher ionized calcium, concentrated in the top calcium tertile.
-It is concordant across three baseline-calcium model specifications and a Cox LRT
-(all p≈0.02–0.05), but it attenuates with increasing power, is absent for
-time-averaged calcium, and is vulnerable to confounding by illness acuity. This is
-**hypothesis-generating, not confirmatory.**
+There is a **direction-consistent signal** that LDL-C is more harmful at higher
+ionized calcium, concentrated in the top calcium tertile — concordant across three
+baseline-calcium specifications and a Cox LRT (all p≈0.02–0.05), and **robust to
+adjustment for chronic comorbidity burden and renal disease**. It is, however, still
+**statistically borderline** (p≈0.04 when adequately powered), **absent for
+time-averaged calcium**, and not yet de-confounded from *acute* illness state at the
+index measurement. Best characterized as a **promising, severity-robust but
+not-yet-confirmatory** finding worth pursuing.
 
 ## Planned next steps
 1. Re-run with total/serum calcium (more conventional, outpatient-leaning measure)
    as a concordance check, ideally with albumin correction.
-2. Adjust for an acuity proxy (e.g., inpatient vs outpatient index encounter) to
-   probe the confounding-by-severity concern.
-3. If pursued, pre-specify the baseline-calcium window and consider a larger
-   calcium-enriched data pull to move from borderline to definitive power.
+2. Obtain an encounter-type (inpatient/ED/ICU) field in a future pull to directly
+   test acute-state confounding — the one alternative explanation not yet excluded.
+3. Pre-specify the baseline-calcium window and consider a larger calcium-enriched
+   data pull to move the borderline interaction toward definitive power.

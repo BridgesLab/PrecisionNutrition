@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dave Bridges">
-<meta name="dcterms.date" content="2026-06-09">
+<meta name="dcterms.date" content="2026-06-10">
 
 <title>Calcium as a Modifier of the LDL-C → MACE Relationship</title>
 <style>
@@ -101,6 +101,10 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
   <li><a href="#model-3-fully-stratified-fine-gray-within-each-calcium-tertile" id="toc-model-3-fully-stratified-fine-gray-within-each-calcium-tertile" class="nav-link" data-scroll-target="#model-3-fully-stratified-fine-gray-within-each-calcium-tertile">Model 3: Fully Stratified Fine-Gray (within each calcium tertile)</a></li>
   <li><a href="#sensitivity-a-cox-interaction-with-likelihood-ratio-test" id="toc-sensitivity-a-cox-interaction-with-likelihood-ratio-test" class="nav-link" data-scroll-target="#sensitivity-a-cox-interaction-with-likelihood-ratio-test">Sensitivity A: Cox Interaction with Likelihood-Ratio Test</a></li>
   <li><a href="#sensitivity-b-time-averaged-calcium-as-the-modifier" id="toc-sensitivity-b-time-averaged-calcium-as-the-modifier" class="nav-link" data-scroll-target="#sensitivity-b-time-averaged-calcium-as-the-modifier">Sensitivity B: Time-Averaged Calcium as the Modifier</a></li>
+  <li><a href="#sensitivity-c-severity-acuity-adjustment" id="toc-sensitivity-c-severity-acuity-adjustment" class="nav-link" data-scroll-target="#sensitivity-c-severity-acuity-adjustment">Sensitivity C: Severity / Acuity Adjustment</a>
+  <ul class="collapse">
+  <li><a href="#did-the-calcium-ldl-c-interaction-survive-severity-adjustment" id="toc-did-the-calcium-ldl-c-interaction-survive-severity-adjustment" class="nav-link" data-scroll-target="#did-the-calcium-ldl-c-interaction-survive-severity-adjustment">Did the calcium × LDL-C interaction survive severity adjustment?</a></li>
+  </ul></li>
   <li><a href="#summary-effect-modification" id="toc-summary-effect-modification" class="nav-link" data-scroll-target="#summary-effect-modification">Summary: Effect Modification</a></li>
   <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
   </ul>
@@ -127,7 +131,7 @@ pre > code.sourceCode > span > a:first-child::before { text-decoration: underlin
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">June 9, 2026</p>
+      <p class="date">June 10, 2026</p>
     </div>
   </div>
   
@@ -1845,41 +1849,418 @@ Figure&nbsp;1
 </div>
 <hr>
 </section>
+<section id="sensitivity-c-severity-acuity-adjustment" class="level2">
+<h2 class="anchored" data-anchor-id="sensitivity-c-severity-acuity-adjustment">Sensitivity C: Severity / Acuity Adjustment</h2>
+<p><strong>Why this matters.</strong> Ionized calcium is preferentially ordered in acute/inpatient settings, so a <em>baseline</em> ionized-calcium value may partly mark how ill a patient was at the index time rather than stable calcium physiology. Illness severity predicts both abnormal ionized calcium (critical-illness hypocalcemia, alkalosis, transfusion/citrate effects) and subsequent MACE — a classic confounding triangle. If the calcium × LDL-C interaction (<code>ldl_x_cac</code>) is really a <em>severity</em> × LDL-C interaction in disguise, it should <strong>attenuate</strong> once we adjust for severity (and for severity-modification of the LDL-C effect).</p>
+<p>This dataset has <strong>no encounter-type/inpatient flag</strong>, so a literal acute-acuity proxy is unavailable. We use the best available substitutes from <code>ComorbiditiesOnset.csv</code>:</p>
+<ul>
+<li><strong>Charlson comorbidity score at baseline</strong> (<code>charlson_score_baseline</code>) — a standard <em>chronic-severity</em> proxy (partial, not complete, control for acute acuity).</li>
+<li><strong>Renal disease</strong> (any Charlson/Elixhauser renal diagnosis on/before follow-up end) — the key <em>mechanistic</em> calcium confounder: CKD–mineral-bone disorder directly disturbs calcium homeostasis and independently drives cardiovascular events.</li>
+</ul>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a><span class="co"># --- Build severity covariates from the already-loaded comorbidity_onset ---</span></span>
+<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a>severity_vars <span class="ot">&lt;-</span> comorbidity_onset <span class="sc">%&gt;%</span></span>
+<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">charlson_renal_onset =</span> <span class="fu">suppressWarnings</span>(<span class="fu">as_datetime</span>(charlson_renal_onset)),</span>
+<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">renal_failure_onset  =</span> <span class="fu">suppressWarnings</span>(<span class="fu">as_datetime</span>(renal_failure_onset)),</span>
+<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">renal_onset          =</span> <span class="fu">pmin</span>(charlson_renal_onset, renal_failure_onset, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span></span>
+<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(DeID_PatientID, charlson_score_baseline, renal_onset)</span>
+<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a>analytic_sev <span class="ot">&lt;-</span> analytic <span class="sc">%&gt;%</span></span>
+<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(severity_vars, <span class="at">by =</span> <span class="st">"DeID_PatientID"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">charlson_base =</span> <span class="fu">replace_na</span>(charlson_score_baseline, <span class="dv">0</span>),  <span class="co"># no record → no coded burden</span></span>
+<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">charlson_c    =</span> charlson_base <span class="sc">-</span> <span class="fu">mean</span>(charlson_base),</span>
+<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">ever_renal    =</span> <span class="fu">as.integer</span>(<span class="sc">!</span><span class="fu">is.na</span>(renal_onset) <span class="sc">&amp;</span> renal_onset <span class="sc">&lt;=</span> t_end),</span>
+<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">ldl_x_char    =</span> meanLDL_trap_s <span class="sc">*</span> charlson_c</span>
+<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Charlson baseline score — summary:</span><span class="sc">\n</span><span class="st">"</span>); <span class="fu">print</span>(<span class="fu">summary</span>(analytic_sev<span class="sc">$</span>charlson_base))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Charlson baseline score — summary:</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.0000  0.0000  0.3352  0.0000  6.0000 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"Ever renal disease:"</span>, <span class="fu">sum</span>(analytic_sev<span class="sc">$</span>ever_renal), <span class="st">"of"</span>, <span class="fu">nrow</span>(analytic_sev), <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Ever renal disease: 183 of 367 </code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Pull a single named coefficient (sub-HR, CI, p) from a crr fit</span></span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a>extract_term <span class="ot">&lt;-</span> <span class="cf">function</span>(fit, term, label) {</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  s <span class="ot">&lt;-</span> <span class="fu">summary</span>(fit)<span class="sc">$</span>coef</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>  b <span class="ot">&lt;-</span> s[term, <span class="st">"coef"</span>]; se <span class="ot">&lt;-</span> s[term, <span class="st">"se(coef)"</span>]</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">Model         =</span> label,</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">Sub-HR</span><span class="st">`</span>      <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">exp</span>(b), <span class="dv">4</span>),</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span>  <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">exp</span>(b <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se), <span class="dv">4</span>),</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(<span class="fu">exp</span>(b <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se), <span class="dv">4</span>),</span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>     <span class="ot">=</span> <span class="fu">format.pval</span>(s[term, <span class="st">"p-value"</span>], <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">eps =</span> <span class="fl">0.001</span>)</span>
+<span id="cb36-11"><a href="#cb36-11" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb36-12"><a href="#cb36-12" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb36-13"><a href="#cb36-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-14"><a href="#cb36-14" aria-hidden="true" tabindex="-1"></a><span class="co"># Model C1: interaction + severity main effects (Charlson score, renal disease)</span></span>
+<span id="cb36-15"><a href="#cb36-15" aria-hidden="true" tabindex="-1"></a>cov_c1 <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(analytic_sev <span class="sc">%&gt;%</span></span>
+<span id="cb36-16"><a href="#cb36-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(meanLDL_trap_s, Ca_c, ldl_x_cac, <span class="fu">all_of</span>(adj_cols),</span>
+<span id="cb36-17"><a href="#cb36-17" aria-hidden="true" tabindex="-1"></a>         charlson_c, ever_renal))</span>
+<span id="cb36-18"><a href="#cb36-18" aria-hidden="true" tabindex="-1"></a>fg_c1 <span class="ot">&lt;-</span> <span class="fu">safe_crr</span>(analytic_sev<span class="sc">$</span>follow_up_days, analytic_sev<span class="sc">$</span>fg_status, cov_c1)</span>
+<span id="cb36-19"><a href="#cb36-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-20"><a href="#cb36-20" aria-hidden="true" tabindex="-1"></a><span class="co"># Model C2: also let severity modify the LDL-C effect (Charlson × LDL-C)</span></span>
+<span id="cb36-21"><a href="#cb36-21" aria-hidden="true" tabindex="-1"></a>cov_c2 <span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(analytic_sev <span class="sc">%&gt;%</span></span>
+<span id="cb36-22"><a href="#cb36-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(meanLDL_trap_s, Ca_c, ldl_x_cac, <span class="fu">all_of</span>(adj_cols),</span>
+<span id="cb36-23"><a href="#cb36-23" aria-hidden="true" tabindex="-1"></a>         charlson_c, ever_renal, ldl_x_char))</span>
+<span id="cb36-24"><a href="#cb36-24" aria-hidden="true" tabindex="-1"></a>fg_c2 <span class="ot">&lt;-</span> <span class="fu">safe_crr</span>(analytic_sev<span class="sc">$</span>follow_up_days, analytic_sev<span class="sc">$</span>fg_status, cov_c2)</span>
+<span id="cb36-25"><a href="#cb36-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb36-26"><a href="#cb36-26" aria-hidden="true" tabindex="-1"></a><span class="fu">format_fg</span>(fg_c1, <span class="st">"Model C1 — calcium×LDL interaction + severity (Charlson, renal) main effects"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Model C1 — calcium×LDL interaction + severity (Charlson, renal) main effects</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Term</th>
+<th style="text-align: right;">Sub-HR</th>
+<th style="text-align: right;">95% CI low</th>
+<th style="text-align: right;">95% CI high</th>
+<th style="text-align: left;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">meanLDL_trap_s</td>
+<td style="text-align: right;">1.0175</td>
+<td style="text-align: right;">0.9740</td>
+<td style="text-align: right;">1.0629</td>
+<td style="text-align: left;">0.440</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ca_c</td>
+<td style="text-align: right;">0.7357</td>
+<td style="text-align: right;">0.4882</td>
+<td style="text-align: right;">1.1087</td>
+<td style="text-align: left;">0.140</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ldl_x_cac</td>
+<td style="text-align: right;">1.0319</td>
+<td style="text-align: right;">1.0006</td>
+<td style="text-align: right;">1.0641</td>
+<td style="text-align: left;">0.046</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Age_baseline</td>
+<td style="text-align: right;">1.0126</td>
+<td style="text-align: right;">1.0015</td>
+<td style="text-align: right;">1.0237</td>
+<td style="text-align: left;">0.025</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sex_female</td>
+<td style="text-align: right;">0.8152</td>
+<td style="text-align: right;">0.5767</td>
+<td style="text-align: right;">1.1523</td>
+<td style="text-align: left;">0.250</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">race_black</td>
+<td style="text-align: right;">0.6999</td>
+<td style="text-align: right;">0.3838</td>
+<td style="text-align: right;">1.2763</td>
+<td style="text-align: left;">0.240</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">race_asian</td>
+<td style="text-align: right;">0.7603</td>
+<td style="text-align: right;">0.3104</td>
+<td style="text-align: right;">1.8622</td>
+<td style="text-align: left;">0.550</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">race_hisp</td>
+<td style="text-align: right;">0.6095</td>
+<td style="text-align: right;">0.2127</td>
+<td style="text-align: right;">1.7463</td>
+<td style="text-align: left;">0.360</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">race_other</td>
+<td style="text-align: right;">1.3218</td>
+<td style="text-align: right;">0.5927</td>
+<td style="text-align: right;">2.9478</td>
+<td style="text-align: left;">0.500</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ever_statin</td>
+<td style="text-align: right;">0.8187</td>
+<td style="text-align: right;">0.5586</td>
+<td style="text-align: right;">1.2000</td>
+<td style="text-align: left;">0.310</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ever_diabetes</td>
+<td style="text-align: right;">0.8321</td>
+<td style="text-align: right;">0.5732</td>
+<td style="text-align: right;">1.2079</td>
+<td style="text-align: left;">0.330</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ever_hypertension</td>
+<td style="text-align: right;">1.3402</td>
+<td style="text-align: right;">0.7168</td>
+<td style="text-align: right;">2.5058</td>
+<td style="text-align: left;">0.360</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">charlson_c</td>
+<td style="text-align: right;">1.2126</td>
+<td style="text-align: right;">1.0332</td>
+<td style="text-align: right;">1.4232</td>
+<td style="text-align: left;">0.018</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ever_renal</td>
+<td style="text-align: right;">0.7086</td>
+<td style="text-align: right;">0.5013</td>
+<td style="text-align: right;">1.0016</td>
+<td style="text-align: left;">0.051</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">format_fg</span>(fg_c2, <span class="st">"Model C2 — C1 plus a Charlson×LDL-C interaction term"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Model C2 — C1 plus a Charlson×LDL-C interaction term</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Term</th>
+<th style="text-align: right;">Sub-HR</th>
+<th style="text-align: right;">95% CI low</th>
+<th style="text-align: right;">95% CI high</th>
+<th style="text-align: left;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">meanLDL_trap_s</td>
+<td style="text-align: right;">1.0153</td>
+<td style="text-align: right;">0.9702</td>
+<td style="text-align: right;">1.0625</td>
+<td style="text-align: left;">0.510</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ca_c</td>
+<td style="text-align: right;">0.7271</td>
+<td style="text-align: right;">0.4822</td>
+<td style="text-align: right;">1.0965</td>
+<td style="text-align: left;">0.130</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ldl_x_cac</td>
+<td style="text-align: right;">1.0330</td>
+<td style="text-align: right;">1.0014</td>
+<td style="text-align: right;">1.0655</td>
+<td style="text-align: left;">0.040</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Age_baseline</td>
+<td style="text-align: right;">1.0122</td>
+<td style="text-align: right;">1.0011</td>
+<td style="text-align: right;">1.0233</td>
+<td style="text-align: left;">0.031</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sex_female</td>
+<td style="text-align: right;">0.8219</td>
+<td style="text-align: right;">0.5816</td>
+<td style="text-align: right;">1.1615</td>
+<td style="text-align: left;">0.270</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">race_black</td>
+<td style="text-align: right;">0.7442</td>
+<td style="text-align: right;">0.4152</td>
+<td style="text-align: right;">1.3337</td>
+<td style="text-align: left;">0.320</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">race_asian</td>
+<td style="text-align: right;">0.7667</td>
+<td style="text-align: right;">0.3122</td>
+<td style="text-align: right;">1.8828</td>
+<td style="text-align: left;">0.560</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">race_hisp</td>
+<td style="text-align: right;">0.5260</td>
+<td style="text-align: right;">0.1676</td>
+<td style="text-align: right;">1.6505</td>
+<td style="text-align: left;">0.270</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">race_other</td>
+<td style="text-align: right;">1.3248</td>
+<td style="text-align: right;">0.5916</td>
+<td style="text-align: right;">2.9666</td>
+<td style="text-align: left;">0.490</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ever_statin</td>
+<td style="text-align: right;">0.8189</td>
+<td style="text-align: right;">0.5581</td>
+<td style="text-align: right;">1.2016</td>
+<td style="text-align: left;">0.310</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ever_diabetes</td>
+<td style="text-align: right;">0.8225</td>
+<td style="text-align: right;">0.5653</td>
+<td style="text-align: right;">1.1968</td>
+<td style="text-align: left;">0.310</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ever_hypertension</td>
+<td style="text-align: right;">1.3355</td>
+<td style="text-align: right;">0.7136</td>
+<td style="text-align: right;">2.4993</td>
+<td style="text-align: left;">0.370</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">charlson_c</td>
+<td style="text-align: right;">1.0507</td>
+<td style="text-align: right;">0.7110</td>
+<td style="text-align: right;">1.5527</td>
+<td style="text-align: left;">0.800</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ever_renal</td>
+<td style="text-align: right;">0.7110</td>
+<td style="text-align: right;">0.5029</td>
+<td style="text-align: right;">1.0052</td>
+<td style="text-align: left;">0.054</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ldl_x_char</td>
+<td style="text-align: right;">1.0150</td>
+<td style="text-align: right;">0.9833</td>
+<td style="text-align: right;">1.0478</td>
+<td style="text-align: left;">0.360</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<section id="did-the-calcium-ldl-c-interaction-survive-severity-adjustment" class="level3">
+<h3 class="anchored" data-anchor-id="did-the-calcium-ldl-c-interaction-survive-severity-adjustment">Did the calcium × LDL-C interaction survive severity adjustment?</h3>
+<p>The decisive comparison: the calcium × LDL-C term (<code>ldl_x_cac</code>) before vs after adding severity. Material attenuation toward 1.0 / loss of significance would indicate the calcium signal was largely a severity/acuity artifact; stability would support a genuine calcium-specific interaction.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="sourceCode cell-code" id="cb38"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb38-2"><a href="#cb38-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_term</span>(fg_int, <span class="st">"ldl_x_cac"</span>, <span class="st">"Primary (no severity adj.)"</span>),</span>
+<span id="cb38-3"><a href="#cb38-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_term</span>(fg_c1,  <span class="st">"ldl_x_cac"</span>, <span class="st">"C1: + Charlson score + renal disease"</span>),</span>
+<span id="cb38-4"><a href="#cb38-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_term</span>(fg_c2,  <span class="st">"ldl_x_cac"</span>, <span class="st">"C2: + Charlson×LDL-C interaction"</span>)</span>
+<span id="cb38-5"><a href="#cb38-5" aria-hidden="true" tabindex="-1"></a>) <span class="sc">%&gt;%</span></span>
+<span id="cb38-6"><a href="#cb38-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(</span>
+<span id="cb38-7"><a href="#cb38-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Calcium × LDL-C interaction term (per "</span>, CAL_SCALE, <span class="st">" mg/dL "</span>, CALCIUM_TEST,</span>
+<span id="cb38-8"><a href="#cb38-8" aria-hidden="true" tabindex="-1"></a>    <span class="st">" × "</span>, LDL_SCALE, <span class="st">" mg/dL LDL-C) — before vs after severity adjustment"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Calcium × LDL-C interaction term (per 0.5 mg/dL Ionized Calcium × 10 mg/dL LDL-C) — before vs after severity adjustment</caption>
+<colgroup>
+<col style="width: 49%">
+<col style="width: 9%">
+<col style="width: 14%">
+<col style="width: 16%">
+<col style="width: 10%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Model</th>
+<th style="text-align: right;">Sub-HR</th>
+<th style="text-align: right;">95% CI low</th>
+<th style="text-align: right;">95% CI high</th>
+<th style="text-align: left;">p-value</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Primary (no severity adj.)</td>
+<td style="text-align: right;">1.0317</td>
+<td style="text-align: right;">1.0016</td>
+<td style="text-align: right;">1.0627</td>
+<td style="text-align: left;">0.039</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">C1: + Charlson score + renal disease</td>
+<td style="text-align: right;">1.0319</td>
+<td style="text-align: right;">1.0006</td>
+<td style="text-align: right;">1.0641</td>
+<td style="text-align: left;">0.046</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">C2: + Charlson×LDL-C interaction</td>
+<td style="text-align: right;">1.0330</td>
+<td style="text-align: right;">1.0014</td>
+<td style="text-align: right;">1.0655</td>
+<td style="text-align: left;">0.04</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+</section>
 <section id="summary-effect-modification" class="level2">
 <h2 class="anchored" data-anchor-id="summary-effect-modification">Summary: Effect Modification</h2>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>interaction_p <span class="ot">&lt;-</span> <span class="fu">format.pval</span>(int_p, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">eps =</span> <span class="fl">0.001</span>)</span>
-<span id="cb31-2"><a href="#cb31-2" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-3"><a href="#cb31-3" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> ldl_by_tertile <span class="sc">%&gt;%</span></span>
-<span id="cb31-4"><a href="#cb31-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Source =</span> <span class="st">"Interaction model"</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb31-5"><a href="#cb31-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(stratified_ldl <span class="sc">%&gt;%</span></span>
-<span id="cb31-6"><a href="#cb31-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Stratum, <span class="st">`</span><span class="at">Sub-HR</span><span class="st">`</span>, <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span>, <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span>, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
-<span id="cb31-7"><a href="#cb31-7" aria-hidden="true" tabindex="-1"></a>              <span class="fu">mutate</span>(<span class="at">Source =</span> <span class="st">"Stratified model"</span>)) <span class="sc">%&gt;%</span></span>
-<span id="cb31-8"><a href="#cb31-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Stratum =</span> <span class="fu">factor</span>(Stratum,</span>
-<span id="cb31-9"><a href="#cb31-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">levels =</span> <span class="fu">rev</span>(<span class="fu">c</span>(<span class="st">"T1 (low)"</span>, <span class="st">"T2 (mid)"</span>, <span class="st">"T3 (high)"</span>))))</span>
-<span id="cb31-10"><a href="#cb31-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb31-11"><a href="#cb31-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(forest, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sub-HR</span><span class="st">`</span>, <span class="at">y =</span> Stratum,</span>
-<span id="cb31-12"><a href="#cb31-12" aria-hidden="true" tabindex="-1"></a>                   <span class="at">xmin =</span> <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span>, <span class="at">xmax =</span> <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span>,</span>
-<span id="cb31-13"><a href="#cb31-13" aria-hidden="true" tabindex="-1"></a>                   <span class="at">colour =</span> Source)) <span class="sc">+</span></span>
-<span id="cb31-14"><a href="#cb31-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">1</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
-<span id="cb31-15"><a href="#cb31-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">height =</span> <span class="fl">0.25</span>, <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
-<span id="cb31-16"><a href="#cb31-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
-<span id="cb31-17"><a href="#cb31-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Interaction model"</span> <span class="ot">=</span> color_mace,</span>
-<span id="cb31-18"><a href="#cb31-18" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"Stratified model"</span>  <span class="ot">=</span> color_accent)) <span class="sc">+</span></span>
-<span id="cb31-19"><a href="#cb31-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
-<span id="cb31-20"><a href="#cb31-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="fu">paste0</span>(<span class="st">"LDL-C → MACE sub-HR by "</span>, <span class="fu">tolower</span>(CALCIUM_TEST), <span class="st">" tertile"</span>),</span>
-<span id="cb31-21"><a href="#cb31-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Per "</span>, LDL_SCALE, <span class="st">" mg/dL LDL-C; continuous interaction p = "</span>,</span>
-<span id="cb31-22"><a href="#cb31-22" aria-hidden="true" tabindex="-1"></a>                      interaction_p),</span>
-<span id="cb31-23"><a href="#cb31-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">paste0</span>(<span class="st">"LDL-C sub-HR per "</span>, LDL_SCALE, <span class="st">" mg/dL (95% CI)"</span>),</span>
-<span id="cb31-24"><a href="#cb31-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="fu">paste0</span>(<span class="st">"Baseline "</span>, <span class="fu">tolower</span>(CALCIUM_TEST), <span class="st">" tertile"</span>),</span>
-<span id="cb31-25"><a href="#cb31-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour =</span> <span class="cn">NULL</span></span>
-<span id="cb31-26"><a href="#cb31-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
-<span id="cb31-27"><a href="#cb31-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
-<span id="cb31-28"><a href="#cb31-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
-<span id="cb31-29"><a href="#cb31-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"bottom"</span>,</span>
-<span id="cb31-30"><a href="#cb31-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a>interaction_p <span class="ot">&lt;-</span> <span class="fu">format.pval</span>(int_p, <span class="at">digits =</span> <span class="dv">3</span>, <span class="at">eps =</span> <span class="fl">0.001</span>)</span>
+<span id="cb39-2"><a href="#cb39-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-3"><a href="#cb39-3" aria-hidden="true" tabindex="-1"></a>forest <span class="ot">&lt;-</span> ldl_by_tertile <span class="sc">%&gt;%</span></span>
+<span id="cb39-4"><a href="#cb39-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Source =</span> <span class="st">"Interaction model"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb39-5"><a href="#cb39-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">bind_rows</span>(stratified_ldl <span class="sc">%&gt;%</span></span>
+<span id="cb39-6"><a href="#cb39-6" aria-hidden="true" tabindex="-1"></a>              <span class="fu">select</span>(Stratum, <span class="st">`</span><span class="at">Sub-HR</span><span class="st">`</span>, <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span>, <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span>, <span class="st">`</span><span class="at">p-value</span><span class="st">`</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb39-7"><a href="#cb39-7" aria-hidden="true" tabindex="-1"></a>              <span class="fu">mutate</span>(<span class="at">Source =</span> <span class="st">"Stratified model"</span>)) <span class="sc">%&gt;%</span></span>
+<span id="cb39-8"><a href="#cb39-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">Stratum =</span> <span class="fu">factor</span>(Stratum,</span>
+<span id="cb39-9"><a href="#cb39-9" aria-hidden="true" tabindex="-1"></a>                          <span class="at">levels =</span> <span class="fu">rev</span>(<span class="fu">c</span>(<span class="st">"T1 (low)"</span>, <span class="st">"T2 (mid)"</span>, <span class="st">"T3 (high)"</span>))))</span>
+<span id="cb39-10"><a href="#cb39-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb39-11"><a href="#cb39-11" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(forest, <span class="fu">aes</span>(<span class="at">x =</span> <span class="st">`</span><span class="at">Sub-HR</span><span class="st">`</span>, <span class="at">y =</span> Stratum,</span>
+<span id="cb39-12"><a href="#cb39-12" aria-hidden="true" tabindex="-1"></a>                   <span class="at">xmin =</span> <span class="st">`</span><span class="at">95% CI low</span><span class="st">`</span>, <span class="at">xmax =</span> <span class="st">`</span><span class="at">95% CI high</span><span class="st">`</span>,</span>
+<span id="cb39-13"><a href="#cb39-13" aria-hidden="true" tabindex="-1"></a>                   <span class="at">colour =</span> Source)) <span class="sc">+</span></span>
+<span id="cb39-14"><a href="#cb39-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">1</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb39-15"><a href="#cb39-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_errorbarh</span>(<span class="at">height =</span> <span class="fl">0.25</span>, <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb39-16"><a href="#cb39-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">3</span>, <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb39-17"><a href="#cb39-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"Interaction model"</span> <span class="ot">=</span> color_mace,</span>
+<span id="cb39-18"><a href="#cb39-18" aria-hidden="true" tabindex="-1"></a>                                 <span class="st">"Stratified model"</span>  <span class="ot">=</span> color_accent)) <span class="sc">+</span></span>
+<span id="cb39-19"><a href="#cb39-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb39-20"><a href="#cb39-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="fu">paste0</span>(<span class="st">"LDL-C → MACE sub-HR by "</span>, <span class="fu">tolower</span>(CALCIUM_TEST), <span class="st">" tertile"</span>),</span>
+<span id="cb39-21"><a href="#cb39-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="fu">paste0</span>(<span class="st">"Per "</span>, LDL_SCALE, <span class="st">" mg/dL LDL-C; continuous interaction p = "</span>,</span>
+<span id="cb39-22"><a href="#cb39-22" aria-hidden="true" tabindex="-1"></a>                      interaction_p),</span>
+<span id="cb39-23"><a href="#cb39-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">paste0</span>(<span class="st">"LDL-C sub-HR per "</span>, LDL_SCALE, <span class="st">" mg/dL (95% CI)"</span>),</span>
+<span id="cb39-24"><a href="#cb39-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="fu">paste0</span>(<span class="st">"Baseline "</span>, <span class="fu">tolower</span>(CALCIUM_TEST), <span class="st">" tertile"</span>),</span>
+<span id="cb39-25"><a href="#cb39-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">colour =</span> <span class="cn">NULL</span></span>
+<span id="cb39-26"><a href="#cb39-26" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb39-27"><a href="#cb39-27" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb39-28"><a href="#cb39-28" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">panel.grid.minor =</span> <span class="fu">element_blank</span>(),</span>
+<span id="cb39-29"><a href="#cb39-29" aria-hidden="true" tabindex="-1"></a>        <span class="at">legend.position =</span> <span class="st">"bottom"</span>,</span>
+<span id="cb39-30"><a href="#cb39-30" aria-hidden="true" tabindex="-1"></a>        <span class="at">plot.title =</span> <span class="fu">element_text</span>(<span class="at">face =</span> <span class="st">"bold"</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output-display">
 <div id="fig-summary" class="quarto-float quarto-figure quarto-figure-center anchored" width="2400">
@@ -1902,7 +2283,7 @@ Figure&nbsp;2
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="sourceCode cell-code" id="cb32"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </details>
 <div class="cell-output cell-output-stdout">
 <pre><code>R version 4.4.3 (2025-02-28)

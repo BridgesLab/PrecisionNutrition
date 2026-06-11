@@ -1,0 +1,446 @@
+---
+title: "Fracture Adverse Events in Lipid-Lowering Outcome Trials (ClinicalTrials.gov)"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  gfm:
+    html-math-method: webtex
+theme: journal
+execute:
+  echo: true
+  warning: false
+knitr:
+  opts_chunk:
+    fig-path: "figures-fracture-ae/"
+    dev: ["png", "pdf"]
+    dpi: 300
+    dev.args:
+      png:
+        type: "cairo-png"
+      pdf:
+        family: "sans"
+---
+
+```{r setup}
+#| label: setup
+#| message: false
+
+library(httr2)
+library(tidyverse)   # dplyr, purrr, stringr, tidyr, ggplot2
+library(broom)
+library(metafor)     # random-effects meta-analysis
+library(knitr)
+```
+
+## Motivation
+
+This is a **preliminary, hypothesis-generating** scan of fracture-related adverse
+events (AEs) reported on ClinicalTrials.gov for large lipid-lowering cardiovascular
+outcome trials. The motivating question is whether lowering LDL-C — and by extension
+the cholesterol/calcium axis we have been studying in the EHR cohort — is associated
+with a signal in fracture risk. We pull the structured `adverseEventsModule` from the
+v2 API, filter to fracture terms, and compare active vs. control arms within each
+trial before pooling.
+
+Two drug classes are included:
+
+- **Non-statin LDL-lowering** (PCSK9 inhibitors, ezetimibe) — the original target set.
+- **Statins** — added here for context, since they are the dominant LDL-lowering class
+  and carry their own (mixed) literature on bone/fracture effects.
+
+::: {.callout-warning}
+## Caveats up front
+- AE modules report **all-cause** fracture counts from safety surveillance, not
+  adjudicated efficacy endpoints. Ascertainment differs across trials.
+- Denominators (`numAtRisk`) are the safety-population arm sizes, not person-time, so
+  these are **crude risk ratios**, not incidence-rate ratios. Differential follow-up
+  between arms is *not* accounted for.
+- Many landmark statin trials (4S, WOSCOPS, HPS, LIPID, CARDS) predate mandatory
+  results posting and have **no machine-readable AE module** — they will silently
+  return empty. Treat the statin set as a convenience sample of registry-era trials.
+- A wrong NCT fails silently: it returns either an empty result *or — worse — a real
+  but unrelated trial*. In an earlier draft `NCT00831441` (APPRAISE-2, apixaban) and
+  `NCT00153231` (a vaginal-prolapse surgery study) had been mislabeled as statin
+  trials and one slipped into the pool. Every NCT and **every arm title** below has now
+  been confirmed against a live registry pull, and arm roles are assigned by an explicit
+  hand-checked map rather than parsed from free-text arm titles.
+:::
+
+## Trial registry
+
+```{r trials}
+#| label: trials
+
+# class:      drug class for grouping
+# comparator: "placebo" or "active" (more- vs less-intensive LDL lowering)
+# has_ae:     TRUE = confirmed posted AE module on a live pull (2026-06); FALSE = no module
+trials <- tribble(
+  ~nct,          ~trial,             ~drug,          ~class,        ~comparator, ~has_ae,
+  # --- Non-statin LDL-lowering (original set) ---
+  "NCT01764633", "FOURIER",          "evolocumab",   "PCSK9i",      "placebo",   TRUE,
+  "NCT01663402", "ODYSSEY OUTCOMES", "alirocumab",   "PCSK9i",      "placebo",   TRUE,
+  "NCT00202878", "IMPROVE-IT",       "ezetimibe",    "ezetimibe",   "active",    TRUE,   # eze+simva vs simva
+  "NCT00125593", "SHARP",            "eze+simva",    "ezetimibe",   "placebo",   TRUE,   # vs placebo (confounded)
+  "NCT02993406", "CLEAR Outcomes",   "bempedoic",    "ATP-citrate", "placebo",   TRUE,
+  # --- Statins ---
+  "NCT00239681", "JUPITER",          "rosuvastatin", "statin",      "placebo",   TRUE,   # rosuva 20 vs placebo
+  # Registry-era statin trials kept for the coverage table but with NO posted AE
+  # module (confirmed empty on a live pull), so they contribute nothing downstream:
+  "NCT00147602", "SPARCL",           "atorvastatin", "statin",      "placebo",   FALSE,  # atorva 80 vs placebo
+  "NCT00327691", "SATURN",           "rosuvastatin", "statin",      "active",    FALSE,  # rosuva vs atorva
+  "NCT00468923", "HOPE-3",           "rosuvastatin", "statin",      "placebo",   FALSE   # rosuva vs placebo (corrected NCT)
+  # Dropped: NCT00831441 = APPRAISE-2 (apixaban), NCT00153231 = prolapse surgery.
+  # Both were wrong NCTs masquerading as statin trials in an earlier draft.
+)
+
+trials |> arrange(class, trial) |> kable()
+```
+
+Arm roles are assigned by an **explicit map** keyed on the registry's stable event-group
+id (`EG000` / `EG001`), confirmed against a live pull of each trial's `eventGroups`. This
+replaces the old free-text title heuristic, which silently mislabeled the lone-`Simvastatin`
+control arm in IMPROVE-IT and an apixaban arm as "active". Only trials with a posted AE
+module appear here.
+
+```{r arm-map}
+#| label: arm-map
+
+# role: "treatment" (LDL-lowering / more-intensive arm) vs "control"
+arm_roles <- tribble(
+  ~nct,          ~group_id, ~role,
+  "NCT01764633", "EG000",   "control",     # FOURIER     Placebo
+  "NCT01764633", "EG001",   "treatment",   # FOURIER     Evolocumab
+  "NCT01663402", "EG000",   "control",     # ODYSSEY     Placebo
+  "NCT01663402", "EG001",   "treatment",   # ODYSSEY     Alirocumab
+  "NCT00202878", "EG000",   "treatment",   # IMPROVE-IT  Ezetimibe/Simvastatin
+  "NCT00202878", "EG001",   "control",     # IMPROVE-IT  Simvastatin (active comparator)
+  "NCT00125593", "EG000",   "treatment",   # SHARP       Simvastatin Plus Ezetimibe
+  "NCT00125593", "EG001",   "control",     # SHARP       Placebo
+  "NCT02993406", "EG000",   "treatment",   # CLEAR       Bempedoic Acid 180 mg
+  "NCT02993406", "EG001",   "control",     # CLEAR       Placebo Comparator
+  "NCT00239681", "EG000",   "control",     # JUPITER     Placebo
+  "NCT00239681", "EG001",   "treatment"    # JUPITER     Rosuvastatin 20 mg
+)
+```
+
+## Pull adverse-event modules
+
+```{r fetch-ae}
+#| label: fetch-ae
+#| cache: true
+
+fetch_ae <- function(nct) {
+  aem <- request(paste0("https://clinicaltrials.gov/api/v2/studies/", nct)) |>
+    req_url_query(format = "json",
+                  fields = "resultsSection.adverseEventsModule") |>
+    req_user_agent("fracture-AE-pull (research; davebrid@umich.edu)") |>
+    req_retry(max_tries = 3) |>
+    req_perform() |>
+    resp_body_json() |>
+    pluck("resultsSection", "adverseEventsModule")
+
+  if (is.null(aem)) return(tibble(nct = nct))
+
+  groups <- map_dfr(aem$eventGroups,
+                    \(g) tibble(group_id = g$id, arm = g$title))
+
+  parse_events <- function(events, category) {
+    map_dfr(events %||% list(), \(e) {
+      map_dfr(e$stats, \(s) tibble(
+        category     = category,
+        term         = e$term,
+        organ        = e$organSystem  %||% NA_character_,
+        group_id     = s$groupId,
+        num_affected = s$numAffected  %||% NA_integer_,
+        num_at_risk  = s$numAtRisk    %||% NA_integer_
+      ))
+    })
+  }
+
+  bind_rows(parse_events(aem$seriousEvents, "serious"),
+            parse_events(aem$otherEvents,   "other")) |>
+    left_join(groups, by = "group_id") |>
+    mutate(nct = nct, .before = 1)
+}
+
+# Be polite to the API; a small pause between calls.
+ae_raw <- map_dfr(trials$nct, \(x) {
+  out <- fetch_ae(x)
+  Sys.sleep(0.5)
+  out
+})
+
+# Did the live pull match what the registry table claims (has_ae)?
+ae_coverage <- ae_raw |>
+  group_by(nct) |>
+  summarise(pulled_ae = any(!is.na(category)), .groups = "drop") |>
+  right_join(trials, by = "nct") |>
+  transmute(trial, drug, class, comparator,
+            expected_ae = has_ae,
+            pulled_ae = coalesce(pulled_ae, FALSE))
+
+ae_coverage |> arrange(desc(pulled_ae), class, trial) |> kable()
+```
+
+## Filter to fracture terms
+
+```{r fracture-terms}
+#| label: fracture-terms
+
+# Broad fracture regex. We exclude "fracture" appearing only as part of unrelated
+# MedDRA terms is unlikely, but inspect the distinct terms to be safe.
+fracture <- ae_raw |>
+  filter(str_detect(term, regex("fracture", ignore_case = TRUE))) |>
+  left_join(trials, by = "nct")
+
+# Sanity-check exactly which MedDRA terms were captured.
+fracture |>
+  distinct(term, organ) |>
+  arrange(term) |>
+  kable(caption = "Distinct fracture MedDRA terms captured")
+```
+
+```{r fracture-by-arm}
+#| label: fracture-by-arm
+
+# Collapse to trial x arm x (serious/other). num_at_risk is constant within an
+# event group, so max() recovers the denominator. Sum across the (possibly several)
+# distinct fracture terms within an arm.
+# Keep nct + group_id so we can join the explicit arm-role map (group_id is the
+# registry's stable key; arm titles are free text and not trustworthy as a key).
+fracture_by_arm <- fracture |>
+  group_by(nct, trial, drug, class, comparator, group_id, arm, category) |>
+  summarise(affected  = sum(num_affected, na.rm = TRUE),
+            n_at_risk = max(num_at_risk,  na.rm = TRUE),
+            .groups = "drop") |>
+  mutate(pct = 100 * affected / n_at_risk)
+
+fracture_by_arm |>
+  arrange(class, trial, category, desc(arm)) |>
+  select(trial, drug, class, arm, category, affected, n_at_risk, pct) |>
+  kable(digits = 2, caption = "Fracture AE counts by trial, arm, and seriousness")
+```
+
+## Assign arm roles (treatment vs. control)
+
+Each event group is labeled by joining the explicit `arm_roles` map (keyed on the stable
+`group_id`). The table below pairs each role with the **actual registry arm title** so you
+can eyeball that "treatment" and "control" are not flipped — particularly for the
+active-comparator trial (IMPROVE-IT) and the confounded SHARP comparison.
+
+```{r arm-roles}
+#| label: arm-roles
+
+fracture_roles <- fracture_by_arm |>
+  inner_join(arm_roles, by = c("nct", "group_id"))
+
+# Show the actual arm title behind each role so flips are easy to catch.
+fracture_roles |>
+  distinct(trial, class, comparator, group_id, arm, role) |>
+  arrange(class, trial, role) |>
+  kable(caption = "Arm-role assignment with registry arm titles — verify nothing is flipped")
+```
+
+::: {.callout-note}
+**IMPROVE-IT** is an *active-comparator* trial (ezetimibe+simvastatin vs simvastatin
+alone), so its "treatment vs control" contrast is *more- vs less-intensive* LDL lowering,
+not drug-vs-placebo. **SHARP** randomized eze+simva vs placebo, so its effect cannot be
+attributed to ezetimibe alone. Both are flagged `comparator` in the registry and IMPROVE-IT
+is excluded from the placebo-controlled pool below.
+:::
+
+## Per-trial risk ratios
+
+```{r rr-helper}
+#| label: rr-helper
+
+# Shared 2x2 -> risk ratio with Wald CI on the log scale, Haldane–Anscombe 0.5
+# continuity correction when any cell is zero. Expects columns a, n1, c, n0
+# (a/c = treatment/control events; n1/n0 = treatment/control at risk).
+compute_rr <- function(df) {
+  df |>
+    mutate(
+      cc = if_else(a == 0 | c == 0, 0.5, 0),
+      rr      = ((a + cc) / (n1 + 2 * cc)) / ((c + cc) / (n0 + 2 * cc)),
+      log_rr  = log(rr),
+      se_log  = sqrt(1 / (a + cc) - 1 / (n1 + 2 * cc) +
+                     1 / (c + cc) - 1 / (n0 + 2 * cc)),
+      lci = exp(log_rr - 1.96 * se_log),
+      uci = exp(log_rr + 1.96 * se_log)
+    )
+}
+```
+
+```{r risk-ratios}
+#| label: risk-ratios
+
+# 2x2 per trial x seriousness: treatment vs control. Keep the arm titles so the
+# RR table is self-documenting. Drop rows lacking a clean two-arm contrast.
+rr_tab <- fracture_roles |>
+  group_by(trial, drug, class, comparator, category, role) |>
+  summarise(affected = sum(affected), n_at_risk = max(n_at_risk),
+            arm = first(arm), .groups = "drop") |>
+  pivot_wider(names_from = role,
+              values_from = c(affected, n_at_risk, arm)) |>
+  filter(!is.na(affected_treatment), !is.na(affected_control),
+         n_at_risk_treatment > 0, n_at_risk_control > 0) |>
+  transmute(trial, drug, class, comparator, category,
+            a  = affected_treatment, n1 = n_at_risk_treatment,
+            c  = affected_control,   n0 = n_at_risk_control,
+            treatment_arm = arm_treatment, control_arm = arm_control,
+            source = "registry") |>
+  compute_rr()
+
+rr_tab |>
+  transmute(trial, drug, class, comparator, category,
+            `treatment arm` = str_glue("{treatment_arm} ({a}/{n1})"),
+            `control arm`   = str_glue("{control_arm} ({c}/{n0})"),
+            rr = round(rr, 2),
+            `95% CI` = str_glue("{round(lci,2)}–{round(uci,2)}")) |>
+  arrange(class, category, trial) |>
+  kable(caption = "Crude fracture risk ratio (treatment vs control) by trial, with arm labels")
+```
+
+## Manual evidence: pre-registry trials
+
+The landmark statin trials (4S, WOSCOPS, HPS, LIPID, CARDS) predate the FDAAA 2007
+results-posting mandate, so they have **no machine-readable AE module** to pull. If/when
+you hand-extract fracture counts from a publication, FDA review, or Clinical Study Report,
+enter them below and they flow into the same pooled analysis with a `source` flag so the
+forest plot shows provenance. Rows with `NA` event counts are skipped automatically, so
+this block is safe to leave partially filled.
+
+::: {.callout-important}
+Many of these CV trials likely **never recorded fracture as an adverse event** — confirm
+the count exists before trusting a blank. Record *where* each number came from in
+`source_detail` (e.g. "FDA Stat Review Tbl 12", "Lancet 1994 appendix", "Vivli CSR p.214")
+so the provenance is auditable. Use the safety/ITT population denominators and match the
+`category` (serious vs other) to how the source classified the event.
+:::
+
+```{r manual-ae}
+#| label: manual-ae
+
+# Fill a/n1 (treatment events/at-risk) and c/n0 (control events/at-risk) as you find
+# them. Leave NA until then. comparator: "placebo" or "active". category: "serious"
+# or "other". source_detail: free-text citation for auditability.
+manual_ae <- tribble(
+  ~trial,    ~drug,          ~class,  ~comparator, ~category, ~a, ~n1,  ~c, ~n0, ~source_detail,
+  "4S",      "simvastatin",  "statin", "placebo",  "serious", NA, NA,   NA, NA,  "",   # Merck; Lancet 1994 / FDA review
+  "WOSCOPS", "pravastatin",  "statin", "placebo",  "serious", NA, NA,   NA, NA,  "",   # BMS/Sankyo; NEJM 1995
+  "HPS",     "simvastatin",  "statin", "placebo",  "serious", NA, NA,   NA, NA,  "",   # Merck/CTSU; Lancet 2002 appendix
+  "LIPID",   "pravastatin",  "statin", "placebo",  "serious", NA, NA,   NA, NA,  "",   # BMS; NEJM 1998
+  "CARDS",   "atorvastatin", "statin", "placebo",  "serious", NA, NA,   NA, NA,  ""    # Pfizer; Lancet 2004
+)
+
+manual_rr <- manual_ae |>
+  filter(!is.na(a), !is.na(n1), !is.na(c), !is.na(n0), n1 > 0, n0 > 0) |>
+  mutate(treatment_arm = drug, control_arm = "control",
+         source = "manual") |>
+  compute_rr()
+
+if (nrow(manual_rr) > 0) {
+  manual_rr |>
+    transmute(trial, drug, class, comparator, category,
+              `trt (a/n1)` = str_glue("{a}/{n1}"),
+              `ctl (c/n0)` = str_glue("{c}/{n0}"),
+              rr = round(rr, 2),
+              `95% CI` = str_glue("{round(lci,2)}–{round(uci,2)}"),
+              source_detail) |>
+    arrange(trial) |>
+    kable(caption = "Hand-extracted fracture risk ratios (pre-registry trials)")
+} else {
+  message("No manual fracture counts entered yet — `manual_ae` is still all NA.")
+}
+
+# Combine registry + manual into one evidence base for pooling. Keep only the
+# columns both share.
+keep <- c("trial", "drug", "class", "comparator", "category",
+          "a", "n1", "c", "n0", "rr", "lci", "uci", "source")
+rr_all <- bind_rows(select(rr_tab, any_of(keep)),
+                    if (nrow(manual_rr) > 0) select(manual_rr, any_of(keep)))
+```
+
+## Forest plot and random-effects pooling
+
+We pool **serious** fracture events across placebo-controlled trials with a
+random-effects model (REML). Active-comparator trials are excluded from the pooled
+estimate but shown in the per-trial table above.
+
+```{r meta}
+#| label: meta
+#| fig-width: 8
+#| fig-height: 6
+
+# Restrict to serious events and to placebo-controlled trials (per the `comparator`
+# flag — no hardcoded trial list). Active-comparator trials (IMPROVE-IT) are excluded
+# automatically. Pulls from rr_all, so any hand-entered manual rows join the pool.
+meta_dat <- rr_all |>
+  filter(category == "serious", comparator == "placebo") |>
+  arrange(source, trial)
+
+message("Pooling ", nrow(meta_dat), " placebo-controlled trials (",
+        sum(meta_dat$source == "registry"), " registry / ",
+        sum(meta_dat$source == "manual"), " manual): ",
+        paste(meta_dat$trial, collapse = ", "))
+
+if (nrow(meta_dat) >= 2) {
+  es <- escalc(measure = "RR",
+               ai = a, n1i = n1,    # treatment arm: events, n
+               ci = c, n2i = n0,    # control arm: events, n
+               data = meta_dat,
+               slab = trial)
+
+  res <- rma(yi, vi, data = es, method = "REML")
+
+  forest(res, atransf = exp,
+         at = log(c(0.25, 0.5, 1, 2, 4)),
+         xlab = "Risk ratio (serious fracture, treatment vs control)",
+         ilab = es$source, ilab.xpos = -3.2,    # show provenance column
+         mlab = "RE model (REML)",
+         header = c("Trial", "RR [95% CI]"))
+  text(-3.2, res$k + 2, "Source", font = 2)
+
+  res
+} else {
+  message("Not enough trials with serious fracture data to pool — ",
+          "add manual rows or verify NCTs and re-run.")
+}
+```
+
+```{r meta-by-class}
+#| label: meta-by-class
+
+# Subgroup pooling by drug class, if enough classes are represented.
+if (exists("res") && nrow(meta_dat) >= 2 && n_distinct(meta_dat$class) >= 2) {
+  es <- escalc(measure = "RR", ai = a, n1i = n1, ci = c, n2i = n0,
+               data = meta_dat, slab = trial)
+  res_class <- rma(yi, vi, mods = ~ class, data = es, method = "REML")
+  res_class
+}
+```
+
+## Session info
+
+```{r session}
+#| label: session
+sessionInfo()
+```
+
+## Next steps
+
+- **Verify the `FALSE` NCTs** in the registry table — several statin entries are
+  best-guesses and may lack a posted AE module (they'll show `has_ae = FALSE` above).
+- Swap crude risk ratios for **incidence-rate ratios** where person-time is recoverable
+  (some modules expose `frequencyThreshold` / time-frame metadata).
+- Hand-correct arm roles for active-comparator trials and decide whether to keep them.
+- If a real signal emerges, cross-reference against the EHR-derived osteoporosis /
+  fracture competing-risks analyses in this project for triangulation.
+```
+

@@ -1360,6 +1360,217 @@ Table: Fine-Gray interaction using TIME-AVERAGED calcium (N = 290)
 
 ---
 
+## Sensitivity C: Severity / Acuity Adjustment
+
+**Why this matters.** Ionized calcium is preferentially ordered in acute/inpatient
+settings, so a *baseline* ionized-calcium value may partly mark how ill a patient
+was at the index time rather than stable calcium physiology. Illness severity
+predicts both abnormal ionized calcium (critical-illness hypocalcemia, alkalosis,
+transfusion/citrate effects) and subsequent MACE — a classic confounding triangle.
+If the calcium × LDL-C interaction (`ldl_x_cac`) is really a *severity* × LDL-C
+interaction in disguise, it should **attenuate** once we adjust for severity (and
+for severity-modification of the LDL-C effect).
+
+This dataset has **no encounter-type/inpatient flag**, so a literal acute-acuity
+proxy is unavailable. We use the best available substitutes from
+`ComorbiditiesOnset.csv`:
+
+- **Charlson comorbidity score at baseline** (`charlson_score_baseline`) — a
+  standard *chronic-severity* proxy (partial, not complete, control for acute acuity).
+- **Renal disease** (any Charlson/Elixhauser renal diagnosis on/before follow-up
+  end) — the key *mechanistic* calcium confounder: CKD–mineral-bone disorder
+  directly disturbs calcium homeostasis and independently drives cardiovascular events.
+
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# --- Build severity covariates from the already-loaded comorbidity_onset ---
+severity_vars <- comorbidity_onset %>%
+  mutate(
+    charlson_renal_onset = suppressWarnings(as_datetime(charlson_renal_onset)),
+    renal_failure_onset  = suppressWarnings(as_datetime(renal_failure_onset)),
+    renal_onset          = pmin(charlson_renal_onset, renal_failure_onset, na.rm = TRUE)
+  ) %>%
+  select(DeID_PatientID, charlson_score_baseline, renal_onset)
+
+analytic_sev <- analytic %>%
+  left_join(severity_vars, by = "DeID_PatientID") %>%
+  mutate(
+    charlson_base = replace_na(charlson_score_baseline, 0),  # no record → no coded burden
+    charlson_c    = charlson_base - mean(charlson_base),
+    ever_renal    = as.integer(!is.na(renal_onset) & renal_onset <= t_end),
+    ldl_x_char    = meanLDL_trap_s * charlson_c
+  )
+
+cat("Charlson baseline score — summary:\n"); print(summary(analytic_sev$charlson_base))
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Charlson baseline score — summary:
+```
+
+
+:::
+
+::: {.cell-output .cell-output-stdout}
+
+```
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+ 0.0000  0.0000  0.0000  0.3352  0.0000  6.0000 
+```
+
+
+:::
+
+```{.r .cell-code}
+cat("Ever renal disease:", sum(analytic_sev$ever_renal), "of", nrow(analytic_sev), "\n")
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+Ever renal disease: 183 of 367 
+```
+
+
+:::
+
+```{.r .cell-code}
+# Pull a single named coefficient (sub-HR, CI, p) from a crr fit
+extract_term <- function(fit, term, label) {
+  s <- summary(fit)$coef
+  b <- s[term, "coef"]; se <- s[term, "se(coef)"]
+  tibble(
+    Model         = label,
+    `Sub-HR`      = round(exp(b), 4),
+    `95% CI low`  = round(exp(b - 1.96 * se), 4),
+    `95% CI high` = round(exp(b + 1.96 * se), 4),
+    `p-value`     = format.pval(s[term, "p-value"], digits = 3, eps = 0.001)
+  )
+}
+
+# Model C1: interaction + severity main effects (Charlson score, renal disease)
+cov_c1 <- as.matrix(analytic_sev %>%
+  select(meanLDL_trap_s, Ca_c, ldl_x_cac, all_of(adj_cols),
+         charlson_c, ever_renal))
+fg_c1 <- safe_crr(analytic_sev$follow_up_days, analytic_sev$fg_status, cov_c1)
+
+# Model C2: also let severity modify the LDL-C effect (Charlson × LDL-C)
+cov_c2 <- as.matrix(analytic_sev %>%
+  select(meanLDL_trap_s, Ca_c, ldl_x_cac, all_of(adj_cols),
+         charlson_c, ever_renal, ldl_x_char))
+fg_c2 <- safe_crr(analytic_sev$follow_up_days, analytic_sev$fg_status, cov_c2)
+
+format_fg(fg_c1, "Model C1 — calcium×LDL interaction + severity (Charlson, renal) main effects")
+```
+
+::: {.cell-output-display}
+
+
+Table: Model C1 — calcium×LDL interaction + severity (Charlson, renal) main effects
+
+|Term              | Sub-HR| 95% CI low| 95% CI high|p-value |
+|:-----------------|------:|----------:|-----------:|:-------|
+|meanLDL_trap_s    | 1.0175|     0.9740|      1.0629|0.440   |
+|Ca_c              | 0.7357|     0.4882|      1.1087|0.140   |
+|ldl_x_cac         | 1.0319|     1.0006|      1.0641|0.046   |
+|Age_baseline      | 1.0126|     1.0015|      1.0237|0.025   |
+|sex_female        | 0.8152|     0.5767|      1.1523|0.250   |
+|race_black        | 0.6999|     0.3838|      1.2763|0.240   |
+|race_asian        | 0.7603|     0.3104|      1.8622|0.550   |
+|race_hisp         | 0.6095|     0.2127|      1.7463|0.360   |
+|race_other        | 1.3218|     0.5927|      2.9478|0.500   |
+|ever_statin       | 0.8187|     0.5586|      1.2000|0.310   |
+|ever_diabetes     | 0.8321|     0.5732|      1.2079|0.330   |
+|ever_hypertension | 1.3402|     0.7168|      2.5058|0.360   |
+|charlson_c        | 1.2126|     1.0332|      1.4232|0.018   |
+|ever_renal        | 0.7086|     0.5013|      1.0016|0.051   |
+
+
+:::
+
+```{.r .cell-code}
+format_fg(fg_c2, "Model C2 — C1 plus a Charlson×LDL-C interaction term")
+```
+
+::: {.cell-output-display}
+
+
+Table: Model C2 — C1 plus a Charlson×LDL-C interaction term
+
+|Term              | Sub-HR| 95% CI low| 95% CI high|p-value |
+|:-----------------|------:|----------:|-----------:|:-------|
+|meanLDL_trap_s    | 1.0153|     0.9702|      1.0625|0.510   |
+|Ca_c              | 0.7271|     0.4822|      1.0965|0.130   |
+|ldl_x_cac         | 1.0330|     1.0014|      1.0655|0.040   |
+|Age_baseline      | 1.0122|     1.0011|      1.0233|0.031   |
+|sex_female        | 0.8219|     0.5816|      1.1615|0.270   |
+|race_black        | 0.7442|     0.4152|      1.3337|0.320   |
+|race_asian        | 0.7667|     0.3122|      1.8828|0.560   |
+|race_hisp         | 0.5260|     0.1676|      1.6505|0.270   |
+|race_other        | 1.3248|     0.5916|      2.9666|0.490   |
+|ever_statin       | 0.8189|     0.5581|      1.2016|0.310   |
+|ever_diabetes     | 0.8225|     0.5653|      1.1968|0.310   |
+|ever_hypertension | 1.3355|     0.7136|      2.4993|0.370   |
+|charlson_c        | 1.0507|     0.7110|      1.5527|0.800   |
+|ever_renal        | 0.7110|     0.5029|      1.0052|0.054   |
+|ldl_x_char        | 1.0150|     0.9833|      1.0478|0.360   |
+
+
+:::
+:::
+
+
+
+
+### Did the calcium × LDL-C interaction survive severity adjustment?
+
+The decisive comparison: the calcium × LDL-C term (`ldl_x_cac`) before vs after
+adding severity. Material attenuation toward 1.0 / loss of significance would
+indicate the calcium signal was largely a severity/acuity artifact; stability
+would support a genuine calcium-specific interaction.
+
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+bind_rows(
+  extract_term(fg_int, "ldl_x_cac", "Primary (no severity adj.)"),
+  extract_term(fg_c1,  "ldl_x_cac", "C1: + Charlson score + renal disease"),
+  extract_term(fg_c2,  "ldl_x_cac", "C2: + Charlson×LDL-C interaction")
+) %>%
+  kable(caption = paste0(
+    "Calcium × LDL-C interaction term (per ", CAL_SCALE, " mg/dL ", CALCIUM_TEST,
+    " × ", LDL_SCALE, " mg/dL LDL-C) — before vs after severity adjustment"))
+```
+
+::: {.cell-output-display}
+
+
+Table: Calcium × LDL-C interaction term (per 0.5 mg/dL Ionized Calcium × 10 mg/dL LDL-C) — before vs after severity adjustment
+
+|Model                                | Sub-HR| 95% CI low| 95% CI high|p-value |
+|:------------------------------------|------:|----------:|-----------:|:-------|
+|Primary (no severity adj.)           | 1.0317|     1.0016|      1.0627|0.039   |
+|C1: + Charlson score + renal disease | 1.0319|     1.0006|      1.0641|0.046   |
+|C2: + Charlson×LDL-C interaction     | 1.0330|     1.0014|      1.0655|0.04    |
+
+
+:::
+:::
+
+
+
+
+---
+
 ## Summary: Effect Modification
 
 

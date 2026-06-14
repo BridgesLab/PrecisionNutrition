@@ -200,7 +200,8 @@ different exclusion criteria apply (MACE-missing-onset vs osteo-missing-onset).
 | `combine_batches_v2.R` | Active | Combines 3 data pull batches into `combined_data/` |
 | `ldlc_mace_competing_risks.qmd` | **ACTIVE — v3** | MACE primary analysis with competing risks |
 | `ldlc_osteoporosis_competing_risks.qmd` | **ACTIVE — v3** | Osteoporosis primary analysis with competing risks |
-| `ldlc_calcium_interaction_mace.qmd` | **NEW — feasibility-limited** | Serum calcium × LDL-C effect modification on MACE (Fine-Gray), built on v3 framework. Calcium is sparse in the single combined_data pull; see the in-script "Calcium Feasibility Diagnostic" before trusting estimates. |
+| `ldlc_calcium_interaction_mace.qmd` | **NEW — feasibility-limited** | Calcium × LDL-C effect modification on MACE (Fine-Gray), built on v3 framework. Calcium is sparse in the single combined_data pull; see the in-script "Calcium Feasibility Diagnostic" before trusting estimates. |
+| `ldlc_calcium_interaction_osteoporosis.qmd` | **ACTIVE — complete (2026-06-10)** | Osteoporosis-outcome companion to the calcium×LDL MACE script. Three-state competing risks (osteoporosis=1, MACE=2, death=3). Same calcium-interaction machinery + Sensitivity A/B/C. Interaction NULL — see Current Results. |
 | `ldlc_mace_analysis.qmd` | Superseded (v1) | Time-varying spot LDL-C with stratification |
 | `ldlc_mace_baseline.qmd` | Superseded (v1) | Fixed baseline LDL-C |
 | `ldlc_mace_cumulative.qmd` | Superseded (v2) | Raw cumulative LDL-years |
@@ -275,6 +276,39 @@ Cohort: ≥2 LDL-C measurements.
 | Cox — time-avg LDL-C | 0.981 | 0.959–1.004 | 0.10 |
 | Cox — baseline LDL-C | 0.987 | 0.967–1.007 | 0.19 |
 | Cox — time-varying LOCF 1825d | 0.984 | 0.957–1.011 | 0.24 |
+
+### Calcium × LDL-C Interaction on MACE (Fine-Gray, ionized Ca, ±730d, N=367)
+
+Run 2026-06-08. Primary: continuous LDL×ionized-Ca product term; Cox LRT + time-avg-Ca + severity adjustment as sensitivities.
+
+| Model | Ca×LDL sub-HR | 95% CI | p |
+|---|---|---|---|
+| Primary (no severity adj.) | 1.032 | 1.002–1.063 | 0.039 |
+| + Charlson score + renal disease | 1.032 | 1.001–1.064 | 0.046 |
+| + Charlson × LDL interaction | 1.033 | 1.001–1.066 | 0.040 |
+| Time-averaged calcium (sensitivity) | 0.997 | — | 0.79 |
+
+Narrow ±365d window (N=219, 97 events, EPV 8.1): sub-HR 1.061 (1.020–1.105), p=0.004 — stronger but underpowered.
+Stratified (LDL sub-HR by Ca tertile): T1 0.99 (p=0.74), T2 1.03 (p=0.45), T3 1.06 (p=0.049).
+Cox LRT χ²=3.88, df=1, p=0.049.
+
+**Summary:** direction-consistent, severity-robust, but borderline (p≈0.04) and absent for time-averaged calcium. Best characterised as promising/hypothesis-generating.
+
+### Calcium × LDL-C Interaction on Osteoporosis (Fine-Gray 3-state, ionized Ca, ±730d, N=394)
+
+Run 2026-06-10. Three-state: osteoporosis=1, MACE=2, death=3. 86 osteoporosis events, 149 MACE competing, 43 death competing. EPV = 7.2 ⚠ underpowered.
+
+| Model | Ca×LDL sub-HR | 95% CI | p |
+|---|---|---|---|
+| Primary continuous interaction | 0.964 | 0.924–1.007 | 0.096 |
+| + Severity adjustment (Sens C) | 0.964 | 0.924–1.007 | 0.096 |
+| Time-averaged calcium (sensitivity) | — | — | 0.76 |
+| Cox LRT | χ²=1.17 | df=1 | 0.28 |
+
+Tertile: LDL sub-HR T1(low Ca) 1.10 (1.00–1.21, p=0.045); T2 1.02 (p=0.63); T3 0.97 (p=0.56). The T1 blip is in the opposite direction to MACE and is underpowered/multiplicity-fragile.
+LDL main effect at mean Ca: sub-HR 1.025 (p=0.40), consistent with v3 osteoporosis null.
+
+**Summary:** interaction NULL (LRT p=0.28). Point estimate trends opposite to MACE (sub-1 vs MACE's 1.032) — directionally intriguing but formally null and underpowered. Powered rerun (≥2 LDL/1826d: 148 events, EPV 12.3) deferred; expectation is it stays null given LRT p=0.28.
 
 ### Interpretation
 
@@ -405,9 +439,20 @@ risks adjustment.
     null (p=0.36). Caveat: Charlson baseline sparse (median 0); acute index-state
     still untestable without encounter-type data.
   - **STATUS**: promising, severity-robust, but NOT confirmatory — still borderline
-    (p~0.04) and absent for time-averaged calcium. NEXT: serum-calcium concordance
-    check (+albumin correction); pursue encounter-type field for acute-acuity test;
-    pre-specify window; consider larger calcium-enriched pull for definitive power.
+    (p~0.04) and absent for time-averaged calcium.
+  - **NEXT STEPS** (see `calcium_ldl_interaction_summary.md`):
+    1. Total serum calcium concordance — rerun interaction with albumin-corrected
+       total Ca (~4,009 pts, lower power, may be null); requires adding an albumin
+       branch to `labs_cleaning.qmd` (corrected = total + 0.8×(4.0−albumin)).
+    2. ✅ Osteoporosis outcome — COMPLETE (2026-06-10). Result: NULL (LRT p=0.28, sub-HR 0.964).
+       See Current Results section above. Powered rerun deferred (expectation: stays null).
+    3. Acute-state confounding — needs an encounter-type (inpatient/ED/ICU) field in a
+       future pull (Charlson only controls chronic burden).
+    4. Total serum calcium concordance — rerun interaction with albumin-corrected total Ca
+       (~4,009 pts, lower power). Requires adding albumin branch to `labs_cleaning.qmd`
+       (corrected = total + 0.8×(4.0−albumin)).
+    5. Power/definitiveness — pre-specify baseline-calcium window; consider larger
+       calcium-enriched MGI pull to move borderline MACE interaction toward confirmatory power.
   - TODO: from the diagnostic, pick a defensible (window, LDL) combo or document
     underpowering; consider albumin correction (albumin not yet in
     `labs_cleaning.qmd` test_name — would need a new branch).

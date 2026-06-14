@@ -91,9 +91,18 @@ index measurement. Best characterized as a **promising, severity-robust but
 not-yet-confirmatory** finding worth pursuing.
 
 ## Planned next steps
-1. Re-run with total/serum calcium (more conventional, outpatient-leaning measure)
-   as a concordance check, ideally with albumin correction.
-2. Obtain an encounter-type (inpatient/ED/ICU) field in a future pull to directly
-   test acute-state confounding — the one alternative explanation not yet excluded.
-3. Pre-specify the baseline-calcium window and consider a larger calcium-enriched
-   data pull to move the borderline interaction toward definitive power.
+1. **Total serum calcium concordance** — re-run the same Fine-Gray interaction model
+   substituting albumin-corrected total serum calcium for ionized calcium. This is
+   lower-powered (~4,009 patients vs 20,089) and may well be null, but it is a natural
+   sensitivity check since total calcium is the more conventional clinical measure and
+   is more likely to reflect outpatient draws. (Requires first adding an albumin branch
+   to `labs_cleaning.qmd`, then corrected = total + 0.8 × (4.0 − albumin).)
+2. **Osteoporosis outcome** — parallel Fine-Gray competing-risks analysis flipping the
+   event (osteoporosis diagnosis as primary, MACE as competing event), same interaction
+   framework. This is arguably the more mechanistically motivated analysis given the
+   Mendelian-randomization work.
+3. **Acute-state confounding** — obtain an encounter-type (inpatient/ED/ICU) field in a
+   future pull to directly test acute index-state confounding, the one alternative
+   explanation not yet excluded (the Charlson proxy controls only chronic burden).
+4. **Power** — pre-specify the baseline-calcium window and consider a larger
+   calcium-enriched data pull to move the borderline interaction toward definitive power.

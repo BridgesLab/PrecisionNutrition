@@ -1,6 +1,6 @@
 ---
 title: "Analysis of Screening Logs"
-author: "Kai-Lin Jen, Kaelin Loftus and Dave Bridges"
+author: "Kai-Lin Jen, Kaelin Loftus, Cece Occhipinti and Dave Bridges"
 date: "May 1, 2026"
 format:
   html:
@@ -45,7 +45,7 @@ To quantify screening efforts for the calcium-cholesterol meta-analysis
 ## Data Entry
 
 ```{r data-entry}
-log.file <- 'Screening Log for Calcium and Cholesterol Meta-Analysis - Screening Log.csv'
+log.file <- 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSTzg4wsY7a4Yz-FNbV74j0_ZTZE9vRmKArv7X7TNwKohKPj1WJRw0EM8aAMuMcfHzrFZbQAZj6nG44/pub?gid=1434844649&single=true&output=csv'
 screening.log <- read_csv(log.file,
                           col_types = cols(
   Key = col_character(),
@@ -57,7 +57,8 @@ screening.log <- read_csv(log.file,
   Decision = col_character(),
   FullTextView = col_factor(),
   ExclusionReason = col_factor(),
-  Notes = col_character()
+  Notes = col_character(),
+  Correlations = col_factor()
 ))
 ```
 
@@ -74,9 +75,13 @@ correlation.association.papers <- screening.log %>%
 correlation.papers <- screening.log %>%
   filter(str_detect(Title, regex("correlation", ignore_case = TRUE)) |
            str_detect(`Abstract Note`, regex("correlation", ignore_case = TRUE)))
+
+correlation.papers |>
+  filter(is.na(Correlations)) |>
+write_csv("Papers to screen for correlations.csv")
 ```
 
-There were `r nrow(correlation.association.papers)` papers with the words correlation or association in the title or abstract.`. There were `r nrow(correlation.papers)` papers with the word correlation in the title or abstract.
+There were `r nrow(correlation.association.papers)` papers with the words correlation or association in the title or abstract. There were `r nrow(correlation.papers)` papers with the word correlation in the title or abstract.  Of those `r correlation.papers |> filter(is.na(Correlations)) |> nrow()` remain to be evaluated
 
 ## Session Information
 

@@ -1,0 +1,331 @@
+---
+title: "Creating Bimbam file from HFD-DO Viewer Dataset"
+author: "Dave Bridges"
+format: html
+---
+
+# Load Dataset
+
+* Datafile originally at 
+
+```{r load}
+filename <- 'core.Svenson_DO_HFD.v12.Rdata'
+load(filename)
+```
+
+# Bimbam file format
+
+looks like this (from https://www.xzlab.org/software/GEMMAmanual.pdf)
+
+```
+SNP,Minor,Major,ID1,ID2,ID3
+rs1,A,T,0.02,0.80,1.50 
+rs2,G,C,0.98,0.04,1.00
+```
+
+
+
+```{r bimbam}
+library(tidyr)
+library(dplyr)
+library(tibble)
+library(stringr)
+
+
+df.1 <- as.data.frame(genoprobs$`1`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.2 <- as.data.frame(genoprobs$`2`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.3 <- as.data.frame(genoprobs$`3`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.4 <- as.data.frame(genoprobs$`4`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.5 <- as.data.frame(genoprobs$`5`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.6 <- as.data.frame(genoprobs$`6`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.7 <- as.data.frame(genoprobs$`7`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.8 <- as.data.frame(genoprobs$`8`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.9 <- as.data.frame(genoprobs$`9`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.10 <- as.data.frame(genoprobs$`10`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.11 <- as.data.frame(genoprobs$`11`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.12 <- as.data.frame(genoprobs$`12`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.13 <- as.data.frame(genoprobs$`13`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.14 <- as.data.frame(genoprobs$`14`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.15 <- as.data.frame(genoprobs$`15`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.16 <- as.data.frame(genoprobs$`16`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.16 <- as.data.frame(genoprobs$`16`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.17 <- as.data.frame(genoprobs$`17`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.18 <- as.data.frame(genoprobs$`18`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.19 <- as.data.frame(genoprobs$`19`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+df.X <- as.data.frame(genoprobs$`X`, stringsAsFactors = FALSE) %>%
+  pivot_longer(cols = everything(-1),  # Replace "Sample" with the actual name of your sample identifier
+               names_to = "Sample",
+               values_to = "Value") %>%
+  mutate(Sample=dimnames(K$X)[[1]]) %>% #added sample names which were lost in the previous step
+  pivot_longer(-Sample,
+               names_to="Genotype.ID",
+               values_to="Likelihood") %>%
+  separate(Genotype.ID, sep=2, into=c("Allele","Locus")) %>%
+  mutate(Allele=str_trunc(Allele,1,side="right", ellipsis=""))
+
+
+long_df <- bind_rows(df.1,
+                     df.2,
+                     df.3,
+                     df.4,
+                     df.5,
+                     df.6,
+                     df.7,
+                     df.8,
+                     df.9,
+                     df.10,
+                     df.11,
+                     df.12,
+                     df.13,
+                     df.14,
+                     df.15,
+                     df.16,
+                     df.17,
+                     df.18,
+                     df.19,
+                     df.X)
+
+#now need to find out the major allele for each locus
+
+major_allele <-
+  long_df %>%
+  ungroup %>%
+  group_by(Locus) %>%
+  filter(Likelihood == max(Likelihood)) %>% #select only the allele which is the major allele for a locus 
+  select(-Sample)
+
+knitr::kable(as.data.frame(summary(as.factor(major_allele$Allele))) %>%
+               rename(Count=1) %>%
+               mutate(Pct = Count/sum(Count)*100),
+      caption="Number of major alleles per originating strain")
+
+long.data.major <-
+  left_join(long_df,major_allele, by="Locus", suffix=c("","_major")) %>% #merged in to have the major allele for each sample/snp pair
+  rename(Major="Allele_major") %>%
+  select(-Likelihood_major) %>% #not used further
+  filter(Likelihood>0.1)#remove variants where the predicted allele likelihood is very low.  Ideally this should be 0.5, 0 or 1
+
+bimbam.format <-
+  long.data.major %>%
+  mutate(Locus.Combined=paste(Locus,Major,Allele,sep="_")) %>% #renamed locus to be CHR_LOC_MAJ_MIN, these are new genotypes because any given locus can have multiple variants
+  select(Locus.Combined, Sample, Likelihood) %>%
+  pivot_wider(names_from="Sample",
+              values_from="Likelihood",
+              values_fn=mean) %>% 
+  mutate_all(~replace(., is.na(.), 0)) %>% #convert NA values to zero
+  mutate_if(is.double,.funs=~.*2)  #multiplied by 2 to make heterozygosity a 1
+
+
+library(readr)
+#write out the genome file in the right format
+genotype.file <- "DO_HFD_Genome_All.csv"
+write_csv(bimbam.format, file=genotype.file)
+```
+
+This script creates a csv file which contains both annotation data and the genotype data called `r `.  This is used by the *SNP-Annotation.qmd* file to parse out the genotypes from the SNP annotaiton.
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

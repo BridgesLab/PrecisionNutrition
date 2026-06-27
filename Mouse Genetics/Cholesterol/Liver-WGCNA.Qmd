@@ -1,0 +1,354 @@
+---
+title: "WGCNA Analysis of DO Livers"
+author: "Dave Bridges"
+format: html
+execute:
+  keep-md: true
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+Followed instructions on https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/, which was based on the method used in https://doi.org/10.1371/journal.pgen.0020130
+
+# Data Preparation
+
+```{r data-preparation}
+library(WGCNA)
+options(stringsAsFactors = F)
+expression.filename <- "GSE72759_DO192_RNAseq_UpperQuartileNormalized_n21454genes_forGEOSubmission.txt"
+
+library(tibble)
+expression.data <- read_tsv(expression.filename) %>%
+  rename(gene_id=1) %>%
+  column_to_rownames('gene_id') %>%
+  t %>% as.data.frame #rotate with samples on the left and genes on the columns
+
+phenotype.filename <- 'Svenson_HFD_DO_phenotype_V12.csv'
+phenotype.data <- read_csv(phenotype.filename) %>% 
+  select(mouse.id,chol2,sex,diet) %>%
+  column_to_rownames('mouse.id')
+  
+phenotype.data[phenotype.data=='-999999'] <- NA
+
+good.genes <- goodSamplesGenes(expression.data)
+#check if all genes are ok, not too many missing values for genes or samples
+good.genes$allOK
+```
+
+# Network Construction
+
+```{r loading-datasets}
+nSets <- 2 #tw datasets
+setLabels <- c("NCD","HFHS")
+multiExpr=vector(mode="list",length=nSets) #create vector with two datasets
+
+chow.mice <- phenotype.data %>% filter(diet=="chow") %>% rownames
+hf.mice <- phenotype.data %>% filter(diet=="hf") %>% rownames
+
+chow.expression <- expression.data[chow.mice,] %>% na.omit
+hf.expression <- expression.data[hf.mice,] %>% na.omit
+
+#for NCD data, this is not separating males from females
+multiExpr[[1]]=list(data=chow.expression)
+multiExpr[[2]]=list(data=hf.expression) 
+
+exprSize <- checkSets(multiExpr)
+gsg <- goodSamplesGenesMS(multiExpr)
+#names(multiExpr[[2]]$data)=maleData$substanceBXH; 
+#rownames(multiExpr[[2]]$data)=names(maleData)[-c(1:8)];
+
+if (!gsg$allOK)
+{
+  # Print information about the removed genes:
+  if (sum(!gsg$goodGenes) > 0)
+    printFlush(paste("Removing genes:", paste(names(multiExpr[[1]]$data)[!gsg$goodGenes], 
+                                              collapse = ", ")))
+  for (set in 1:exprSize$nSets)
+  {
+    if (sum(!gsg$goodSamples[[set]]))
+      printFlush(paste("In set", setLabels[set], "removing samples",
+                       paste(rownames(multiExpr[[set]]$data)[!gsg$goodSamples[[set]]], collapse = ", ")))
+    # Remove the offending genes and samples
+    multiExpr[[set]]$data = multiExpr[[set]]$data[gsg$goodSamples[[set]], gsg$goodGenes];
+  }
+  # Update exprSize
+  exprSize = checkSets(multiExpr)
+}
+
+sampleTrees = list()
+for (set in 1:nSets)
+{
+  sampleTrees[[set]] = hclust(dist(multiExpr[[set]]$data), method = "average")
+}
+
+for (set in 1:nSets)
+  plot(sampleTrees[[set]], 
+       main = paste("Sample clustering on all genes in",
+                    setLabels[set]),
+       xlab="", 
+       sub="", 
+       cex = 0.7);
+
+
+# Form a multi-set structure that will hold the clinical traits.
+Traits = vector(mode="list", length = nSets);
+for (set in 1:nSets)
+{
+  setSamples = rownames(multiExpr[[set]]$data);
+  traitRows = match(setSamples, rownames(phenotype.data));
+  Traits[[set]] = list(data = phenotype.data[traitRows,]);
+  rownames(Traits[[set]]$data) = rownames(phenotype.data[traitRows,]);
+}
+collectGarbage();
+# Define data set dimensions
+nGenes = exprSize$nGenes;
+nSamples = exprSize$nSamples;
+```
+
+The combined dataset includes `r nGenes` genes and `r nSamples` samples separated into `nSets` datasets (`r`paste(setLabels, collapse=",")\`).
+
+```{r wgcna-network-construction}
+
+# Choose a set of soft-thresholding powers
+powers = c(seq(4,10,by=1), seq(12,20, by=2));
+# Initialize a list to hold the results of scale-free analysis
+powerTables = vector(mode = "list", length = nSets);
+# Call the network topology analysis function for each set in turn
+for (set in 1:nSets)
+  powerTables[[set]] = list(data = pickSoftThreshold(multiExpr[[set]]$data,
+                                                     powerVector=powers,
+                                                     verbose = 2)[[2]]);
+collectGarbage();
+# Plot the results:
+colors = c("black", "red")
+# Will plot these columns of the returned scale free analysis tables
+plotCols = c(2,5,6,7)
+colNames = c("Scale Free Topology Model Fit", "Mean connectivity", "Median connectivity",
+"Max connectivity");
+# Get the minima and maxima of the plotted points
+ylim = matrix(NA, nrow = 2, ncol = 4);
+for (set in 1:nSets)
+{
+  for (col in 1:length(plotCols))
+  {
+    ylim[1, col] = min(ylim[1, col], powerTables[[set]]$data[, plotCols[col]], na.rm = TRUE);
+    ylim[2, col] = max(ylim[2, col], powerTables[[set]]$data[, plotCols[col]], na.rm = TRUE);
+  }
+}
+# Plot the quantities in the chosen columns vs. the soft thresholding power
+sizeGrWindow(8, 6)
+#pdf(file = "Plots/scaleFreeAnalysis.pdf", wi = 8, he = 6)
+par(mfcol = c(2,2));
+par(mar = c(4.2, 4.2 , 2.2, 0.5))
+cex1 = 0.7;
+for (col in 1:length(plotCols)) for (set in 1:nSets)
+{
+  if (set==1)
+  {
+    plot(powerTables[[set]]$data[,1], -sign(powerTables[[set]]$data[,3])*powerTables[[set]]$data[,2],
+         xlab="Soft Threshold (power)",ylab=colNames[col],type="n", ylim = ylim[, col],
+         main = colNames[col]);
+    addGrid();
+  }
+  if (col==1)
+  {
+    text(powerTables[[set]]$data[,1], -sign(powerTables[[set]]$data[,3])*powerTables[[set]]$data[,2],
+         labels=powers,cex=cex1,col=colors[set]);
+  } else
+    text(powerTables[[set]]$data[,1], powerTables[[set]]$data[,plotCols[col]],
+         labels=powers,cex=cex1,col=colors[set]);
+  if (col==1)
+  {
+    legend("bottomright", legend = setLabels, col = colors, pch = 20) ;
+  } else
+    legend("topright", legend = setLabels, col = colors, pch = 20) ;
+}
+#dev.off();
+
+network.power <-10
+net = blockwiseConsensusModules(
+        multiExpr, 
+        power = network.power, 
+        minModuleSize = 10, #default is 20, tutorial said 30
+        deepSplit = 2, #default
+        maxBlockSize = nrow(chow.expression),
+        pamRespectsDendro = FALSE, 
+        mergeCutHeight = 0.25,
+        numericLabels = TRUE,
+        minKMEtoStay = 0.2, #default is 0.2, tutorial said 0.1
+        saveTOMs = TRUE, 
+        verbose = 3)
+```
+
+Constructed modules with `r network.power` soft-thresholding power.
+
+## Plotting Samples Clustered by Consensus Modules
+
+```{r wgcna-dendrograms-by-modules}
+
+consMEs = net$multiMEs
+moduleLabels = net$colors
+# Convert the numeric labels to color labels
+moduleColors = labels2colors(moduleLabels)
+consTree = net$dendrograms[[1]]
+
+# Convert labels to colors for plotting
+mergedColors = labels2colors(net$colors)
+# Plot the dendrogram and the module colors underneath
+plotDendroAndColors(net$dendrograms[[1]], mergedColors[net$blockGenes[[1]]],
+                    "Module colors",
+                    dendroLabels = FALSE, hang = 0.03,
+                    addGuide = TRUE, guideHang = 0.05)
+
+# Convert labels to colors for plotting
+mergedColors = labels2colors(net$colors)
+# Plot the dendrogram and the module colors underneath
+plotDendroAndColors(net$dendrograms[[2]], mergedColors[net$blockGenes[[1]]],
+                    "Module colors",
+                    dendroLabels = FALSE, hang = 0.03,
+                    addGuide = TRUE, guideHang = 0.05)
+
+# plotDendroAndColors(consTree, moduleColors,
+#                     "Module colors",
+#                     dendroLabels = FALSE, hang = 0.03,
+#                     addGuide = TRUE, guideHang = 0.05,
+#                     main = "Consensus gene dendrogram and module colors")
+
+moduleLabels = net$colors
+moduleColors = labels2colors(net$colors)
+MEs = net$MEs;
+geneTree = net$dendrograms[[1]];
+```
+
+# Analysis of Constructed Network
+
+```{r wgcna-genes-per-module}
+table(net$colors) %>%
+  kable(caption="Genes per module (0 indicates unassigned")
+```
+
+# Integation with Cholesterol Data
+
+```{r cholesterol-correlations}
+MEs0.ncd <- moduleEigengenes(expr=multiExpr[[1]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.hf <- moduleEigengenes(expr=multiExpr[[2]]$data,
+                         colors=moduleColors)$eigengenes
+
+MEs.ncd=orderMEs(MEs0.ncd)
+MEs.hf=orderMEs(MEs0.hf)
+
+#correlate eigengenes with cholesterol levels for ncd
+moduleTraitCor.ncd <-cor(MEs.ncd,
+                     phenotype.data[rownames(MEs.ncd),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.ncd <- corPvalueStudent(moduleTraitCor.ncd,nSamples)
+
+#correlate eigengenes with cholesterol levels for hfd
+moduleTraitCor.hf <-cor(MEs.hf,
+                     phenotype.data[rownames(MEs.hf),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.hf=corPvalueStudent(moduleTraitCor.hf,nSamples)
+
+#Will display correlations and their p-values
+textMatrix.ncd <- paste(signif(moduleTraitCor.ncd,2),
+                    "\n(",signif(moduleTraitPvalue.ncd,1),")",
+                    sep="")
+
+textMatrix.hf <- paste(signif(moduleTraitCor.hf,2),
+                    "\n(",signif(moduleTraitPvalue.hf,1),")",
+                    sep="")
+
+
+dim(textMatrix.ncd) <- dim(moduleTraitCor.ncd)
+dim(textMatrix.hf) <- dim(moduleTraitCor.hf)
+#Display the correlation values within a heatmap plot
+
+# labeledHeatmap(Matrix=moduleTraitCor.hf, 
+#                xLabels='Cholesterol', 
+#                ySymbols=names(MEs), 
+#                colorLabels=FALSE, 
+#                colors=greenWhiteRed(50), 
+#                textMatrix=textMatrix, 
+#                setStdMargins=FALSE, 
+#                cex.text=0.5, 
+#                zlim=c(-1,1), 
+#                main=paste("Module-cholesterol relationships"))
+
+labeledHeatmap(Matrix=cbind(moduleTraitCor.ncd,moduleTraitCor.hf), 
+               xLabels=c("NCD","HFHS"), 
+               yLabels=names(MEs.ncd), 
+               ySymbols=names(MEs.ncd), 
+               colorLabels=FALSE, 
+               colors=greenWhiteRed(50), 
+               textMatrix=cbind(textMatrix.ncd,textMatrix.hf), 
+               setStdMargins=FALSE, 
+               cex.text=0.6, 
+               cex.lab.y=0.4,
+               zlim=c(-1,1), 
+               main=paste("Module-cholesterol relationships"))
+```
+
+```{r gene-trait-correlations}
+geneModuleMembership.ncd <- as.data.frame(
+  cor(
+    phenotype.data[rownames(MEs.ncd),'chol2'],
+    MEs.ncd,
+    use="a",
+    method="spearman"))
+
+MMPvalue <- as.data.frame(
+  corPvalueStudent(
+    as.matrix(
+      geneModuleMembership.ncd),
+    nSamples[1]))
+
+modNames=substring(names(MEs.ncd),3)
+names(geneModuleMembership) <- paste("MM",modNames,sep="")
+names(MMPvalue)=paste("p.MM",modNames,sep="")
+
+geneTraitSignificance <- as.data.frame(
+  cor(multiExpr[[1]]$data,
+      phenotype.data[multiExpr[[1]]$data %>% rownames,'chol2'],
+      use="p",
+      method="spearman"))
+
+GSPvalue <- as.data.frame(
+  corPvalueStudent(
+    as.matrix(geneTraitSignificance),nSamples[1]))
+
+module <- "blue"
+column <- match(module,modNames)
+moduleGenes <- moduleColors==module
+#stuck on verbose scatter plot
+```

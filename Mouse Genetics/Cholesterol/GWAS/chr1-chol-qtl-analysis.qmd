@@ -1,0 +1,107 @@
+---
+title: "Analysis of Cholesterol QTL Region on C"
+author: "Dave Bridges"
+format: html
+execute:
+  keep-md: true
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+library(readr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(broom)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=FALSE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+```
+
+# Data Entry
+
+Downloaded the genomic region from Genome MUSTER from 162,000,000 to 180,000,000 for all the founder strains.  This script can be found in `r getwd()` and was most recently run on `r date()`.
+
+```{r data-entry}
+library(stringr)
+muster.datafile <- 'muster_v2_2023_10_15__19_40_22.csv'
+muster.data <- read_csv(muster.datafile)
+  
+# need to separate confidence from the allele for each column
+
+
+
+
+```
+
+# Analysis
+
+Based on the effect estimation the allele is present in the 129S1/SvImJ but not the other strains, particularly A/J.  We ran GenomeMuster to only provide variants that are different between these strains.
+
+# Annotation
+
+The MVAR annotation didnt come out from genome Muster so used https://genome.ucsc.edu/cgi-bin/hgVai on the known rs id's from these strains.
+
+```{r vai}
+vai.file <- 'vai.txt.gz'
+vai.data <- read_table(vai.file, skip=8, col_names = FALSE)
+colnames(vai.data)[1:7] <- c("SNP","Location","Major","Gene","Transcript","Type","Annotation")
+```
+
+## Analysis of Annotation
+
+```{r vai-annotation}
+vai.data %>% 
+  group_by(Annotation) %>% 
+  count %>% 
+  arrange(-n) %>% 
+  kable(caption="Variants by annotation type")
+
+vai.high.impact <- 
+  filter(vai.data, Annotation %in% c('missense_variant','stop_gained'))
+
+vai.high.impact %>% 
+  group_by(Gene) %>%
+  count %>%
+  arrange(-n) %>% 
+  kable(caption="Variants by annotation type")
+```
+
+# Known Associations
+
+
+Downloaded known total cholesterol variants from https://t2d.hugeamp.org/phenotype.html?phenotype=CHOL
+
+```{r known-associations}
+t2d.file <- 't2d-tc-genes.csv'
+known.tc.data <- read_csv(t2d.file)
+mouse_human_genes <- read.csv("http://www.informatics.jax.org/downloads/reports/HOM_MouseHumanSequence.rpt",sep="\t")
+
+mouse.human.table <-
+  mouse_human_genes %>%
+  pivot_wider(values_from=Symbol,
+              id_cols=DB.Class.Key,
+              names_from=Common.Organism.Name,
+              values_fn=first)
+
+annotated.tc.data <-
+ left_join(known.tc.data,mouse.human.table,by=c('gene'='human')) %>%
+  rename(mouse=`mouse, laboratory`)
+
+annotated.tc.data %>%
+  filter(mouse %in% as.character(distinct(vai.high.impact,Gene)))%>%
+  kable(caption="High impact variants with human cholesterol associating orthologs")
+
+annotated.tc.data %>%
+  filter(mouse %in% as.character(distinct(vai.data,Gene))) %>%
+  kable(caption="All variants with human cholesterol associating orthologs")
+
+#no known cholesterol variants
+```
+
+# Session Information
+
+```{r session-information, echo=T}
+sessionInfo()
+```

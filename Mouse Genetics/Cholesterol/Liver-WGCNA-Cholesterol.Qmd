@@ -1,0 +1,239 @@
+---
+title: "WGCNA Analysis of DO Livers"
+author: "Dave Bridges"
+format: html
+execute:
+  keep-md: true
+---
+
+```{r global_options, include=FALSE}
+library(knitr)
+#figures makde will go to directory called figures, will make them as both png and pdf files 
+opts_chunk$set(fig.path='figures/',
+               echo=TRUE, warning=FALSE, message=FALSE,dev=c('png','pdf'))
+options(scipen = 2, digits = 3)
+# set echo and message to TRUE if you want to display code blocks and code output respectively
+
+knitr::knit_hooks$set(inline = function(x) {
+  knitr:::format_sci(x, 'md')
+})
+
+
+superpose.eb <- function (x, y, ebl, ebu = ebl, length = 0.08, ...)
+  arrows(x, y + ebu, x, y - ebl, angle = 90, code = 3,
+  length = length, ...)
+
+  
+se <- function(x) sd(x, na.rm=T)/sqrt(length(x))
+
+#load these packages, nearly always needed
+library(tidyr)
+library(dplyr)
+library(readr)
+library(ggplot2)
+
+# sets maize and blue color scheme
+color.scheme <- c('#00274c', '#ffcb05')
+```
+
+Followed instructions on https://horvath.genetics.ucla.edu/html/CoexpressionNetwork/Rpackages/WGCNA/Tutorials/, which was based on the method used in https://doi.org/10.1371/journal.pgen.0020130
+
+# Input
+
+Wrote this out to read in in the script Liver-WGCNA-Construction.Qmd
+
+```{r read}
+load("ncd_hf_wcgna_networks.RData")
+library(WGCNA)
+```
+
+# Analysis of Constructed Network
+
+```{r wgcna-genes-per-module}
+table(net$colors) %>%
+  kable(caption="Genes per module (0 indicates unassigned")
+```
+
+# Integation with Cholesterol Data
+
+```{r cholesterol-correlations}
+MEs0.ncd.m <- moduleEigengenes(expr=multiExpr[[1]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.hf.m <- moduleEigengenes(expr=multiExpr[[2]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.ncd.f <- moduleEigengenes(expr=multiExpr[[3]]$data,
+                         colors=moduleColors)$eigengenes
+MEs0.hf.f <- moduleEigengenes(expr=multiExpr[[4]]$data,
+                         colors=moduleColors)$eigengenes
+
+MEs.ncd.m=orderMEs(MEs0.ncd.m)
+MEs.hf.m=orderMEs(MEs0.hf.m)
+MEs.ncd.f=orderMEs(MEs0.ncd.f)
+MEs.hf.f=orderMEs(MEs0.hf.f)
+
+#correlate eigengenes with cholesterol levels for ncd males
+moduleTraitCor.ncd.m <-cor(MEs.ncd.m,
+                     phenotype.data[rownames(MEs.ncd.m),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.ncd.m <- corPvalueStudent(moduleTraitCor.ncd.m,nSamples)
+
+#correlate eigengenes with cholesterol levels for ncd females
+moduleTraitCor.ncd.f <-cor(MEs.ncd.f,
+                     phenotype.data[rownames(MEs.ncd.f),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.ncd.f <- corPvalueStudent(moduleTraitCor.ncd.f,nSamples)
+
+#correlate eigengenes with cholesterol levels for hfd males
+moduleTraitCor.hf.m <-cor(MEs.hf.m,
+                     phenotype.data[rownames(MEs.hf.m),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.hf.m=corPvalueStudent(moduleTraitCor.hf.m,nSamples)
+
+#correlate eigengenes with cholesterol levels for hfd females
+moduleTraitCor.hf.f <-cor(MEs.hf.f,
+                     phenotype.data[rownames(MEs.hf.f),'chol2'],
+                     use="p",
+                     method="spearman")
+moduleTraitPvalue.hf.f=corPvalueStudent(moduleTraitCor.hf.f,nSamples)
+
+#Will display correlations and their p-values
+textMatrix.ncd.m <- paste(signif(moduleTraitCor.ncd.m,2),
+                    "\n(",signif(moduleTraitPvalue.ncd.m,1),")",
+                    sep="")
+
+textMatrix.hf.m <- paste(signif(moduleTraitCor.hf.m,2),
+                    "\n(",signif(moduleTraitPvalue.hf.m,1),")",
+                    sep="")
+
+textMatrix.ncd.f <- paste(signif(moduleTraitCor.ncd.f,2),
+                    "\n(",signif(moduleTraitPvalue.ncd.f,1),")",
+                    sep="")
+
+textMatrix.hf.f <- paste(signif(moduleTraitCor.hf.f,2),
+                    "\n(",signif(moduleTraitPvalue.hf.f,1),")",
+                    sep="")
+
+dim(textMatrix.ncd.m) <- dim(moduleTraitCor.ncd.m)
+dim(textMatrix.hf.m) <- dim(moduleTraitCor.hf.m)
+dim(textMatrix.ncd.f) <- dim(moduleTraitCor.ncd.f)
+dim(textMatrix.hf.f) <- dim(moduleTraitCor.hf.f)
+#Display the correlation values within a heatmap plot
+
+labeledHeatmap(Matrix=moduleTraitCor.hf.m, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.hf.m),
+                ySymbols=names(MEs.hf.m), 
+                colorLabels=FALSE, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.hf.m, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for HFD males"))
+
+labeledHeatmap(Matrix=moduleTraitCor.ncd.m, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.ncd.m),
+                ySymbols=names(MEs.ncd.m), 
+                colorLabels=FALSE, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.ncd.m, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for NCD males"))
+
+labeledHeatmap(Matrix=moduleTraitCor.hf.f, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.hf.f),
+                ySymbols=names(MEs.hf.f), 
+                colorLabels=FALSE, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.hf.f, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for HFD females"))
+
+labeledHeatmap(Matrix=moduleTraitCor.ncd.f, 
+                xLabels='Cholesterol',
+                yLabels=names(MEs.ncd.f),
+                ySymbols=names(MEs.ncd.f), 
+                colorLabels=FALSE, 
+                colors=blueWhiteRed(50), 
+                textMatrix=textMatrix.ncd.f, 
+                setStdMargins=FALSE, 
+                cex.text=0.5, 
+                zlim=c(-1,1), 
+                main=paste("Module-cholesterol relationships for NCD females"))
+
+labeledHeatmap(Matrix=cbind(moduleTraitCor.ncd.m,
+                            moduleTraitCor.ncd.f,
+                            moduleTraitCor.hf.m,
+                            moduleTraitCor.hf.f), 
+               xLabels=c("NCD-M","NCD-F","HFHS-M","HFHS-F"), 
+               yLabels=names(MEs.ncd.m), 
+               ySymbols=names(MEs.ncd.m), 
+               colorLabels=FALSE, 
+               colors=blueWhiteRed(50), 
+               textMatrix=cbind(textMatrix.ncd.m,textMatrix.ncd.f,
+                                textMatrix.hf.m,textMatrix.hf.f), 
+               setStdMargins=FALSE, 
+               cex.text=0.6, 
+               cex.lab.y=0.4,
+               zlim=c(-1,1), 
+               main=paste("Module-cholesterol relationships"))
+```
+
+```{r gene-trait-correlations}
+geneModuleMembership.ncd.m <- as.data.frame(
+  cor(
+    phenotype.data[rownames(MEs.ncd.m),'chol2'],
+    MEs.ncd.m,
+    use="p",
+    method="spearman"))
+
+MMPvalue <- as.data.frame(
+  corPvalueStudent(
+    as.matrix(
+      geneModuleMembership.ncd.m),
+    nSamples[1]))
+
+modNames=substring(names(MEs.ncd.m),3)
+names(geneModuleMembership.ncd.m) <- paste("MM",modNames,sep="")
+names(MMPvalue)=paste("p.MM",modNames,sep="")
+
+geneTraitSignificance <- as.data.frame(
+  cor(multiExpr[[1]]$data,
+      phenotype.data[multiExpr[[1]]$data %>% rownames,'chol2'],
+      use="p",
+      method="spearman"))
+
+GSPvalue <- as.data.frame(
+  corPvalueStudent(
+    as.matrix(geneTraitSignificance),nSamples[1]))
+
+module <- "blue"
+column <- match(module,modNames)
+moduleGenes <- moduleColors==module
+#stuck on verbose scatter plot
+```
+
+# Top Genes in Each Module
+
+```{r top-genes}
+chooseTopHubInEachModule(expression.data,colorh="magenta",
+                         type="unsigned")
+
+names(expression.data)[moduleColors=="magenta"]
+#write(names(expression.data)[moduleColors=="magenta"],"Magenta_Genes.txt")
+```
+
+# Session Information
+
+```{r session-info}
+sessionInfo()
+```

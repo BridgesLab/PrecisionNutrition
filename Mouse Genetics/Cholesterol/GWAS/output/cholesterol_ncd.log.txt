@@ -1,0 +1,37 @@
+##
+## GEMMA Version    = 0.98.5 (2021-08-25)
+## Build profile    = /gnu/store/8rvid272yb53bgascf5c468z0jhsyflj-profile
+## GCC version      = 7.5.0
+## GSL Version      = 2.6
+## OpenBlas         = OpenBLAS 0.3.9  - OpenBLAS 0.3.9 DYNAMIC_ARCH NO_AFFINITY SkylakeX MAX_THREADS=128
+##   arch           = SkylakeX
+##   threads        = 1
+##   parallel type  = threaded
+##
+## Command Line Input = gemma -g Genotypes_all.bimbam -p Cholesterol_NCD.txt -c Covariates.sex.tab -d output/cholesterol_ncd.eigenD.txt -u output/cholesterol_ncd.eigenU.txt -lmm 1 -o cholesterol_ncd 
+##
+## Date = Sat Mar  9 23:19:44 2024
+##
+## Summary Statistics:
+## number of total individuals = 835
+## number of analyzed individuals = 439
+## number of covariates = 2
+## number of phenotypes = 1
+## number of total SNPs/var = 561101
+## number of analyzed SNPs/var = 561101
+## REMLE log-likelihood in the null model = -1976.26
+## MLE log-likelihood in the null model = -1984.02
+## pve estimate in the null model = 0.443476
+## se(pve) in the null model = 0.0994746
+## vg estimate in the null model = 1106.46
+## ve estimate in the null model = 292.559
+## beta estimate in the null model =   96.2966  -17.4539
+## se(beta) =   1.34459  2.10329
+##
+## Computation Time:
+## total computation time = 4.9122 min 
+## computation time break down: 
+##      time on eigen-decomposition = 0 min 
+##      time on calculating UtX = 0.0598528 min 
+##      time on optimization = 3.24456 min 
+##

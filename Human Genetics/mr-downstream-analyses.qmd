@@ -30,6 +30,14 @@ se <- function(x) sd(x, na.rm = TRUE) / sqrt(length(x))
 library(tidyverse)
 library(knitr)
 
+# Attach the analysis packages here, in a NON-cached chunk. Loading them inside
+# a cached chunk is unsafe: on a cache hit knitr restores the chunk's objects
+# but does not re-run library(), so downstream chunks (e.g. mr_singlesnp,
+# mr_leaveoneout, mr_presso) would fail to find the functions.
+library(TwoSampleMR)
+library(ieugwasr)
+library(MRPRESSO)
+
 color_scheme <- c("#00274c", "#ffcb05")
 
 # Method ordering for summary tables (matches the calcium MR script)
@@ -38,6 +46,38 @@ method.order <- c(
   "Weighted median", "Weighted mode",
   "MR-PRESSO (Raw)", "MR-PRESSO (Corrected)"
 )
+
+# Format MR-PRESSO results as MR-style rows for the combined summary.
+# Defined here (not in a cached chunk) so it is always available to the
+# cached MR-PRESSO chunks that call it.
+extract_mrpresso_rows <- function(mrpresso_obj, exposure_label, outcome_label, n_snp) {
+  if (is.null(mrpresso_obj)) return(NULL)
+  res <- mrpresso_obj$`Main MR results`
+  global_p_raw <- mrpresso_obj$`MR-PRESSO results`$`Global Test`$Pvalue
+
+  # Coerce to numeric — handle "<0.001" style strings
+  global_p <- if (is.character(global_p_raw)) {
+    as.numeric(str_remove(global_p_raw, "<"))
+  } else {
+    as.numeric(global_p_raw)
+  }
+
+  rows <- res %>%
+    mutate(
+      method   = if_else(`MR Analysis` == "Raw",
+                         "MR-PRESSO (Raw)", "MR-PRESSO (Corrected)"),
+      exposure = exposure_label,
+      outcome  = outcome_label,
+      nsnp     = as.integer(n_snp),
+      b        = as.numeric(`Causal Estimate`),
+      se       = as.numeric(Sd),
+      pval     = as.numeric(`P-value`)
+    ) %>%
+    dplyr::select(exposure, outcome, method, nsnp, b, se, pval)
+
+  rows$global_pval <- global_p
+  rows
+}
 ```
 
 ## Purpose
@@ -151,40 +191,50 @@ cat("After rsID lookup (excluding NAs): ", nrow(instruments.tc.rsid), "\n")
 This analysis tests the hypothesis that total cholesterol impacts
 25-hydroxyvitamin D levels, as cholesterol is a precursor for vitamin D
 synthesis in the skin. This could positively impact calcium levels indirectly
-via increased vitamin D. This analysis uses MGI-BioVU LabWAS data
-[@goldsteinLabWASNovelFindings2020]. The vitamin D GWAS is retained from the
-original local file because it is a non-routine biomarker with limited
-coverage on OpenGWAS.
+via increased vitamin D.
+
+The previous version of this analysis used MGI-BioVU LabWAS data
+[@goldsteinLabWASNovelFindings2020], a small (n=12,250) non-routine biomarker
+GWAS. This version replaces it with the much higher-powered Revez 2020
+25-hydroxyvitamin D GWAS (OpenGWAS `ebi-a-GCST90000616`; UK Biobank,
+n≈417,580) [@revezGenomewideAssociationStudy2020], queried through the
+OpenGWAS API with LD proxies (r²>0.8) using exactly the same pattern as the
+bone outcomes below. This raises statistical power for the vitamin D
+mechanism by roughly 34-fold in sample size and lets the analysis draw on the
+rsID-keyed instrument set.
 
 ```{r mr-vitd}
-gwas.vitd.file <- 'PheWeb Summary Statistics/phenocode-Vit-D.tsv.gz'
-samplesize.outcome.vitd <- 12250
+#| label: mr-vitd
+#| cache: true
 
-gwas.vitd <- read_tsv(gwas.vitd.file, show_col_types = FALSE) |>
-  mutate(ID = paste(chrom, pos, ref, alt, sep = ":")) |>
-  dplyr::rename(
-    SNP                   = ID,
-    beta.outcome          = beta,
-    se.outcome            = sebeta,
-    effect_allele.outcome = alt,
-    other_allele.outcome  = ref,
-    pval.outcome          = pval,
-    eaf.outcome           = maf,
-  ) |>
-  mutate(
-    id.outcome         = "Vitamin D (MGI-BioVU LabWAS)",
-    outcome            = "Vitamin D (MGI-BioVU LabWAS)",
-    samplesize.outcome = samplesize.outcome.vitd
-  )
+# Packages are attached in the non-cached global_options chunk (see note there).
 
-library(TwoSampleMR)
+vitd.gwas_id <- "ebi-a-GCST90000616"
+vitd.label   <- "25-hydroxyvitamin D (Revez 2020, UKB)"
 
-# Vitamin D analysis uses the original chr:pos:a:b SNP IDs (not rsIDs)
-vitd.data <- harmonise_data(instruments.tc, gwas.vitd, action = 2)
+# Query OpenGWAS for the vitamin D outcome using the rsID-keyed instruments,
+# recovering missing SNPs via LD proxies (r²>0.8) — same pattern as bone outcomes
+gwas.vitd <- extract_outcome_data(
+  snps          = instruments.tc.rsid$SNP,
+  outcomes      = vitd.gwas_id,
+  proxies       = TRUE,
+  rsq           = 0.8,
+  align_alleles = 1,
+  palindromes   = 1,
+  maf_threshold = 0.01
+) |>
+  mutate(id.outcome = vitd.label, outcome = vitd.label)
+
+cat("Vitamin D outcome SNPs returned:", nrow(gwas.vitd),
+    "of", nrow(instruments.tc.rsid), "instruments (",
+    sum(gwas.vitd$proxy.outcome == TRUE, na.rm = TRUE), "via proxy )\n")
+
+# Vitamin D analysis now uses the rsID-keyed instruments (OpenGWAS query)
+vitd.data <- harmonise_data(instruments.tc.rsid, gwas.vitd, action = 2)
 vitd.data_steiger <- steiger_filtering(vitd.data)
 
-# Pre-harmonization instrument metrics (all 370 input SNPs)
-pre_harm_metrics_vitd <- instruments.tc %>%
+# Pre-harmonization instrument metrics (all rsID-keyed input SNPs)
+pre_harm_metrics_vitd <- instruments.tc.rsid %>%
   mutate(
     R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
     F.exposure  = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
@@ -357,8 +407,8 @@ outlier-corrected estimate.
 
 ```{r vitd-mrpresso}
 #| cache: true
-library(MRPRESSO)
 
+# MRPRESSO is attached in the non-cached global_options chunk.
 set.seed(2026)
 vitd.mrpresso <- tryCatch(
   mr_presso(BetaOutcome     = "beta.outcome",
@@ -382,43 +432,299 @@ if (!is.null(vitd.mrpresso)) {
       vitd.mrpresso$`MR-PRESSO results`$`Global Test`$Pvalue, "\n")
 }
 
-# Format MR-PRESSO results as MR-style rows for the combined summary
-extract_mrpresso_rows <- function(mrpresso_obj, exposure_label, outcome_label, n_snp) {
-  if (is.null(mrpresso_obj)) return(NULL)
-  res <- mrpresso_obj$`Main MR results`
-  global_p_raw <- mrpresso_obj$`MR-PRESSO results`$`Global Test`$Pvalue
-  
-  # Coerce to numeric — handle "<0.001" style strings
-  global_p <- if (is.character(global_p_raw)) {
-    as.numeric(str_remove(global_p_raw, "<"))
-  } else {
-    as.numeric(global_p_raw)
-  }
-
-  rows <- res %>%
-    mutate(
-      method   = if_else(`MR Analysis` == "Raw",
-                         "MR-PRESSO (Raw)", "MR-PRESSO (Corrected)"),
-      exposure = exposure_label,
-      outcome  = outcome_label,
-      nsnp     = as.integer(n_snp),
-      b        = as.numeric(`Causal Estimate`),
-      se       = as.numeric(Sd),
-      pval     = as.numeric(`P-value`)
-    ) %>%
-    dplyr::select(exposure, outcome, method, nsnp, b, se, pval)
-
-  rows$global_pval <- global_p
-  rows
-}
-
 vitd.mrpresso_rows <- extract_mrpresso_rows(
   vitd.mrpresso,
   "Total Cholesterol (UK Biobank)",
-  "Vitamin D (MGI-BioVU LabWAS)",
+  vitd.label,
   nrow(vitd.data_steiger)
 )
 ```
+
+### Vitamin D — Replication in MGI-BioVU LabWAS
+
+As a lower-powered but independent replication of the primary Revez 2020
+result, we repeat the vitamin D analysis in the MGI-BioVU LabWAS GWAS
+(n=12,250) [@goldsteinLabWASNovelFindings2020]. Because this is a local
+summary-statistics file keyed by chromosome-position-allele IDs (not rsIDs),
+it is harmonised against the original `instruments.tc` set rather than the
+rsID-keyed instruments used for the OpenGWAS query. The Revez 2020 estimate
+remains the primary vitamin D result used for the Primary Mechanisms plot and
+the calcium hypothesis test below; MGI-BioVU is reported here as a sensitivity
+/ replication data point.
+
+```{r mr-vitd-biovu}
+gwas.vitdbv.file <- 'PheWeb Summary Statistics/phenocode-Vit-D.tsv.gz'
+samplesize.outcome.vitdbv <- 12250
+vitdbv.label <- "Vitamin D (MGI-BioVU LabWAS)"
+
+gwas.vitdbv <- read_tsv(gwas.vitdbv.file, show_col_types = FALSE) |>
+  mutate(ID = paste(chrom, pos, ref, alt, sep = ":")) |>
+  dplyr::rename(
+    SNP                   = ID,
+    beta.outcome          = beta,
+    se.outcome            = sebeta,
+    effect_allele.outcome = alt,
+    other_allele.outcome  = ref,
+    pval.outcome          = pval,
+    eaf.outcome           = maf,
+  ) |>
+  mutate(
+    id.outcome         = vitdbv.label,
+    outcome            = vitdbv.label,
+    samplesize.outcome = samplesize.outcome.vitdbv
+  )
+
+# BioVU replication uses the original chr:pos:a:b SNP IDs (not rsIDs)
+vitdbv.data <- harmonise_data(instruments.tc, gwas.vitdbv, action = 2)
+vitdbv.data_steiger <- steiger_filtering(vitdbv.data)
+
+# Pre-harmonization instrument metrics (all chr:pos-keyed input SNPs)
+pre_harm_metrics_vitdbv <- instruments.tc %>%
+  mutate(
+    R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
+    F.exposure  = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
+  )
+
+pre_harm_summary_vitdbv <- pre_harm_metrics_vitdbv %>%
+  summarise(
+    num_snps            = n(),
+    samplesize.exposure = dplyr::first(samplesize.exposure),
+    cumulative_R2       = sum(R2.exposure, na.rm = TRUE),
+    mean_F              = mean(F.exposure, na.rm = TRUE),
+    median_F            = median(F.exposure, na.rm = TRUE),
+    mean_maf            = mean(eaf.exposure, na.rm = TRUE),
+    mean_beta           = mean(abs(beta.exposure), na.rm = TRUE)
+  ) |>
+  mutate(
+    overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) /
+                ((1 - cumulative_R2) * num_snps)
+  )
+
+# Post-harmonization instrument metrics
+vitdbv.data.annot <- vitdbv.data_steiger %>%
+  mutate(
+    R2.exposure = 2 * eaf.exposure * (1 - eaf.exposure) * beta.exposure^2,
+    F.exposure  = (R2.exposure * (samplesize.exposure - 2)) / (1 - R2.exposure)
+  )
+
+vitdbv.exposure.summary <- vitdbv.data.annot %>%
+  summarise(
+    num_snps            = n(),
+    samplesize.exposure = dplyr::first(samplesize.exposure),
+    cumulative_R2       = sum(R2.exposure, na.rm = TRUE),
+    mean_F              = mean(F.exposure, na.rm = TRUE),
+    median_F            = median(F.exposure, na.rm = TRUE),
+    mean_maf            = mean(eaf.exposure, na.rm = TRUE),
+    mean_beta           = mean(abs(beta.exposure), na.rm = TRUE)
+  ) |>
+  mutate(
+    overall_F = (cumulative_R2 * (samplesize.exposure - num_snps - 1)) /
+                ((1 - cumulative_R2) * num_snps)
+  )
+
+# Write instrument files
+pre_harm_summary_vitdbv %>%
+  write_csv("Instrument Metrics - Total Cholesterol for Vitamin D MGI-BioVU - Pre-Harmonization.csv")
+vitdbv.exposure.summary %>%
+  write_csv("Instrument Metrics - Total Cholesterol for Vitamin D MGI-BioVU - Post-Harmonization.csv")
+vitdbv.data.annot %>%
+  write_csv("Total Cholesterol Instruments for Vitamin D MGI-BioVU.csv")
+
+bind_rows(
+  pre_harm_summary_vitdbv  %>% mutate(Stage = "Pre-Harmonization"),
+  vitdbv.exposure.summary  %>% mutate(Stage = "Post-Harmonization")
+) %>%
+  dplyr::select(Stage, everything()) %>%
+  kable(caption = "Total cholesterol instruments before and after harmonisation for MGI-BioVU Vitamin D replication",
+        digits = c(NA, 0, 0, 4, 1, 1, 4, 4, 1))
+
+vitdbv.mr <- mr(vitdbv.data_steiger,
+                method_list = c("mr_ivw_mre", "mr_ivw_fe", "mr_raps",
+                                "mr_egger_regression",
+                                "mr_weighted_median", "mr_weighted_mode"))
+
+vitdbv.mr |>
+  dplyr::select(-starts_with('id')) |>
+  kable(caption = "MR Results for Total Cholesterol - MGI-BioVU Vitamin D Replication",
+        digits = c(0, 0, 0, 0, 3, 3, 99))
+
+vitdbv.pleio <- mr_pleiotropy_test(vitdbv.data_steiger)
+vitdbv.pleio |>
+  dplyr::select(-starts_with('id')) |>
+  kable(caption = "MR Pleiotropy Results for Total Cholesterol - MGI-BioVU Vitamin D Replication")
+
+vitdbv.het <- mr_heterogeneity(vitdbv.data_steiger) |>
+  mutate(I2 = pmax(0, (Q - Q_df) / Q) * 100)
+vitdbv.het |>
+  dplyr::select(-starts_with('id')) |>
+  kable(caption = "MR Heterogeneity Results for Total Cholesterol - MGI-BioVU Vitamin D Replication",
+        digits = c(0, 0, 0, 3, 3, 99, 1))
+```
+
+#### MGI-BioVU Replication — Diagnostic Plots
+
+```{r vitdbv-scatter}
+ggplot(vitdbv.data_steiger, aes(x = beta.exposure, y = beta.outcome)) +
+  geom_point(size = 1) +
+  geom_errorbar(aes(ymin = beta.outcome - 1.96 * se.outcome,
+                    ymax = beta.outcome + 1.96 * se.outcome),
+                alpha = 0.5) +
+  geom_errorbar(aes(xmin = beta.exposure - 1.96 * se.exposure,
+                    xmax = beta.exposure + 1.96 * se.exposure),
+                alpha = 0.5) +
+  geom_smooth(method = "lm", se = FALSE) +
+  theme_classic(base_size = 16) +
+  labs(x = "Exposure Estimate (Total Cholesterol)",
+       y = "Outcome Estimate (Vitamin D, MGI-BioVU)",
+       title = "")
+```
+
+```{r vitdbv-funnel}
+vitdbv.single_snp <- mr_singlesnp(vitdbv.data_steiger)
+
+vitdbv.ivw_beta <- vitdbv.mr |>
+  filter(method == "Inverse variance weighted (multiplicative random effects)") |>
+  pull(b)
+
+vitdbv.y_max <- max(vitdbv.single_snp$se^{-1}, na.rm = TRUE) * 1.1
+vitdbv.precision_grid <- seq(0, vitdbv.y_max, length.out = 1000)
+vitdbv.bounds_df <- data.frame(
+  precision = vitdbv.precision_grid,
+  lower     = vitdbv.ivw_beta - 1.96 / vitdbv.precision_grid,
+  upper     = vitdbv.ivw_beta + 1.96 / vitdbv.precision_grid
+)
+
+ggplot(vitdbv.single_snp, aes(x = b, y = 1/se)) +
+  geom_point(size = 1) +
+  geom_vline(xintercept = vitdbv.ivw_beta, linetype = "solid",
+             color = "#ff7f0e", size = 1) +
+  geom_line(data = vitdbv.bounds_df,
+            aes(x = lower, y = precision), linetype = "dashed") +
+  geom_line(data = vitdbv.bounds_df,
+            aes(x = upper, y = precision), linetype = "dashed") +
+  labs(x = "Estimate (Beta-IVW)", y = "Precision (1/Standard Error)",
+       title = "") +
+  theme_classic(base_size = 16) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  coord_cartesian(ylim = c(0, vitdbv.y_max),
+                  xlim = c(min(vitdbv.single_snp$b, na.rm = TRUE),
+                           max(vitdbv.single_snp$b, na.rm = TRUE)))
+```
+
+```{r vitdbv-loo}
+vitdbv.loo_res <- mr_leaveoneout(vitdbv.data_steiger)
+
+vitdbv.loo_res |>
+  mutate(diff = b - filter(vitdbv.mr,
+                           method == "Inverse variance weighted (multiplicative random effects)")$b) |>
+  arrange(-abs(diff)) |>
+  head() |>
+  dplyr::select(SNP, diff, b, se, p) |>
+  kable(caption = "Leave-One-Out Results for MGI-BioVU Vitamin D Replication (IVW method) for influential SNPs",
+        digits = c(0, 5, 5, 5, 5))
+
+ggplot(vitdbv.loo_res, aes(x = reorder(SNP, -b), y = b)) +
+  geom_point(size = 1) +
+  geom_errorbar(aes(ymin = b - 1.96 * se, ymax = b + 1.96 * se),
+                width = 0.01, alpha = 0.5) +
+  coord_flip() +
+  labs(x = "SNP Removed", y = "Estimate (Beta-IVW; leave-one-out)") +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 16) +
+  theme(axis.text.y = element_text(size = 1))
+```
+
+```{r vitdbv-mrpresso}
+#| cache: true
+
+set.seed(2026)
+vitdbv.mrpresso <- tryCatch(
+  mr_presso(BetaOutcome     = "beta.outcome",
+            BetaExposure    = "beta.exposure",
+            SdOutcome       = "se.outcome",
+            SdExposure      = "se.exposure",
+            OUTLIERtest     = TRUE,
+            DISTORTIONtest  = TRUE,
+            data            = vitdbv.data_steiger,
+            NbDistribution  = 50000,
+            SignifThreshold = 0.05),
+  error = function(e) { message("MR-PRESSO failed: ", e$message); NULL }
+)
+
+if (!is.null(vitdbv.mrpresso)) {
+  vitdbv.mrpresso$`Main MR results` |>
+    kable(caption = "MR-PRESSO results for MGI-BioVU Vitamin D Replication",
+          digits = c(0, 4, 4, 4, 0, 99))
+
+  cat("Global heterogeneity test p-value:",
+      vitdbv.mrpresso$`MR-PRESSO results`$`Global Test`$Pvalue, "\n")
+}
+
+vitdbv.mrpresso_rows <- extract_mrpresso_rows(
+  vitdbv.mrpresso,
+  "Total Cholesterol (UK Biobank)",
+  vitdbv.label,
+  nrow(vitdbv.data_steiger)
+)
+```
+
+#### Replication Comparison — Revez 2020 vs MGI-BioVU
+
+```{r vitd-replication-comparison}
+#| label: vitd-replication-comparison
+#| fig-width: 8
+#| fig-height: 3.5
+
+vitd.sources_mr <- bind_rows(vitd.mr, vitdbv.mr) %>%
+  filter(method == "Inverse variance weighted (multiplicative random effects)")
+
+vitd.sources_mr %>%
+  dplyr::select(outcome, nsnp, b, se, pval) %>%
+  kable(caption = paste0(
+    "IVW-RE estimates for total cholesterol on 25-hydroxyvitamin D across the ",
+    "primary (Revez 2020) and replication (MGI-BioVU) GWAS"),
+    digits = c(NA, 0, 4, 4, 6))
+
+ggplot(vitd.sources_mr, aes(x = b, y = outcome)) +
+  geom_point(size = 3, colour = color_scheme[1]) +
+  geom_errorbar(aes(xmin = b - 1.96 * se, xmax = b + 1.96 * se),
+                width = 0.2, colour = color_scheme[1]) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 14) +
+  labs(title = "Cholesterol effect on vitamin D — primary vs replication GWAS",
+       subtitle = "IVW-RE; 95% CI",
+       y = "", x = "Beta Coefficient (per SD total cholesterol)")
+```
+
+```{r vitd-replication-agreement}
+#| label: vitd-replication-agreement
+#| echo: false
+
+# Primary (Revez) IVW-RE beta, computed locally so this chunk does not depend
+# on the later vitd-interpretation chunk
+vitd.primary.b <- filter(vitd.mr,
+                         method == "Inverse variance weighted (multiplicative random effects)") %>%
+  pull(b)
+
+vitdbv.ivw <- filter(vitdbv.mr,
+                     method == "Inverse variance weighted (multiplicative random effects)")
+vitdbv.b <- vitdbv.ivw$b
+vitdbv.p <- vitdbv.ivw$pval
+
+vitd.same_sign <- sign(vitd.primary.b) == sign(vitdbv.b)
+vitd.replication_phrase <- if (vitd.same_sign) {
+  paste0("agrees in direction with the primary Revez 2020 estimate (both ",
+         if (vitd.primary.b > 0) "positive" else "negative", ")")
+} else {
+  "is in the opposite direction to the primary Revez 2020 estimate"
+}
+```
+
+The MGI-BioVU replication IVW-RE estimate (β = `r round(vitdbv.b, 4)`,
+p = `r format.pval(vitdbv.p, digits = 2)`) `r vitd.replication_phrase`. Given
+its far smaller sample size (n=12,250 vs n≈417,580), MGI-BioVU is
+underpowered relative to the primary GWAS and is interpreted only as a
+directional replication check.
 
 
 ## Pathological Outcomes
@@ -436,11 +742,14 @@ SNPs that are not directly present in each outcome dataset.
 The three bone-related outcomes are treated as primary analyses because
 they ask different but complementary questions:
 
-- **Heel BMD (Morris 2019, UKB, n=426,824)**: highest-powered BMD GWAS
-  available, derived from quantitative ultrasound; cortical-bone-dominated
-- **Femoral neck BMD (Zheng 2015, GEFOS, n=32,735)**: DXA-based, lower
-  powered legacy comparator
-- **Fractures (Dönertaş 2021, UKB, n=484,598)**: clinical endpoint integrating
+- **Heel BMD (Morris 2019, UKB, n=426,824)**
+  [@morrisAtlasGeneticInfluences2019]: highest-powered BMD GWAS available,
+  derived from quantitative ultrasound; cortical-bone-dominated
+- **Femoral neck BMD (Zheng 2015, GEFOS, n=32,735)**
+  [@zhengWholegenomeSequencingIdentifies2015]: DXA-based, lower powered
+  legacy comparator
+- **Fractures (Dönertaş 2021, UKB, n=484,598)**
+  [@donertasCommonGeneticAssociations2021]: clinical endpoint integrating
   bone density, geometry, and fall propensity
 
 ### Querying OpenGWAS for BMD and Fracture Outcomes
@@ -455,7 +764,7 @@ bone_outcome_gwas <- tribble(
   ~label,                              ~gwas_id,              ~n,       ~year, ~pmid,
   "Heel BMD (Morris 2019, UKB)",        "ebi-a-GCST006979",    426824,   2019,  30598549,
   "Femoral neck BMD (Zheng 2015)",      "ieu-a-980",           32735,    2015,  26367794,
-  "Fractures (Dönertaş 2021, UKB)",     "ebi-a-GCST90038703",  484598,   2021,  34187969
+  "Fractures (Dönertaş 2021, UKB)",     "ebi-a-GCST90038703",  484598,   2021,  33959723
 )
 
 kable(bone_outcome_gwas,
@@ -846,8 +1155,8 @@ bone_mr_combined %>%
 #| fig-width: 9
 #| fig-height: 5
 
-# Combine vitamin D with all bone outcomes
-all_mr_combined <- bind_rows(vitd.mr, bone_mr_combined) %>%
+# Combine vitamin D (primary Revez + MGI-BioVU replication) with all bone outcomes
+all_mr_combined <- bind_rows(vitd.mr, vitdbv.mr, bone_mr_combined) %>%
   filter(method == "Inverse variance weighted (multiplicative random effects)")
 
 ggplot(all_mr_combined, aes(x = outcome, y = b)) +
@@ -872,7 +1181,7 @@ two primary outcomes for the calcium hypothesis test.
 #| fig-height: 3.5
 
 primary_mechanisms <- all_mr_combined %>%
-  filter(outcome %in% c("Vitamin D (MGI-BioVU LabWAS)",
+  filter(outcome %in% c(vitd.label,
                         "Heel BMD (Morris 2019, UKB)"))
 
 ggplot(primary_mechanisms, aes(x = outcome, y = b)) +
@@ -894,7 +1203,8 @@ ggplot(primary_mechanisms, aes(x = outcome, y = b)) +
 
 # Combine main MR results across all outcomes plus MR-PRESSO rows
 all_mr_full <- bind_rows(
-  vitd.mr %>% mutate(outcome = "Vitamin D (MGI-BioVU LabWAS)"),
+  vitd.mr   %>% mutate(outcome = vitd.label),
+  vitdbv.mr %>% mutate(outcome = vitdbv.label),
   bone_mr_combined
 ) %>%
   dplyr::select(-starts_with('id'))
@@ -902,12 +1212,14 @@ all_mr_full <- bind_rows(
 # Append MR-PRESSO rows
 all_mrpresso <- bind_rows(
   vitd.mrpresso_rows    %>% mutate(global_pval = as.numeric(global_pval)),
+  vitdbv.mrpresso_rows  %>% mutate(global_pval = as.numeric(global_pval)),
   heelbmd.mrpresso_rows %>% mutate(global_pval = as.numeric(global_pval))
 )
 
 # Pleiotropy and heterogeneity rows for the summary file
 all_pleio <- bind_rows(
-  vitd.pleio %>% mutate(outcome = "Vitamin D (MGI-BioVU LabWAS)"),
+  vitd.pleio   %>% mutate(outcome = vitd.label),
+  vitdbv.pleio %>% mutate(outcome = vitdbv.label),
   bone_pleio_combined
 ) %>%
   dplyr::select(-starts_with('id')) %>%
@@ -916,7 +1228,8 @@ all_pleio <- bind_rows(
   dplyr::select(exposure = exposure, outcome, method, nsnp, b, se, pval)
 
 all_het <- bind_rows(
-  vitd.het %>% mutate(outcome = "Vitamin D (MGI-BioVU LabWAS)"),
+  vitd.het   %>% mutate(outcome = vitd.label),
+  vitdbv.het %>% mutate(outcome = vitdbv.label),
   bone_het_combined
 ) %>%
   dplyr::select(-starts_with('id'))
@@ -959,6 +1272,9 @@ the four possible outcomes. For the BMD hypothesis we use the **Morris 2019
 heel BMD** result as the primary estimate because it has by far the largest
 sample size and therefore the tightest standard error; sensitivity analyses
 using the Zheng 2015 femoral neck BMD outcome are reported alongside.
+Symmetrically, for the vitamin D hypothesis we use the **Revez 2020** result
+as the primary estimate (n≈417,580) and report the smaller **MGI-BioVU**
+GWAS (n=12,250) as a sensitivity/replication estimate.
 
 ```{r calcium-hypothesis-testing}
 #| label: calcium-hypothesis-testing
@@ -1084,6 +1400,42 @@ kable(bayes_sensitivity,
       digits = c(NA, 4, 4, 4, 4, NA, NA))
 ```
 
+### Sensitivity — Bayesian Probabilities Using Each Vitamin D GWAS
+
+To assess robustness of the H2 conclusion, we recompute the posterior
+probabilities using each of the two vitamin D estimates separately: the
+primary Revez 2020 GWAS and the MGI-BioVU replication. The BMD term is held
+at the primary Heel BMD estimate.
+
+```{r vitd-sensitivity-bayes}
+#| label: vitd-sensitivity-bayes
+
+vitd_outcomes_for_bayes <- bind_rows(
+  vitd.mr   %>% mutate(outcome = vitd.label),
+  vitdbv.mr %>% mutate(outcome = vitdbv.label)
+) %>%
+  filter(method == "Inverse variance weighted (multiplicative random effects)")
+
+vitd_bayes_sensitivity <- vitd_outcomes_for_bayes %>%
+  rowwise() %>%
+  mutate(
+    p_h2_true        = posterior_prob_direction(b, se, "greater"),
+    p_only_h2        = p_h1_false * p_h2_true,
+    p_both_true      = p_h1_true * p_h2_true,
+    `Only H2 (%)`    = sprintf("%.2f%%", p_only_h2 * 100),
+    `Both H1+H2 (%)` = sprintf("%.2f%%", p_both_true * 100)
+  ) %>%
+  ungroup() %>%
+  dplyr::select(outcome, b, se, pval, p_h2_true,
+                `Only H2 (%)`, `Both H1+H2 (%)`)
+
+kable(vitd_bayes_sensitivity,
+      caption = paste0(
+        "Bayesian posterior sensitivity across vitamin D GWAS (BMD term held ",
+        "at ", bmd_primary_label, ")"),
+      digits = c(NA, 4, 4, 4, 4, NA, NA))
+```
+
 ### Mathematical Approach
 
 To evaluate the two hypotheses regarding elevated calcium levels:
@@ -1162,32 +1514,94 @@ p = `r format.pval(heelbmd.mrpresso[["MR-PRESSO results"]][["Distortion Test"]][
 confirming that outlier-driven pleiotropy is not the source of the
 observed cholesterol→BMD effect.
 
-### Vitamin D Does Not Meet the Threshold for a Causal Mediator
+```{r vitd-interpretation}
+#| label: vitd-interpretation
+#| echo: false
 
-In contrast to the heel BMD result, vitamin D failed to meet any of the
-pre-specified causal criteria. The IVW-RE point estimate was negative
-(β = `r round(filter(vitd.mr, method == "Inverse variance weighted (multiplicative random effects)") |> pull(b), 4)`,
-SE = `r round(filter(vitd.mr, method == "Inverse variance weighted (multiplicative random effects)") |> pull(se), 4)`,
-p = `r format.pval(filter(vitd.mr, method == "Inverse variance weighted (multiplicative random effects)") |> pull(pval), digits = 2)`),
-which is the *opposite* sign from the H2 hypothesis that elevated
-cholesterol increases serum calcium via increased vitamin D synthesis.
-The robust-method estimates (weighted median
+# Data-driven interpretation of the vitamin D result. The higher-powered
+# Revez 2020 GWAS can change the sign/significance relative to the earlier
+# MGI-BioVU analysis, so the narrative below is generated from the estimate
+# rather than hard-coded.
+
+vitd.ivw <- filter(vitd.mr,
+                   method == "Inverse variance weighted (multiplicative random effects)")
+vitd.b  <- vitd.ivw$b
+vitd.se <- vitd.ivw$se
+vitd.p  <- vitd.ivw$pval
+
+vitd.sign_word   <- if (vitd.b > 0) "positive" else "negative"
+vitd.supports_h2 <- vitd.b > 0            # H2 predicts a positive cholesterol->VitD effect
+vitd.sig         <- vitd.p < 0.05
+vitd.consistent  <- if (vitd.supports_h2) {
+  "consistent with"
+} else {
+  "the *opposite* sign from"
+}
+
+# MR-PRESSO outlier count (may be unavailable if the test could not run)
+vitd.n_outliers <- tryCatch(
+  sum(vitd.mrpresso[["MR-PRESSO results"]][["Outlier Test"]][["Pvalue"]] < 0.05,
+      na.rm = TRUE),
+  error = function(e) NA_integer_
+)
+vitd.outlier_phrase <- if (is.na(vitd.n_outliers)) {
+  "the per-SNP outlier test could not be evaluated"
+} else if (vitd.n_outliers == 0) {
+  paste0("no individual SNPs met the outlier threshold, indicating diffuse ",
+         "rather than concentrated pleiotropy")
+} else {
+  paste0(vitd.n_outliers, " of ", nrow(vitd.data_steiger),
+         " SNPs were flagged as pleiotropic outliers")
+}
+
+# Global heterogeneity p-value phrase (MR-PRESSO may have returned NULL)
+vitd.global_p <- tryCatch(
+  as.numeric(str_remove(
+    as.character(vitd.mrpresso[["MR-PRESSO results"]][["Global Test"]][["Pvalue"]]),
+    "<")),
+  error = function(e) NA_real_
+)
+vitd.global_phrase <- if (is.na(vitd.global_p)) {
+  "MR-PRESSO could not be evaluated for this outcome"
+} else {
+  paste0("MR-PRESSO returned a global heterogeneity test p = ",
+         format.pval(vitd.global_p, digits = 2))
+}
+
+# Overall verdict: H2 requires a positive AND statistically significant effect
+vitd.meets_threshold <- vitd.supports_h2 && vitd.sig
+vitd.verdict_heading <- if (vitd.meets_threshold) {
+  "Vitamin D Supports the Threshold for a Causal Mediator"
+} else {
+  "Vitamin D Does Not Meet the Threshold for a Causal Mediator"
+}
+vitd.verdict_sentence <- if (vitd.meets_threshold) {
+  paste0("vitamin D meets the pre-specified threshold for a causal mediator ",
+         "(a positive, statistically significant IVW-RE estimate), supporting ",
+         "H2 alongside the bone demineralisation mechanism")
+} else {
+  paste0("vitamin D does not meet the threshold for a causal mediator, and we ",
+         "focus the remainder of this analysis on the bone demineralisation ",
+         "mechanism")
+}
+```
+
+### `r vitd.verdict_heading`
+
+Relative to the heel BMD result, the higher-powered Revez 2020 vitamin D
+GWAS gives an IVW-RE point estimate that is `r vitd.sign_word`
+(β = `r round(vitd.b, 4)`, SE = `r round(vitd.se, 4)`,
+p = `r format.pval(vitd.p, digits = 2)`), which is `r vitd.consistent`
+the H2 hypothesis that elevated cholesterol increases serum calcium via
+increased vitamin D synthesis. The robust-method estimates are reported for
+comparison (weighted median
 β = `r round(filter(vitd.mr, method == "Weighted median") |> pull(b), 4)`,
-weighted mode β = `r round(filter(vitd.mr, method == "Weighted mode") |> pull(b), 4)`)
-attenuated toward zero, suggesting the modestly negative IVW-RE estimate
-may itself reflect residual pleiotropy rather than a true effect.
-MR-PRESSO confirmed significant global heterogeneity (p =
-`r format.pval(as.numeric(str_remove(as.character(vitd.mrpresso[["MR-PRESSO results"]][["Global Test"]][["Pvalue"]]), "<")), digits = 2)`),
-but at NbDistribution = 50,000 no individual SNPs met the outlier
-threshold, indicating diffuse rather than concentrated pleiotropy and
-preventing computation of an outlier-corrected estimate. The Bayesian
+weighted mode β = `r round(filter(vitd.mr, method == "Weighted mode") |> pull(b), 4)`).
+`r vitd.global_phrase`, and at NbDistribution = 50,000
+`r vitd.outlier_phrase`. The Bayesian
 posterior probability for H2 (cholesterol → increased vitamin D) was
-`r round(p_h2_true * 100, 1)`%, which combined with the rejected
-direction of effect provides strong evidence against vitamin D as a
-mediator of the cholesterol→calcium relationship. We therefore conclude
-that vitamin D does not meet the threshold for a causal mediator and
-focus the remainder of this analysis on the bone demineralisation
-mechanism.
+`r round(p_h2_true * 100, 1)`%. We therefore conclude that
+`r vitd.verdict_sentence`.
 
 ## References
 

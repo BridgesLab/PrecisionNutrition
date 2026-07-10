@@ -1,0 +1,4 @@
+pathway,exposure,model,effect_type,n_snps,beta,se,ci_lower,ci_upper,pval,pct_mediated,pm_flag
+PCSK9,Total cholesterol,Univariable (total),Total (chol->Ca),3,0.003596849157194455,0.021286591775413716,-0.03812487072261642,0.04531856903700534,0.8658182526351538,NA,NA
+PCSK9,Total cholesterol,MVMR (difference),Direct (chol->Ca | BMD),80,0.07620100777287296,0.03800819753574521,0.0017063094855283428,0.1506957060602176,0.04497831743497582,-2018.5488866124651,inconsistent sign (interpret with care)
+PCSK9,Total cholesterol,Two-step (product a*b),Indirect (chol->BMD->Ca),308,2.2030486323271152e-4,3.3602937602863597e-4,-4.38312713783415e-4,8.78922440248838e-4,0.5120738562163178,6.124940290922555,ok

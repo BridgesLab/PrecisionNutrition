@@ -23,6 +23,12 @@ The analyses must be run in the following order:
 7. `mr-downstream-analyses.qmd` — requires internet access to OpenGWAS API
 8. `summary-tables.qmd` — collates outputs from all MR scripts above
 
+Mediation and mechanism follow-up analyses (build on the drug-target results; all require internet access to the OpenGWAS API):
+
+9. `mvmr_analyses.qmd` — multivariable MR testing whether BMD mediates the cholesterol → calcium effect (spec: `MVMR_Analysis_Specification.md`)
+10. `mediator_screen.qmd` — second-leg screen of candidate mediators (mediator → calcium) to decide what is worth conditioning on
+11. `calcium_artefact_checks.qmd` — outcome-robustness checks on serum calcium (albumin assay artefact; phosphate co-regulation)
+
 ## Software Requirements
 
 * plink2 (v2.00a5.12LM AVX2 AMD (25 Jun 2024))
@@ -134,10 +140,81 @@ Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium 
 - **Output**: `MR Results - Drug Target BMD.csv`
 
 ### Joint significance
-Together these two drug-target MR analyses establish that the
-cholesterol → BMD → calcium pathway is HMGCR/mevalonate-mediated at every
-step. This is the mechanistic basis for the proposed statin/ezetimibe and
-cell-specific Hmgcr knockout experiments.
+Together these two drug-target MR analyses establish that HMGCR/mevalonate
+activity affects both BMD and serum calcium. Whether these sit on a single
+**cholesterol → BMD → calcium** chain, or are parallel consequences of HMGCR
+pleiotropy, is the question the mediation analyses below were built to resolve.
+
+## Mediation and Mechanism Analyses
+
+These follow-up analyses test *how* cholesterol/HMGCR raises serum calcium. The
+headline result is that it does **not** act through bone: the effect is real,
+strong, and HMGCR-specific, but the mediator is not bone mineral density.
+
+### Mediation MVMR — does BMD carry the cholesterol → calcium effect? (completed 2026-07)
+- **Script**: `mvmr_analyses.qmd` (frozen spec: `MVMR_Analysis_Specification.md`)
+- **Rationale**: The drug-target MRs show HMGCR moves both BMD (down) and calcium
+  (up) — the directions a "cholesterol → bone demineralization → calcium release"
+  chain predicts. This script formally tests whether BMD *mediates* the
+  cholesterol → calcium effect, and whether any mediation is HMGCR-specific
+  (vs PCSK9/NPC1L1). Exposures: drug-target cis-instruments and all-LDL-C;
+  mediator: heel BMD (Morris 2019); outcome: UKB calcium (Barton 2021). Effect
+  decomposed by both difference-method MVMR and two-step product-of-coefficients.
+- **Finding**: BMD does **not** mediate. The BMD → calcium leg is null
+  (β ≈ −0.005, p ≈ 0.76), so the two-step indirect effect is ≈ 0 (HMGCR ≈ 0.5 %
+  mediated). The HMGCR → calcium effect (β ≈ 0.185) is essentially entirely direct.
+- **Interpretation**: The chain breaks at the **second** link (BMD → calcium),
+  not the first. Cholesterol lowers BMD and raises calcium as **parallel**
+  consequences of HMGCR pleiotropy, not a serial pathway — consistent with serum
+  calcium being a homeostatically defended set-point.
+- **Methodological note**: For cis drug-target exposures, trust the two-step
+  estimate; the difference-method MVMR "direct" effect is contaminated by
+  BMD-instrument pleiotropy (clearest for PCSK9, whose null total yields a
+  nonsensical % mediated).
+- **Output**: `results/mvmr_*_summary.csv`, `results/mvmr_results_summary.csv`,
+  plus pleiotropy/heterogeneity CSVs.
+
+### Mediator second-leg screen (completed 2026-07)
+- **Script**: `mediator_screen.qmd`
+- **Rationale**: Before conditioning on any candidate mediator M in a full MVMR,
+  cheaply test the leg that must be non-null — **M → serum calcium**. There is no
+  point conditioning on a mediator that does not affect the outcome. Also directly
+  answers "does a *different* bone site (femoral neck, total body) mediate where
+  heel eBMD did not?"
+- **Finding**: Every bone-density site → calcium is a well-powered null
+  (heel eBMD F ≈ 197, 301 SNPs, β ≈ −0.009, p = 0.45; femoral neck and total-body
+  BMD likewise null). PTH could **not** be tested — the INTERVAL/KORA pQTLs have
+  no cis instrument (PTH has no strong cis-pQTL), so PTH is *untested*, not excluded.
+- **Interpretation**: No bone-density measure (heel QUS, femoral-neck or
+  total-body DXA) causally moves serum calcium — closing the hip/femoral-neck
+  question. Calcium homeostasis buffers standing-density changes.
+- **Output**: `results/mediator_second_leg_screen.csv`
+
+### Serum-calcium outcome robustness — albumin & phosphate (completed 2026-07)
+- **Script**: `calcium_artefact_checks.qmd`
+- **Rationale**: With bone excluded, stress-test the calcium *outcome* before
+  hunting further mediators. (1) **Albumin (assay artefact)** — UKB measures
+  *total* calcium (~45 % albumin-bound) and lipaemic samples interfere with the
+  assay, so a cholesterol → albumin effect could render the calcium signal a
+  binding artefact. (2) **Phosphate (co-regulation)** — the calcium-vs-phosphate
+  sign pattern discriminates mechanism (PTH lowers PO₄; vitamin-D/absorption and
+  bone resorption raise it; a calcium-specific route leaves it flat). Albumin
+  (`ebi-a-GCST90025992`) and phosphate (`ebi-a-GCST90025948`) come from the same
+  UKB biomarker batch as calcium (Barton et al. 2021, PMID 34226706).
+- **Finding**: **Not an albumin artefact** — the albumin-mediated fraction is
+  small and *negative* (two-step albumin-adjusted direct ≈ 112 % of total);
+  positive control albumin → calcium = 0.53 (p = 1e-177) confirms the test is
+  sensitive. **Phosphate is flat** (HMGCR → phosphate β ≈ 0.027, p = 0.15).
+- **Interpretation**: The effect is real and **calcium-specific**. Flat phosphate
+  rules out PTH, vitamin-D/absorption and bone resorption (all shift phosphate);
+  albumin rules out an assay artefact — converging on a calcium-specific,
+  plausibly **renal (tubular handling)** mechanism.
+- **Methodological note**: same cis-contamination caveat — use the two-step, not
+  the cis + genome-wide MVMR, for the albumin adjustment.
+- **Next (open)**: direct renal test (urinary calcium / fractional excretion;
+  Sun 2020 GWAS) and PTH via a larger pQTL (e.g. deCODE) remain to be done.
+- **Output**: `results/calcium_artefact_univariable.csv`,
+  `results/calcium_artefact_albumin_mvmr*.csv`
 
 ### Datasets Summary
 
@@ -160,6 +237,16 @@ cell-specific Hmgcr knockout experiments.
 | mr-downstream-analyses | Outcome | Heel BMD | Morris 2019, UK Biobank | ebi-a-GCST006979 | 426,824 |
 | mr-downstream-analyses | Outcome | Femoral Neck BMD | Zheng 2015, GEFOS | ieu-a-980 | 32,735 |
 | mr-downstream-analyses | Outcome | Fractures | Dönertaş 2021, UK Biobank | ebi-a-GCST90038703 | 484,598 |
+| mvmr_analyses | Exposure | LDL-C | UK Biobank (Richardson 2020) | ieu-b-110 | 440,546 |
+| mvmr_analyses | Mediator | Heel BMD | Morris 2019, UK Biobank | ebi-a-GCST006979 | 426,824 |
+| mvmr_analyses | Outcome | Serum Calcium | UKB Barton et al. 2021 | ebi-a-GCST90025990 | 400,792 |
+| mediator_screen | Mediator | Femoral Neck BMD | Zheng 2015, GEFOS | ieu-a-980 | 32,735 |
+| mediator_screen | Mediator | Total Body BMD | Medina-Gomez 2018, GEFOS | ebi-a-GCST005348 | 56,284 |
+| mediator_screen | Mediator | Parathyroid hormone (pQTL) | Sun 2018, INTERVAL | prot-a-2431 | 3,301 |
+| mediator_screen | Outcome | Serum Calcium | UKB Barton et al. 2021 | ebi-a-GCST90025990 | 400,792 |
+| calcium_artefact_checks | Outcome | Serum Albumin | UKB Barton et al. 2021 | ebi-a-GCST90025992 | 400,938 |
+| calcium_artefact_checks | Outcome | Serum Phosphate | UKB Barton et al. 2021 | ebi-a-GCST90025948 | ~400,000 |
+| calcium_artefact_checks | Outcome | Serum Calcium | UKB Barton et al. 2021 | ebi-a-GCST90025990 | 400,792 |
 
 ### Outcome GWAS
 

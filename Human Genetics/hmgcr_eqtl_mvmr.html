@@ -1,0 +1,1168 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges">
+<meta name="dcterms.date" content="2026-07-13">
+
+<title>HMGCR Expression → Calcium &amp; BMD — multi-tissue eQTL MR (incl.&nbsp;monocyte / osteoclast proxy)</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="hmgcr_eqtl_mvmr_files/libs/clipboard/clipboard.min.js"></script>
+<script src="hmgcr_eqtl_mvmr_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="hmgcr_eqtl_mvmr_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="hmgcr_eqtl_mvmr_files/libs/quarto-html/popper.min.js"></script>
+<script src="hmgcr_eqtl_mvmr_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="hmgcr_eqtl_mvmr_files/libs/quarto-html/anchor.min.js"></script>
+<link href="hmgcr_eqtl_mvmr_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="hmgcr_eqtl_mvmr_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="hmgcr_eqtl_mvmr_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="hmgcr_eqtl_mvmr_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="hmgcr_eqtl_mvmr_files/libs/bootstrap/bootstrap-d4791fd432f8730d65180f3796899ee9.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a>
+  <ul class="collapse">
+  <li><a href="#two-caveats-that-shape-the-whole-design" id="toc-two-caveats-that-shape-the-whole-design" class="nav-link" data-scroll-target="#two-caveats-that-shape-the-whole-design">Two caveats that shape the whole design</a></li>
+  <li><a href="#outcome-matched-tissue-priorities" id="toc-outcome-matched-tissue-priorities" class="nav-link" data-scroll-target="#outcome-matched-tissue-priorities">Outcome-matched tissue priorities</a></li>
+  </ul></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a>
+  <ul class="collapse">
+  <li><a href="#tissue-dataset-catalogue" id="toc-tissue-dataset-catalogue" class="nav-link" data-scroll-target="#tissue-dataset-catalogue">Tissue / dataset catalogue</a></li>
+  <li><a href="#getting-the-eqtl-files-why-and-how" id="toc-getting-the-eqtl-files-why-and-how" class="nav-link" data-scroll-target="#getting-the-eqtl-files-why-and-how">Getting the eQTL files (why, and how)</a></li>
+  </ul></li>
+  <li><a href="#ingestion-one-hmgcr-cis-eqtl-instrument-set-per-tissue" id="toc-ingestion-one-hmgcr-cis-eqtl-instrument-set-per-tissue" class="nav-link" data-scroll-target="#ingestion-one-hmgcr-cis-eqtl-instrument-set-per-tissue">Ingestion — one HMGCR cis-eQTL instrument set per tissue</a></li>
+  <li><a href="#mr-hmgcr-expression-calcium-bmd-per-tissue" id="toc-mr-hmgcr-expression-calcium-bmd-per-tissue" class="nav-link" data-scroll-target="#mr-hmgcr-expression-calcium-bmd-per-tissue">MR — HMGCR expression → calcium &amp; BMD, per tissue</a></li>
+  <li><a href="#colocalization-is-it-really-hmgcr-gene-confirmation" id="toc-colocalization-is-it-really-hmgcr-gene-confirmation" class="nav-link" data-scroll-target="#colocalization-is-it-really-hmgcr-gene-confirmation">Colocalization — is it really HMGCR? (gene confirmation)</a></li>
+  <li><a href="#interpretation" id="toc-interpretation" class="nav-link" data-scroll-target="#interpretation">Interpretation</a></li>
+  <li><a href="#session-info" id="toc-session-info" class="nav-link" data-scroll-target="#session-info">Session info</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">HMGCR Expression → Calcium &amp; BMD — multi-tissue eQTL MR (incl.&nbsp;monocyte / osteoclast proxy)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 13, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>Instrument <strong>HMGCR expression</strong> (mRNA) with tissue-specific <em>cis</em>-eQTLs and test its causal effect on <strong>serum calcium</strong> and <strong>heel BMD</strong>, tissue by tissue. Two questions:</p>
+<ol type="1">
+<li><strong>Gene confirmation (solid):</strong> does HMGCR <em>expression</em> colocalize with the calcium / BMD signals at the locus (coloc H4)? This confirms the effect runs through <strong>HMGCR itself</strong>, not a neighbouring gene — the main vulnerability of cis-instrument MR.</li>
+<li><strong>Tissue-of-action (suggestive):</strong> in which tissue does HMGCR expression track the phenotype? Interpreted cautiously — see the caveat below.</li>
+</ol>
+<section id="two-caveats-that-shape-the-whole-design" class="level3">
+<h3 class="anchored" data-anchor-id="two-caveats-that-shape-the-whole-design">Two caveats that shape the whole design</h3>
+<ul>
+<li><p><strong>cis-eQTLs are shared across tissues.</strong> The same variant usually regulates HMGCR in nearly every tissue, so using “tissue X’s eQTL” does <strong>not</strong> cleanly isolate tissue X. Tissue attribution is <em>suggestive</em>, strongest when a tissue has a private eQTL or a much larger expression effect. The <strong>coloc</strong> result is the defensible core; the tissue ranking is exploratory.</p></li>
+<li><p><strong>There is no bone / bone-marrow eQTL in GTEx</strong> (post-mortem bank; bone RNA is hard to extract), and dedicated osteoblast/bone eQTL studies are small and not in OpenGWAS. <strong>Workaround:</strong> osteoclasts differentiate from the <strong>monocyte/myeloid</strong> lineage — the very cell where the mevalonate → GGPP → osteoclast-prenylation (bisphosphonate) mechanism acts — so <strong>monocyte</strong> and <strong>whole-blood</strong> eQTLs are a mechanistically legitimate proxy for the osteoclast-relevant HMGCR regulation, and are well powered (eQTLGen n≈31k, BLUEPRINT monocytes). Osteoblasts (mesenchymal, not haematopoietic) are <strong>not</strong> proxied by blood — that arm stays data-limited.</p></li>
+</ul>
+</section>
+<section id="outcome-matched-tissue-priorities" class="level3">
+<h3 class="anchored" data-anchor-id="outcome-matched-tissue-priorities">Outcome-matched tissue priorities</h3>
+<table class="caption-top table">
+<colgroup>
+<col style="width: 33%">
+<col style="width: 33%">
+<col style="width: 33%">
+</colgroup>
+<thead>
+<tr class="header">
+<th>Outcome</th>
+<th>Priority tissues</th>
+<th>Rationale</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>Heel BMD</td>
+<td><strong>monocyte / whole blood</strong> (osteoclast proxy)</td>
+<td>mevalonate → GGPP osteoclast mechanism</td>
+</tr>
+<tr class="even">
+<td>Serum calcium</td>
+<td><strong>kidney</strong> (tubular), liver (systemic), small intestine (absorption)</td>
+<td>leading renal hypothesis + systemic/absorption routes</td>
+</tr>
+</tbody>
+</table>
+<p>Because we already showed calcium is <strong>not</strong> bone-mediated, bone/osteoclast tissue mainly explains the <strong>BMD</strong> leg; the calcium leg is expected to localize to kidney/liver/gut. We run every tissue against <strong>both</strong> outcomes anyway — a dissociation (e.g.&nbsp;blood→BMD but not →calcium) is itself informative.</p>
+<hr>
+</section>
+</section>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(TwoSampleMR)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ieugwasr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(kableExtra)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="co"># coloc is optional; the coloc section is guarded on it being installed.</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Target gene ──────────────────────────────────────────────────────────────</span></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>HMGCR_ENSG   <span class="ot">&lt;-</span> <span class="st">"ENSG00000113161"</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="co"># cis window around the HMGCR gene body. eQTLGen is GRCh37/hg19 (matches the</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ieu/ebi outcome GWAS); GTEx v8 is GRCh38 and needs liftover or rsID matching.</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>HMGCR_REGION_HG19 <span class="ot">&lt;-</span> <span class="st">"5:74532993-74757941"</span>   <span class="co"># gene ±100 kb, GRCh37</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>HMGCR_REGION_HG38 <span class="ot">&lt;-</span> <span class="st">"5:75236294-75462104"</span>   <span class="co"># gene ±100 kb, GRCh38 (verify before use)</span></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Outcomes ─────────────────────────────────────────────────────────────────</span></span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>OUTCOMES <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>outcome_label,   <span class="sc">~</span>outcome_id,</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Serum calcium"</span>,  <span class="st">"ebi-a-GCST90025990"</span>,   <span class="co"># Barton 2021 UKB</span></span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Heel BMD"</span>,       <span class="st">"ebi-a-GCST006979"</span>      <span class="co"># Morris 2019 UKB</span></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="co"># ── Instrument selection ─────────────────────────────────────────────────────</span></span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>P_EQTL    <span class="ot">&lt;-</span> <span class="fl">5e-8</span>      <span class="co"># cis-eQTL significance threshold</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="co"># Keep a few near-independent cis signals rather than a single lead. A single</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a><span class="co"># lead is fragile: the eQTLGen HMGCR lead (rs6453133) is multiallelic (A&gt;G/A&gt;T)</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a><span class="co"># and was dropped by the calcium GWAS's biallelic-only QC, which silently killed</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a><span class="co"># the whole calcium arm. Retaining several cis SNPs means a clean biallelic one</span></span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a><span class="co"># survives into each outcome. NB: with r2&lt;0.1 the instruments are mildly</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a><span class="co"># LD-correlated, so IVW SEs are slightly anti-conservative — fine for a tissue</span></span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="co"># screen; for a headline estimate use a single clean SNP or a correlation-aware IVW.</span></span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>R2_CLUMP  <span class="ot">&lt;-</span> <span class="fl">0.1</span></span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>CLUMP_KB  <span class="ot">&lt;-</span> <span class="dv">1000</span></span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">"results"</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">"raw_data/eqtl"</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="tissue-dataset-catalogue" class="level3">
+<h3 class="anchored" data-anchor-id="tissue-dataset-catalogue">Tissue / dataset catalogue</h3>
+<p>Each row is one HMGCR eQTL dataset. <code>source</code> selects how it is fetched:</p>
+<ul>
+<li><code>opengwas</code> — via <code>ieugwasr</code> (e.g.&nbsp;eQTLGen whole blood; hg19, cleanest).</li>
+<li><code>catalogue</code> — eQTL Catalogue REST API (GTEx v8, BLUEPRINT, …; hg38 — best-effort).</li>
+<li><code>local</code> — a pre-harmonised file at <code>raw_data/eqtl/&lt;id_or_path&gt;</code> with columns <code>SNP, effect_allele, other_allele, beta, se, eaf, pval</code> (use this for GTEx / BLUEPRINT files you already have on GreatLakes).</li>
+</ul>
+<p>Fill in real accessions where marked <code>&lt;verify&gt;</code>; unknown/failed rows are skipped gracefully so the document still renders.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>tissue_catalogue <span class="ot">&lt;-</span> <span class="fu">tribble</span>(</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>tissue,                    <span class="sc">~</span>source,      <span class="sc">~</span>id_or_path,                    <span class="sc">~</span>build, <span class="sc">~</span>priority, <span class="sc">~</span>note,</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- concrete, well-powered, hg19 (runs as-is) ----------------------------</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Whole blood (eQTLGen)"</span>,    <span class="st">"opengwas"</span>,   <span class="st">"eqtl-a-ENSG00000113161"</span>,       <span class="st">"hg19"</span>, <span class="st">"BMD+Ca"</span>, <span class="st">"osteoclast-lineage proxy; strongest instrument"</span>,</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- osteoclast proxy: monocytes (fill in an accession or drop a file) -----</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Monocyte (BLUEPRINT)"</span>,     <span class="st">"catalogue"</span>,  <span class="st">"QTD000026"</span>,                    <span class="st">"hg38"</span>, <span class="st">"BMD"</span>,    <span class="st">"osteoclast precursor; &lt;verify eQTL Catalogue dataset id&gt;"</span>,</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- calcium-relevant tissues (GTEx v8; via catalogue or local files) ------</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Kidney cortex (GTEx)"</span>,     <span class="st">"local"</span>,  <span class="st">"Kidney_cortex_GTEx.tsv"</span>,                    <span class="st">"hg38"</span>, <span class="st">"Ca"</span>,     <span class="st">"renal/tubular hypothesis; GTEx n small — weak instrument; &lt;verify id&gt;"</span>,</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Liver (GTEx)"</span>,             <span class="st">"local"</span>,  <span class="st">"liver_GTEx.tsv"</span>,                    <span class="st">"hg38"</span>, <span class="st">"Ca"</span>,     <span class="st">"systemic LDL-C route; &lt;verify id&gt;"</span>,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Small intestine (GTEx)"</span>,   <span class="st">"local"</span>,  <span class="st">"small_intestine_GTEx.tsv"</span>,                    <span class="st">"hg38"</span>, <span class="st">"Ca"</span>,     <span class="st">"absorption route; &lt;verify id&gt;"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Blood (GTEx)"</span>,   <span class="st">"local"</span>,  <span class="st">"blood_GTEx.tsv"</span>,                    <span class="st">"hg38"</span>, <span class="st">"Ca"</span>,     <span class="st">"absorption route; &lt;verify id&gt;"</span>,</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># --- example local-file row (uncomment once you drop the file) -------------</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>  <span class="co"># "Osteoblast (primary)",   "local",      "osteoblast_hmgcr.tsv",         "hg19", "BMD",    "true bone cell; small study, low power",</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(tissue_catalogue <span class="sc">%&gt;%</span> <span class="fu">select</span>(tissue, source, build, priority, note),</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"HMGCR eQTL datasets to screen (outcome-matched priorities)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>HMGCR eQTL datasets to screen (outcome-matched priorities)</caption>
+<colgroup>
+<col style="width: 19%">
+<col style="width: 8%">
+<col style="width: 5%">
+<col style="width: 7%">
+<col style="width: 59%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">tissue</th>
+<th style="text-align: left;">source</th>
+<th style="text-align: left;">build</th>
+<th style="text-align: left;">priority</th>
+<th style="text-align: left;">note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Whole blood (eQTLGen)</td>
+<td style="text-align: left;">opengwas</td>
+<td style="text-align: left;">hg19</td>
+<td style="text-align: left;">BMD+Ca</td>
+<td style="text-align: left;">osteoclast-lineage proxy; strongest instrument</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Monocyte (BLUEPRINT)</td>
+<td style="text-align: left;">catalogue</td>
+<td style="text-align: left;">hg38</td>
+<td style="text-align: left;">BMD</td>
+<td style="text-align: left;">osteoclast precursor; <verify eqtl="" catalogue="" dataset="" id=""></verify></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Kidney cortex (GTEx)</td>
+<td style="text-align: left;">local</td>
+<td style="text-align: left;">hg38</td>
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">renal/tubular hypothesis; GTEx n small — weak instrument; <verify id=""></verify></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Liver (GTEx)</td>
+<td style="text-align: left;">local</td>
+<td style="text-align: left;">hg38</td>
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">systemic LDL-C route; <verify id=""></verify></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Small intestine (GTEx)</td>
+<td style="text-align: left;">local</td>
+<td style="text-align: left;">hg38</td>
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">absorption route; <verify id=""></verify></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Blood (GTEx)</td>
+<td style="text-align: left;">local</td>
+<td style="text-align: left;">hg38</td>
+<td style="text-align: left;">Ca</td>
+<td style="text-align: left;">absorption route; <verify id=""></verify></td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="getting-the-eqtl-files-why-and-how" class="level3">
+<h3 class="anchored" data-anchor-id="getting-the-eqtl-files-why-and-how">Getting the eQTL files (why, and how)</h3>
+<p>The OpenGWAS <code>eqtl-a-…</code> (eQTLGen) record is effectively <strong>top-cis-SNP-only</strong> — it returns a single SNP for HMGCR (rs6453133), which is multiallelic and was dropped by the calcium GWAS’s biallelic QC. One SNP gives no redundancy and no coloc region, so switch the source to the <strong>eQTL Catalogue</strong> (full cis stats, all SNPs, every tissue, GRCh38, tabix-indexed). Harmonisation to the hg19 outcomes is by <strong>rsID</strong>, so the build difference does not matter for the MR or rsID-based coloc.</p>
+<p><strong>On a Mac workstation (no HPC, no big downloads):</strong> <code>tabix</code> streams <em>only</em> the HMGCR region from the remote file — nothing is downloaded whole. Install it once with Homebrew, then pull each tissue’s region into <code>raw_data/eqtl/</code> and flip that catalogue row to <code>source = "local"</code> (the loader auto-filters the region dump to HMGCR, so no <code>awk</code> needed):</p>
+<div class="code-copy-outer-scaffold"><div class="sourceCode" id="cb3"><pre class="sourceCode bash code-with-copy"><code class="sourceCode bash"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="ex">brew</span> install htslib      <span class="co"># provides tabix (built with libcurl → reads https/ftp)</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># HMGCR ±500 kb, GRCh38. eQTLGen whole blood = dataset QTD000116</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># (verify current id/URL at https://www.ebi.ac.uk/eqtl/Studies/).</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="va">BASE</span><span class="op">=</span>https://ftp.ebi.ac.uk/pub/databases/spot/eQTL/sumstats</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a><span class="ex">tabix</span> <span class="at">-h</span> <span class="va">${BASE}</span>/QTD000116/QTD000116.all.tsv.gz 5:74836294-75862104 <span class="dt">\</span></span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="op">&gt;</span> raw_data/eqtl/Whole_blood_eQTLGen.tsv</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a><span class="co"># repeat for GTEx kidney / liver / small intestine and a BLUEPRINT monocyte dataset</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<p>Then set e.g.&nbsp;<code>~source = "local", ~id_or_path = "Whole_blood_eQTLGen.tsv"</code> in the catalogue. The loader reads eQTL Catalogue columns directly (<code>rsid, ref, alt, beta, se, maf, pvalue</code>), so the same file drives both the MR (many biallelic SNPs → a clean instrument survives into calcium) and coloc (full regional distribution).</p>
+<p><strong>No tabix / prefer pure R?</strong> Use <code>source = "catalogue"</code> — <code>fetch_catalogue()</code> hits the eQTL Catalogue REST API for the HMGCR gene with no external tools (verify the endpoint/fields for the current API version). Native <strong>eQTLGen</strong> files (hg19) are also fine but report <strong>Z-scores</strong>, not beta/se — convert with <code>beta = Z / sqrt(2·MAF·(1−MAF)·(N+Z²))</code>, <code>se = 1 / sqrt(2·MAF·(1−MAF)·(N+Z²))</code>.</p>
+<hr>
+</section>
+</section>
+<section id="ingestion-one-hmgcr-cis-eqtl-instrument-set-per-tissue" class="level2">
+<h2 class="anchored" data-anchor-id="ingestion-one-hmgcr-cis-eqtl-instrument-set-per-tissue">Ingestion — one HMGCR cis-eQTL instrument set per tissue</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Normalise any eQTL source into TwoSampleMR exposure format (one row per SNP).</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>to_exposure <span class="ot">&lt;-</span> <span class="cf">function</span>(df, tissue) {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  df <span class="sc">%&gt;%</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(<span class="at">SNP =</span> rsid, <span class="at">beta.exposure =</span> beta, <span class="at">se.exposure =</span> se,</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>              <span class="at">effect_allele.exposure =</span> <span class="fu">toupper</span>(ea), <span class="at">other_allele.exposure =</span> <span class="fu">toupper</span>(nea),</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>              <span class="at">eaf.exposure =</span> eaf, <span class="at">pval.exposure =</span> p,</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>              <span class="at">exposure =</span> tissue, <span class="at">id.exposure =</span> tissue,</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>              <span class="at">mr_keep.exposure =</span> <span class="cn">TRUE</span>, <span class="at">pval_origin.exposure =</span> <span class="st">"reported"</span>,</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>              <span class="at">data_source.exposure =</span> <span class="st">"eqtl"</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="co"># (a) OpenGWAS-hosted eQTL (eQTLGen). hg19, rsID-keyed — cleanest path.</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>fetch_opengwas <span class="ot">&lt;-</span> <span class="cf">function</span>(id, region) {</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  raw <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    ieugwasr<span class="sc">::</span><span class="fu">associations</span>(<span class="at">variants =</span> region, <span class="at">id =</span> id, <span class="at">proxies =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">as_tibble</span>(),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">warning</span>(id, <span class="st">": "</span>, e<span class="sc">$</span>message); <span class="fu">return</span>(<span class="fu">tibble</span>()) })</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(raw) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="st">"pos"</span> <span class="sc">%in%</span> <span class="fu">names</span>(raw) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="st">"position"</span> <span class="sc">%in%</span> <span class="fu">names</span>(raw)) raw <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">rename</span>(raw, <span class="at">position =</span> pos)</span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>  raw</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a><span class="co"># (b) eQTL Catalogue REST API (GTEx v8, BLUEPRINT, …). hg38. BEST-EFFORT: verify</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a><span class="co"># the endpoint/fields for the current API version; returns NULL on any failure so</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a><span class="co"># the pipeline degrades gracefully. Prefer a local file (c) if this is flaky.</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>fetch_catalogue <span class="ot">&lt;-</span> <span class="cf">function</span>(dataset_id, <span class="at">gene =</span> HMGCR_ENSG) {</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"jsonlite"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  url <span class="ot">&lt;-</span> <span class="fu">sprintf</span>(</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    <span class="st">"https://www.ebi.ac.uk/eqtl/api/v2/datasets/%s/associations?gene_id=%s&amp;size=1000"</span>,</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>    dataset_id, gene)</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(jsonlite<span class="sc">::</span><span class="fu">fromJSON</span>(url), <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">warning</span>(e<span class="sc">$</span>message); <span class="cn">NULL</span> })</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(res) <span class="sc">||</span> <span class="fu">length</span>(res) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">as_tibble</span>(res) <span class="sc">%&gt;%</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(<span class="at">rsid =</span> rsid, <span class="at">ea =</span> alt, <span class="at">nea =</span> ref, <span class="at">beta =</span> beta, <span class="at">se =</span> se,</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>              <span class="at">eaf =</span> maf, <span class="at">p =</span> pvalue, <span class="at">position =</span> position)   <span class="co"># &lt;verify field names</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># (c) Local file — RECOMMENDED path (GreatLakes). Reads either a simple</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co"># pre-harmonised file (SNP/effect_allele/other_allele/eaf/pval) OR an eQTL</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Catalogue tabix dump directly (rsid/alt/ref/maf/pvalue). In the eQTL Catalogue</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a><span class="co"># the *effect* allele is ALT and the other allele is REF; it reports `maf` (fine</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a><span class="co"># for coloc; for palindromic MR you'd want the ALT-allele frequency = ac/an).</span></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a>fetch_local <span class="ot">&lt;-</span> <span class="cf">function</span>(path) {</span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>  fp <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"raw_data/eqtl"</span>, path)</span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(fp)) { <span class="fu">warning</span>(<span class="st">"no local eQTL file at "</span>, fp); <span class="fu">return</span>(<span class="cn">NULL</span>) }</span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> readr<span class="sc">::</span><span class="fu">read_tsv</span>(fp, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-46"><a href="#cb4-46" aria-hidden="true" tabindex="-1"></a>  <span class="co"># A region tabix dump contains every gene in the window (HMGCR, CERT1, POC5…);</span></span>
+<span id="cb4-47"><a href="#cb4-47" aria-hidden="true" tabindex="-1"></a>  <span class="co"># keep only HMGCR so you don't have to pre-filter the file yourself.</span></span>
+<span id="cb4-48"><a href="#cb4-48" aria-hidden="true" tabindex="-1"></a>  gcol <span class="ot">&lt;-</span> <span class="fu">intersect</span>(<span class="fu">c</span>(<span class="st">"gene_id"</span>, <span class="st">"molecular_trait_id"</span>), <span class="fu">names</span>(d))</span>
+<span id="cb4-49"><a href="#cb4-49" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">length</span>(gcol) <span class="sc">&gt;</span> <span class="dv">0</span>) d <span class="ot">&lt;-</span> dplyr<span class="sc">::</span><span class="fu">filter</span>(d, .data[[gcol[<span class="dv">1</span>]]] <span class="sc">==</span> HMGCR_ENSG)</span>
+<span id="cb4-50"><a href="#cb4-50" aria-hidden="true" tabindex="-1"></a>  pick <span class="ot">&lt;-</span> <span class="cf">function</span>(...) { nm <span class="ot">&lt;-</span> <span class="fu">c</span>(...); hit <span class="ot">&lt;-</span> nm[nm <span class="sc">%in%</span> <span class="fu">names</span>(d)]; <span class="cf">if</span> (<span class="fu">length</span>(hit)) hit[<span class="dv">1</span>] <span class="cf">else</span> <span class="cn">NA_character_</span> }</span>
+<span id="cb4-51"><a href="#cb4-51" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb4-52"><a href="#cb4-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">rsid =</span> d[[<span class="fu">pick</span>(<span class="st">"rsid"</span>, <span class="st">"SNP"</span>)]],</span>
+<span id="cb4-53"><a href="#cb4-53" aria-hidden="true" tabindex="-1"></a>    <span class="at">ea   =</span> <span class="fu">toupper</span>(d[[<span class="fu">pick</span>(<span class="st">"effect_allele"</span>, <span class="st">"alt"</span>)]]),</span>
+<span id="cb4-54"><a href="#cb4-54" aria-hidden="true" tabindex="-1"></a>    <span class="at">nea  =</span> <span class="fu">toupper</span>(d[[<span class="fu">pick</span>(<span class="st">"other_allele"</span>, <span class="st">"ref"</span>)]]),</span>
+<span id="cb4-55"><a href="#cb4-55" aria-hidden="true" tabindex="-1"></a>    <span class="at">beta =</span> d[[<span class="fu">pick</span>(<span class="st">"beta"</span>)]],</span>
+<span id="cb4-56"><a href="#cb4-56" aria-hidden="true" tabindex="-1"></a>    <span class="at">se   =</span> d[[<span class="fu">pick</span>(<span class="st">"se"</span>)]],</span>
+<span id="cb4-57"><a href="#cb4-57" aria-hidden="true" tabindex="-1"></a>    <span class="at">eaf  =</span> d[[<span class="fu">pick</span>(<span class="st">"eaf"</span>, <span class="st">"maf"</span>)]],</span>
+<span id="cb4-58"><a href="#cb4-58" aria-hidden="true" tabindex="-1"></a>    <span class="at">p    =</span> d[[<span class="fu">pick</span>(<span class="st">"pval"</span>, <span class="st">"pvalue"</span>)]],</span>
+<span id="cb4-59"><a href="#cb4-59" aria-hidden="true" tabindex="-1"></a>    <span class="at">position =</span> <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.na</span>(<span class="fu">pick</span>(<span class="st">"position"</span>))) d[[<span class="fu">pick</span>(<span class="st">"position"</span>)]] <span class="cf">else</span> <span class="cn">NA_integer_</span></span>
+<span id="cb4-60"><a href="#cb4-60" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(rsid), <span class="sc">!</span><span class="fu">is.na</span>(beta), <span class="sc">!</span><span class="fu">is.na</span>(se))</span>
+<span id="cb4-61"><a href="#cb4-61" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-62"><a href="#cb4-62" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-63"><a href="#cb4-63" aria-hidden="true" tabindex="-1"></a><span class="co"># Dispatcher: fetch -&gt; filter to cis-significant -&gt; clump -&gt; exposure format.</span></span>
+<span id="cb4-64"><a href="#cb4-64" aria-hidden="true" tabindex="-1"></a>get_hmgcr_eqtl <span class="ot">&lt;-</span> <span class="cf">function</span>(row) {</span>
+<span id="cb4-65"><a href="#cb4-65" aria-hidden="true" tabindex="-1"></a>  region <span class="ot">&lt;-</span> <span class="cf">if</span> (row<span class="sc">$</span>build <span class="sc">==</span> <span class="st">"hg19"</span>) HMGCR_REGION_HG19 <span class="cf">else</span> HMGCR_REGION_HG38</span>
+<span id="cb4-66"><a href="#cb4-66" aria-hidden="true" tabindex="-1"></a>  raw <span class="ot">&lt;-</span> <span class="cf">switch</span>(row<span class="sc">$</span>source,</span>
+<span id="cb4-67"><a href="#cb4-67" aria-hidden="true" tabindex="-1"></a>                <span class="at">opengwas  =</span> <span class="fu">fetch_opengwas</span>(row<span class="sc">$</span>id_or_path, region),</span>
+<span id="cb4-68"><a href="#cb4-68" aria-hidden="true" tabindex="-1"></a>                <span class="at">catalogue =</span> <span class="fu">fetch_catalogue</span>(row<span class="sc">$</span>id_or_path),</span>
+<span id="cb4-69"><a href="#cb4-69" aria-hidden="true" tabindex="-1"></a>                <span class="at">local     =</span> <span class="fu">fetch_local</span>(row<span class="sc">$</span>id_or_path),</span>
+<span id="cb4-70"><a href="#cb4-70" aria-hidden="true" tabindex="-1"></a>                <span class="cn">NULL</span>)</span>
+<span id="cb4-71"><a href="#cb4-71" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(raw) <span class="sc">||</span> <span class="fu">nrow</span>(raw) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb4-72"><a href="#cb4-72" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-73"><a href="#cb4-73" aria-hidden="true" tabindex="-1"></a>  sig <span class="ot">&lt;-</span> raw <span class="sc">%&gt;%</span> <span class="fu">filter</span>(p <span class="sc">&lt;=</span> P_EQTL)</span>
+<span id="cb4-74"><a href="#cb4-74" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(sig) <span class="sc">&lt;</span> <span class="dv">1</span>) { <span class="fu">message</span>(row<span class="sc">$</span>tissue, <span class="st">": no cis-eQTL at p&lt;"</span>, P_EQTL); <span class="fu">return</span>(<span class="cn">NULL</span>) }</span>
+<span id="cb4-75"><a href="#cb4-75" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-76"><a href="#cb4-76" aria-hidden="true" tabindex="-1"></a>  clumped <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nrow</span>(sig) <span class="sc">&gt;=</span> <span class="dv">2</span>) {</span>
+<span id="cb4-77"><a href="#cb4-77" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tryCatch</span>(</span>
+<span id="cb4-78"><a href="#cb4-78" aria-hidden="true" tabindex="-1"></a>      ieugwasr<span class="sc">::</span><span class="fu">ld_clump</span>(<span class="fu">tibble</span>(<span class="at">rsid =</span> sig<span class="sc">$</span>rsid, <span class="at">pval =</span> sig<span class="sc">$</span>p, <span class="at">id =</span> row<span class="sc">$</span>tissue),</span>
+<span id="cb4-79"><a href="#cb4-79" aria-hidden="true" tabindex="-1"></a>                         <span class="at">clump_r2 =</span> R2_CLUMP, <span class="at">clump_kb =</span> CLUMP_KB, <span class="at">pop =</span> <span class="st">"EUR"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb4-80"><a href="#cb4-80" aria-hidden="true" tabindex="-1"></a>        <span class="fu">inner_join</span>(sig, <span class="at">by =</span> <span class="st">"rsid"</span>),</span>
+<span id="cb4-81"><a href="#cb4-81" aria-hidden="true" tabindex="-1"></a>      <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">warning</span>(<span class="st">"clump ("</span>, row<span class="sc">$</span>tissue, <span class="st">"): "</span>, e<span class="sc">$</span>message); sig })</span>
+<span id="cb4-82"><a href="#cb4-82" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> sig</span>
+<span id="cb4-83"><a href="#cb4-83" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-84"><a href="#cb4-84" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">exposure =</span> <span class="fu">to_exposure</span>(clumped, row<span class="sc">$</span>tissue), <span class="at">raw =</span> raw, <span class="at">n_instruments =</span> <span class="fu">nrow</span>(clumped))</span>
+<span id="cb4-85"><a href="#cb4-85" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<hr>
+</section>
+<section id="mr-hmgcr-expression-calcium-bmd-per-tissue" class="level2">
+<h2 class="anchored" data-anchor-id="mr-hmgcr-expression-calcium-bmd-per-tissue">MR — HMGCR expression → calcium &amp; BMD, per tissue</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># One tissue × one outcome MR (Wald ratio for a single cis-eQTL, IVW-MRE for &gt;=2).</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>run_eqtl_mr <span class="ot">&lt;-</span> <span class="cf">function</span>(exposure, outcome_id, tissue, outcome_label) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Return a diagnostic row even when the MR can't run, so a missing outcome row</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># is visible with its reason rather than silently vanishing (a single-SNP</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>  <span class="co"># instrument absent from the outcome GWAS is a COVERAGE issue, not a null result).</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  snp_ids <span class="ot">&lt;-</span> <span class="fu">paste</span>(exposure<span class="sc">$</span>SNP, <span class="at">collapse =</span> <span class="st">";"</span>)   <span class="co"># show WHICH variant(s) so coverage is checkable</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  none <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">tissue =</span> tissue, <span class="at">outcome =</span> outcome_label, <span class="at">snp =</span> snp_ids, <span class="at">method =</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>                 <span class="at">n_snps =</span> <span class="dv">0</span>L, <span class="at">mean_F =</span> <span class="cn">NA_real_</span>, <span class="at">beta =</span> <span class="cn">NA_real_</span>, <span class="at">se =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>                 <span class="at">ci_lower =</span> <span class="cn">NA_real_</span>, <span class="at">ci_upper =</span> <span class="cn">NA_real_</span>, <span class="at">pval =</span> <span class="cn">NA_real_</span>, <span class="at">note =</span> <span class="cn">NA_character_</span>)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  out  <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">extract_outcome_data</span>(exposure<span class="sc">$</span>SNP, outcome_id, <span class="at">proxies =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>                   <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(out) <span class="sc">||</span> <span class="fu">nrow</span>(out) <span class="sc">==</span> <span class="dv">0</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(none <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">note =</span> <span class="st">"instrument absent from outcome GWAS (no proxy) — NOT a null"</span>))</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  harm <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(exposure, out) <span class="sc">%&gt;%</span> <span class="fu">filter</span>(mr_keep)</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  nsnp <span class="ot">&lt;-</span> <span class="fu">nrow</span>(harm)</span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (nsnp <span class="sc">&lt;</span> <span class="dv">1</span>)</span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(none <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">note =</span> <span class="st">"dropped in harmonisation (palindromic/ambiguous) — NOT a null"</span>))</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  ml   <span class="ot">&lt;-</span> <span class="cf">if</span> (nsnp <span class="sc">&gt;=</span> <span class="dv">2</span>) <span class="st">"mr_ivw_mre"</span> <span class="cf">else</span> <span class="st">"mr_wald_ratio"</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  res  <span class="ot">&lt;-</span> <span class="fu">mr</span>(harm, <span class="at">method_list =</span> ml) <span class="sc">%&gt;%</span> <span class="fu">slice</span>(<span class="dv">1</span>)</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">tissue =</span> tissue, <span class="at">outcome =</span> outcome_label, <span class="at">snp =</span> <span class="fu">paste</span>(harm<span class="sc">$</span>SNP, <span class="at">collapse =</span> <span class="st">";"</span>),</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>         <span class="at">method =</span> res<span class="sc">$</span>method, <span class="at">n_snps =</span> nsnp,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>         <span class="at">mean_F =</span> <span class="fu">mean</span>((harm<span class="sc">$</span>beta.exposure <span class="sc">/</span> harm<span class="sc">$</span>se.exposure)<span class="sc">^</span><span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">beta =</span> res<span class="sc">$</span>b, <span class="at">se =</span> res<span class="sc">$</span>se,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>         <span class="at">ci_lower =</span> res<span class="sc">$</span>b <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> res<span class="sc">$</span>se, <span class="at">ci_upper =</span> res<span class="sc">$</span>b <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> res<span class="sc">$</span>se,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>         <span class="at">pval =</span> res<span class="sc">$</span>pval, <span class="at">note =</span> <span class="st">"ok"</span>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a><span class="co"># Fetch each tissue's instrument once, then run it against both outcomes.</span></span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>eqtl_sets <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(tissue_catalogue)),</span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a>                        <span class="sc">~</span> <span class="fu">get_hmgcr_eqtl</span>(tissue_catalogue[.x, ])) <span class="sc">%&gt;%</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">setNames</span>(tissue_catalogue<span class="sc">$</span>tissue) <span class="sc">%&gt;%</span> purrr<span class="sc">::</span><span class="fu">compact</span>()</span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>eqtl_mr_grid <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map_dfr</span>(<span class="fu">names</span>(eqtl_sets), <span class="cf">function</span>(tis) {</span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>  exp_dat <span class="ot">&lt;-</span> eqtl_sets[[tis]]<span class="sc">$</span>exposure</span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a>  purrr<span class="sc">::</span><span class="fu">map_dfr</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(OUTCOMES)), <span class="cf">function</span>(i)</span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a>    <span class="fu">run_eqtl_mr</span>(exp_dat, OUTCOMES<span class="sc">$</span>outcome_id[i], tis, OUTCOMES<span class="sc">$</span>outcome_label[i]))</span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(eqtl_mr_grid, <span class="st">"results/hmgcr_eqtl_mr_grid.csv"</span>)</span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(eqtl_mr_grid <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(mean_F, beta, se, ci_lower, ci_upper), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">4</span>)),</span>
+<span id="cb5-41"><a href="#cb5-41" aria-hidden="true" tabindex="-1"></a>                             <span class="at">pval =</span> <span class="fu">signif</span>(pval, <span class="dv">3</span>)),</span>
+<span id="cb5-42"><a href="#cb5-42" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"HMGCR expression → outcome, by tissue (Wald ratio / IVW-MRE)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>HMGCR expression → outcome, by tissue (Wald ratio / IVW-MRE)</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 8%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 34%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">tissue</th>
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">snp</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">n_snps</th>
+<th style="text-align: right;">mean_F</th>
+<th style="text-align: right;">beta</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">ci_lower</th>
+<th style="text-align: right;">ci_upper</th>
+<th style="text-align: right;">pval</th>
+<th style="text-align: left;">note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Whole blood (eQTLGen)</td>
+<td style="text-align: left;">Serum calcium</td>
+<td style="text-align: left;">rs6453133</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">instrument absent from outcome GWAS (no proxy) — NOT a null</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Whole blood (eQTLGen)</td>
+<td style="text-align: left;">Heel BMD</td>
+<td style="text-align: left;">rs6453133</td>
+<td style="text-align: left;">Wald ratio</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">224.0034</td>
+<td style="text-align: right;">-0.0437</td>
+<td style="text-align: right;">0.0107</td>
+<td style="text-align: right;">-0.0647</td>
+<td style="text-align: right;">-0.0227</td>
+<td style="text-align: right;">4.44e-05</td>
+<td style="text-align: left;">ok</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(eqtl_mr_grid) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(eqtl_mr_grid, <span class="fu">aes</span>(<span class="at">x =</span> beta, <span class="at">y =</span> tissue, <span class="at">colour =</span> outcome)) <span class="sc">+</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> ci_lower, <span class="at">xmax =</span> ci_upper),</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>                    <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> color_scheme, <span class="at">name =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">title =</span> <span class="st">"HMGCR expression → serum calcium and heel BMD, by tissue"</span>,</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"Expected: ↑HMGCR expression → ↑calcium, ↓BMD (recapitulating the cholesterol cis-MR)"</span>,</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>         <span class="at">x =</span> <span class="st">"Effect on outcome per unit HMGCR expression"</span>, <span class="at">y =</span> <span class="cn">NULL</span>) <span class="sc">+</span></span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">legend.position =</span> <span class="st">"top"</span>)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="hmgcr_eqtl_mvmr_files/figure-html/grid-plot-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+<hr>
+</section>
+<section id="colocalization-is-it-really-hmgcr-gene-confirmation" class="level2">
+<h2 class="anchored" data-anchor-id="colocalization-is-it-really-hmgcr-gene-confirmation">Colocalization — is it really HMGCR? (gene confirmation)</h2>
+<p>For each tissue with regional eQTL stats plus the regional outcome stats, test whether the two signals share a causal variant (coloc H4) vs distinct signals (H3 = pleiotropy). H4 confirms the phenotype effect is transmitted through HMGCR expression. Runs only if the <code>coloc</code> package is installed and regional stats are available; skipped gracefully otherwise.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># coloc needs the FULL regional distribution (not just significant SNPs) over a</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># wide-ish window. Use ±500 kb.</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>COLOC_REGION_HG19 <span class="ot">&lt;-</span> <span class="st">"5:74132993-75157941"</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>COLOC_REGION_HG38 <span class="ot">&lt;-</span> <span class="st">"5:74836294-75862104"</span>   <span class="co"># verify before trusting hg38 arms</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Regional eQTL stats for coloc, in order of preference:</span></span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a><span class="co">#  1. a LOCAL full-region file  raw_data/eqtl/regions/&lt;tissue-slug&gt;.tsv</span></span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="co">#     (columns: SNP, beta, se, eaf) — best, because the OpenGWAS eQTLGen record is</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="co">#     significant-cis only and too sparse for a stable coloc. Get the full region</span></span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="co">#     by tabix-ing the HMGCR locus from the eQTL Catalogue (eQTLGen/GTEx/BLUEPRINT)</span></span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a><span class="co">#     or from the eQTLGen full cis download.</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a><span class="co">#  2. else the OpenGWAS / catalogue / local instrument source, region-queried.</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>eqtl_region_stats <span class="ot">&lt;-</span> <span class="cf">function</span>(row, region) {</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  slug <span class="ot">&lt;-</span> <span class="fu">gsub</span>(<span class="st">"[^A-Za-z0-9]+"</span>, <span class="st">"_"</span>, row<span class="sc">$</span>tissue)</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  fp   <span class="ot">&lt;-</span> <span class="fu">file.path</span>(<span class="st">"raw_data/eqtl/regions"</span>, <span class="fu">paste0</span>(slug, <span class="st">".tsv"</span>))</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(fp)) {</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(readr<span class="sc">::</span><span class="fu">read_tsv</span>(fp, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>             <span class="fu">transmute</span>(<span class="at">rsid =</span> SNP, beta, se, eaf))</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb7-20"><a href="#cb7-20" aria-hidden="true" tabindex="-1"></a>  raw <span class="ot">&lt;-</span> <span class="cf">switch</span>(row<span class="sc">$</span>source,</span>
+<span id="cb7-21"><a href="#cb7-21" aria-hidden="true" tabindex="-1"></a>                <span class="at">opengwas  =</span> <span class="fu">fetch_opengwas</span>(row<span class="sc">$</span>id_or_path, region),</span>
+<span id="cb7-22"><a href="#cb7-22" aria-hidden="true" tabindex="-1"></a>                <span class="at">catalogue =</span> <span class="fu">fetch_catalogue</span>(row<span class="sc">$</span>id_or_path),</span>
+<span id="cb7-23"><a href="#cb7-23" aria-hidden="true" tabindex="-1"></a>                <span class="at">local     =</span> <span class="fu">fetch_local</span>(row<span class="sc">$</span>id_or_path),</span>
+<span id="cb7-24"><a href="#cb7-24" aria-hidden="true" tabindex="-1"></a>                <span class="cn">NULL</span>)</span>
+<span id="cb7-25"><a href="#cb7-25" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(raw) <span class="sc">||</span> <span class="fu">nrow</span>(raw) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb7-26"><a href="#cb7-26" aria-hidden="true" tabindex="-1"></a>  raw <span class="sc">%&gt;%</span> <span class="fu">transmute</span>(rsid, beta, se, eaf)</span>
+<span id="cb7-27"><a href="#cb7-27" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-28"><a href="#cb7-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-29"><a href="#cb7-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Always returns a diagnostic row (n SNPs at each step + a note), so a skip is</span></span>
+<span id="cb7-30"><a href="#cb7-30" aria-hidden="true" tabindex="-1"></a><span class="co"># visible in the rendered table instead of vanishing to stderr.</span></span>
+<span id="cb7-31"><a href="#cb7-31" aria-hidden="true" tabindex="-1"></a>run_coloc_pair <span class="ot">&lt;-</span> <span class="cf">function</span>(eqtl_reg, outcome_id, region, tissue, outcome_label, <span class="at">eqtl_N =</span> <span class="dv">31684</span>) {</span>
+<span id="cb7-32"><a href="#cb7-32" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">tissue =</span> tissue, <span class="at">outcome =</span> outcome_label,</span>
+<span id="cb7-33"><a href="#cb7-33" aria-hidden="true" tabindex="-1"></a>                 <span class="at">n_eqtl =</span> <span class="fu">nrow</span>(eqtl_reg), <span class="at">n_outcome =</span> <span class="cn">NA_integer_</span>, <span class="at">n_matched =</span> <span class="cn">NA_integer_</span>,</span>
+<span id="cb7-34"><a href="#cb7-34" aria-hidden="true" tabindex="-1"></a>                 <span class="at">H3 =</span> <span class="cn">NA_real_</span>, <span class="at">H4 =</span> <span class="cn">NA_real_</span>, <span class="at">note =</span> <span class="cn">NA_character_</span>)</span>
+<span id="cb7-35"><a href="#cb7-35" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">requireNamespace</span>(<span class="st">"coloc"</span>, <span class="at">quietly =</span> <span class="cn">TRUE</span>)) <span class="fu">return</span>(base <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">note =</span> <span class="st">"coloc not installed"</span>))</span>
+<span id="cb7-36"><a href="#cb7-36" aria-hidden="true" tabindex="-1"></a>  out_reg <span class="ot">&lt;-</span> <span class="fu">fetch_opengwas</span>(outcome_id, region)</span>
+<span id="cb7-37"><a href="#cb7-37" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(out_reg) <span class="sc">||</span> <span class="fu">nrow</span>(out_reg) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">return</span>(base <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">note =</span> <span class="st">"no outcome region SNPs"</span>))</span>
+<span id="cb7-38"><a href="#cb7-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-39"><a href="#cb7-39" aria-hidden="true" tabindex="-1"></a>  m <span class="ot">&lt;-</span> <span class="fu">inner_join</span>(</span>
+<span id="cb7-40"><a href="#cb7-40" aria-hidden="true" tabindex="-1"></a>    eqtl_reg <span class="sc">%&gt;%</span> <span class="fu">transmute</span>(rsid, <span class="at">b_e =</span> beta, <span class="at">se_e =</span> se, <span class="at">eaf_e =</span> eaf),</span>
+<span id="cb7-41"><a href="#cb7-41" aria-hidden="true" tabindex="-1"></a>    out_reg  <span class="sc">%&gt;%</span> <span class="fu">transmute</span>(rsid, <span class="at">b_o =</span> beta, <span class="at">se_o =</span> se),</span>
+<span id="cb7-42"><a href="#cb7-42" aria-hidden="true" tabindex="-1"></a>    <span class="at">by =</span> <span class="st">"rsid"</span>) <span class="sc">%&gt;%</span></span>
+<span id="cb7-43"><a href="#cb7-43" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(b_e), <span class="sc">!</span><span class="fu">is.na</span>(se_e), <span class="sc">!</span><span class="fu">is.na</span>(b_o), <span class="sc">!</span><span class="fu">is.na</span>(se_o), se_e <span class="sc">&gt;</span> <span class="dv">0</span>, se_o <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb7-44"><a href="#cb7-44" aria-hidden="true" tabindex="-1"></a>  base <span class="ot">&lt;-</span> base <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">n_outcome =</span> <span class="fu">nrow</span>(out_reg), <span class="at">n_matched =</span> <span class="fu">nrow</span>(m))</span>
+<span id="cb7-45"><a href="#cb7-45" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(m) <span class="sc">&lt;</span> <span class="dv">20</span>)</span>
+<span id="cb7-46"><a href="#cb7-46" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(base <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">note =</span> <span class="st">"too few matched SNPs — supply a full-region eQTL file (see comments)"</span>))</span>
+<span id="cb7-47"><a href="#cb7-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-48"><a href="#cb7-48" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(coloc<span class="sc">::</span><span class="fu">coloc.abf</span>(</span>
+<span id="cb7-49"><a href="#cb7-49" aria-hidden="true" tabindex="-1"></a>    <span class="at">dataset1 =</span> <span class="fu">list</span>(<span class="at">beta =</span> m<span class="sc">$</span>b_e, <span class="at">varbeta =</span> m<span class="sc">$</span>se_e<span class="sc">^</span><span class="dv">2</span>, <span class="at">snp =</span> m<span class="sc">$</span>rsid,</span>
+<span id="cb7-50"><a href="#cb7-50" aria-hidden="true" tabindex="-1"></a>                    <span class="at">type =</span> <span class="st">"quant"</span>, <span class="at">MAF =</span> <span class="fu">pmin</span>(m<span class="sc">$</span>eaf_e, <span class="dv">1</span> <span class="sc">-</span> m<span class="sc">$</span>eaf_e), <span class="at">N =</span> eqtl_N),</span>
+<span id="cb7-51"><a href="#cb7-51" aria-hidden="true" tabindex="-1"></a>    <span class="at">dataset2 =</span> <span class="fu">list</span>(<span class="at">beta =</span> m<span class="sc">$</span>b_o, <span class="at">varbeta =</span> m<span class="sc">$</span>se_o<span class="sc">^</span><span class="dv">2</span>, <span class="at">snp =</span> m<span class="sc">$</span>rsid, <span class="at">type =</span> <span class="st">"quant"</span>, <span class="at">N =</span> <span class="fl">4e5</span>)),</span>
+<span id="cb7-52"><a href="#cb7-52" aria-hidden="true" tabindex="-1"></a>    <span class="at">error =</span> <span class="cf">function</span>(e) { <span class="fu">warning</span>(<span class="st">"coloc ("</span>, tissue, <span class="st">"): "</span>, e<span class="sc">$</span>message); <span class="cn">NULL</span> })</span>
+<span id="cb7-53"><a href="#cb7-53" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(res)) <span class="fu">return</span>(base <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">note =</span> <span class="st">"coloc.abf error"</span>))</span>
+<span id="cb7-54"><a href="#cb7-54" aria-hidden="true" tabindex="-1"></a>  base <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="at">H3 =</span> res<span class="sc">$</span>summary[[<span class="st">"PP.H3.abf"</span>]], <span class="at">H4 =</span> res<span class="sc">$</span>summary[[<span class="st">"PP.H4.abf"</span>]], <span class="at">note =</span> <span class="st">"ok"</span>)</span>
+<span id="cb7-55"><a href="#cb7-55" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb7-56"><a href="#cb7-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-57"><a href="#cb7-57" aria-hidden="true" tabindex="-1"></a>coloc_grid <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map_dfr</span>(<span class="fu">names</span>(eqtl_sets), <span class="cf">function</span>(tis) {</span>
+<span id="cb7-58"><a href="#cb7-58" aria-hidden="true" tabindex="-1"></a>  row      <span class="ot">&lt;-</span> tissue_catalogue <span class="sc">%&gt;%</span> <span class="fu">filter</span>(tissue <span class="sc">==</span> tis)</span>
+<span id="cb7-59"><a href="#cb7-59" aria-hidden="true" tabindex="-1"></a>  region   <span class="ot">&lt;-</span> <span class="cf">if</span> (row<span class="sc">$</span>build <span class="sc">==</span> <span class="st">"hg19"</span>) COLOC_REGION_HG19 <span class="cf">else</span> COLOC_REGION_HG38</span>
+<span id="cb7-60"><a href="#cb7-60" aria-hidden="true" tabindex="-1"></a>  eqtl_reg <span class="ot">&lt;-</span> <span class="fu">eqtl_region_stats</span>(row, region)</span>
+<span id="cb7-61"><a href="#cb7-61" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(eqtl_reg))</span>
+<span id="cb7-62"><a href="#cb7-62" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">tissue =</span> tis, <span class="at">outcome =</span> <span class="cn">NA_character_</span>, <span class="at">n_eqtl =</span> <span class="dv">0</span>L, <span class="at">n_outcome =</span> <span class="cn">NA_integer_</span>,</span>
+<span id="cb7-63"><a href="#cb7-63" aria-hidden="true" tabindex="-1"></a>                  <span class="at">n_matched =</span> <span class="cn">NA_integer_</span>, <span class="at">H3 =</span> <span class="cn">NA_real_</span>, <span class="at">H4 =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb7-64"><a href="#cb7-64" aria-hidden="true" tabindex="-1"></a>                  <span class="at">note =</span> <span class="st">"no eQTL region stats returned"</span>))</span>
+<span id="cb7-65"><a href="#cb7-65" aria-hidden="true" tabindex="-1"></a>  purrr<span class="sc">::</span><span class="fu">map_dfr</span>(<span class="fu">seq_len</span>(<span class="fu">nrow</span>(OUTCOMES)), <span class="cf">function</span>(i)</span>
+<span id="cb7-66"><a href="#cb7-66" aria-hidden="true" tabindex="-1"></a>    <span class="fu">run_coloc_pair</span>(eqtl_reg, OUTCOMES<span class="sc">$</span>outcome_id[i], region, tis, OUTCOMES<span class="sc">$</span>outcome_label[i]))</span>
+<span id="cb7-67"><a href="#cb7-67" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb7-68"><a href="#cb7-68" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb7-69"><a href="#cb7-69" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(coloc_grid, <span class="st">"results/hmgcr_eqtl_coloc.csv"</span>)</span>
+<span id="cb7-70"><a href="#cb7-70" aria-hidden="true" tabindex="-1"></a><span class="fu">kable</span>(coloc_grid <span class="sc">%&gt;%</span> <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">c</span>(H3, H4), <span class="sc">~</span><span class="fu">round</span>(.x, <span class="dv">3</span>))),</span>
+<span id="cb7-71"><a href="#cb7-71" aria-hidden="true" tabindex="-1"></a>      <span class="at">caption =</span> <span class="st">"Coloc diagnostics &amp; results — n_eqtl / n_outcome / n_matched show where it drops out; H4 = shared causal variant. A sparse n_eqtl means OpenGWAS eQTLGen is significant-cis only → supply a full-region file."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Coloc diagnostics &amp; results — n_eqtl / n_outcome / n_matched show where it drops out; H4 = shared causal variant. A sparse n_eqtl means OpenGWAS eQTLGen is significant-cis only → supply a full-region file.</caption>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 8%">
+<col style="width: 11%">
+<col style="width: 11%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 18%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">tissue</th>
+<th style="text-align: left;">outcome</th>
+<th style="text-align: right;">n_eqtl</th>
+<th style="text-align: right;">n_outcome</th>
+<th style="text-align: right;">n_matched</th>
+<th style="text-align: right;">H3</th>
+<th style="text-align: right;">H4</th>
+<th style="text-align: left;">note</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Whole blood (eQTLGen)</td>
+<td style="text-align: left;">Serum calcium</td>
+<td style="text-align: right;">3808</td>
+<td style="text-align: right;">1592</td>
+<td style="text-align: right;">241</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">coloc.abf error</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Whole blood (eQTLGen)</td>
+<td style="text-align: left;">Heel BMD</td>
+<td style="text-align: right;">3808</td>
+<td style="text-align: right;">4533</td>
+<td style="text-align: right;">2856</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">coloc.abf error</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<hr>
+</section>
+<section id="interpretation" class="level2">
+<h2 class="anchored" data-anchor-id="interpretation">Interpretation</h2>
+<ul>
+<li><strong>HMGCR expression → BMD</strong> is significant in: Whole blood (eQTLGen) (β -0.044). Inverse (↓BMD) is the predicted sign; a whole-blood/monocyte signal supports the cell-autonomous osteoclast model.</li>
+<li><strong>HMGCR expression → calcium: could not be tested</strong> for Whole blood (eQTLGen) — instrument absent from outcome GWAS (no proxy) — NOT a null. This is a COVERAGE issue (single cis-eQTL not in the calcium GWAS), <strong>not</strong> evidence of no effect. Add proxy SNPs or a second cis instrument, or test the liver/kidney arms.</li>
+</ul>
+<p><strong>Read tissue results as suggestive</strong> (cis-eQTL sharing limits attribution); the coloc H4 above is the defensible claim that the effect is HMGCR-mediated. Signs should match the cholesterol cis-MR: ↑HMGCR → ↑calcium, ↓BMD.</p>
+<p><strong>Caveats.</strong> (1) Tissue attribution is limited by cross-tissue eQTL sharing — treat the ranking as exploratory. (2) Blood/monocyte proxies the osteoclast (myeloid) lineage but <strong>not</strong> osteoblasts. (3) GTEx kidney/liver eQTLs have small n → weak instruments; a dedicated kidney-tubule eQTL resource would be better for the renal question. (4) GTEx v8 is GRCh38 — harmonise builds (liftover or rsID) before trusting the GTEx arms; the eQTLGen arm is hg19 and matches the outcomes directly. (5) Single cis-eQTLs give Wald-ratio estimates with no pleiotropy test — lean on coloc.</p>
+<hr>
+</section>
+<section id="session-info" class="level2">
+<h2 class="anchored" data-anchor-id="session-info">Session info</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Tahoe 26.5.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Detroit
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] kableExtra_1.4.0  ieugwasr_1.1.0    TwoSampleMR_0.7.5 knitr_1.51       
+ [5] lubridate_1.9.5   forcats_1.0.1     stringr_1.6.0     dplyr_1.2.1      
+ [9] purrr_1.2.2       readr_2.2.0       tidyr_1.3.2       tibble_3.3.1     
+[13] ggplot2_4.0.3     tidyverse_2.0.0  
+
+loaded via a namespace (and not attached):
+ [1] generics_0.1.4     xml2_1.6.0         stringi_1.8.7      hms_1.1.4         
+ [5] digest_0.6.39      magrittr_2.0.5     evaluate_1.0.5     grid_4.6.1        
+ [9] timechange_0.4.0   RColorBrewer_1.1-3 fastmap_1.2.0      jsonlite_2.0.0    
+[13] viridisLite_0.4.3  scales_1.4.0       textshaping_1.0.5  cli_3.6.6         
+[17] rlang_1.2.0        withr_3.0.3        yaml_2.3.12        otel_0.2.0        
+[21] tools_4.6.1        tzdb_0.5.0         vctrs_0.7.3        R6_2.6.1          
+[25] lifecycle_1.0.5    htmlwidgets_1.6.4  pkgconfig_2.0.3    pillar_1.11.1     
+[29] gtable_0.3.6       glue_1.8.1         data.table_1.18.4  systemfonts_1.3.2 
+[33] xfun_0.59          tidyselect_1.2.1   rstudioapi_0.19.0  farver_2.1.2      
+[37] htmltools_0.5.9    rmarkdown_2.31     svglite_2.2.2      labeling_0.4.3    
+[41] compiler_4.6.1     S7_0.2.2          </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

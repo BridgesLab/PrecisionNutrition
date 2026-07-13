@@ -114,6 +114,36 @@ phosphate rules out PTH (would drop PO₄), vitamin-D/absorption and bone resorp
 (would raise PO₄). Combined with the bone-density null, everything converges on a
 **calcium-specific, plausibly renal (tubular handling)** mechanism.
 
+### 7. HMGCR expression → BMD (blood eQTL) — one solid result; total-expression MR otherwise not viable
+_Script: `hmgcr_eqtl_mvmr.qmd`. Thread stopped here by design (see limitation)._
+
+- **HMGCR expression (whole blood, eQTLGen) → heel BMD: β = −0.044, se = 0.011,
+  p = 4.4e-5** (single cis-eQTL rs6453133, F = 224, Wald ratio). Direction is as
+  predicted (↑HMGCR expression → ↓BMD, matching the cholesterol cis-MR of −0.115).
+- Because whole blood proxies the **myeloid/osteoclast lineage**, this supports the
+  **cell-autonomous osteoclast model** (mevalonate → GGPP prenylation in the
+  osteoclast precursor) — a solid, correctly-signed, well-instrumented result.
+
+**Limitation — why total-expression eQTL MR is not the tool for HMGCR (thread closed):**
+- The **functional HMGCR variants are null for total mRNA** in GTEx: rs3846662
+  (exon-13 splice variant) p = 0.78 (blood) / 0.93 (liver); rs12916 p ≈ 0.46;
+  rs6453133 p ≈ 0.65. **HMGCR is regulated by *splicing*, not expression level**, so
+  a gene-expression (`ge`) eQTL is blind to the causal mechanism.
+- GTEx per-tissue power is far too low regardless (best HMGCR `ge` p ≈ 1e-3;
+  kidney n = 73), so the multi-tissue calcium/kidney/liver screen and colocalization
+  cannot run.
+- The eQTLGen blood signal exists only because n ≈ 31k detects a tiny total-
+  expression effect; its lead (rs6453133) is multiallelic and was dropped by the
+  calcium GWAS's biallelic QC, so **blood → calcium could not be tested**.
+
+**Future avenues (if ever revisited):** (a) **HMGCR splice-QTL** (eQTL Catalogue
+`leafcutter`/`txrev`; the rs3846662 exon-13 event) — the functionally correct,
+strong, biallelic exposure; (b) eQTLGen-full blood `ge` for a well-powered (if
+biologically small) total-expression instrument that dodges the multiallelic SNP.
+Neither is critical: the **drug-target cis-MR already provides a valid HMGCR
+instrument** (rs3846662/rs12916), so tissue-of-action is the only thing the eQTL
+route would add — and that is limited by cis-eQTL sharing across tissues anyway.
+
 ---
 
 ## Key numbers at a glance
@@ -134,6 +164,8 @@ phosphate rules out PTH (would drop PO₄), vitamin-D/absorption and bone resorp
 | HMGCR → calcium \| albumin | 0.207 | — | 112 % → not artefact |
 | HMGCR → phosphate | 0.027 | 0.15 | flat → calcium-specific |
 | PTH → calcium | — | — | untestable (no cis instrument) |
+| **HMGCR expression (blood eQTL) → BMD** | **−0.044** | 4.4e-5 | solid; ↓BMD, osteoclast-lineage |
+| HMGCR expression (blood eQTL) → calcium | — | — | untestable (multiallelic lead absent from calcium GWAS) |
 
 ---
 
@@ -156,6 +188,11 @@ phosphate rules out PTH (would drop PO₄), vitamin-D/absorption and bone resorp
   and colocalization instead of Egger/PRESSO when only 1 SNP is available.
 - **Batch OpenGWAS `associations()` queries** (~100 variants) — a long variant list
   is silently truncated, which once collapsed an MVMR union from 528 → 80 SNPs.
+- **Check the molecular phenotype before an expression-eQTL MR.** HMGCR is
+  regulated by *splicing*, so its functional variants (rs3846662, rs12916) are null
+  for total mRNA (`ge`) — a gene-expression eQTL MR is blind to it. Use the QTL
+  type that matches the biology (sQTL/txrev here), and don't rely on GTEx for a
+  gene whose per-tissue eQTL is weak (small n; best HMGCR `ge` p ≈ 1e-3).
 
 ---
 
@@ -169,7 +206,7 @@ phosphate rules out PTH (would drop PO₄), vitamin-D/absorption and bone resorp
 | **HDL-C / triglyceride associations** | not started | From `TODO.md`. |
 | **PCSK9 pQTL MR (UKB-PPP)** | not started | From `TODO.md` — strengthen the PCSK9-null leg with protein-level instruments. |
 | **Colocalization of HMGCR signals (LDL-C / BMD / eQTL)** | not started | From `TODO.md` — H4 vs H3 to defend cis-instrument validity. |
-| **HMGCR eQTL-based MVMR across tissues** | stub only | `mvmr_analyses.qmd` Part 4 is a guarded stub pending eQTL summary stats. |
+| **HMGCR eQTL-based MR across tissues** | **CLOSED — limitation recorded** (`hmgcr_eqtl_mvmr.qmd`, evidence-chain §7) | Kept the one solid result (blood eQTL → BMD). Total-expression eQTL MR not viable for HMGCR (splice-regulated; functional variants null for `ge`; GTEx underpowered). Reopen only via splice-QTL (`leafcutter`/rs3846662) or eQTLGen-full — not critical since the drug-target cis-MR already gives a valid HMGCR instrument. |
 | **Sample-overlap correction method** | not decided | From `TODO.md`. |
 
 ---
@@ -197,3 +234,13 @@ See `README.md` for execution order, datasets, and software/reproducibility note
   mediator second-leg screen, and albumin/phosphate outcome-robustness checks:
   bone-density mediation and albumin artefact excluded; phosphate flat; mechanism
   narrowed to calcium-specific / renal. PTH untested; renal test is the next step.
+- **2026-07-11** — Scaffolded `hmgcr_eqtl_mvmr.qmd`: multi-tissue HMGCR
+  expression → calcium & BMD eQTL MR + colocalization, including a monocyte /
+  whole-blood osteoclast-lineage proxy (bone/marrow eQTL is absent from GTEx).
+  Runs for eQTLGen whole blood; awaits GTEx/BLUEPRINT accessions or local files.
+- **2026-07-13** — **Closed the eQTL thread** (evidence-chain §7). Kept the solid
+  result: HMGCR expression (blood) → BMD, β = −0.044, p = 4.4e-5, correct sign,
+  osteoclast-lineage. Recorded the limitation: HMGCR is splice-regulated, so
+  total-expression (`ge`) eQTL MR is not viable (functional variants null for `ge`;
+  GTEx underpowered; eQTLGen lead multiallelic & absent from the calcium GWAS).
+  Future avenues noted (splice-QTL / eQTLGen-full); not critical.

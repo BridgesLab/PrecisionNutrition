@@ -1,0 +1,338 @@
+---
+title: "Layer 4e — Sample overlap (Task C) + index-event/selection correction (Task D)"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(TwoSampleMR)
+library(ieugwasr)
+library(SlopeHunter)
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+
+    ______                        __   __
+   / ____/__    ____  _________  / /  / /_  ____   __________________
+  / /__  / /   / _  \/ _  / __/ / /__/ / / / / \  / /_  __/ ___/ _  /
+  \___ \/ /   / / / / ___/ /_  /  __  / / / / / \/ / / / / /_ /   _/
+ ____/ / /___/ /_/ / /  / /_  / /  / / /_/ / /  \ / / / / /__/ / \
+/_____/\____/\____/_/  /___/ /_/  /_/\____/_/  \_/ /_/ /____/_/ \_\  version
+```
+
+
+:::
+
+```{.r .cell-code}
+library(knitr)
+source(here::here("R", "helpers.R"))
+source(here::here("R", "run_taskCD.R"))
+cfg <- load_config()
+set.seed(cfg$seed)
+```
+:::
+
+
+## Task C — sample overlap (exposure ∩ outcome UK Biobank)
+
+The CPD exposure (`ieu-b-142`, GSCAN/Liu 2019) and the Bellenguez controls both draw heavily
+on **UK Biobank**, so the two-sample MR is partly one-sample — biasing the estimate toward
+the confounded observational association.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+tibble::tribble(
+  ~component, ~dataset, ~UKB_content,
+  "exposure (CPD)", "ieu-b-142 GSCAN/Liu 2019 (N=249,752)", "includes UK Biobank",
+  "outcome controls", "Bellenguez ~401,577 controls", "largely UK Biobank",
+  "outcome proxy cases", "Bellenguez ~46,828 by-proxy", "UK Biobank by-proxy") |>
+  kable(caption = "Exposure–outcome UK Biobank overlap")
+```
+
+::: {.cell-output-display}
+
+
+Table: Exposure–outcome UK Biobank overlap
+
+|component           |dataset                              |UKB_content         |
+|:-------------------|:------------------------------------|:-------------------|
+|exposure (CPD)      |ieu-b-142 GSCAN/Liu 2019 (N=249,752) |includes UK Biobank |
+|outcome controls    |Bellenguez ~401,577 controls         |largely UK Biobank  |
+|outcome proxy cases |Bellenguez ~46,828 by-proxy          |UK Biobank by-proxy |
+
+
+:::
+:::
+
+
+**No UKB-excluded CPD GWAS is reachable in OpenGWAS** — both `ieu-b-142` (N=249,752) and the
+larger `ieu-b-25` (N=337,334) GSCAN CPD releases include UK Biobank, and a published no-UKB
+CPD release is not hosted there. Per the project guardrails this is reported as a **gap**, not
+silently substituted.
+
+**The overlap is, however, broken from the *outcome* side in Task B.** The clinical-only
+outcomes **Kunkle 2019** and **Lambert 2013** contain **zero UK Biobank** and zero by-proxy
+cases, so the exposure∩outcome overlap there is negligible — and the protective effect
+**persists** (15q25 −0.136 / −0.123; pooled −0.117). So the strongest available overlap check
+is already embedded in Task B and the effect is not abolished by removing the shared UKB.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+cat("MRlap (overlap-aware correction) is installed but requires genome-wide munged summary",
+    "statistics + LD scores for both traits, which are not cached and are not bulk-retrievable",
+    "via the OpenGWAS API. It is flagged as the concrete next step (download full GSCAN CPD +",
+    "Bellenguez sumstats to data/cache/), not run here.\n")
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+MRlap (overlap-aware correction) is installed but requires genome-wide munged summary statistics + LD scores for both traits, which are not cached and are not bulk-retrievable via the OpenGWAS API. It is flagged as the concrete next step (download full GSCAN CPD + Bellenguez sumstats to data/cache/), not run here.
+```
+
+
+:::
+:::
+
+
+## Task D (LEGACY, SUPERSEDED) — original OpenGWAS-tophits run
+
+::: callout-warning
+**This section is superseded and does not execute** (`eval: false`). It is retained only as an
+audit trail of the original underpowered run (n=10 tophits), whose slope was unidentified. The
+**primary, current** Task D is the genome-wide correction in the next section.
+:::
+
+We correct the **outcome** SNP→AD effects for the survival/selection axis. The *incidence*
+(inducing) trait is **parental lifespan**; the *prognosis* trait is **AD** (Bellenguez).
+SlopeHunter estimates the selection-induced slope `b_SH`. Because IVW is linear, the corrected
+smoking→AD slope is exact:
+$$ \text{corrected}(\text{smk}\to\text{AD}) = (\text{smk}\to\text{AD}) - b_{SH}\,(\text{smk}\to\text{lifespan}). $$
+
+
+::: {.cell}
+
+```{.r .cell-code}
+d <- if (opengwas_ok()) tryCatch(run_taskD(cfg),
+              error = function(e) list(status = "failed", b_SH = NA_real_,
+                                       se_SH = NA_real_, n_snp = 0L))
+     else list(status = "offline", b_SH = NA_real_, se_SH = NA_real_, n_snp = 0L)
+if (is.null(d$b_SH)) d$b_SH <- NA_real_
+cat(sprintf("SlopeHunter slope b_SH = %.3f (SE %.3f), fitted on %s selection-axis SNPs\n",
+            d$b_SH, d$se_SH %||% NA_real_, d$n_snp %||% 0L))
+
+pooled_ad <- read_csv(here::here("results","cis_smoking_ldaware_pooled.csv"), show_col_types = FALSE) |>
+  filter(method == "LD-aware IVW")
+per15 <- read_csv(here::here("results","cis_smoking_ldaware_per_locus.csv"), show_col_types = FALSE) |>
+  filter(locus == "CHRNA5_A3_B4", method == "LD-aware IVW")
+sb <- read_csv(here::here("results","selection_battery.csv"), show_col_types = FALSE) |>
+  filter(outcome == "parental_lifespan")
+
+corr <- bind_rows(
+  apply_correction(pooled_ad$b, pooled_ad$se, sb$b[sb$set=="pooled_nAChR"],
+                   sb$se[sb$set=="pooled_nAChR"], d$b_SH, d$se_SH) |> mutate(set="pooled_nAChR", .before=1),
+  apply_correction(per15$b, per15$se, sb$b[sb$set=="15q25_CHRNA5A3B4"],
+                   sb$se[sb$set=="15q25_CHRNA5A3B4"], d$b_SH, d$se_SH) |> mutate(set="15q25_CHRNA5A3B4", .before=1))
+corr$b_SH <- d$b_SH; corr$n_SH_snp <- d$n_snp
+# Don't overwrite the verified correction with a failed (all-NA) SlopeHunter run.
+corr <- live_or_cache(corr, here::here("results","indexevent_correction.csv"), "b_corr")
+
+corr |>
+  transmute(set, b_uncorr = round(b_uncorr,3), b_corr = round(b_corr,3),
+            `corr 95% CI` = sprintf("[%.3f, %.3f]", ci_lo, ci_hi), p_corr = signif(p_corr,2)) |>
+  kable(caption = "Index-event-corrected smoking→AD (uncorrected vs corrected)")
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+log_decision("L4e", "Task D index-event-corrected nAChR→AD",
+             sprintf("pooled %.3f→%.3f; 15q25 %.3f→%.3f (b_SH=%.2f, n=%d)",
+                     corr$b_uncorr[1], corr$b_corr[1], corr$b_uncorr[2], corr$b_corr[2],
+                     d$b_SH, d$n_snp),
+             "correction attenuates the protective effect toward null — implicates survival collider")
+cat(sprintf("Corrected pooled p=%.2g; corrected 15q25 p=%.2g\n", corr$p_corr[1], corr$p_corr[2]))
+```
+:::
+
+
+## Task D (PRIMARY) — genome-wide index-event correction
+
+The OpenGWAS-tophits fit above is **superseded**. Using **full summary statistics** (Bellenguez
+GCST90027158 × Pilling GCST006697, merged on rsID, allele-aligned, palindromic dropped →
+148,162 SNPs; `plink2 --clump` r²<0.01/1Mb against 1000G EUR → **2,346 independent SNPs**), the
+SlopeHunter slope becomes tightly identified. See `R/prep_indexevent_genomewide.R` and
+`R/run_indexevent_genomewide.R`.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+fits <- read_csv(here::here("results","indexevent_slopehunter_fits.csv"), show_col_types = FALSE)
+corr_gw <- read_csv(here::here("results","indexevent_correction_genomewide.csv"), show_col_types = FALSE)
+
+fits |>
+  transmute(`SNP set` = set, n_clumped = n_snp, n_fit,
+            b_SH = round(b_SH,3), se = round(se_SH,3),
+            `95% CI` = sprintf("[%.3f, %.3f]", ci_lo, ci_hi)) |>
+  kable(caption = "SlopeHunter selection slope, genome-wide LD-clumped (2,346 SNPs)")
+```
+
+::: {.cell-output-display}
+
+
+Table: SlopeHunter selection slope, genome-wide LD-clumped (2,346 SNPs)
+
+|SNP set                       | n_clumped| n_fit|   b_SH|    se|95% CI           |
+|:-----------------------------|---------:|-----:|------:|-----:|:----------------|
+|full (incl APOE + 15q25)      |      2346|  2261| -0.863| 0.078|[-1.017, -0.709] |
+|excl_APOE (PRIMARY)           |      2335|  2250| -0.944| 0.070|[-1.081, -0.806] |
+|excl_APOE_15q25 (sensitivity) |      2333|  2248| -0.944| 0.074|[-1.089, -0.799] |
+
+
+:::
+
+```{.r .cell-code}
+corr_gw |>
+  filter(grepl("PRIMARY", slopehunter_set)) |>
+  transmute(`nAChR set` = nachr_set, b_SH = round(b_SH,3),
+            uncorrected = round(b_uncorr,3), corrected = round(b_corr,3),
+            `95% CI` = sprintf("[%.3f, %.3f]", ci_lo, ci_hi), p = signif(p_corr,2)) |>
+  kable(caption = "Index-event-corrected smoking→AD (PRIMARY fit, APOE excluded)")
+```
+
+::: {.cell-output-display}
+
+
+Table: Index-event-corrected smoking→AD (PRIMARY fit, APOE excluded)
+
+|nAChR set        |   b_SH| uncorrected| corrected|95% CI          |    p|
+|:----------------|------:|-----------:|---------:|:---------------|----:|
+|pooled_nAChR     | -0.944|      -0.129|     0.005|[-0.077, 0.086] | 0.91|
+|15q25_CHRNA5A3B4 | -0.944|      -0.105|     0.019|[-0.077, 0.114] | 0.70|
+|canonical_20snp  | -0.944|      -0.113|    -0.012|[-0.082, 0.058] | 0.73|
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Does the collider structure quantitatively predict the observed effect, at every level?
+b_SH <- fits$b_SH[grepl("PRIMARY", fits$set)]
+sb <- read_csv(here::here("results","selection_battery.csv"), show_col_types = FALSE) |>
+  filter(outcome == "parental_lifespan")
+# canonical 20-SNP X->S arm computed from the local Pilling sumstats (see chunk in text)
+xs20 <- readRDS(here::here("data","cache","canonical20_smk_lifespan.rds"))
+
+xs  <- c(xs20$b, sb$b[sb$set == "pooled_nAChR"], sb$b[sb$set == "15q25_CHRNA5A3B4"])
+obs <- c(-0.113, -0.129, -0.105)
+tibble::tibble(
+  set = c("canonical_20snp", "pooled_nAChR", "15q25_CHRNA5A3B4"),
+  `smk→lifespan (X→S)` = xs,
+  `predicted induced effect` = b_SH * xs,
+  `observed uncorrected` = obs,
+  `% of signal explained` = round(100 * (b_SH * xs) / obs)) |>
+  mutate(across(where(is.numeric), ~round(.x, 4))) |>
+  kable(caption = "Coherence: does b_SH × (smk→lifespan) reproduce the observed effect?")
+```
+
+::: {.cell-output-display}
+
+
+Table: Coherence: does b_SH × (smk→lifespan) reproduce the observed effect?
+
+|set              | smk→lifespan (X→S)| predicted induced effect| observed uncorrected| % of signal explained|
+|:----------------|------------------:|------------------------:|--------------------:|---------------------:|
+|canonical_20snp  |             0.1067|                  -0.1007|               -0.113|                    89|
+|pooled_nAChR     |             0.1416|                  -0.1336|               -0.129|                   104|
+|15q25_CHRNA5A3B4 |             0.1304|                  -0.1231|               -0.105|                   117|
+
+
+:::
+:::
+
+
+::: callout-important
+**Task D verdict, revised.** With the correction properly identified (b_SH = −0.944, 95% CI
+[−1.081, −0.806]), the protective effect is **abolished**: pooled −0.129 → **+0.005 (p=0.91)**,
+15q25 −0.105 → **+0.019 (p=0.70)**. Robust to pruning method (distance-pruned replicate
+−0.876) and to exclusions — removing APOE *strengthens* the slope, removing 15q25 changes
+nothing, so **the earlier "APOE/circularity contamination" diagnosis is retracted**: the n=10
+failure was purely a power problem. The collider structure also *quantitatively* predicts the
+signal (−0.134 predicted vs −0.129 observed). **Residual limitation:** the correction cannot
+separate collider-induced association from a genuine effect collinear with the mortality axis,
+so this is strong evidence, not proof.
+:::
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# LEGACY (superseded by the genome-wide fit above) — retained for the audit trail.
+# The SlopeHunter slope is unidentified with reachable data. The fitting set (~10-11 lifespan
+# tophits) includes APOE (rs429358) — a GENUINE AD-longevity pleiotropic locus, not a collider
+# — and a 15q25 SNP, which is circular (it is the locus under test). Dropping both:
+#   b_SH: -0.783 (full) -> -0.758 (clean), but 95% CI widens to [-1.79, +0.27], INCLUDING 0.
+# So the corrected estimate ranges from "abolished" (at b_SH=-0.78) to "unchanged" (at b_SH=0).
+tibble::tribble(
+  ~b_SH_scenario,            ~pooled_corrected, ~`15q25_corrected`,
+  "point (-0.78, incl APOE)",  -0.018,            -0.002,
+  "clean (-0.76, no APOE/15q25)", -0.022,         -0.006,
+  "b_SH = 0 (within CI)",      -0.129,            -0.105) |>
+  knitr::kable(caption = "Corrected nAChR→AD across the b_SH confidence range (D is unidentified)")
+```
+:::
+
+
+::: callout-note
+**Audit trail of the legacy reading (superseded).** The n=10 run was interpreted as
+"inconclusive — slope unidentified", diagnosing APOE/circularity contamination. The genome-wide
+redo shows that diagnosis was **wrong**: excluding APOE *strengthens* the slope
+(−0.863 → −0.944) and excluding 15q25 changes it by <0.001. The n=10 failure was purely a
+**power** problem, and the original point estimate (−0.78) was close to the identified value
+(−0.944). Both the original reading and its retraction are recorded here deliberately; the
+current conclusion is in the PRIMARY section above and in `SUMMARY.md`.
+:::
+
+## Where this leaves the project
+
+Task D is now the decisive result in the selection battery, and it points to a collider. Task B
+(persistence in clinical-only AD) remains valid but is **narrower than it first read** — it
+excludes the *proxy-ascertainment* channel only, and says nothing about survival-to-diagnosis
+selection, which operates in clinical cohorts too. Consequently:
+
+- The protective smoking/nAChR→AD effect **should not be treated as a causal, druggable signal.**
+- The **brain eQTL/pQTL expansion (Layer 3) is gated**, not cancelled — see APPROACH.md §14.
+- The single decisive next test is an **incident / younger-onset AD** outcome, which does not
+  condition on survival to diagnosis age.

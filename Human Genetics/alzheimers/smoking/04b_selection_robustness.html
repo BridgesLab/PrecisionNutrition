@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.37">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges and Katie Kittell">
+<meta name="dcterms.date" content="2026-06-21">
+
+<title>Layer 4b — Locus-resolved selection negative-control battery (Task A)</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="04b_selection_robustness_files/libs/clipboard/clipboard.min.js"></script>
+<script src="04b_selection_robustness_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="04b_selection_robustness_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="04b_selection_robustness_files/libs/quarto-html/popper.min.js"></script>
+<script src="04b_selection_robustness_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="04b_selection_robustness_files/libs/quarto-html/anchor.min.js"></script>
+<link href="04b_selection_robustness_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="04b_selection_robustness_files/libs/quarto-html/quarto-syntax-highlighting-7f8f88aac4f3542376d5c11b86a4c14d.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="04b_selection_robustness_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="04b_selection_robustness_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="04b_selection_robustness_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#instrument-sets-cached-fixed-l6" id="toc-instrument-sets-cached-fixed-l6" class="nav-link" data-scroll-target="#instrument-sets-cached-fixed-l6">Instrument sets (cached, fixed = L6)</a></li>
+  <li><a href="#part-1-xs-arm-do-the-nachr-instruments-engage-the-selection-axis-ld-aware-ivw-tost" id="toc-part-1-xs-arm-do-the-nachr-instruments-engage-the-selection-axis-ld-aware-ivw-tost" class="nav-link" data-scroll-target="#part-1-xs-arm-do-the-nachr-instruments-engage-the-selection-axis-ld-aware-ivw-tost">Part 1 — X→S arm: do the nAChR instruments engage the selection axis? (LD-aware IVW + TOST)</a></li>
+  <li><a href="#acceptance-which-loci-are-selection-clean" id="toc-acceptance-which-loci-are-selection-clean" class="nav-link" data-scroll-target="#acceptance-which-loci-are-selection-clean">Acceptance: which loci are selection-clean?</a></li>
+  <li><a href="#decision" id="toc-decision" class="nav-link" data-scroll-target="#decision">Decision</a></li>
+  <li><a href="#part-2-ys-arm-does-ad-liability-feed-the-survival-node" id="toc-part-2-ys-arm-does-ad-liability-feed-the-survival-node" class="nav-link" data-scroll-target="#part-2-ys-arm-does-ad-liability-feed-the-survival-node">Part 2 — Y→S arm: does AD liability feed the survival node?</a></li>
+  </ul>
+</nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Layer 4b — Locus-resolved selection negative-control battery (Task A)</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges and Katie Kittell </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">June 21, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(TwoSampleMR)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ieugwasr)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(MendelianRandomization)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(knitr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"helpers.R"</span>))</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"R"</span>, <span class="st">"run_taskA.R"</span>))</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>cfg <span class="ot">&lt;-</span> <span class="fu">load_config</span>()</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(cfg<span class="sc">$</span>seed)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>The existing Layer 4 selection check was run only on <strong>CHRNB2</strong> — a locus that contributes ≈null to the smoking→AD effect. The clean locus was tested; the <em>effect-driving</em> locus (<strong>15q25 CHRNA5/A3/B4</strong>, the canonical lung-cancer / COPD / shortened-lifespan locus) was not. This layer tests the effect-driving instruments against the <strong>selection / survival axis</strong>: if the protective AD signal is a survival-collider artefact, the 15q25 instruments should associate with parental lifespan / lung cancer / COPD.</p>
+<p>The test is a <strong>formal equivalence test</strong> (TOST), not a null-significance test. A locus is declared <em>selection-clean</em> only when the 95% CI of its instrument→selection-outcome effect lies entirely within the pre-registered bound ±δ (δ = 0.02, sensitivity 0.05; APPROACH.md §13), simultaneously for <strong>parental lifespan AND lung cancer AND COPD</strong>. A wide CI that merely covers zero is <em>inconclusive</em>, never clean.</p>
+<p>Instruments are the <strong>fixed L6 relaxed-cis sets</strong> (15q25 = 31 SNPs, CHRNA4 = 4, CHRNB2 = 2, CHRNA6/B3 = 6, pooled = 43), cached under <code>data/cache/instr_*.rds</code>, so the same instruments that produced the protective AD estimate are the ones tested here.</p>
+<p>A survival/selection collider needs arrows into the “survived-to-be-sampled” node from <strong>both</strong> ends of the smoking–AD relation: <strong>X→S</strong> (the smoking/nAChR instruments affect survival) and <strong>Y→S</strong> (AD liability affects survival). Part 1 below tests the <strong>X→S</strong> arm (locus-resolved); Part 2 tests the <strong>Y→S</strong> arm (AD liability → mortality). The collider’s <em>necessary</em> precondition holds only if both arms are present.</p>
+</section>
+<section id="instrument-sets-cached-fixed-l6" class="level2">
+<h2 class="anchored" data-anchor-id="instrument-sets-cached-fixed-l6">Instrument sets (cached, fixed = L6)</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>loci <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"CHRNA5_A3_B4"</span>,<span class="st">"CHRNA4"</span>,<span class="st">"CHRNB2"</span>,<span class="st">"CHRNA6_B3"</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (L <span class="cf">in</span> loci) <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>,<span class="st">"cache"</span>,<span class="fu">paste0</span>(<span class="st">"instr_"</span>,L,<span class="st">".rds"</span>))))</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">get_locus_instruments</span>(L, cfg, <span class="at">refresh =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>pooled_f <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>,<span class="st">"cache"</span>,<span class="st">"instr_pooled_nAChR.rds"</span>)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(pooled_f)) {</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>  pooled <span class="ot">&lt;-</span> purrr<span class="sc">::</span><span class="fu">map_dfr</span>(loci, <span class="cf">function</span>(L) <span class="fu">get_locus_instruments</span>(L, cfg)) <span class="sc">|&gt;</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    dplyr<span class="sc">::</span><span class="fu">distinct</span>(SNP, <span class="at">.keep_all =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">saveRDS</span>(pooled, pooled_f)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="at">set =</span> <span class="fu">c</span>(<span class="st">"15q25_CHRNA5A3B4"</span>,<span class="st">"CHRNA4"</span>,<span class="st">"CHRNB2"</span>,<span class="st">"CHRNA6B3"</span>,<span class="st">"pooled_nAChR"</span>),</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_snp =</span> <span class="fu">c</span>(<span class="fu">nrow</span>(<span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>,<span class="st">"cache"</span>,<span class="st">"instr_CHRNA5_A3_B4.rds"</span>))),</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nrow</span>(<span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>,<span class="st">"cache"</span>,<span class="st">"instr_CHRNA4.rds"</span>))),</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nrow</span>(<span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>,<span class="st">"cache"</span>,<span class="st">"instr_CHRNB2.rds"</span>))),</span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nrow</span>(<span class="fu">readRDS</span>(here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"data"</span>,<span class="st">"cache"</span>,<span class="st">"instr_CHRNA6_B3.rds"</span>))),</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>            <span class="fu">nrow</span>(<span class="fu">readRDS</span>(pooled_f)))) <span class="sc">|&gt;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Fixed nAChR instrument sets (= Layer 6 relaxed cis)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Fixed nAChR instrument sets (= Layer 6 relaxed cis)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">set</th>
+<th style="text-align: right;">n_snp</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">15q25_CHRNA5A3B4</td>
+<td style="text-align: right;">31</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA4</td>
+<td style="text-align: right;">4</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNB2</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA6B3</td>
+<td style="text-align: right;">6</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pooled_nAChR</td>
+<td style="text-align: right;">43</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="part-1-xs-arm-do-the-nachr-instruments-engage-the-selection-axis-ld-aware-ivw-tost" class="level2">
+<h2 class="anchored" data-anchor-id="part-1-xs-arm-do-the-nachr-instruments-engage-the-selection-axis-ld-aware-ivw-tost">Part 1 — X→S arm: do the nAChR instruments engage the selection axis? (LD-aware IVW + TOST)</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Try a live LD-aware pull; if OpenGWAS is unreachable (token/quota) and the live result is</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="co"># empty, fall back to the verified result CSV from the original run so the doc still compiles</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a><span class="co"># with real numbers rather than crashing downstream plots.</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>cache_csv <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"results"</span>, <span class="st">"selection_battery.csv"</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>live <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">opengwas_ok</span>()) <span class="fu">tryCatch</span>(<span class="fu">run_taskA</span>(cfg, <span class="at">delta_primary =</span> <span class="fl">0.02</span>, <span class="at">delta_sens =</span> <span class="fl">0.05</span>),</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>                                    <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>) <span class="cf">else</span> <span class="cn">NULL</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Method requires data on &gt;2 variants.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Method requires data on &gt;2 variants.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Method requires data on &gt;2 variants.</code></pre>
+</div>
+<div class="cell-output cell-output-stdout">
+<pre><code>Method requires data on &gt;2 variants.</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>res <span class="ot">&lt;-</span> <span class="fu">live_or_cache</span>(live, cache_csv, <span class="st">"b"</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="sc">!</span><span class="fu">is.null</span>(res), <span class="fu">nrow</span>(res) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>res <span class="sc">|&gt;</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(set, outcome, scale, ukb, <span class="at">n =</span> nsnp, <span class="at">b =</span> <span class="fu">round</span>(b,<span class="dv">3</span>), <span class="at">se =</span> <span class="fu">round</span>(se,<span class="dv">3</span>),</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>            <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">"[%.3f, %.3f]"</span>, ci_lo, ci_hi),</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>            <span class="at">p_assoc =</span> <span class="fu">signif</span>(p_assoc,<span class="dv">2</span>),</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>            <span class="st">`</span><span class="at">δ=0.02</span><span class="st">`</span> <span class="ot">=</span> verdict_d02, <span class="st">`</span><span class="at">δ=0.05</span><span class="st">`</span> <span class="ot">=</span> verdict_d05) <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Task A: nAChR instruments vs the selection/survival axis"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Task A: nAChR instruments vs the selection/survival axis</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 15%">
+<col style="width: 7%">
+<col style="width: 5%">
+<col style="width: 2%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 14%">
+<col style="width: 6%">
+<col style="width: 11%">
+<col style="width: 11%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">set</th>
+<th style="text-align: left;">outcome</th>
+<th style="text-align: left;">scale</th>
+<th style="text-align: left;">ukb</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">p_assoc</th>
+<th style="text-align: left;">δ=0.02</th>
+<th style="text-align: left;">δ=0.05</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">15q25_CHRNA5A3B4</td>
+<td style="text-align: left;">parental_lifespan</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">0.130</td>
+<td style="text-align: right;">0.014</td>
+<td style="text-align: left;">[0.104, 0.157]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">15q25_CHRNA5A3B4</td>
+<td style="text-align: left;">lung_cancer</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">26</td>
+<td style="text-align: right;">1.362</td>
+<td style="text-align: right;">0.090</td>
+<td style="text-align: left;">[1.185, 1.539]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">15q25_CHRNA5A3B4</td>
+<td style="text-align: left;">COPD_FEV1FVC</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">31</td>
+<td style="text-align: right;">-0.084</td>
+<td style="text-align: right;">0.013</td>
+<td style="text-align: left;">[-0.109, -0.059]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">15q25_CHRNA5A3B4</td>
+<td style="text-align: left;">CAD</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: right;">-0.064</td>
+<td style="text-align: right;">0.068</td>
+<td style="text-align: left;">[-0.197, 0.069]</td>
+<td style="text-align: right;">3.4e-01</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">inconclusive</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNA4</td>
+<td style="text-align: left;">parental_lifespan</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.253</td>
+<td style="text-align: right;">0.042</td>
+<td style="text-align: left;">[0.171, 0.335]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA4</td>
+<td style="text-align: left;">lung_cancer</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">1.387</td>
+<td style="text-align: right;">0.353</td>
+<td style="text-align: left;">[0.696, 2.079]</td>
+<td style="text-align: right;">8.5e-05</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNA4</td>
+<td style="text-align: left;">COPD_FEV1FVC</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-0.164</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: left;">[-0.256, -0.073]</td>
+<td style="text-align: right;">4.1e-04</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA4</td>
+<td style="text-align: left;">CAD</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">0.527</td>
+<td style="text-align: right;">0.210</td>
+<td style="text-align: left;">[0.116, 0.938]</td>
+<td style="text-align: right;">1.2e-02</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNB2</td>
+<td style="text-align: left;">parental_lifespan</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.101</td>
+<td style="text-align: right;">0.054</td>
+<td style="text-align: left;">[-0.005, 0.207]</td>
+<td style="text-align: right;">6.1e-02</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">inconclusive</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNB2</td>
+<td style="text-align: left;">lung_cancer</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">1.371</td>
+<td style="text-align: right;">0.300</td>
+<td style="text-align: left;">[0.783, 1.959]</td>
+<td style="text-align: right;">4.8e-06</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNB2</td>
+<td style="text-align: left;">COPD_FEV1FVC</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">-0.037</td>
+<td style="text-align: right;">0.058</td>
+<td style="text-align: left;">[-0.150, 0.076]</td>
+<td style="text-align: right;">5.2e-01</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">inconclusive</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNB2</td>
+<td style="text-align: left;">CAD</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">-0.203</td>
+<td style="text-align: right;">0.242</td>
+<td style="text-align: left;">[-0.677, 0.270]</td>
+<td style="text-align: right;">4.0e-01</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">inconclusive</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNA6B3</td>
+<td style="text-align: left;">parental_lifespan</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.124</td>
+<td style="text-align: right;">0.036</td>
+<td style="text-align: left;">[0.053, 0.195]</td>
+<td style="text-align: right;">6.5e-04</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA6B3</td>
+<td style="text-align: left;">lung_cancer</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.637</td>
+<td style="text-align: right;">0.197</td>
+<td style="text-align: left;">[0.251, 1.023]</td>
+<td style="text-align: right;">1.2e-03</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNA6B3</td>
+<td style="text-align: left;">COPD_FEV1FVC</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">-0.098</td>
+<td style="text-align: right;">0.038</td>
+<td style="text-align: left;">[-0.173, -0.023]</td>
+<td style="text-align: right;">1.1e-02</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA6B3</td>
+<td style="text-align: left;">CAD</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">-0.031</td>
+<td style="text-align: right;">0.152</td>
+<td style="text-align: left;">[-0.330, 0.267]</td>
+<td style="text-align: right;">8.4e-01</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">inconclusive</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pooled_nAChR</td>
+<td style="text-align: left;">parental_lifespan</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">0.142</td>
+<td style="text-align: right;">0.012</td>
+<td style="text-align: left;">[0.118, 0.166]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">pooled_nAChR</td>
+<td style="text-align: left;">lung_cancer</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: right;">1.309</td>
+<td style="text-align: right;">0.077</td>
+<td style="text-align: left;">[1.158, 1.460]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pooled_nAChR</td>
+<td style="text-align: left;">COPD_FEV1FVC</td>
+<td style="text-align: left;">SD/quant</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">43</td>
+<td style="text-align: right;">-0.091</td>
+<td style="text-align: right;">0.012</td>
+<td style="text-align: left;">[-0.113, -0.068]</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">pooled_nAChR</td>
+<td style="text-align: left;">CAD</td>
+<td style="text-align: left;">log-OR</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">41</td>
+<td style="text-align: right;">-0.040</td>
+<td style="text-align: right;">0.062</td>
+<td style="text-align: left;">[-0.160, 0.081]</td>
+<td style="text-align: right;">5.2e-01</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">inconclusive</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p><code>scale</code> flags that parental lifespan and FEV1/FVC are <strong>per-SD quantitative</strong> outcomes (the MR slope is SD-outcome per SD-CPD), whereas lung cancer and CAD are <strong>log-OR</strong>; the equivalence bound δ is applied on each outcome’s own scale. <code>ukb = TRUE</code> flags outcomes that share UK Biobank with the exposure/Bellenguez controls (relevant to overlap, Task C).</p>
+</section>
+<section id="acceptance-which-loci-are-selection-clean" class="level2">
+<h2 class="anchored" data-anchor-id="acceptance-which-loci-are-selection-clean">Acceptance: which loci are selection-clean?</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="co"># A locus is selection-clean iff equivalence (CI within +/-delta) holds for parental</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="co"># lifespan AND lung cancer AND COPD/FEV1-FVC simultaneously (APPROACH.md sec 13.3).</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>required <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"parental_lifespan"</span>,<span class="st">"lung_cancer"</span>,<span class="st">"COPD_FEV1FVC"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>clean <span class="ot">&lt;-</span> res <span class="sc">|&gt;</span></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(outcome <span class="sc">%in%</span> required) <span class="sc">|&gt;</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(set) <span class="sc">|&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="at">n_required =</span> <span class="fu">sum</span>(outcome <span class="sc">%in%</span> required <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(verdict_d02)),</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_equiv_d02 =</span> <span class="fu">sum</span>(verdict_d02 <span class="sc">==</span> <span class="st">"equiv-null"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_real =</span> <span class="fu">sum</span>(verdict_d02 <span class="sc">==</span> <span class="st">"real-assoc"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>),</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>            <span class="at">selection_clean_d02 =</span> n_equiv_d02 <span class="sc">==</span> <span class="fu">length</span>(required),</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>clean <span class="sc">|&gt;</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Selection-clean verdict per instrument set (δ=0.02)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Selection-clean verdict per instrument set (δ=0.02)</caption>
+<colgroup>
+<col style="width: 25%">
+<col style="width: 16%">
+<col style="width: 17%">
+<col style="width: 10%">
+<col style="width: 29%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">set</th>
+<th style="text-align: right;">n_required</th>
+<th style="text-align: right;">n_equiv_d02</th>
+<th style="text-align: right;">n_real</th>
+<th style="text-align: left;">selection_clean_d02</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">15q25_CHRNA5A3B4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNA4</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">CHRNA6B3</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CHRNB2</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">pooled_nAChR</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">3</td>
+<td style="text-align: left;">FALSE</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>flag15 <span class="ot">&lt;-</span> res <span class="sc">|&gt;</span> <span class="fu">filter</span>(set <span class="sc">==</span> <span class="st">"15q25_CHRNA5A3B4"</span>, outcome <span class="sc">%in%</span> required) <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(outcome, <span class="at">b =</span> <span class="fu">round</span>(b,<span class="dv">3</span>), <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">"[%.3f, %.3f]"</span>, ci_lo, ci_hi),</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>            verdict_d02, verdict_d05)</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"</span><span class="sc">\n</span><span class="st">**15q25 explicit flag** (the effect-driving locus):</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>
+**15q25 explicit flag** (the effect-driving locus):</code></pre>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>flag15 <span class="sc">|&gt;</span> <span class="fu">kable</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<thead>
+<tr class="header">
+<th style="text-align: left;">outcome</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: left;">verdict_d02</th>
+<th style="text-align: left;">verdict_d05</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">parental_lifespan</td>
+<td style="text-align: right;">0.130</td>
+<td style="text-align: left;">[0.104, 0.157]</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">lung_cancer</td>
+<td style="text-align: right;">1.362</td>
+<td style="text-align: left;">[1.185, 1.539]</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">COPD_FEV1FVC</td>
+<td style="text-align: right;">-0.084</td>
+<td style="text-align: left;">[-0.109, -0.059]</td>
+<td style="text-align: left;">real-assoc</td>
+<td style="text-align: left;">real-assoc</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>plot_df <span class="ot">&lt;-</span> res <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(b)) <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lab =</span> <span class="fu">paste0</span>(set, <span class="st">" (n="</span>, nsnp, <span class="st">")"</span>))</span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(plot_df) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"No plottable rows (selection battery returned no estimates).</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(plot_df, <span class="fu">aes</span>(<span class="at">x =</span> b, <span class="at">y =</span> outcome, <span class="at">colour =</span> verdict_d02)) <span class="sc">+</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="fu">c</span>(<span class="sc">-</span><span class="fl">0.02</span>, <span class="fl">0.02</span>), <span class="at">linetype =</span> <span class="st">"dotted"</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="st">"dashed"</span>, <span class="at">colour =</span> <span class="st">"red"</span>) <span class="sc">+</span></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="dv">2</span>) <span class="sc">+</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_errorbarh</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> ci_lo, <span class="at">xmax =</span> ci_hi), <span class="at">height =</span> <span class="fl">0.25</span>) <span class="sc">+</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span> set, <span class="at">ncol =</span> <span class="dv">1</span>) <span class="sc">+</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="st">"equiv-null"</span> <span class="ot">=</span> <span class="st">"#00274c"</span>, <span class="st">"real-assoc"</span> <span class="ot">=</span> <span class="st">"#d62728"</span>,</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>                                   <span class="st">"inconclusive"</span> <span class="ot">=</span> <span class="st">"#ffcb05"</span>), <span class="at">na.value =</span> <span class="st">"grey70"</span>) <span class="sc">+</span></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_classic</span>(<span class="at">base_size =</span> <span class="dv">12</span>) <span class="sc">+</span></span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Instrument effect on selection-axis outcome (per SD CPD)"</span>, <span class="at">y =</span> <span class="st">""</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>         <span class="at">colour =</span> <span class="st">"TOST δ=0.02"</span>, <span class="at">title =</span> <span class="st">"Task A: nAChR instruments vs selection axis"</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>         <span class="at">subtitle =</span> <span class="st">"dotted = ±δ equivalence bound; dashed red = null"</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/forest-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="decision" class="level2">
+<h2 class="anchored" data-anchor-id="decision">Decision</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>c15 <span class="ot">&lt;-</span> clean <span class="sc">|&gt;</span> <span class="fu">filter</span>(set <span class="sc">==</span> <span class="st">"15q25_CHRNA5A3B4"</span>)</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>verdict15 <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">nrow</span>(c15) <span class="sc">&amp;&amp;</span> <span class="fu">isTRUE</span>(c15<span class="sc">$</span>selection_clean_d02)) <span class="st">"equivalence-null (selection-clean)"</span> <span class="cf">else</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">any</span>(res<span class="sc">$</span>verdict_d02[res<span class="sc">$</span>set<span class="sc">==</span><span class="st">"15q25_CHRNA5A3B4"</span>] <span class="sc">==</span> <span class="st">"real-assoc"</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="st">"REAL association with selection axis"</span> <span class="cf">else</span> <span class="st">"inconclusive (CI too wide for equivalence)"</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a><span class="fu">log_decision</span>(<span class="st">"L4b"</span>, <span class="st">"15q25 instruments vs selection axis (TOST δ=0.02)"</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>             verdict15,</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>             <span class="st">"decisive for whether the effect-driving locus engages selection"</span>)</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (s <span class="cf">in</span> <span class="fu">unique</span>(clean<span class="sc">$</span>set)) {</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  cs <span class="ot">&lt;-</span> clean <span class="sc">|&gt;</span> <span class="fu">filter</span>(set <span class="sc">==</span> s)</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">log_decision</span>(<span class="st">"L4b"</span>, <span class="fu">sprintf</span>(<span class="st">"%s selection-clean (lifespan&amp;lungCa&amp;COPD, δ=0.02)"</span>, s),</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>               <span class="fu">sprintf</span>(<span class="st">"%d/%d equiv-null"</span>, cs<span class="sc">$</span>n_equiv_d02, <span class="fu">length</span>(required)),</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>               <span class="fu">ifelse</span>(<span class="fu">isTRUE</span>(cs<span class="sc">$</span>selection_clean_d02), <span class="st">"selection-clean"</span>, <span class="st">"NOT clean / inconclusive"</span>))</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a><span class="fu">cat</span>(<span class="st">"15q25 verdict:"</span>, verdict15, <span class="st">"</span><span class="sc">\n</span><span class="st">"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>15q25 verdict: REAL association with selection axis </code></pre>
+</div>
+</div>
+</section>
+<section id="part-2-ys-arm-does-ad-liability-feed-the-survival-node" class="level2">
+<h2 class="anchored" data-anchor-id="part-2-ys-arm-does-ad-liability-feed-the-survival-node">Part 2 — Y→S arm: does AD liability feed the survival node?</h2>
+<p>The X→S arm (Part 1) is only <em>half</em> the collider. For conditioning on survival/sampling to manufacture a spurious smoking–AD association, <strong>AD liability must also affect survival</strong> (the Y→S arm). We estimate it by MR with <strong>clinical</strong> AD instruments as the exposure (Kunkle <code>ieu-b-2</code> — never a proxy AD GWAS, which would be circular since proxy-AD is built on parental survival) against <strong>parental lifespan</strong>. This is an outcome-axis property, so unlike Part 1 it is <strong>not</strong> locus-resolved.</p>
+<p>APOE (rs429358) dominates AD→lifespan via genuine ApoE4 pleiotropy (→ AD <em>and</em> → shorter life) and is <strong>not</strong> in the nAChR instrument set, so we report the estimate <strong>with and without</strong> the APOE region: the non-APOE AD axis is the part relevant to whether the collider can operate at the <em>receptor</em> loci.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>yarm_csv <span class="ot">&lt;-</span> here<span class="sc">::</span><span class="fu">here</span>(<span class="st">"results"</span>, <span class="st">"collider_Yarm_AD_to_lifespan.csv"</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" aria-hidden="true" tabindex="-1"></a>live_y <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">opengwas_ok</span>()) <span class="fu">tryCatch</span>(<span class="fu">run_taskA_Yarm</span>(cfg), <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>) <span class="cf">else</span> <span class="cn">NULL</span></span>
+<span id="cb16-3"><a href="#cb16-3" aria-hidden="true" tabindex="-1"></a>yarm <span class="ot">&lt;-</span> <span class="fu">live_or_cache</span>(live_y, yarm_csv, <span class="st">"b_ivw"</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">is.null</span>(yarm)) yarm <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tibble</span>(</span>
+<span id="cb16-5"><a href="#cb16-5" aria-hidden="true" tabindex="-1"></a>  <span class="at">snp_set =</span> <span class="st">"no reachable data"</span>, <span class="at">nsnp =</span> <span class="dv">0</span>L, <span class="at">b_ivw =</span> <span class="cn">NA_real_</span>, <span class="at">se_ivw =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb16-6"><a href="#cb16-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">p_ivw =</span> <span class="cn">NA_real_</span>, <span class="at">b_wmed =</span> <span class="cn">NA_real_</span>, <span class="at">p_wmed =</span> <span class="cn">NA_real_</span>, <span class="at">ci_lo =</span> <span class="cn">NA_real_</span>, <span class="at">ci_hi =</span> <span class="cn">NA_real_</span>)</span>
+<span id="cb16-7"><a href="#cb16-7" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">all</span>(<span class="fu">is.na</span>(yarm<span class="sc">$</span>b_ivw)))</span>
+<span id="cb16-8"><a href="#cb16-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="st">"Note: Y→S arm not estimated — no clinical AD instruments reachable from OpenGWAS"</span>,</span>
+<span id="cb16-9"><a href="#cb16-9" aria-hidden="true" tabindex="-1"></a>      <span class="st">"at compile time. Re-run with a live token to populate.</span><span class="sc">\n</span><span class="st">"</span>)</span>
+<span id="cb16-10"><a href="#cb16-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb16-11"><a href="#cb16-11" aria-hidden="true" tabindex="-1"></a>yarm <span class="sc">|&gt;</span></span>
+<span id="cb16-12"><a href="#cb16-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="st">`</span><span class="at">AD instrument set</span><span class="st">`</span> <span class="ot">=</span> snp_set, <span class="at">n =</span> nsnp,</span>
+<span id="cb16-13"><a href="#cb16-13" aria-hidden="true" tabindex="-1"></a>            <span class="st">`</span><span class="at">IVW b</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(b_ivw,<span class="dv">3</span>), <span class="st">`</span><span class="at">IVW se</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(se_ivw,<span class="dv">3</span>),</span>
+<span id="cb16-14"><a href="#cb16-14" aria-hidden="true" tabindex="-1"></a>            <span class="st">`</span><span class="at">95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">sprintf</span>(<span class="st">"[%.3f, %.3f]"</span>, ci_lo, ci_hi), <span class="at">p =</span> <span class="fu">signif</span>(p_ivw,<span class="dv">2</span>),</span>
+<span id="cb16-15"><a href="#cb16-15" aria-hidden="true" tabindex="-1"></a>            <span class="st">`</span><span class="at">wtd-median b</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(b_wmed,<span class="dv">3</span>), <span class="at">p_wmed =</span> <span class="fu">signif</span>(p_wmed,<span class="dv">2</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb16-16"><a href="#cb16-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Y→S arm: AD liability (clinical AD instruments) → parental lifespan"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Y→S arm: AD liability (clinical AD instruments) → parental lifespan</caption>
+<colgroup>
+<col style="width: 30%">
+<col style="width: 3%">
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 17%">
+<col style="width: 8%">
+<col style="width: 15%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">AD instrument set</th>
+<th style="text-align: right;">n</th>
+<th style="text-align: right;">IVW b</th>
+<th style="text-align: right;">IVW se</th>
+<th style="text-align: left;">95% CI</th>
+<th style="text-align: right;">p</th>
+<th style="text-align: right;">wtd-median b</th>
+<th style="text-align: right;">p_wmed</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">all AD instruments (n=16)</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.043</td>
+<td style="text-align: right;">0.004</td>
+<td style="text-align: left;">[0.035, 0.050]</td>
+<td style="text-align: right;">0.0000</td>
+<td style="text-align: right;">0.046</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">excl APOE region (n=12)</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.007</td>
+<td style="text-align: left;">[0.007, 0.033]</td>
+<td style="text-align: right;">0.0032</td>
+<td style="text-align: right;">0.020</td>
+<td style="text-align: right;">0.024</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="callout callout-style-default callout-important callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Important
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Outcome orientation (verified, not assumed).</strong> The Pilling parental-longevity outcome is a <strong>Martingale-residual</strong> scale on which <strong>higher = SHORTER lifespan</strong> (a hazard-like coding), so a <strong>positive</strong> MR slope means <strong>life-shortening</strong>. We confirmed this against known anchors in this very dataset: the ApoE4 allele (rs429358 C — established to shorten life) has β = +0.057, and the CHRNA5 smoking-risk allele (rs16969968 A) has β = +0.025; both life-shortening alleles are positive. The Task A smoking→lifespan estimates (+0.13) carry the same meaning. Interpret all signs on this outcome accordingly.</p>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>ya <span class="ot">&lt;-</span> yarm <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"^all"</span>, snp_set))</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>yx <span class="ot">&lt;-</span> yarm <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"excl APOE"</span>, snp_set))</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(ya) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(ya<span class="sc">$</span>b_ivw)) {</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Outcome higher = shorter life, so b &gt; 0 (and p &lt; 0.05) means AD liability SHORTENS lifespan.</span></span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>  arm_all <span class="ot">&lt;-</span> ya<span class="sc">$</span>b_ivw <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> ya<span class="sc">$</span>p_ivw <span class="sc">&lt;</span> <span class="fl">0.05</span></span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>  arm_nonapoe <span class="ot">&lt;-</span> <span class="fu">nrow</span>(yx) <span class="sc">&amp;&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(yx<span class="sc">$</span>b_ivw) <span class="sc">&amp;&amp;</span> yx<span class="sc">$</span>b_ivw <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">&amp;&amp;</span> yx<span class="sc">$</span>p_ivw <span class="sc">&lt;</span> <span class="fl">0.05</span></span>
+<span id="cb17-7"><a href="#cb17-7" aria-hidden="true" tabindex="-1"></a>  dir <span class="ot">&lt;-</span> <span class="cf">if</span> (arm_all) <span class="st">"SHORTER lifespan (Y→S arm PRESENT)"</span> <span class="cf">else</span> <span class="st">"no significant shortening"</span></span>
+<span id="cb17-8"><a href="#cb17-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">log_decision</span>(<span class="st">"L4b"</span>, <span class="st">"Y→S arm: AD liability → parental lifespan (clinical instruments)"</span>,</span>
+<span id="cb17-9"><a href="#cb17-9" aria-hidden="true" tabindex="-1"></a>               <span class="fu">sprintf</span>(<span class="st">"all b=%+.3f p=%.2g; excl-APOE b=%+.3f p=%.2g (outcome: +ve = shorter life)"</span>,</span>
+<span id="cb17-10"><a href="#cb17-10" aria-hidden="true" tabindex="-1"></a>                       ya<span class="sc">$</span>b_ivw, ya<span class="sc">$</span>p_ivw,</span>
+<span id="cb17-11"><a href="#cb17-11" aria-hidden="true" tabindex="-1"></a>                       <span class="fu">ifelse</span>(<span class="fu">nrow</span>(yx), yx<span class="sc">$</span>b_ivw, <span class="cn">NA</span>), <span class="fu">ifelse</span>(<span class="fu">nrow</span>(yx), yx<span class="sc">$</span>p_ivw, <span class="cn">NA</span>)),</span>
+<span id="cb17-12"><a href="#cb17-12" aria-hidden="true" tabindex="-1"></a>               <span class="fu">sprintf</span>(<span class="st">"AD liability → %s; non-APOE arm %s — BOTH collider arms present with Part 1's X→S"</span>,</span>
+<span id="cb17-13"><a href="#cb17-13" aria-hidden="true" tabindex="-1"></a>                       dir, <span class="fu">ifelse</span>(arm_nonapoe, <span class="st">"also present"</span>, <span class="st">"null"</span>)))</span>
+<span id="cb17-14"><a href="#cb17-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">cat</span>(<span class="fu">sprintf</span>(<span class="st">"Y→S arm: AD→lifespan b=%+.3f (p=%.2g) =&gt; %s; excl-APOE b=%+.3f (p=%.2g) =&gt; %s</span><span class="sc">\n</span><span class="st">"</span>,</span>
+<span id="cb17-15"><a href="#cb17-15" aria-hidden="true" tabindex="-1"></a>              ya<span class="sc">$</span>b_ivw, ya<span class="sc">$</span>p_ivw, <span class="fu">ifelse</span>(arm_all,<span class="st">"SHORTENS life"</span>,<span class="st">"ns"</span>),</span>
+<span id="cb17-16"><a href="#cb17-16" aria-hidden="true" tabindex="-1"></a>              <span class="fu">ifelse</span>(<span class="fu">nrow</span>(yx), yx<span class="sc">$</span>b_ivw, <span class="cn">NA</span>), <span class="fu">ifelse</span>(<span class="fu">nrow</span>(yx), yx<span class="sc">$</span>p_ivw, <span class="cn">NA</span>),</span>
+<span id="cb17-17"><a href="#cb17-17" aria-hidden="true" tabindex="-1"></a>              <span class="fu">ifelse</span>(arm_nonapoe,<span class="st">"SHORTENS life"</span>,<span class="st">"ns"</span>)))</span>
+<span id="cb17-18"><a href="#cb17-18" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Y→S arm: AD→lifespan b=+0.043 (p=5.5e-31) =&gt; SHORTENS life; excl-APOE b=+0.020 (p=0.0032) =&gt; SHORTENS life</code></pre>
+</div>
+</div>
+<p><strong>Reading the two arms together.</strong> A survival collider requires <strong>both</strong> X→S (Part 1: the nAChR instruments are emphatically not selection-null) <strong>and</strong> Y→S (Part 2). Both are now confirmed present: AD liability <strong>shortens lifespan</strong> (all instruments b = +0.043, p = 5×10⁻³¹; <strong>excl-APOE b = +0.020, p = 0.003</strong>), and crucially the <strong>non-APOE</strong> component — the part relevant to the receptor loci, since APOE is absent from the nAChR instruments — is itself significant. So the survival collider’s <strong>necessary precondition is fully met</strong>. This is a <em>necessary, not sufficient</em>, condition: the magnitude of induced bias still depends on the joint selection intensity, which Task B (proxy de-selection — effect persists) and the index-event correction (Task D — unidentified) probe and do not resolve in favour of the collider. Note the non-APOE Y→S effect, though significant, is <strong>modest</strong> (b ≈ 0.02).</p>
+<div class="callout callout-style-default callout-note callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Note
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Caveats.</strong> Parental lifespan (Pilling 2017) and FEV1/FVC (Shrine 2019) are UK Biobank–based, so a <em>null</em> there is the more conservative finding (UKB is where the selection lives). All-cause-mortality (binary) and a UKB-participation GWAS were not reachable in OpenGWAS and are reported as gaps, not substituted. Equivalence with δ=0.02 is strict (~15% of the AD effect); the δ=0.05 column is the permissive sensitivity.</p>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

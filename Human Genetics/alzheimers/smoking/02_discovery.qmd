@@ -1,0 +1,131 @@
+---
+title: "Layer 1 — Discovery: is the protection mechanistically clustered at nAChR loci?"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| message: false
+library(mrclust)
+library(knitr)
+source(here::here("R", "helpers.R"))
+cfg <- load_config()
+set.seed(cfg$seed)
+```
+
+## Purpose
+
+A genuine receptor-mediated drug signal should **concentrate** in a cluster of SNPs
+enriched for nAChR loci, rather than smearing uniformly across all smoking instruments.
+We run MR-Clust on the smoking→AD instruments, annotate each SNP to a mechanism bin, and
+ask (hypergeometric test) whether any protective cluster is enriched for
+`nAChR_pharmacodynamic` genes.
+
+## MR-Clust (run on two SNP sets)
+
+We run MR-Clust twice: (1) the **full** 22-SNP set, to confirm the original discovery that
+CLU/MINDY2 form a distinct *risk* cluster; and (2) the **pruned** canonical set (those two
+removed; Layer 0b), to ask whether *new* substructure emerges once the dominant pleiotropy
+outliers are gone.
+
+```{r mrclust-fn}
+run_mrclust <- function(h) {
+  cl <- mr_clust_em(
+    theta    = h$beta.outcome / h$beta.exposure,
+    theta_se = abs(h$se.outcome / h$beta.exposure),
+    bx = h$beta.exposure, by = h$beta.outcome,
+    bxse = h$se.exposure, byse = h$se.outcome,
+    obs_names = h$SNP)
+  assign <- cl$results$best |>
+    as_tibble() |>
+    dplyr::rename(SNP = observation) |>
+    left_join(h |> dplyr::select(SNP, nearest_gene, mechanism, beta.exposure, beta.outcome),
+              by = "SNP")
+  enrich <- assign |>
+    filter(!is.na(cluster), cluster != "Null") |>
+    group_by(cluster) |>
+    summarise(n_in_cluster = n(),
+              n_nachr = sum(mechanism == "nAChR_pharmacodynamic"),
+              genes = paste(sort(unique(nearest_gene)), collapse = ", "),
+              mean_theta = mean(theta, na.rm = TRUE), .groups = "drop") |>
+    rowwise() |>
+    mutate(p_enrich = phyper(n_nachr - 1,
+                             sum(assign$mechanism == "nAChR_pharmacodynamic"),
+                             nrow(assign) - sum(assign$mechanism == "nAChR_pharmacodynamic"),
+                             n_in_cluster, lower.tail = FALSE),
+           direction = ifelse(mean_theta < 0, "protective", "risk")) |>
+    ungroup()
+  list(assign = assign, enrich = enrich)
+}
+```
+
+### Full 22-SNP set (original discovery)
+
+```{r mrclust-full}
+h_full <- read_csv(here::here("results", "baseline_harmonised_annotated.csv"))
+full <- run_mrclust(h_full)
+write_csv(full$assign,  here::here("results", "mrclust_assignments_full.csv"))
+write_csv(full$enrich,  here::here("results", "mrclust_enrichment_full.csv"))
+full$enrich |> kable(caption = "Full-set clusters (note the CLU/MINDY2 risk cluster)", digits = 3)
+```
+
+### Pruned canonical set (CLU/MINDY2 removed) — primary
+
+```{r mrclust-pruned}
+h <- read_csv(here::here("results", "baseline_harmonised_pruned.csv"))
+pruned <- run_mrclust(h)
+assign <- pruned$assign
+enrich <- pruned$enrich
+write_csv(assign, here::here("results", "mrclust_assignments.csv"))
+write_csv(enrich, here::here("results", "mrclust_enrichment.csv"))
+assign |>
+  dplyr::select(SNP, nearest_gene, mechanism, cluster, probability, cluster_mean = theta) |>
+  arrange(cluster, -probability) |>
+  kable(caption = "Pruned-set SNP→cluster assignments", digits = 3)
+enrich |> kable(caption = "Pruned-set clusters + nAChR enrichment (hypergeometric)", digits = 4)
+```
+
+```{r mrclust-scatter}
+library(ggrepel)
+ggplot(assign, aes(x = beta.exposure, y = beta.outcome, colour = factor(cluster))) +
+  geom_point(aes(size = probability)) +
+  geom_text_repel(aes(label = nearest_gene), size = 3, max.overlaps = 15) +
+  geom_hline(yintercept = 0, linetype = "dashed", colour = "grey50") +
+  theme_classic(base_size = 14) +
+  labs(x = "SNP effect on cigarettes/day", y = "SNP effect on AD",
+       colour = "Cluster", size = "Assign. prob.",
+       title = "MR-Clust on pruned set (CLU/MINDY2 removed)")
+```
+
+## Decision
+
+```{r decision}
+n_substantive <- nrow(enrich)                      # non-null clusters in pruned set
+prot_enriched <- enrich |> filter(direction == "protective", p_enrich < 0.05)
+new_risk <- enrich |> filter(direction == "risk")
+msg <- sprintf("pruned set: %d non-null cluster(s); %d new risk cluster(s); nAChR enrichment min p=%.3g",
+               n_substantive, nrow(new_risk),
+               suppressWarnings(min(enrich$p_enrich)))
+log_decision("L1", "MR-Clust substructure on pruned canonical set",
+             sprintf("%d clusters", n_substantive), msg)
+cat(msg, "\n")
+```
+
+If protection concentrates in an nAChR-enriched cluster, Layer 2 quantifies the
+bin-stratified effects; otherwise the signal is more consistent with a dose/combustion
+mechanism and the drug-target framing should be reconsidered.

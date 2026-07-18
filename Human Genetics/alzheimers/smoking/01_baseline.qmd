@@ -1,0 +1,200 @@
+---
+title: "Layer 0 — Baseline Smoking → Alzheimer's MR (the composite signal)"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| message: false
+library(TwoSampleMR)
+library(ieugwasr)
+library(MRPRESSO)
+library(knitr)
+source(here::here("R", "helpers.R"))
+cfg <- load_config()
+set.seed(cfg$seed)
+dir.create(here::here("results"), showWarnings = FALSE)
+dir.create(here::here("figures"), showWarnings = FALSE)
+```
+
+## Purpose
+
+This is **Layer 0** of the decomposition pipeline (see `APPROACH.md`). The goal here is
+*not* to confirm that smoking is protective for AD — it is to re-establish the composite
+smoking→AD signal cleanly so later layers can decompose it into a druggable
+nicotinic-acetylcholine-receptor (nAChR) axis vs. a non-druggable behavioral/combustion
+axis. Record sign, magnitude, heterogeneity, pleiotropy.
+
+## Data
+
+Exposure: Cigarettes per day (GSCAN / Liu 2019, `ieu-b-142`); pre-clumped instrument set
+copied to `data/`. Outcome: Alzheimer's disease, Bellenguez 2022 (`ebi-a-GCST90027158`).
+
+```{r data}
+instruments <- read_csv(here::here("data", "Instruments - cig.liu - Sleep.csv")) |>
+  mutate(samplesize.exposure = cfg$samplesizes$smk_cpd_exposure,
+         exposure = "Cigarettes per day")
+
+ad.outcome <- extract_outcome_data(
+  snps = instruments$SNP,
+  outcomes = cfg$opengwas$ad_primary,
+  proxies = TRUE, rsq = 0.8)
+
+ad.data <- harmonise_data(instruments, ad.outcome, action = 2)
+ad.data.steiger <- steiger_filtering(ad.data)
+```
+
+```{r annotate}
+# Annotate nearest gene (hg19) and instrument strength; persist for downstream layers.
+ad.annot <- ad.data.steiger |>
+  filter(mr_keep == TRUE) |>
+  annotate_nearest_gene(chr_col = "chr.exposure", pos_col = "pos.exposure") |>
+  add_instrument_strength(cfg$samplesizes$smk_cpd_exposure) |>
+  assign_mechanism_bin(cfg)
+
+write_csv(ad.annot, here::here("results", "baseline_harmonised_annotated.csv"))
+
+instrument_summary(ad.annot) |>
+  kable(caption = "Cigarettes-per-day instrument strength (post-harmonisation, post-Steiger)",
+        digits = c(0, 0, 4, 1, 1, 1))
+```
+
+## Composite MR
+
+```{r mr}
+ad.mr <- mr(ad.data.steiger,
+            method_list = c("mr_ivw_mre", "mr_ivw_fe", "mr_raps",
+                            "mr_egger_regression", "mr_weighted_median",
+                            "mr_weighted_mode"))
+
+mr_pleiotropy_test(ad.data.steiger) |>
+  dplyr::select(-starts_with("id")) |>
+  kable(caption = "MR-Egger intercept (directional pleiotropy)")
+
+mr_heterogeneity(ad.data.steiger) |>
+  dplyr::select(-starts_with("id")) |>
+  mutate(I2 = pmax(0, (Q - Q_df) / Q) * 100) |>
+  kable(caption = "Heterogeneity", digits = c(0, 0, 0, 3, 3, 99))
+```
+
+```{r presso}
+ad.presso <- mr_presso(
+  BetaOutcome = "beta.outcome", BetaExposure = "beta.exposure",
+  SdOutcome = "se.outcome", SdExposure = "se.exposure",
+  data = as.data.frame(ad.data.steiger),
+  NbDistribution = 2000, SignifThreshold = 0.05,
+  OUTLIERtest = TRUE, DISTORTIONtest = TRUE)
+
+presso.df <- ad.presso$`Main MR results` |>
+  dplyr::select(`MR Analysis`, `Causal Estimate`, Sd, `P-value`) |>
+  dplyr::rename(method = `MR Analysis`, b = `Causal Estimate`,
+                se = Sd, pval = `P-value`) |>
+  mutate(method = forcats::fct_recode(method,
+           "MR-PRESSO (Raw)" = "Raw",
+           "MR-PRESSO (Outlier-corrected)" = "Outlier-corrected"))
+
+baseline.results <- bind_rows(as_tibble(ad.mr), presso.df) |>
+  tidyr::fill(id.exposure, id.outcome, exposure, outcome, nsnp, .direction = "down")
+
+write_csv(baseline.results, here::here("results", "baseline_mr_results.csv"))
+baseline.results |> dplyr::select(-starts_with("id")) |>
+  kable(caption = "Composite smoking→AD MR (the signal to be decomposed)",
+        digits = c(0, 0, 0, 0, 3, 3, 99))
+```
+
+```{r baseline-forest}
+ggplot(baseline.results, aes(y = method, x = b)) +
+  geom_point() +
+  geom_errorbar(aes(xmin = b - 1.96 * se, xmax = b + 1.96 * se), width = 0.2) +
+  geom_vline(xintercept = 0, linetype = "dashed", color = "red") +
+  theme_classic(base_size = 14) +
+  labs(title = "Composite AD risk per SD cigarettes/day", y = "", x = "Effect (log OR)")
+```
+
+## Pleiotropy-outlier sensitivity (CLU / MINDY2)
+
+Two SNPs — `rs73229090` (nearest **CLU**, a canonical AD susceptibility gene) and
+`rs632811` (**MINDY2**) — behave as **uncorrelated horizontal pleiotropy**: they are the
+SNPs MR-Clust isolates into a separate *risk* cluster (Layer 1), they are the most
+influential in leave-one-out, and they are what MR-PRESSO trims to reach the
+outlier-corrected estimate. Their effect looks direct-to-AD rather than via smoking. We
+report an explicit sensitivity estimate dropping them.
+
+```{r pleiotropy-prune}
+outliers <- names(cfg$pleiotropy_outliers)
+ad.pruned <- ad.data.steiger |> filter(!SNP %in% outliers)
+pruned.mr <- mr(ad.pruned, method_list = c("mr_ivw_mre", "mr_weighted_median")) |>
+  as_tibble() |>
+  mutate(set = "outliers removed (CLU, MINDY2)")
+full.mr <- ad.mr |>
+  filter(method %in% c("Inverse variance weighted (multiplicative random effects)",
+                       "Weighted median")) |>
+  as_tibble() |> mutate(set = "all SNPs")
+
+prune.compare <- bind_rows(full.mr, pruned.mr) |>
+  dplyr::select(set, method, nsnp, b, se, pval)
+write_csv(prune.compare, here::here("results", "baseline_pleiotropy_pruned.csv"))
+prune.compare |>
+  kable(caption = "Effect of removing the CLU/MINDY2 pleiotropy outliers",
+        digits = c(0, 0, 0, 3, 3, 99))
+
+pr_ivw <- pruned.mr |> filter(method == "Inverse variance weighted (multiplicative random effects)")
+log_decision("L0b", "IVW after removing CLU/MINDY2 pleiotropy outliers",
+             sprintf("b=%.3f, p=%.3g (n=%d)", pr_ivw$b, pr_ivw$pval, pr_ivw$nsnp),
+             "protective estimate strengthens — outliers are AD-direct pleiotropy; adopt as canonical baseline")
+```
+
+### Canonical baseline set
+
+The CLU/MINDY2-pruned IVW (b = `r round(pr_ivw$b,3)`, p = `r signif(pr_ivw$pval,2)`) is the
+**more accurate baseline** and is what Layers 1–5 build on. We persist the pruned,
+annotated, bin-assigned SNP table and a pruned instrument file for downstream use; the full
+22-SNP set is retained only for the pleiotropy comparison above and the full-set MR-Clust
+discovery in Layer 1.
+
+```{r write-canonical}
+ad.annot.pruned <- ad.annot |> filter(!SNP %in% outliers)
+write_csv(ad.annot.pruned, here::here("results", "baseline_harmonised_pruned.csv"))
+
+# Pruned raw instrument file (smoking exposure) for MVMR / CAUSE / ascertainment downstream.
+instruments |> filter(!SNP %in% outliers) |>
+  write_csv(here::here("data", "cig_instruments_pruned.csv"))
+
+cat(sprintf("Canonical baseline: %d SNPs (dropped %s).\n",
+            nrow(ad.annot.pruned), paste(unname(unlist(cfg$pleiotropy_outliers)), collapse = ", ")))
+```
+
+## Decision
+
+```{r decision}
+ivw <- baseline.results |>
+  filter(method == "Inverse variance weighted (multiplicative random effects)")
+sign_txt <- ifelse(ivw$b < 0, "protective (b<0)", "risk (b>0)")
+log_decision("L0", "Composite IVW sign/magnitude",
+             sprintf("b=%.3f, p=%.3g", ivw$b, ivw$pval),
+             sprintf("%s — proceed to decompose", sign_txt))
+cat(sprintf("Composite IVW: b = %.3f, OR = %.2f, p = %.3g (%s)\n",
+            ivw$b, exp(ivw$b), ivw$pval, sign_txt))
+```
+
+The composite estimate is the baseline to be **decomposed**, not the result. Layer 1
+asks whether the protection is mechanistically clustered at nAChR loci.
+
+```{r session}
+sessionInfo()
+```

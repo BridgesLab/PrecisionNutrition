@@ -1,0 +1,96 @@
+# config.yml — IDs, thresholds, and gene panel for the smoking->AD decomposition
+# Edit OpenGWAS IDs here; code reads this via yaml::read_yaml(here::here("config.yml")).
+
+seed: 20260604
+
+opengwas:
+  # AD outcomes
+  ad_primary:     "ebi-a-GCST90027158"   # Bellenguez 2022 (case-ascertained)
+  ad_proxy:       "ieu-b-5067"           # Wightman 2021 (incl. proxy/GWAX) - replication / selection probe
+  # Smoking exposures (GSCAN / Liu 2019)
+  smk_cpd:        "ieu-b-142"            # Cigarettes per day (heaviness) - matches local instrument file
+  smk_init:       "ieu-b-4877"           # Smoking initiation
+  # Pleiotropy / MVMR covariate exposures
+  bmi:            "ieu-b-40"             # BMI (Yengo 2018)
+  ldl:            "ieu-b-110"            # LDL cholesterol
+  edu:            "ieu-a-1239"           # Educational attainment (years)
+  # Mortality / lifespan orthogonality
+  # WARNING (2026-06-16 composition audit): the two IDs below were MISLABELLED in the original
+  # config. `ieu-a-1001` is NOT parental lifespan — gwasinfo() returns Okbay 2016 "Years of
+  # schooling" (educational attainment). `ad_proxy: ieu-b-5067` (below) is NOT Wightman 2021 —
+  # gwasinfo() returns Benjamin Woolf 2022 AD with only 954 cases. Do not use either as labelled.
+  # Verified replacements are in the `selection_axis` and `ad_ascertainment` blocks below.
+  lifespan:       "ieu-a-1001"           # MISLABELLED -> actually Okbay EA; see selection_axis.parental_lifespan
+  lung_cancer:    "ieu-a-987"            # Lung cancer (Wang/TRICL 2014); see selection_axis.lung_cancer for McKay 2017
+  cad:            "ieu-a-7"              # Coronary heart disease (Nikpay 2015, CARDIoGRAMplusC4D) - VERIFIED
+
+# Selection / survival-collider axis (Task A, 04b_selection_robustness.qmd).
+# All accessions composition-verified via gwasinfo() on 2026-06-16. NA = not reachable in
+# OpenGWAS -> reported as a gap, not substituted. UKB-overlap noted because the CPD exposure
+# (GSCAN ieu-b-142) and Bellenguez controls also draw on UKB.
+selection_axis:
+  parental_lifespan: "ebi-a-GCST006697"  # Pilling 2017, combined parental attained age (Martingale resid), N=389166, UKB
+  parental_lifespan_alt: "ebi-a-GCST006702" # Pilling 2017, combined parental age at death, N=208118, UKB
+  lung_cancer:       "ebi-a-GCST004748"  # McKay 2017 ILCCO/TRICL, 29266 case / 56450 ctrl, non-UKB
+  copd_fev1fvc:      "ebi-a-GCST007431"  # Shrine 2019 FEV1/FVC ratio (spirometric COPD axis), N=321047, UKB+SpiroMeta
+  cad_primary:       "ieu-a-7"           # Nikpay 2015, 60801 case / 123504 ctrl, pre-UKB
+  cad_sensitivity:   "ebi-a-GCST005195"  # van der Harst 2017, 122733 case / 424528 ctrl, incl UKB
+  all_cause_mortality: NA                # not cleanly reachable in OpenGWAS (parental lifespan stands in)
+  ukb_participation: NA                  # Pirastu 2021 participation GWAS not in OpenGWAS -> gap
+
+# AD outcome ascertainment swap (Task B, 04c_ascertainment_swap.qmd).
+# Gradient of by-proxy fraction for the proxy->clinical attenuation test. All case-control AD
+# GWAS are per-allele log-OR and directly comparable; the GWAX family-history outcome is on a
+# different scale and is rescaled explicitly in 04c (note the transformation).
+ad_ascertainment:
+  clinical_kunkle:   "ieu-b-2"           # Kunkle 2019 IGAP stage-1, 21982 case / 41944 ctrl, clinical, NO proxy/UKB (proxy_frac=0)
+  clinical_lambert:  "ieu-a-297"         # Lambert 2013 IGAP, 17008 case / 37154 ctrl, clinical (proxy_frac=0)
+  proxy_majority:    "ebi-a-GCST90027158" # Bellenguez 2022 (= ad_primary), proxy-majority (proxy_frac~=0.54)
+  gwax_pure:         "ebi-a-GCST90012878" # Schwartzentruber 2021 family-history of AD, N=408942, UKB by-proxy (proxy_frac~=1)
+  incident_onset:    NA                  # incident/younger-onset AD not cleanly reachable -> gap
+
+samplesizes:
+  smk_cpd_exposure: 249752
+  ad_primary_outcome: 487511
+
+thresholds:
+  f_min: 10              # univariable instrument strength
+  cond_f_min: 10         # MVMR Sanderson-Windmeijer conditional F
+  coloc_h4_min: 0.8      # PP.H4 for colocalization
+  steiger_p: 0.05
+
+# nAChR + comparator gene panel and mechanism bins (APPROACH.md sec 5)
+gene_panel:
+  nAChR_pharmacodynamic: ["CHRNA5","CHRNA3","CHRNB4","CHRNA4","CHRNB2","CHRNA7","CHRNA6","CHRNB3"]
+  nicotine_metabolism:   ["CYP2A6","CYP2B6"]
+  reward_behavioral:     ["DRD2","DBH"]
+
+# cis-eQTL OpenGWAS datasets for receptor genes (eQTLGen blood; brain preferred where available).
+# Filled by 04_direct_effect.qmd via gene-coordinate cis windows; listed here for transparency.
+cis_window_kb: 100
+
+# Relaxed cis drug-target MR (Layer 6, 06_cis_drugtarget.qmd).
+# Convention follows cholesterol drug-target MR (HMGCR/PCSK9/NPC1L1): relax the p-value
+# threshold and allow correlated cis-SNPs (r2<0.3), then run LD-aware IVW/Egger using the
+# variant correlation matrix (MendelianRandomization::mr_ivw(correl=TRUE)).
+cis_drugtarget:
+  p_thresh: 1.0e-5     # relaxed instrument p-value within the cis window
+  clump_r2: 0.3        # allow correlated cis-SNPs up to r2<0.3
+  clump_kb: 1000       # clumping window
+  ld_pop: "EUR"        # 1000G reference population for the LD matrix
+
+# Horizontal-pleiotropy outliers identified in Layer 1 (MR-Clust risk cluster) and confirmed
+# by leave-one-out / MR-PRESSO in Layer 0. These map nearest to AD-direct loci (CLU, MINDY2)
+# rather than the smoking->AD axis; Layer 0 reports a sensitivity estimate excluding them.
+pleiotropy_outliers:
+  rs73229090: "CLU"
+  rs632811:   "MINDY2"
+
+# nAChR loci as physical windows (GRCh37); physically clustered genes share one window so the
+# cis-MR captures the whole receptor locus (e.g. the 15q25 CHRNA5/A3/B4 cluster).
+nachr_loci:
+  CHRNA5_A3_B4: { chr: 15, start: 78857862, end: 78937340 }   # 15q25 cluster
+  CHRNA4:       { chr: 20, start: 61975397, end: 62019864 }    # 20q13
+  CHRNB2:       { chr: 1,  start: 154543992, end: 154579816 }  # 1q21
+  CHRNA7:       { chr: 15, start: 32322677, end: 32464722 }    # 15q13 (CHRFAM7A caveat, sec 9)
+  CHRNA6_B3:    { chr: 8,  start: 42551452, end: 42648862 }    # 8p11

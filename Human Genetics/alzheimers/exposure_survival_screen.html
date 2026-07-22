@@ -1,0 +1,1466 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges and Katie Kittell">
+<meta name="dcterms.date" content="2026-07-22">
+
+<title>Exposure → Survival Screen</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="exposure_survival_screen_files/libs/clipboard/clipboard.min.js"></script>
+<script src="exposure_survival_screen_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="exposure_survival_screen_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="exposure_survival_screen_files/libs/quarto-html/popper.min.js"></script>
+<script src="exposure_survival_screen_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="exposure_survival_screen_files/libs/quarto-html/anchor.min.js"></script>
+<link href="exposure_survival_screen_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="exposure_survival_screen_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="exposure_survival_screen_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="exposure_survival_screen_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="exposure_survival_screen_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#configuration-edit-this-block" id="toc-configuration-edit-this-block" class="nav-link" data-scroll-target="#configuration-edit-this-block">Configuration — EDIT THIS BLOCK</a></li>
+  <li><a href="#discovery-find-survivallongevity-ids" id="toc-discovery-find-survivallongevity-ids" class="nav-link" data-scroll-target="#discovery-find-survivallongevity-ids">Discovery — find survival/longevity ids</a></li>
+  <li><a href="#screening-function" id="toc-screening-function" class="nav-link" data-scroll-target="#screening-function">Screening function</a></li>
+  <li><a href="#the-ad-longevity-arm-the-known-edge" id="toc-the-ad-longevity-arm-the-known-edge" class="nav-link" data-scroll-target="#the-ad-longevity-arm-the-known-edge">The AD → longevity arm (the “known” edge)</a></li>
+  <li><a href="#run-the-screen" id="toc-run-the-screen" class="nav-link" data-scroll-target="#run-the-screen">Run the screen</a></li>
+  <li><a href="#flag-the-collider-edge" id="toc-flag-the-collider-edge" class="nav-link" data-scroll-target="#flag-the-collider-edge">Flag the collider edge</a></li>
+  <li><a href="#forest-of-exposure-survival-effects" id="toc-forest-of-exposure-survival-effects" class="nav-link" data-scroll-target="#forest-of-exposure-survival-effects">Forest of exposure → survival effects</a></li>
+  <li><a href="#what-collider-bias-is-present-and-is-the-e-c-arm-live" id="toc-what-collider-bias-is-present-and-is-the-e-c-arm-live" class="nav-link" data-scroll-target="#what-collider-bias-is-present-and-is-the-e-c-arm-live">What collider bias is present — and is the E → C arm live?</a></li>
+  <li><a href="#save" id="toc-save" class="nav-link" data-scroll-target="#save">Save</a></li>
+  <li><a href="#how-to-read-this-and-what-it-does-not-rule-out" id="toc-how-to-read-this-and-what-it-does-not-rule-out" class="nav-link" data-scroll-target="#how-to-read-this-and-what-it-does-not-rule-out">How to read this — and what it does <em>not</em> rule out</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="exposure_survival_screen.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Exposure → Survival Screen</h1>
+<p class="subtitle lead">Does each exposure instrument set have an edge into the survival collider?</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges and Katie Kittell </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 22, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>In an Alzheimer’s-disease MR the outcome GWAS is measured only in people who <strong>survived to old age to be assessed</strong>, so the conditioning variable — the collider — is <em>survival</em> <code>S</code>, not AD incidence. Conditioning on <code>S</code> opens the path shown below.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggdag)     <span class="co"># install.packages(c("ggdag", "dagitty"))</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>collider_dag <span class="ot">&lt;-</span> <span class="fu">dagify</span>(</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>  S  <span class="sc">~</span> G <span class="sc">+</span> AD <span class="sc">+</span> CR,     <span class="co"># survival is caused by the exposure, AD, and competing risks</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>  AD <span class="sc">~</span> U,               <span class="co"># AD and competing risks share etiology (latent U)</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>  CR <span class="sc">~</span> U,</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">exposure =</span> <span class="st">"G"</span>,</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">outcome  =</span> <span class="st">"AD"</span>,</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>  <span class="at">labels =</span> <span class="fu">c</span>(</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">G  =</span> <span class="st">"G_exposure</span><span class="sc">\n</span><span class="st">(instrument)"</span>,</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">S  =</span> <span class="st">"S = survival</span><span class="sc">\n</span><span class="st">(conditioned on = collider)"</span>,</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">AD =</span> <span class="st">"AD"</span>,</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">CR =</span> <span class="st">"competing risks</span><span class="sc">\n</span><span class="st">(IHD, stroke, cancer)"</span>,</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">U  =</span> <span class="st">"shared etiology"</span></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  ),</span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">coords =</span> <span class="fu">list</span>(</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="fu">c</span>(<span class="at">G =</span> <span class="dv">0</span>, <span class="at">S =</span> <span class="dv">2</span>, <span class="at">AD =</span> <span class="dv">4</span>, <span class="at">CR =</span> <span class="fl">2.9</span>, <span class="at">U =</span> <span class="dv">4</span>),</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="fu">c</span>(<span class="at">G =</span> <span class="dv">0</span>, <span class="at">S =</span> <span class="dv">0</span>, <span class="at">AD =</span> <span class="dv">0</span>, <span class="at">CR =</span> <span class="fl">1.3</span>, <span class="at">U =</span> <span class="fl">1.6</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a><span class="fu">ggdag</span>(collider_dag, <span class="at">text =</span> <span class="cn">FALSE</span>, <span class="at">use_labels =</span> <span class="st">"label"</span>, <span class="at">node_size =</span> <span class="dv">16</span>) <span class="sc">+</span></span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_dag</span>(<span class="at">base_size =</span> <span class="dv">11</span>) <span class="sc">+</span></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> <span class="st">"Survival as the collider in an AD Mendelian randomization"</span>,</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">subtitle =</span> <span class="st">"Conditioning on S (studying survivors) opens the G_exposure — AD path"</span></span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/dag-collider-1.png" class="img-fluid figure-img" width="720"></p>
+</figure>
+</div>
+</div>
+</div>
+<p>The known edge is <code>AD → S</code> (AD hastens death); competing risks feed <code>S</code> and share etiology with AD via a latent common cause <code>U</code>. Conditioning on <code>S</code> induces a spurious <code>G_exposure</code>–AD association. <strong>That triangle only closes if the exposure instruments have an edge into survival</strong> (<code>G → S</code>). This notebook estimates that edge directly: an MR of each exposure on a survival/longevity GWAS. A non-null effect means survival-collider bias is a live threat for that exposure in the downstream AD analysis and must be corrected; a near-null effect means that instrument set is comparatively safe (with caveats at the bottom).</p>
+</section>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<p>You need an OpenGWAS JWT (anonymous access is gone). Get one at <a href="https://api.opengwas.io" class="uri">https://api.opengwas.io</a>, then add <code>OPENGWAS_JWT=&lt;token&gt;</code> to <code>~/.Renviron</code> and restart R. Treat it like a password — don’t commit it.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(TwoSampleMR)   <span class="co"># install.packages("TwoSampleMR",</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>                       <span class="co">#   repos = c("https://mrcieu.r-universe.dev",</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>                       <span class="co">#             "https://cloud.r-project.org"))</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ieugwasr)</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Fail fast if the token isn't wired up</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nchar</span>(ieugwasr<span class="sc">::</span><span class="fu">get_opengwas_jwt</span>()) <span class="sc">&gt;</span> <span class="dv">0</span>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>ieugwasr<span class="sc">::</span><span class="fu">user</span>()   <span class="co"># prints your account + remaining allowance</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>$user
+$user$account_id
+[1] "FefMNDLtgqaMN38b9zdeWo"
+
+$user$uid
+[1] "dave.bridges@gmail.com"
+
+$user$first_name
+[1] "Dave"
+
+$user$last_name
+[1] "Bridges"
+
+$user$most_recent_signin_method
+[1] "GitHub"
+
+$user$jwt_valid_until
+[1] "2026-07-23 21:10 UTC"
+
+$user$roles
+list()
+
+$user$tags
+[1] "trial"
+
+
+$request
+$request$client
+[1] "ieugwasr/1.1.0"
+
+$request$ip
+[1] "99.188.200.157"</code></pre>
+</div>
+</div>
+</section>
+<section id="configuration-edit-this-block" class="level2">
+<h2 class="anchored" data-anchor-id="configuration-edit-this-block">Configuration — EDIT THIS BLOCK</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Exposures: the risk-factor / nAChR instruments you'll use against AD. ----</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Named vector: names are display labels, values are OpenGWAS ids.</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Add new instruments by appending "label" = "id" — everything downstream fans out.</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>exposures <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Smoking (GSCAN, ieu-b-142)"</span> <span class="ot">=</span> <span class="st">"ieu-b-142"</span>,  <span class="co"># &lt;-- example; append more here</span></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDL-C"</span>                    <span class="ot">=</span> <span class="st">"ieu-b-110"</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># "CHRNA5 region cis-eQTL"   = "eqtl-a-XXXX",</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- AD GWAS: the downstream outcome; here used to size the AD -&gt; S arm. ----</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Two contrasting ascertainments so we can see if the AD-&gt;S edge is proxy-driven.</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>ad_gwas <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AD — Bellenguez 2022 (proxy-incl.)"</span> <span class="ot">=</span> <span class="st">"ebi-a-GCST90027158"</span>,  <span class="co"># 39k clin + 47k proxy; largest, selection-prone</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AD — Kunkle 2019 IGAP (clinical)"</span>   <span class="ot">=</span> <span class="st">"ieu-b-2"</span>              <span class="co"># 22k clinical cases, no UKB/proxy: clean comparator</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>PRIMARY_AD <span class="ot">&lt;-</span> <span class="st">"ieu-b-2"</span>   <span class="co"># reference AD-&gt;S edge for the induced-bias direction (clean, clinical)</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Longevity / survival outcomes = the collider S. ----</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a><span class="co"># All four are Timmers et al. 2019 parental-lifespan phenotypes. The combined-</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a><span class="co"># parents Martingale-residual analysis (GCST006697) is the best-powered headline</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a><span class="co"># lifespan phenotype and the PRIMARY here; the others are sensitivity swaps.</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>survival_outcomes <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Parental lifespan (combined, Martingale resid)"</span> <span class="ot">=</span> <span class="st">"ebi-a-GCST006697"</span>,  <span class="co"># PRIMARY: N=389,166</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Combined parental age at death"</span>                 <span class="ot">=</span> <span class="st">"ebi-a-GCST006702"</span>,  <span class="co"># N=208,118</span></span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Father's age at death"</span>                          <span class="ot">=</span> <span class="st">"ebi-a-GCST006700"</span>,  <span class="co"># N=317,652</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Mother's attained age"</span>                          <span class="ot">=</span> <span class="st">"ebi-a-GCST006696"</span>   <span class="co"># N=412,937</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>PRIMARY_SURVIVAL <span class="ot">&lt;-</span> <span class="st">"ebi-a-GCST006697"</span>   <span class="co"># headline longevity outcome</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- ROPE / Bayesian settings ----</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a><span class="co"># ROPE = region of practical equivalence, expressed in SD of the longevity outcome.</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="co"># The MR slope is the causal effect per unit exposure in per-SD-outcome units, so</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a><span class="co"># ROPE = 0.01 reads: "a shift in lifespan smaller than 0.01 SD is practically null</span></span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a><span class="co"># for collider purposes." Deliberately small — this is a bias-relevant threshold,</span></span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a><span class="co"># not a Cohen 'small-effect' cutoff: even a tiny survival edge opens the collider,</span></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co"># and kin-proxy lifespan GWAS already ~halve per-allele effects.</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># (Effects are read as per-SD of the outcome; rescale if an outcome GWAS you add</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a><span class="co">#  reports in non-SD units such as years.)</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>ROPE     <span class="ot">&lt;-</span> <span class="fl">0.01</span>    <span class="co"># SD of the longevity outcome</span></span>
+<span id="cb4-40"><a href="#cb4-40" aria-hidden="true" tabindex="-1"></a>PRIOR_SD <span class="ot">&lt;-</span> <span class="fl">0.50</span>    <span class="co"># weakly-informative prior effect ~ N(0, PRIOR_SD^2); ~flat at this scale</span></span>
+<span id="cb4-41"><a href="#cb4-41" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-42"><a href="#cb4-42" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Instrument / clumping parameters ----</span></span>
+<span id="cb4-43"><a href="#cb4-43" aria-hidden="true" tabindex="-1"></a>P_THRESH <span class="ot">&lt;-</span> <span class="fl">5e-8</span></span>
+<span id="cb4-44"><a href="#cb4-44" aria-hidden="true" tabindex="-1"></a>R2       <span class="ot">&lt;-</span> <span class="fl">0.001</span></span>
+<span id="cb4-45"><a href="#cb4-45" aria-hidden="true" tabindex="-1"></a>KB       <span class="ot">&lt;-</span> <span class="dv">10000</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="discovery-find-survivallongevity-ids" class="level2">
+<h2 class="anchored" data-anchor-id="discovery-find-survivallongevity-ids">Discovery — find survival/longevity ids</h2>
+<p>Run once to locate candidate datasets in the OpenGWAS catalogue, paste the ids into <code>survival_outcomes</code> above, then set <code>eval: false</code> again.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>ao <span class="ot">&lt;-</span> TwoSampleMR<span class="sc">::</span><span class="fu">available_outcomes</span>()   <span class="co"># full catalogue (large)</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>ao <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="fu">grepl</span>(<span class="st">"lifespan|longevity|survival|age at death|parental|healthspan"</span>,</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>               trait, <span class="at">ignore.case =</span> <span class="cn">TRUE</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(id, trait, sample_size, nsnp, consortium, author, year) <span class="sc">|&gt;</span></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(year)) <span class="sc">|&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">print</span>(<span class="at">n =</span> <span class="dv">50</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="screening-function" class="level2">
+<h2 class="anchored" data-anchor-id="screening-function">Screening function</h2>
+<p>One exposure × one survival outcome → one tidy row. Robust to small instrument sets (falls back to Wald ratio) and to failed queries (returned as <code>NULL</code> by <code>possibly()</code> in the runner).</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>screen_one <span class="ot">&lt;-</span> <span class="cf">function</span>(exp_id, exp_label, out_id, out_label,</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>                       <span class="at">p =</span> P_THRESH, <span class="at">r2 =</span> R2, <span class="at">kb =</span> KB) {</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 1. GW-significant, LD-clumped instruments for the exposure</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  inst <span class="ot">&lt;-</span> <span class="fu">extract_instruments</span>(exp_id, <span class="at">p1 =</span> p, <span class="at">r2 =</span> r2, <span class="at">kb =</span> kb)</span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(inst) <span class="sc">||</span> <span class="fu">nrow</span>(inst) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">stop</span>(<span class="st">"no instruments: "</span>, exp_id)</span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 2. look those SNPs up in the survival GWAS</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">extract_outcome_data</span>(<span class="at">snps =</span> inst<span class="sc">$</span>SNP, <span class="at">outcomes =</span> out_id)</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(out) <span class="sc">||</span> <span class="fu">nrow</span>(out) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">stop</span>(<span class="st">"no overlap: "</span>, out_id)</span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 3. harmonise (action = 2: align, drop ambiguous palindromes by frequency)</span></span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(inst, out, <span class="at">action =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span> <span class="fu">filter</span>(mr_keep)</span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(dat) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">stop</span>(<span class="st">"nothing kept after harmonisation"</span>)</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># 4. MR — default method set adapts to the number of SNPs</span></span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>  res     <span class="ot">&lt;-</span> <span class="fu">mr</span>(dat)</span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>  pleio_p <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">mr_pleiotropy_test</span>(dat)<span class="sc">$</span>pval, <span class="at">error =</span> \(e) <span class="cn">NA_real_</span>)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-20"><a href="#cb6-20" aria-hidden="true" tabindex="-1"></a>  <span class="co"># pick a primary estimate by availability/priority</span></span>
+<span id="cb6-21"><a href="#cb6-21" aria-hidden="true" tabindex="-1"></a>  primary <span class="ot">&lt;-</span> res <span class="sc">|&gt;</span></span>
+<span id="cb6-22"><a href="#cb6-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">rank =</span> <span class="fu">match</span>(method, <span class="fu">c</span>(<span class="st">"Inverse variance weighted"</span>, <span class="st">"Wald ratio"</span>,</span>
+<span id="cb6-23"><a href="#cb6-23" aria-hidden="true" tabindex="-1"></a>                                  <span class="st">"Weighted median"</span>, <span class="st">"MR Egger"</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb6-24"><a href="#cb6-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">arrange</span>(rank) <span class="sc">|&gt;</span> <span class="fu">slice</span>(<span class="dv">1</span>)</span>
+<span id="cb6-25"><a href="#cb6-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-26"><a href="#cb6-26" aria-hidden="true" tabindex="-1"></a>  <span class="co"># mean instrument strength (approx per-SNP F)</span></span>
+<span id="cb6-27"><a href="#cb6-27" aria-hidden="true" tabindex="-1"></a>  mean_F <span class="ot">&lt;-</span> <span class="fu">mean</span>((dat<span class="sc">$</span>beta.exposure <span class="sc">/</span> dat<span class="sc">$</span>se.exposure)<span class="sc">^</span><span class="dv">2</span>, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb6-28"><a href="#cb6-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-29"><a href="#cb6-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb6-30"><a href="#cb6-30" aria-hidden="true" tabindex="-1"></a>    <span class="at">exposure    =</span> exp_label,</span>
+<span id="cb6-31"><a href="#cb6-31" aria-hidden="true" tabindex="-1"></a>    <span class="at">survival    =</span> out_label,</span>
+<span id="cb6-32"><a href="#cb6-32" aria-hidden="true" tabindex="-1"></a>    <span class="at">n_snp       =</span> primary<span class="sc">$</span>nsnp,</span>
+<span id="cb6-33"><a href="#cb6-33" aria-hidden="true" tabindex="-1"></a>    <span class="at">method      =</span> primary<span class="sc">$</span>method,</span>
+<span id="cb6-34"><a href="#cb6-34" aria-hidden="true" tabindex="-1"></a>    <span class="at">b           =</span> primary<span class="sc">$</span>b,</span>
+<span id="cb6-35"><a href="#cb6-35" aria-hidden="true" tabindex="-1"></a>    <span class="at">se          =</span> primary<span class="sc">$</span>se,</span>
+<span id="cb6-36"><a href="#cb6-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">p           =</span> primary<span class="sc">$</span>pval,</span>
+<span id="cb6-37"><a href="#cb6-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">mean_F      =</span> mean_F,</span>
+<span id="cb6-38"><a href="#cb6-38" aria-hidden="true" tabindex="-1"></a>    <span class="at">egger_int_p =</span> pleio_p,</span>
+<span id="cb6-39"><a href="#cb6-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">b_wmedian   =</span> res<span class="sc">$</span>b[<span class="fu">match</span>(<span class="st">"Weighted median"</span>, res<span class="sc">$</span>method)],</span>
+<span id="cb6-40"><a href="#cb6-40" aria-hidden="true" tabindex="-1"></a>    <span class="at">b_egger     =</span> res<span class="sc">$</span>b[<span class="fu">match</span>(<span class="st">"MR Egger"</span>,        res<span class="sc">$</span>method)]</span>
+<span id="cb6-41"><a href="#cb6-41" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb6-42"><a href="#cb6-42" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="the-ad-longevity-arm-the-known-edge" class="level2">
+<h2 class="anchored" data-anchor-id="the-ad-longevity-arm-the-known-edge">The AD → longevity arm (the “known” edge)</h2>
+<p>The collider needs <em>both</em> arms. Before screening exposures, pin down the arm the triangle cannot work without: <code>AD → S</code>. If AD-liability instruments do not move lifespan there is no collider and nothing to correct. We MR each AD GWAS onto the longevity outcomes; a <strong>negative</strong> effect (higher AD liability → shorter parental lifespan) confirms the collider node is real. Running both AD GWAS shows whether that edge is genuine or an artefact of Bellenguez’s UK-Biobank by-proxy cases — Kunkle/IGAP is clinically ascertained with no proxy component as the clean check.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Closed-form Bayesian posterior for one MR estimate.</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># Conjugate normal: prior effect ~ N(0, tau^2); likelihood b ~ N(effect, se^2).</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># Returns posterior summaries and the ROPE decision quantities.</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>bayes_rope <span class="ot">&lt;-</span> <span class="cf">function</span>(b, se, <span class="at">rope =</span> ROPE, <span class="at">tau =</span> PRIOR_SD) {</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(b) <span class="sc">||</span> <span class="fu">is.na</span>(se) <span class="sc">||</span> se <span class="sc">&lt;=</span> <span class="dv">0</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">post_mean =</span> <span class="cn">NA_real_</span>, <span class="at">post_sd =</span> <span class="cn">NA_real_</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>                  <span class="at">p_out_rope =</span> <span class="cn">NA_real_</span>, <span class="at">p_direction =</span> <span class="cn">NA_real_</span>))</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  prec_post <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> se<span class="sc">^</span><span class="dv">2</span> <span class="sc">+</span> <span class="dv">1</span> <span class="sc">/</span> tau<span class="sc">^</span><span class="dv">2</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  mu_post   <span class="ot">&lt;-</span> (b <span class="sc">/</span> se<span class="sc">^</span><span class="dv">2</span>) <span class="sc">/</span> prec_post</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>  sd_post   <span class="ot">&lt;-</span> <span class="fu">sqrt</span>(<span class="dv">1</span> <span class="sc">/</span> prec_post)</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># posterior mass with |effect| &gt; ROPE (i.e. effect is practically non-null)</span></span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>  p_out <span class="ot">&lt;-</span> <span class="fu">pnorm</span>(<span class="sc">-</span>rope, mu_post, sd_post) <span class="sc">+</span></span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>           <span class="fu">pnorm</span>( rope, mu_post, sd_post, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>  <span class="co"># probability of direction: how sure we are of the sign</span></span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>  p_dir <span class="ot">&lt;-</span> <span class="fu">max</span>(<span class="fu">pnorm</span>(<span class="dv">0</span>, mu_post, sd_post),</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>               <span class="fu">pnorm</span>(<span class="dv">0</span>, mu_post, sd_post, <span class="at">lower.tail =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb7-17"><a href="#cb7-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">post_mean =</span> mu_post, <span class="at">post_sd =</span> sd_post,</span>
+<span id="cb7-18"><a href="#cb7-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">p_out_rope =</span> p_out, <span class="at">p_direction =</span> p_dir)</span>
+<span id="cb7-19"><a href="#cb7-19" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<p>The API pull (expensive) is cached; the ROPE/Bayesian layer that reads it is <strong>not</strong> cached, so retuning <code>ROPE</code> always re-computes without re-hitting OpenGWAS.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>safe_screen <span class="ot">&lt;-</span> <span class="fu">possibly</span>(screen_one, <span class="at">otherwise =</span> <span class="cn">NULL</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>ad_grid <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">exp_id =</span> <span class="fu">unname</span>(ad_gwas),           <span class="at">exp_label =</span> <span class="fu">names</span>(ad_gwas)),</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">out_id =</span> <span class="fu">unname</span>(survival_outcomes), <span class="at">out_label =</span> <span class="fu">names</span>(survival_outcomes))</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>ad_raw <span class="ot">&lt;-</span> <span class="fu">pmap</span>(ad_grid, safe_screen) <span class="sc">|&gt;</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compact</span>() <span class="sc">|&gt;</span></span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_rbind</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ad_survival <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  ad_raw,</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pmap</span>(<span class="fu">list</span>(ad_raw<span class="sc">$</span>b, ad_raw<span class="sc">$</span>se), bayes_rope) <span class="sc">|&gt;</span> <span class="fu">list_rbind</span>()</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>ad_survival <span class="sc">|&gt;</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="st">`</span><span class="at">AD GWAS</span><span class="st">`</span> <span class="ot">=</span> exposure, survival, n_snp, method, b, se, p,</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>         mean_F, <span class="st">`</span><span class="at">P(|AD→S|&gt;ROPE)</span><span class="st">`</span> <span class="ot">=</span> p_out_rope) <span class="sc">|&gt;</span></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">signif</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"AD instruments → parental lifespan: the AD → S arm."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>AD instruments → parental lifespan: the AD → S arm.</caption>
+<colgroup>
+<col style="width: 20%">
+<col style="width: 27%">
+<col style="width: 3%">
+<col style="width: 15%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 14%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">AD GWAS</th>
+<th style="text-align: left;">survival</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">p</th>
+<th style="text-align: right;">mean_F</th>
+<th style="text-align: right;">P(|AD→S|&gt;ROPE)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">Parental lifespan (combined, Martingale resid)</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0351</td>
+<td style="text-align: right;">0.00547</td>
+<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">87.9</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">Combined parental age at death</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0213</td>
+<td style="text-align: right;">0.00768</td>
+<td style="text-align: right;">0.00549</td>
+<td style="text-align: right;">87.9</td>
+<td style="text-align: right;">0.930</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">Father’s age at death</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0119</td>
+<td style="text-align: right;">0.00558</td>
+<td style="text-align: right;">0.03290</td>
+<td style="text-align: right;">87.9</td>
+<td style="text-align: right;">0.633</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">Mother’s attained age</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0324</td>
+<td style="text-align: right;">0.00485</td>
+<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">87.9</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">Parental lifespan (combined, Martingale resid)</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0427</td>
+<td style="text-align: right;">0.00369</td>
+<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">313.0</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">Combined parental age at death</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0302</td>
+<td style="text-align: right;">0.00458</td>
+<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">313.0</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">Father’s age at death</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0173</td>
+<td style="text-align: right;">0.00303</td>
+<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">313.0</td>
+<td style="text-align: right;">0.992</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">Mother’s attained age</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0410</td>
+<td style="text-align: right;">0.00270</td>
+<td style="text-align: right;">0.00000</td>
+<td style="text-align: right;">313.0</td>
+<td style="text-align: right;">1.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>The primary contrast (both AD GWAS against the headline longevity outcome):</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>primary_label <span class="ot">&lt;-</span> <span class="fu">names</span>(survival_outcomes)[<span class="fu">match</span>(PRIMARY_SURVIVAL, survival_outcomes)]</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>ad_survival <span class="sc">|&gt;</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(survival <span class="sc">==</span> primary_label) <span class="sc">|&gt;</span></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="st">`</span><span class="at">AD GWAS</span><span class="st">`</span> <span class="ot">=</span> exposure, n_snp, <span class="at">b =</span> <span class="fu">signif</span>(b, <span class="dv">3</span>), <span class="at">se =</span> <span class="fu">signif</span>(se, <span class="dv">3</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>            <span class="at">p =</span> <span class="fu">signif</span>(p, <span class="dv">3</span>), <span class="st">`</span><span class="at">P(|AD→S|&gt;ROPE)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(p_out_rope, <span class="dv">3</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"AD → "</span>, primary_label,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                                <span class="st">" (the known collider edge)."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>AD → Parental lifespan (combined, Martingale resid) (the known collider edge).</caption>
+<colgroup>
+<col style="width: 41%">
+<col style="width: 7%">
+<col style="width: 8%">
+<col style="width: 9%">
+<col style="width: 3%">
+<col style="width: 29%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">AD GWAS</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">p</th>
+<th style="text-align: right;">P(|AD→S|&gt;ROPE)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: right;">54</td>
+<td style="text-align: right;">0.0351</td>
+<td style="text-align: right;">0.00547</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.0427</td>
+<td style="text-align: right;">0.00369</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>A high <code>P(|AD→S| &gt; ROPE)</code> with a negative <code>b</code> in both GWAS establishes the <code>AD → S</code> arm empirically, so the collider node is live. Whether <em>bias</em> reaches any given exposure then hinges entirely on the <code>E → S</code> arm screened next.</p>
+</section>
+<section id="run-the-screen" class="level2">
+<h2 class="anchored" data-anchor-id="run-the-screen">Run the screen</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>grid <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">exp_id =</span> <span class="fu">unname</span>(exposures),         <span class="at">exp_label =</span> <span class="fu">names</span>(exposures)),</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">out_id =</span> <span class="fu">unname</span>(survival_outcomes), <span class="at">out_label =</span> <span class="fu">names</span>(survival_outcomes))</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>safe_screen <span class="ot">&lt;-</span> <span class="fu">possibly</span>(screen_one, <span class="at">otherwise =</span> <span class="cn">NULL</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> <span class="fu">pmap</span>(grid, safe_screen) <span class="sc">|&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">compact</span>() <span class="sc">|&gt;</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list_rbind</span>()</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, survival, n_snp, method, b, se, p, mean_F, egger_int_p) <span class="sc">|&gt;</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">signif</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Exposure → survival screen: primary MR estimate per pair."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Exposure → survival screen: primary MR estimate per pair.</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 31%">
+<col style="width: 4%">
+<col style="width: 17%">
+<col style="width: 5%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 4%">
+<col style="width: 8%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">survival</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">p</th>
+<th style="text-align: right;">mean_F</th>
+<th style="text-align: right;">egger_int_p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Parental lifespan (combined, Martingale resid)</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.1020</td>
+<td style="text-align: right;">0.01770</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">0.44400</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Combined parental age at death</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0922</td>
+<td style="text-align: right;">0.02130</td>
+<td style="text-align: right;">1.44e-05</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">0.79300</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Father’s age at death</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0864</td>
+<td style="text-align: right;">0.01690</td>
+<td style="text-align: right;">3.00e-07</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">0.48200</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Mother’s attained age</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0533</td>
+<td style="text-align: right;">0.01360</td>
+<td style="text-align: right;">8.86e-05</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: right;">0.46200</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Parental lifespan (combined, Martingale resid)</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0650</td>
+<td style="text-align: right;">0.01060</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0.00673</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Combined parental age at death</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0651</td>
+<td style="text-align: right;">0.01220</td>
+<td style="text-align: right;">1.00e-07</td>
+<td style="text-align: right;">261</td>
+<td style="text-align: right;">0.14000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Father’s age at death</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0529</td>
+<td style="text-align: right;">0.00937</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0.11100</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Mother’s attained age</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0379</td>
+<td style="text-align: right;">0.00855</td>
+<td style="text-align: right;">9.40e-06</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: right;">0.00804</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="flag-the-collider-edge" class="level2">
+<h2 class="anchored" data-anchor-id="flag-the-collider-edge">Flag the collider edge</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>results <span class="ot">&lt;-</span> results <span class="sc">|&gt;</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">edge =</span> <span class="fu">case_when</span>(</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>      p <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">/</span> <span class="fu">n</span>() <span class="sc">~</span> <span class="st">"STRONG survival edge (Bonferroni)"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>      p <span class="sc">&lt;</span> <span class="fl">0.05</span>       <span class="sc">~</span> <span class="st">"nominal survival edge"</span>,</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>           <span class="sc">~</span> <span class="st">"no clear edge"</span>),</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">pleiotropy =</span> <span class="fu">if_else</span>(<span class="sc">!</span><span class="fu">is.na</span>(egger_int_p) <span class="sc">&amp;</span> egger_int_p <span class="sc">&lt;</span> <span class="fl">0.05</span>,</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>                         <span class="st">"Egger intercept p&lt;0.05 — directional pleiotropy"</span>, <span class="st">""</span>)</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span></span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, survival, n_snp, method, b, se, p, mean_F, edge, pleiotropy) <span class="sc">|&gt;</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">signif</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Frequentist edge flags (Bonferroni / nominal) and pleiotropy check."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Frequentist edge flags (Bonferroni / nominal) and pleiotropy check.</caption>
+<colgroup>
+<col style="width: 12%">
+<col style="width: 21%">
+<col style="width: 2%">
+<col style="width: 11%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 15%">
+<col style="width: 21%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">survival</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">p</th>
+<th style="text-align: right;">mean_F</th>
+<th style="text-align: left;">edge</th>
+<th style="text-align: left;">pleiotropy</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Parental lifespan (combined, Martingale resid)</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.1020</td>
+<td style="text-align: right;">0.01770</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Combined parental age at death</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0922</td>
+<td style="text-align: right;">0.02130</td>
+<td style="text-align: right;">1.44e-05</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Father’s age at death</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0864</td>
+<td style="text-align: right;">0.01690</td>
+<td style="text-align: right;">3.00e-07</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">Mother’s attained age</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0533</td>
+<td style="text-align: right;">0.01360</td>
+<td style="text-align: right;">8.86e-05</td>
+<td style="text-align: right;">100</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Parental lifespan (combined, Martingale resid)</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0650</td>
+<td style="text-align: right;">0.01060</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;">Egger intercept p&lt;0.05 — directional pleiotropy</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Combined parental age at death</td>
+<td style="text-align: right;">156</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0651</td>
+<td style="text-align: right;">0.01220</td>
+<td style="text-align: right;">1.00e-07</td>
+<td style="text-align: right;">261</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Father’s age at death</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">-0.0529</td>
+<td style="text-align: right;">0.00937</td>
+<td style="text-align: right;">0.00e+00</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;"></td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">Mother’s attained age</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: left;">Inverse variance weighted</td>
+<td style="text-align: right;">0.0379</td>
+<td style="text-align: right;">0.00855</td>
+<td style="text-align: right;">9.40e-06</td>
+<td style="text-align: right;">265</td>
+<td style="text-align: left;">STRONG survival edge (Bonferroni)</td>
+<td style="text-align: left;">Egger intercept p&lt;0.05 — directional pleiotropy</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="forest-of-exposure-survival-effects" class="level2">
+<h2 class="anchored" data-anchor-id="forest-of-exposure-survival-effects">Forest of exposure → survival effects</h2>
+<p>Intervals clear of zero ⇒ the <code>G → S</code> edge is present ⇒ survival-collider bias is live for that exposure in the AD MR.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a>results <span class="sc">|&gt;</span></span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">lab =</span> <span class="fu">paste</span>(exposure, survival, <span class="at">sep =</span> <span class="st">" → "</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(<span class="fu">aes</span>(b, <span class="fu">reorder</span>(lab, b))) <span class="sc">+</span></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> b <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">xmax =</span> b <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se)) <span class="sc">+</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">x =</span> <span class="st">"IVW/Wald effect of exposure on survival"</span>,</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">title =</span> <span class="st">"Step 1: does each exposure have an edge into the survival collider?"</span></span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">+</span></span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/plot-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="what-collider-bias-is-present-and-is-the-e-c-arm-live" class="level2">
+<h2 class="anchored" data-anchor-id="what-collider-bias-is-present-and-is-the-e-c-arm-live">What collider bias is present — and is the E → C arm live?</h2>
+<p>The downstream MR regresses AD liability on exposure instruments, but AD is only ever observed in people who <strong>survived to be assessed</strong>. Survival <code>S</code> is a collider on two arms: <code>AD → S</code> (established above) and, if present, <code>E → S</code>. Selecting on survivors conditions on <code>S</code>, opening the non-causal <code>G_exposure — AD</code> path and biasing the exposure→AD estimate — typically <strong>toward spurious protection</strong> (index-event / survival bias). Because the <code>AD → S</code> arm is already confirmed, the bias is <em>live for a given exposure exactly when its <code>E → S</code> (i.e.&nbsp;<code>E → C</code>) arm is present</em>. The table below nominates that, conditional on the collider node being real.</p>
+<p>For each exposure×outcome we combine the frequentist IVW p-value with a closed-form Bayesian posterior (normal-conjugate, prior <code>N(0, PRIOR_SD²)</code>) and report the probability the effect lies <strong>outside the ROPE</strong> — i.e.&nbsp;is practically non-null — and the probability of direction.</p>
+<p><strong>Direction of the induced bias.</strong> Existence of the <code>E → C</code> arm says the collider is open; the <em>sign</em> of the spurious <code>G_exposure</code>–AD association it creates is set by the <strong>product</strong> of the two arms measured on the <em>same</em> outcome. For a linear collider <code>S = a·G_exp + c·AD</code>, conditioning on <code>S</code> gives <code>Cov(G_exp, AD | S) ∝ −a·c</code>, and that sign is <strong>invariant to how the lifespan outcome is coded</strong> (flipping <code>S</code> flips both <code>a</code> and <code>c</code>, leaving <code>a·c</code> unchanged) — so we can read it straight off the betas on the primary outcome:</p>
+<ul>
+<li><code>b_E · b_AD &gt; 0</code> (exposure and AD push survival the <em>same</em> way) → induced association is <strong>negative</strong> → the exposure’s risk alleles look <em>protective</em> for AD in survivors: <strong>spurious protection</strong> (the artifact that would fake a druggable protective AD signal).</li>
+<li><code>b_E · b_AD &lt; 0</code> → induced association is positive → <strong>spurious harm</strong>.</li>
+</ul>
+<p>The reference <code>AD → S</code> edge is the clean clinical GWAS (<code>PRIMARY_AD</code>); both AD GWAS agree in sign on the primary outcome, so the direction is robust to that choice. The label is only meaningful where the <code>E → C</code> arm is present — magnitude still scales with <code>|b_E · b_AD|</code>, so a within-ROPE arm induces negligible bias regardless of sign.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>primary_label <span class="ot">&lt;-</span> <span class="fu">names</span>(survival_outcomes)[<span class="fu">match</span>(PRIMARY_SURVIVAL, survival_outcomes)]</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>ad_ref_label  <span class="ot">&lt;-</span> <span class="fu">names</span>(ad_gwas)[<span class="fu">match</span>(PRIMARY_AD, ad_gwas)]</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Reference AD -&gt; S beta on the primary outcome (sign sets the induced-bias direction)</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>b_ad_primary <span class="ot">&lt;-</span> ad_raw <span class="sc">|&gt;</span></span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(survival <span class="sc">==</span> primary_label, exposure <span class="sc">==</span> ad_ref_label) <span class="sc">|&gt;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">pull</span>(b) <span class="sc">|&gt;</span> (\(x) <span class="cf">if</span> (<span class="fu">length</span>(x)) x[<span class="dv">1</span>] <span class="cf">else</span> <span class="cn">NA_real_</span>)()</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>bayes_cols <span class="ot">&lt;-</span> <span class="fu">pmap</span>(<span class="fu">list</span>(results<span class="sc">$</span>b, results<span class="sc">$</span>se), bayes_rope) <span class="sc">|&gt;</span> <span class="fu">list_rbind</span>()</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>verdict <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(results, bayes_cols) <span class="sc">|&gt;</span></span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">E_to_C =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>      p_out_rope <span class="sc">&gt;=</span> <span class="fl">0.95</span> <span class="sc">&amp;</span> p_direction <span class="sc">&gt;=</span> <span class="fl">0.975</span> <span class="sc">~</span> <span class="st">"PRESENT — edge into collider"</span>,</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>      p_out_rope <span class="sc">&lt;=</span> <span class="fl">0.05</span>                        <span class="sc">~</span> <span class="st">"absent — within ROPE (≈ null)"</span>,</span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                      <span class="sc">~</span> <span class="st">"indeterminate"</span></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Induced-bias direction = sign of b_E * b_AD on the SAME (primary) outcome.</span></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Only defined against the primary outcome; NA elsewhere.</span></span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">bias_product   =</span> <span class="fu">if_else</span>(survival <span class="sc">==</span> primary_label, b <span class="sc">*</span> b_ad_primary, <span class="cn">NA_real_</span>),</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">induced_bias =</span> <span class="fu">case_when</span>(</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>      E_to_C <span class="sc">==</span> <span class="st">"absent — within ROPE (≈ null)"</span> <span class="sc">~</span> <span class="st">"negligible (arm ≈ null)"</span>,</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(bias_product)                       <span class="sc">~</span> <span class="cn">NA_character_</span>,</span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a>      bias_product <span class="sc">&gt;</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"spurious PROTECTION (mimics ↓AD)"</span>,</span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>      bias_product <span class="sc">&lt;</span> <span class="dv">0</span> <span class="sc">~</span> <span class="st">"spurious HARM (mimics ↑AD)"</span>,</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>             <span class="sc">~</span> <span class="st">"—"</span></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Reported only against the primary outcome (full verdict saved below).</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>verdict <span class="sc">|&gt;</span></span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(survival <span class="sc">==</span> primary_label) <span class="sc">|&gt;</span></span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">arrange</span>(<span class="fu">desc</span>(p_out_rope)) <span class="sc">|&gt;</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a>    exposure, n_snp,</span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a>    <span class="at">b =</span> <span class="fu">signif</span>(b, <span class="dv">3</span>), <span class="at">se =</span> <span class="fu">signif</span>(se, <span class="dv">3</span>), <span class="at">p_ivw =</span> <span class="fu">signif</span>(p, <span class="dv">3</span>),</span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_dir =</span> <span class="fu">round</span>(p_direction, <span class="dv">3</span>),</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">P(|E→S|&gt;ROPE)</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">round</span>(p_out_rope, <span class="dv">3</span>),</span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">E → C arm</span><span class="st">`</span> <span class="ot">=</span> E_to_C,</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">induced bias</span><span class="st">`</span> <span class="ot">=</span> induced_bias</span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(</span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>    <span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"Conditional collider verdict for "</span>, primary_label,</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>                     <span class="st">" (ROPE = ±"</span>, ROPE, <span class="st">" SD). Induced-bias direction "</span>,</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"uses the reference AD→S edge ("</span>, ad_ref_label, <span class="st">", b = "</span>,</span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">signif</span>(b_ad_primary, <span class="dv">3</span>), <span class="st">"). The collider is live where the "</span>,</span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>                     <span class="st">"E → C arm is PRESENT; its sign is the 'induced bias' column."</span>)</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Conditional collider verdict for Parental lifespan (combined, Martingale resid) (ROPE = ±0.01 SD). Induced-bias direction uses the reference AD→S edge (AD — Kunkle 2019 IGAP (clinical), b = 0.0427). The collider is live where the E → C arm is PRESENT; its sign is the ‘induced bias’ column.</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 16%">
+<col style="width: 20%">
+<col style="width: 22%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: right;">b</th>
+<th style="text-align: right;">se</th>
+<th style="text-align: right;">p_ivw</th>
+<th style="text-align: right;">p_dir</th>
+<th style="text-align: right;">P(|E→S|&gt;ROPE)</th>
+<th style="text-align: left;">E → C arm</th>
+<th style="text-align: left;">induced bias</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: right;">157</td>
+<td style="text-align: right;">0.065</td>
+<td style="text-align: right;">0.0106</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">PRESENT — edge into collider</td>
+<td style="text-align: left;">spurious PROTECTION (mimics ↓AD)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">0.102</td>
+<td style="text-align: right;">0.0177</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">PRESENT — edge into collider</td>
+<td style="text-align: left;">spurious PROTECTION (mimics ↓AD)</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="save" class="level2">
+<h2 class="anchored" data-anchor-id="save">Save</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(results,     <span class="st">"exposure_survival_screen.csv"</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(verdict,     <span class="st">"exposure_survival_verdict.csv"</span>)</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(ad_survival, <span class="st">"ad_longevity_arm.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="how-to-read-this-and-what-it-does-not-rule-out" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-read-this-and-what-it-does-not-rule-out">How to read this — and what it does <em>not</em> rule out</h2>
+<ul>
+<li><strong>Non-null effect</strong> → the exposure moves survival, the collider triangle closes, and you must carry a survival-bias correction into the AD analysis for that exposure (feed the survival GWAS as the “incidence” input to SlopeHunter, or estimate <code>b</code> via MR of survival→AD, or MVMR on competing risk). For your CHRNA5/A3/B4 instruments a strong edge is the expected / worst case, since smoking-quantity variants drive mortality hard.</li>
+<li><strong>Near-null effect</strong> → that instrument set is comparatively insulated, which <em>strengthens</em> a druggable-pharmacology reading of any protective AD signal.</li>
+</ul>
+<p>Three caveats before over-trusting a null:</p>
+<ol type="1">
+<li><strong>Parental-lifespan attenuation.</strong> Kin-based lifespan GWAS measure the <em>parents’</em> survival through offspring genotype, so per-allele effects are roughly halved (and on a years-of-life / hazard scale). Treat magnitudes as conservative; a null here is a weaker null than it looks.</li>
+<li><strong>Competing risk still bites.</strong> An exposure with a small <em>net</em> survival effect can still bias the AD estimate if it kills through pathways sharing etiology with AD (IHD, stroke). A clean survival screen does not fully exonerate — consider MVMR conditioning on cardiovascular liability.</li>
+<li><strong>The survival GWAS is itself measured in survivors</strong>, an imperfect proxy for the exact selection your AD cohort underwent.</li>
+</ol>
+<ul>
+<li><strong>Allowance:</strong> each exposure×outcome pair is two API calls. Keep the lists modest or add <code>Sys.sleep()</code>; if you hit rate limits, clump locally (<code>ieugwasr::ld_clump_local()</code> with a plink binary + 1000G panel) after <code>extract_instruments(..., clump = FALSE)</code>.</li>
+</ul>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

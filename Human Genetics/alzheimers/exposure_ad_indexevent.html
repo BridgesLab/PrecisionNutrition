@@ -1,0 +1,1363 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.9.38">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges and Katie Kittell">
+<meta name="dcterms.date" content="2026-07-31">
+
+<title>Step 2 — Naive exposure → AD, then SlopeHunter selection correction</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="exposure_ad_indexevent_files/libs/clipboard/clipboard.min.js"></script>
+<script src="exposure_ad_indexevent_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="exposure_ad_indexevent_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="exposure_ad_indexevent_files/libs/quarto-html/popper.min.js"></script>
+<script src="exposure_ad_indexevent_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="exposure_ad_indexevent_files/libs/quarto-html/anchor.min.js"></script>
+<link href="exposure_ad_indexevent_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="exposure_ad_indexevent_files/libs/quarto-html/quarto-syntax-highlighting-15634bcf2e68342d4ad2dfa704d543f6.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="exposure_ad_indexevent_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="exposure_ad_indexevent_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="exposure_ad_indexevent_files/libs/bootstrap/bootstrap-138a6193a3bd40baf1e627da441a4734.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+  <script src="https://cdnjs.cloudflare.com/polyfill/v3/polyfill.min.js?features=es6"></script>
+  <script defer="" src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+
+<script type="text/javascript">
+const typesetMath = (el) => {
+  if (window.MathJax) {
+    // MathJax Typeset
+    window.MathJax.typeset([el]);
+  } else if (window.katex) {
+    // KaTeX Render
+    var mathElements = el.getElementsByClassName("math");
+    var macros = [];
+    for (var i = 0; i < mathElements.length; i++) {
+      var texText = mathElements[i].firstChild;
+      if (mathElements[i].tagName == "SPAN" && texText && texText.data) {
+        window.katex.render(texText.data, mathElements[i], {
+          displayMode: mathElements[i].classList.contains('display'),
+          throwOnError: false,
+          macros: macros,
+          fleqn: false
+        });
+      }
+    }
+  }
+}
+window.Quarto = {
+  typesetMath
+};
+</script>
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#setup" id="toc-setup" class="nav-link" data-scroll-target="#setup">Setup</a></li>
+  <li><a href="#configuration" id="toc-configuration" class="nav-link" data-scroll-target="#configuration">Configuration</a></li>
+  <li><a href="#naive-exposure-ad-uncorrected" id="toc-naive-exposure-ad-uncorrected" class="nav-link" data-scroll-target="#naive-exposure-ad-uncorrected">Naive exposure → AD (uncorrected)</a></li>
+  <li><a href="#exposure-lifespan-arm-reused-from-step-1" id="toc-exposure-lifespan-arm-reused-from-step-1" class="nav-link" data-scroll-target="#exposure-lifespan-arm-reused-from-step-1">Exposure → lifespan arm (reused from Step 1)</a></li>
+  <li><a href="#selection-slope-b_sh" id="toc-selection-slope-b_sh" class="nav-link" data-scroll-target="#selection-slope-b_sh">Selection slope b_SH</a></li>
+  <li><a href="#corrected-exposure-ad" id="toc-corrected-exposure-ad" class="nav-link" data-scroll-target="#corrected-exposure-ad">Corrected exposure → AD</a></li>
+  <li><a href="#naive-vs-corrected-forest" id="toc-naive-vs-corrected-forest" class="nav-link" data-scroll-target="#naive-vs-corrected-forest">Naive vs corrected — forest</a></li>
+  <li><a href="#how-to-read-this" id="toc-how-to-read-this" class="nav-link" data-scroll-target="#how-to-read-this">How to read this</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="exposure_ad_indexevent.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Step 2 — Naive exposure → AD, then SlopeHunter selection correction</h1>
+<p class="subtitle lead">Adjusting each exposure → AD estimate for the survival collider flagged in Step 1</p>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges and Katie Kittell </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">July 31, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>Step 1 (<code>exposure_survival_screen.qmd</code>) established two things: (i) AD shortens survival, so the survival collider <code>S</code> is real, and (ii) for the exposures flagged there, the <code>E → S</code> arm is present — i.e.&nbsp;selecting on survival induces a spurious <code>G_exposure</code>–AD association, in a direction given by <code>sign(b_E · b_AD)</code>. This notebook does the correction: for each exposure we</p>
+<ol type="1">
+<li>estimate the <strong>naive</strong> <code>E → AD</code> effect (standard two-sample MR, <em>uncorrected</em> — this is the estimate that carries the survival-collider bias), then</li>
+<li>subtract the selection-induced component using a <strong>SlopeHunter</strong> selection slope <code>b_SH</code>, exactly as in the smoking→AD analysis (<code>smoking/04e_overlap_indexevent.qmd</code>).</li>
+</ol>
+<p>Because IVW is linear, the correction is exact: <span class="math display">\[ \text{corrected}(E\to\text{AD}) \;=\; (E\to\text{AD}) \;-\; b_{SH}\,(E\to\text{lifespan}). \]</span></p>
+<p><code>b_SH</code> is the SlopeHunter slope relating SNP effects on AD (prognosis) to SNP effects on lifespan (the selection axis). It is a property of the <strong>(AD GWAS × lifespan GWAS)</strong> pair and is <em>exposure-independent</em> — estimate it once per AD GWAS (<code>R/fit_selection_slope.R</code>, genome-wide, APOE excluded), then apply it to every exposure. <code>E → lifespan</code> is reused from Step 1.</p>
+</section>
+<section id="setup" class="level2">
+<h2 class="anchored" data-anchor-id="setup">Setup</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># cache=FALSE is required: a cached setup chunk is restored WITHOUT re-running library()/source(),</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="co"># so on re-render dplyr etc. would not be attached ("could not find function transmute").</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(TwoSampleMR)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ieugwasr)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(dplyr)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyr)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(purrr)</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(ggplot2)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a><span class="co"># Optional, needed only for those naive models: MRPRESSO (MR-PRESSO), mr.raps (MR-RAPS).</span></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a><span class="co"># install.packages(c("MRPRESSO", "mr.raps"))  # both used via TwoSampleMR wrappers; absent -&gt; IVW-MRE fallback</span></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Correction engine (correct_estimate + the genome-wide fit driver).</span></span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a><span class="fu">source</span>(<span class="st">"R/fit_selection_slope.R"</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a><span class="fu">stopifnot</span>(<span class="fu">nchar</span>(ieugwasr<span class="sc">::</span><span class="fu">get_opengwas_jwt</span>()) <span class="sc">&gt;</span> <span class="dv">0</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="configuration" class="level2">
+<h2 class="anchored" data-anchor-id="configuration">Configuration</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Exposures + the SOP-validated naive model used for each E -&gt; AD association. ----</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="co"># One row per exposure: OpenGWAS `id` AND the `naive_model` you validated for that association,</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="co"># so the collider correction runs on the exact model you used — not a re-derived default.</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># Model choice can be a judgement call (e.g. LDL-C: visual APOE outliers -&gt; MR-PRESSO), which is</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="co"># why it is recorded explicitly here rather than auto-selected. `note` documents the rationale.</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Allowed `naive_model`: "IVW-FE", "IVW-MRE", "MR-Egger", "Weighted median", "Weighted mode",</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a><span class="co"># "MR-RAPS", "MR-PRESSO"  (SOP: https://bridgeslab.sph.umich.edu/protocols/index.php/Mendelian_Randomization)</span></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>exposures <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>label,                        <span class="sc">~</span>id,          <span class="sc">~</span>naive_model,  <span class="sc">~</span>note,</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Smoking (GSCAN, ieu-b-142)"</span>,  <span class="st">"ieu-b-142"</span>,  <span class="st">"MR-PRESSO"</span>,     <span class="st">"visual APOE outliers -&gt; PRESSO"</span>,</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"LDL-C"</span>,                       <span class="st">"ieu-b-110"</span>,  <span class="st">"MR-PRESSO"</span>,   <span class="st">"visual APOE outliers -&gt; PRESSO"</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- AD outcomes (the downstream trait, measured only in survivors). ----</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>ad_gwas <span class="ot">&lt;-</span> <span class="fu">c</span>(</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AD — Bellenguez 2022 (proxy-incl.)"</span> <span class="ot">=</span> <span class="st">"ebi-a-GCST90027158"</span>,</span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>  <span class="st">"AD — Kunkle 2019 IGAP (clinical)"</span>   <span class="ot">=</span> <span class="st">"ieu-b-2"</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Selection axis = the lifespan GWAS b_SH is fit on. MUST match Step 1's PRIMARY_SURVIVAL</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="co">#      and the E -&gt; lifespan estimates we reuse below. ----</span></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>SELECTION_LABEL <span class="ot">&lt;-</span> <span class="st">"Parental lifespan (combined, Martingale resid)"</span>  <span class="co"># ebi-a-GCST006697</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a><span class="co"># ---- Selection slope b_SH per AD GWAS. ----</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a><span class="co"># b_SH is genome-wide, LD-clumped, APOE-excluded (see R/fit_selection_slope.R). It is heavy to</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a><span class="co"># fit (needs full sumstats), so we consume a cached fits CSV per AD GWAS. Bellenguez x this same</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a><span class="co"># lifespan is already fit in the smoking pipeline; Kunkle needs its own fit (chunk below).</span></span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a>bsh_sources <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(</span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>ad_id,               <span class="sc">~</span>fits_csv,                                             <span class="sc">~</span>fit_set,</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ebi-a-GCST90027158"</span>, <span class="st">"smoking/results/indexevent_slopehunter_fits.csv"</span>,     <span class="st">"excl_APOE (PRIMARY)"</span>,</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ieu-b-2"</span>,            <span class="st">"R/fits/kunkle_lifespan_slopehunter_fits.csv"</span>,          <span class="st">"excl_APOE (PRIMARY)"</span></span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a><span class="co"># Instrument / clumping parameters (match Step 1).</span></span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>P_THRESH <span class="ot">&lt;-</span> <span class="fl">5e-8</span></span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>R2       <span class="ot">&lt;-</span> <span class="fl">0.001</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>KB       <span class="ot">&lt;-</span> <span class="dv">10000</span></span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a><span class="co"># ROPE for judging whether a *corrected* effect is practically non-null (per-SD outcome).</span></span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>ROPE <span class="ot">&lt;-</span> <span class="fl">0.01</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="naive-exposure-ad-uncorrected" class="level2">
+<h2 class="anchored" data-anchor-id="naive-exposure-ad-uncorrected">Naive exposure → AD (uncorrected)</h2>
+<p>The bias-carrying estimate. Same instrument selection as Step 1, pointed at AD.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Retry a (possibly rate-limited) OpenGWAS call with exponential backoff. `fn` is a thunk.</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>og_retry <span class="ot">&lt;-</span> <span class="cf">function</span>(fn, <span class="at">tries =</span> <span class="dv">4</span>, <span class="at">base =</span> <span class="dv">3</span>) {</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span> (i <span class="cf">in</span> <span class="fu">seq_len</span>(tries)) {</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>    r <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">fn</span>(), <span class="at">error =</span> <span class="cf">function</span>(e) <span class="cn">NULL</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(r) <span class="sc">&amp;&amp;</span> (<span class="sc">!</span><span class="fu">is.data.frame</span>(r) <span class="sc">||</span> <span class="fu">nrow</span>(r) <span class="sc">&gt;</span> <span class="dv">0</span>)) <span class="fu">return</span>(r)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (i <span class="sc">&lt;</span> tries) <span class="fu">Sys.sleep</span>(base <span class="sc">*</span> i)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="cn">NULL</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a><span class="co"># Instruments are pulled ONCE per exposure and reused across AD outcomes (halves API calls and</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># keeps the instrument set identical across the two AD GWAS).</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a>.inst_cache <span class="ot">&lt;-</span> <span class="fu">new.env</span>(<span class="at">parent =</span> <span class="fu">emptyenv</span>())</span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>get_instruments <span class="ot">&lt;-</span> <span class="cf">function</span>(exp_id, p, r2, kb) {</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>  key <span class="ot">&lt;-</span> <span class="fu">paste</span>(exp_id, p, r2, kb)</span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(.inst_cache[[key]]))</span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>    .inst_cache[[key]] <span class="ot">&lt;-</span> <span class="fu">og_retry</span>(<span class="cf">function</span>() <span class="fu">extract_instruments</span>(exp_id, <span class="at">p1 =</span> p, <span class="at">r2 =</span> r2, <span class="at">kb =</span> kb))</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>  .inst_cache[[key]]</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a><span class="co"># Dispatch to the SOP-validated naive model on a harmonised dataset. Returns one row with the</span></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a><span class="co"># estimate + diagnostics (Cochran's Q p, Egger-intercept p, and — for MR-PRESSO — #outliers and</span></span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a><span class="co"># the global-test p). Unknown/failed methods and missing optional packages (MRPRESSO, mr.raps)</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a><span class="co"># degrade to IVW-MRE, and the `method` column shows what actually ran so a fallback is visible.</span></span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>run_naive_model <span class="ot">&lt;-</span> <span class="cf">function</span>(dat, <span class="at">model =</span> <span class="st">"IVW-MRE"</span>) {</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a>  tsm <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"IVW-FE"</span> <span class="ot">=</span> <span class="st">"mr_ivw_fe"</span>, <span class="st">"IVW-MRE"</span> <span class="ot">=</span> <span class="st">"mr_ivw_mre"</span>, <span class="st">"MR-Egger"</span> <span class="ot">=</span> <span class="st">"mr_egger_regression"</span>,</span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>           <span class="st">"Weighted median"</span> <span class="ot">=</span> <span class="st">"mr_weighted_median"</span>, <span class="st">"Weighted mode"</span> <span class="ot">=</span> <span class="st">"mr_weighted_mode"</span>,</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>           <span class="st">"MR-RAPS"</span> <span class="ot">=</span> <span class="st">"mr_raps"</span>)</span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>  Q_p   <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">mr_heterogeneity</span>(dat, <span class="at">method_list =</span> <span class="st">"mr_ivw"</span>)<span class="sc">$</span>Q_pval[<span class="dv">1</span>], <span class="at">error =</span> \(e) <span class="cn">NA_real_</span>)</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>  egg_p <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">mr_pleiotropy_test</span>(dat)<span class="sc">$</span>pval,                            <span class="at">error =</span> \(e) <span class="cn">NA_real_</span>)</span>
+<span id="cb3-31"><a href="#cb3-31" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Enforce column types so rows from different models always bind (list_rbind is type-strict).</span></span>
+<span id="cb3-32"><a href="#cb3-32" aria-hidden="true" tabindex="-1"></a>  out_row <span class="ot">&lt;-</span> <span class="cf">function</span>(method, b, se, p, n, <span class="at">n_out =</span> <span class="cn">NA_integer_</span>, <span class="at">gp =</span> <span class="cn">NA_real_</span>)</span>
+<span id="cb3-33"><a href="#cb3-33" aria-hidden="true" tabindex="-1"></a>    <span class="fu">tibble</span>(<span class="at">model =</span> model, <span class="at">method =</span> method, <span class="at">n_snp =</span> <span class="fu">as.integer</span>(n),</span>
+<span id="cb3-34"><a href="#cb3-34" aria-hidden="true" tabindex="-1"></a>           <span class="at">b =</span> <span class="fu">as.numeric</span>(b), <span class="at">se =</span> <span class="fu">as.numeric</span>(se), <span class="at">p =</span> <span class="fu">as.numeric</span>(p),</span>
+<span id="cb3-35"><a href="#cb3-35" aria-hidden="true" tabindex="-1"></a>           <span class="at">Q_p =</span> <span class="fu">as.numeric</span>(Q_p), <span class="at">egger_int_p =</span> <span class="fu">as.numeric</span>(egg_p),</span>
+<span id="cb3-36"><a href="#cb3-36" aria-hidden="true" tabindex="-1"></a>           <span class="at">n_outlier =</span> <span class="fu">as.integer</span>(n_out), <span class="at">presso_global_p =</span> <span class="fu">as.numeric</span>(gp))</span>
+<span id="cb3-37"><a href="#cb3-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-38"><a href="#cb3-38" aria-hidden="true" tabindex="-1"></a>  <span class="co"># MR-PRESSO reports very small p-values as strings ("&lt;0.001"); coerce to numeric so rows bind.</span></span>
+<span id="cb3-39"><a href="#cb3-39" aria-hidden="true" tabindex="-1"></a>  as_num <span class="ot">&lt;-</span> <span class="cf">function</span>(x) <span class="cf">if</span> (<span class="fu">is.character</span>(x)) <span class="fu">suppressWarnings</span>(<span class="fu">as.numeric</span>(<span class="fu">sub</span>(<span class="st">"^&lt;"</span>, <span class="st">""</span>, x))) <span class="cf">else</span> <span class="fu">as.numeric</span>(x)</span>
+<span id="cb3-40"><a href="#cb3-40" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-41"><a href="#cb3-41" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (model <span class="sc">==</span> <span class="st">"MR-PRESSO"</span>) {                              <span class="co"># SOP: chosen when outliers seen / Q sig</span></span>
+<span id="cb3-42"><a href="#cb3-42" aria-hidden="true" tabindex="-1"></a>    pr <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">suppressWarnings</span>(<span class="fu">run_mr_presso</span>(dat, <span class="at">NbDistribution =</span> <span class="dv">1000</span>,</span>
+<span id="cb3-43"><a href="#cb3-43" aria-hidden="true" tabindex="-1"></a>                                                  <span class="at">SignifThreshold =</span> <span class="fl">0.05</span>)), <span class="at">error =</span> \(e) <span class="cn">NULL</span>)</span>
+<span id="cb3-44"><a href="#cb3-44" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="sc">!</span><span class="fu">is.null</span>(pr)) {</span>
+<span id="cb3-45"><a href="#cb3-45" aria-hidden="true" tabindex="-1"></a>      main <span class="ot">&lt;-</span> pr[[<span class="dv">1</span>]]<span class="sc">$</span><span class="st">`</span><span class="at">Main MR results</span><span class="st">`</span></span>
+<span id="cb3-46"><a href="#cb3-46" aria-hidden="true" tabindex="-1"></a>      gp   <span class="ot">&lt;-</span> <span class="fu">as_num</span>(pr[[<span class="dv">1</span>]]<span class="sc">$</span><span class="st">`</span><span class="at">MR-PRESSO results</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Global Test</span><span class="st">`</span><span class="sc">$</span>Pvalue)</span>
+<span id="cb3-47"><a href="#cb3-47" aria-hidden="true" tabindex="-1"></a>      oidx <span class="ot">&lt;-</span> pr[[<span class="dv">1</span>]]<span class="sc">$</span><span class="st">`</span><span class="at">MR-PRESSO results</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Distortion Test</span><span class="st">`</span><span class="sc">$</span><span class="st">`</span><span class="at">Outliers Indices</span><span class="st">`</span></span>
+<span id="cb3-48"><a href="#cb3-48" aria-hidden="true" tabindex="-1"></a>      n_out <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">is.null</span>(oidx)) <span class="dv">0</span>L <span class="cf">else</span> <span class="fu">length</span>(oidx)</span>
+<span id="cb3-49"><a href="#cb3-49" aria-hidden="true" tabindex="-1"></a>      row <span class="ot">&lt;-</span> main[main<span class="sc">$</span><span class="st">`</span><span class="at">MR Analysis</span><span class="st">`</span> <span class="sc">==</span> <span class="st">"Outlier-corrected"</span>, ]</span>
+<span id="cb3-50"><a href="#cb3-50" aria-hidden="true" tabindex="-1"></a>      lab <span class="ot">&lt;-</span> <span class="st">"MR-PRESSO (outlier-corrected)"</span></span>
+<span id="cb3-51"><a href="#cb3-51" aria-hidden="true" tabindex="-1"></a>      <span class="cf">if</span> (<span class="fu">nrow</span>(row) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="fu">is.na</span>(<span class="fu">as_num</span>(row<span class="sc">$</span><span class="st">`</span><span class="at">Causal Estimate</span><span class="st">`</span>))) {   <span class="co"># no outliers -&gt; raw estimate</span></span>
+<span id="cb3-52"><a href="#cb3-52" aria-hidden="true" tabindex="-1"></a>        row <span class="ot">&lt;-</span> main[main<span class="sc">$</span><span class="st">`</span><span class="at">MR Analysis</span><span class="st">`</span> <span class="sc">==</span> <span class="st">"Raw"</span>, ]; lab <span class="ot">&lt;-</span> <span class="st">"MR-PRESSO (raw; no outliers)"</span></span>
+<span id="cb3-53"><a href="#cb3-53" aria-hidden="true" tabindex="-1"></a>      }</span>
+<span id="cb3-54"><a href="#cb3-54" aria-hidden="true" tabindex="-1"></a>      <span class="fu">return</span>(<span class="fu">out_row</span>(lab, <span class="fu">as_num</span>(row<span class="sc">$</span><span class="st">`</span><span class="at">Causal Estimate</span><span class="st">`</span>), <span class="fu">as_num</span>(row<span class="sc">$</span>Sd),</span>
+<span id="cb3-55"><a href="#cb3-55" aria-hidden="true" tabindex="-1"></a>                     <span class="fu">as_num</span>(row<span class="sc">$</span><span class="st">`</span><span class="at">P-value</span><span class="st">`</span>), <span class="fu">nrow</span>(dat), n_out, gp))</span>
+<span id="cb3-56"><a href="#cb3-56" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb3-57"><a href="#cb3-57" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"MR-PRESSO unavailable/failed — falling back to IVW-MRE"</span>); model <span class="ot">&lt;-</span> <span class="st">"IVW-MRE"</span></span>
+<span id="cb3-58"><a href="#cb3-58" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-59"><a href="#cb3-59" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-60"><a href="#cb3-60" aria-hidden="true" tabindex="-1"></a>  meth <span class="ot">&lt;-</span> <span class="fu">unname</span>(tsm[model])   <span class="co"># single-bracket: NA for an unknown model (not an error)</span></span>
+<span id="cb3-61"><a href="#cb3-61" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.na</span>(meth)) { <span class="fu">message</span>(<span class="st">"unknown model '"</span>, model, <span class="st">"' — using IVW-MRE"</span>)</span>
+<span id="cb3-62"><a href="#cb3-62" aria-hidden="true" tabindex="-1"></a>                     model <span class="ot">&lt;-</span> <span class="st">"IVW-MRE"</span>; meth <span class="ot">&lt;-</span> <span class="st">"mr_ivw_mre"</span> }</span>
+<span id="cb3-63"><a href="#cb3-63" aria-hidden="true" tabindex="-1"></a>  res <span class="ot">&lt;-</span> <span class="fu">tryCatch</span>(<span class="fu">mr</span>(dat, <span class="at">method_list =</span> meth), <span class="at">error =</span> \(e) <span class="cn">NULL</span>)</span>
+<span id="cb3-64"><a href="#cb3-64" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(res) <span class="sc">||</span> <span class="fu">nrow</span>(res) <span class="sc">==</span> <span class="dv">0</span>) {                                <span class="co"># e.g. mr.raps not installed</span></span>
+<span id="cb3-65"><a href="#cb3-65" aria-hidden="true" tabindex="-1"></a>    res <span class="ot">&lt;-</span> <span class="fu">mr</span>(dat, <span class="at">method_list =</span> <span class="st">"mr_ivw_mre"</span>)</span>
+<span id="cb3-66"><a href="#cb3-66" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">out_row</span>(<span class="st">"IVW-MRE (fallback)"</span>, res<span class="sc">$</span>b[<span class="dv">1</span>], res<span class="sc">$</span>se[<span class="dv">1</span>], res<span class="sc">$</span>pval[<span class="dv">1</span>], res<span class="sc">$</span>nsnp[<span class="dv">1</span>]))</span>
+<span id="cb3-67"><a href="#cb3-67" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb3-68"><a href="#cb3-68" aria-hidden="true" tabindex="-1"></a>  <span class="fu">out_row</span>(model, res<span class="sc">$</span>b[<span class="dv">1</span>], res<span class="sc">$</span>se[<span class="dv">1</span>], res<span class="sc">$</span>pval[<span class="dv">1</span>], res<span class="sc">$</span>nsnp[<span class="dv">1</span>])</span>
+<span id="cb3-69"><a href="#cb3-69" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-70"><a href="#cb3-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-71"><a href="#cb3-71" aria-hidden="true" tabindex="-1"></a><span class="co"># One exposure x one AD outcome: pull, harmonise, run the SOP-validated model -&gt; one estimate row.</span></span>
+<span id="cb3-72"><a href="#cb3-72" aria-hidden="true" tabindex="-1"></a>mr_pair <span class="ot">&lt;-</span> <span class="cf">function</span>(exp_id, exp_label, out_id, out_label, <span class="at">model =</span> <span class="st">"IVW-MRE"</span>,</span>
+<span id="cb3-73"><a href="#cb3-73" aria-hidden="true" tabindex="-1"></a>                    <span class="at">p =</span> P_THRESH, <span class="at">r2 =</span> R2, <span class="at">kb =</span> KB) {</span>
+<span id="cb3-74"><a href="#cb3-74" aria-hidden="true" tabindex="-1"></a>  inst <span class="ot">&lt;-</span> <span class="fu">get_instruments</span>(exp_id, p, r2, kb)</span>
+<span id="cb3-75"><a href="#cb3-75" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(inst) <span class="sc">||</span> <span class="fu">nrow</span>(inst) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">stop</span>(<span class="st">"no instruments: "</span>, exp_id)</span>
+<span id="cb3-76"><a href="#cb3-76" aria-hidden="true" tabindex="-1"></a>  out <span class="ot">&lt;-</span> <span class="fu">og_retry</span>(<span class="cf">function</span>() <span class="fu">extract_outcome_data</span>(<span class="at">snps =</span> inst<span class="sc">$</span>SNP, <span class="at">outcomes =</span> out_id))</span>
+<span id="cb3-77"><a href="#cb3-77" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(out) <span class="sc">||</span> <span class="fu">nrow</span>(out) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">stop</span>(<span class="st">"no overlap: "</span>, out_id)</span>
+<span id="cb3-78"><a href="#cb3-78" aria-hidden="true" tabindex="-1"></a>  dat <span class="ot">&lt;-</span> <span class="fu">harmonise_data</span>(inst, out, <span class="at">action =</span> <span class="dv">2</span>) <span class="sc">|&gt;</span> <span class="fu">filter</span>(mr_keep)</span>
+<span id="cb3-79"><a href="#cb3-79" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(dat) <span class="sc">==</span> <span class="dv">0</span>) <span class="fu">stop</span>(<span class="st">"nothing kept after harmonisation"</span>)</span>
+<span id="cb3-80"><a href="#cb3-80" aria-hidden="true" tabindex="-1"></a>  <span class="fu">run_naive_model</span>(dat, model) <span class="sc">|&gt;</span></span>
+<span id="cb3-81"><a href="#cb3-81" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">exposure =</span> exp_label, <span class="at">ad =</span> out_label, <span class="at">.before =</span> <span class="dv">1</span>) <span class="sc">|&gt;</span></span>
+<span id="cb3-82"><a href="#cb3-82" aria-hidden="true" tabindex="-1"></a>    <span class="fu">rename</span>(<span class="at">b_ad =</span> b, <span class="at">se_ad =</span> se, <span class="at">p_ad =</span> p)</span>
+<span id="cb3-83"><a href="#cb3-83" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb3-84"><a href="#cb3-84" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-85"><a href="#cb3-85" aria-hidden="true" tabindex="-1"></a><span class="co"># Typed empty prototype so a fully-failed pull still carries the schema downstream joins need.</span></span>
+<span id="cb3-86"><a href="#cb3-86" aria-hidden="true" tabindex="-1"></a>naive_proto <span class="ot">&lt;-</span> <span class="fu">tibble</span>(<span class="at">exposure =</span> <span class="fu">character</span>(), <span class="at">ad =</span> <span class="fu">character</span>(), <span class="at">model =</span> <span class="fu">character</span>(),</span>
+<span id="cb3-87"><a href="#cb3-87" aria-hidden="true" tabindex="-1"></a>                      <span class="at">method =</span> <span class="fu">character</span>(), <span class="at">n_snp =</span> <span class="fu">integer</span>(), <span class="at">b_ad =</span> <span class="fu">double</span>(),</span>
+<span id="cb3-88"><a href="#cb3-88" aria-hidden="true" tabindex="-1"></a>                      <span class="at">se_ad =</span> <span class="fu">double</span>(), <span class="at">p_ad =</span> <span class="fu">double</span>(), <span class="at">Q_p =</span> <span class="fu">double</span>(),</span>
+<span id="cb3-89"><a href="#cb3-89" aria-hidden="true" tabindex="-1"></a>                      <span class="at">egger_int_p =</span> <span class="fu">double</span>(), <span class="at">n_outlier =</span> <span class="fu">integer</span>(), <span class="at">presso_global_p =</span> <span class="fu">double</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>naive_grid <span class="ot">&lt;-</span> <span class="fu">expand_grid</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>  exposures <span class="sc">|&gt;</span> <span class="fu">transmute</span>(<span class="at">exp_id =</span> id, <span class="at">exp_label =</span> label, <span class="at">model =</span> naive_model),</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(<span class="at">out_id =</span> <span class="fu">unname</span>(ad_gwas), <span class="at">out_label =</span> <span class="fu">names</span>(ad_gwas))</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a><span class="co"># Persist the successful pull to CSV rather than knitr cache: an empty/failed pull is never</span></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="co"># written, so a later render retries once the OpenGWAS allowance is back.</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>naive_csv <span class="ot">&lt;-</span> <span class="st">"exposure_ad_naive.csv"</span></span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a><span class="co"># Re-pull if the cache is missing, predates the schema, OR was computed under different</span></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a><span class="co"># `naive_model` choices than the config now requests — so changing a model auto-invalidates it.</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>cache_ok <span class="ot">&lt;-</span> <span class="fu">local</span>({</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">file.exists</span>(naive_csv)) <span class="fu">return</span>(<span class="cn">FALSE</span>)</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  hdr <span class="ot">&lt;-</span> <span class="fu">names</span>(<span class="fu">read_csv</span>(naive_csv, <span class="at">n_max =</span> <span class="dv">0</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>))</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="sc">!</span><span class="fu">all</span>(<span class="fu">c</span>(<span class="st">"exposure"</span>, <span class="st">"model"</span>, <span class="st">"b_ad"</span>, <span class="st">"se_ad"</span>, <span class="st">"p_ad"</span>, <span class="st">"n_outlier"</span>, <span class="st">"Q_p"</span>) <span class="sc">%in%</span> hdr))</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="cn">FALSE</span>)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>  cached    <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(naive_csv, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span> <span class="fu">distinct</span>(exposure, model)</span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  requested <span class="ot">&lt;-</span> exposures <span class="sc">|&gt;</span> <span class="fu">transmute</span>(<span class="at">exposure =</span> label, <span class="at">model =</span> naive_model)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">nrow</span>(<span class="fu">anti_join</span>(requested, cached, <span class="at">by =</span> <span class="fu">c</span>(<span class="st">"exposure"</span>, <span class="st">"model"</span>))) <span class="sc">==</span> <span class="dv">0</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>})</span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>naive_ad <span class="ot">&lt;-</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (cache_ok) {</span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="fu">read_csv</span>(naive_csv, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>    x <span class="ot">&lt;-</span> <span class="fu">pmap</span>(naive_grid, <span class="fu">possibly</span>(mr_pair, <span class="at">otherwise =</span> <span class="cn">NULL</span>)) <span class="sc">|&gt;</span> <span class="fu">compact</span>() <span class="sc">|&gt;</span> <span class="fu">list_rbind</span>()</span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">nrow</span>(x) <span class="sc">&gt;</span> <span class="dv">0</span>) {</span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>      <span class="fu">write_csv</span>(x, naive_csv); x</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>      <span class="fu">warning</span>(<span class="st">"Naive E→AD returned no rows — OpenGWAS is likely rate-limited or the token's "</span>,</span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>              <span class="st">"allowance is exhausted. Check ieugwasr::user(); rerun once available. The "</span>,</span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>              <span class="st">"correction below will be empty until then."</span>)</span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>      naive_proto</span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a>naive_ad <span class="sc">|&gt;</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(exposure, ad, model, method, n_snp, b_ad, se_ad, p_ad, n_outlier, Q_p) <span class="sc">|&gt;</span></span>
+<span id="cb4-38"><a href="#cb4-38" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">signif</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb4-39"><a href="#cb4-39" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Naive exposure → AD, per SOP-validated model (n_outlier / Q p = MR-PRESSO / heterogeneity diagnostics)."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Naive exposure → AD, per SOP-validated model (n_outlier / Q p = MR-PRESSO / heterogeneity diagnostics).</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 23%">
+<col style="width: 6%">
+<col style="width: 20%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 4%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 4%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">ad</th>
+<th style="text-align: left;">model</th>
+<th style="text-align: left;">method</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: right;">b_ad</th>
+<th style="text-align: right;">se_ad</th>
+<th style="text-align: right;">p_ad</th>
+<th style="text-align: right;">n_outlier</th>
+<th style="text-align: right;">Q_p</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: left;">MR-PRESSO (outlier-corrected)</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">-0.1120</td>
+<td style="text-align: right;">0.0305</td>
+<td style="text-align: right;">0.00147</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.0000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: left;">MR-PRESSO (raw; no outliers)</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">-0.0263</td>
+<td style="text-align: right;">0.0708</td>
+<td style="text-align: right;">0.71400</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: right;">0.0416</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: left;">MR-PRESSO (outlier-corrected)</td>
+<td style="text-align: right;">161</td>
+<td style="text-align: right;">-0.0718</td>
+<td style="text-align: right;">0.0344</td>
+<td style="text-align: right;">0.03870</td>
+<td style="text-align: right;">8</td>
+<td style="text-align: right;">0.0000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: left;">MR-PRESSO (outlier-corrected)</td>
+<td style="text-align: right;">149</td>
+<td style="text-align: right;">0.0795</td>
+<td style="text-align: right;">0.0654</td>
+<td style="text-align: right;">0.22700</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.0000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>Model selection (scatter/funnel inspection, MR-PRESSO vs IVW-MRE vs …) was done when these associations were first identified; the validated choice is recorded in <code>naive_model</code> above and applied here. This notebook only carries the correction.</p>
+</section>
+<section id="exposure-lifespan-arm-reused-from-step-1" class="level2">
+<h2 class="anchored" data-anchor-id="exposure-lifespan-arm-reused-from-step-1">Exposure → lifespan arm (reused from Step 1)</h2>
+<p><code>E → lifespan</code> on the same selection axis <code>b_SH</code> is fit on. Read from Step 1’s saved screen; if that file is absent, recompute with the same function.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>es_arm <span class="ot">&lt;-</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">file.exists</span>(<span class="st">"exposure_survival_screen.csv"</span>)) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="fu">read_csv</span>(<span class="st">"exposure_survival_screen.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>      <span class="fu">filter</span>(survival <span class="sc">==</span> SELECTION_LABEL) <span class="sc">|&gt;</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      <span class="fu">transmute</span>(exposure, <span class="at">b_life =</span> b, <span class="at">se_life =</span> se, <span class="at">p_life =</span> p)</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  } <span class="cf">else</span> {</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">warning</span>(<span class="st">"exposure_survival_screen.csv not found — recomputing E → lifespan (IVW-MRE)."</span>)</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    life_id <span class="ot">&lt;-</span> <span class="st">"ebi-a-GCST006697"</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    exp_tbl <span class="ot">&lt;-</span> exposures <span class="sc">|&gt;</span> <span class="fu">transmute</span>(<span class="at">exp_id =</span> id, <span class="at">exp_label =</span> label)</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pmap</span>(exp_tbl, \(exp_id, exp_label)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>         <span class="fu">possibly</span>(mr_pair, <span class="cn">NULL</span>)(exp_id, exp_label, life_id, SELECTION_LABEL)) <span class="sc">|&gt;</span></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>      <span class="fu">compact</span>() <span class="sc">|&gt;</span> <span class="fu">list_rbind</span>() <span class="sc">|&gt;</span></span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>      <span class="fu">transmute</span>(exposure, <span class="at">b_life =</span> b_ad, <span class="at">se_life =</span> se_ad, <span class="at">p_life =</span> p_ad)</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>es_arm <span class="sc">|&gt;</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">signif</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Exposure → lifespan (selection axis), from Step 1."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Exposure → lifespan (selection axis), from Step 1.</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: right;">b_life</th>
+<th style="text-align: right;">se_life</th>
+<th style="text-align: right;">p_life</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">chronotype.ukbb</td>
+<td style="text-align: right;">-0.00327</td>
+<td style="text-align: right;">0.043200</td>
+<td style="text-align: right;">0.94000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sleeplessness.elsworth</td>
+<td style="text-align: right;">-0.01520</td>
+<td style="text-align: right;">0.051600</td>
+<td style="text-align: right;">0.76900</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">sleepduration.elsworth</td>
+<td style="text-align: right;">-0.07080</td>
+<td style="text-align: right;">0.040800</td>
+<td style="text-align: right;">0.08260</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">sleepapnea.sakaue</td>
+<td style="text-align: right;">0.02530</td>
+<td style="text-align: right;">0.021900</td>
+<td style="text-align: right;">0.24700</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDLchol.ukb.richardson</td>
+<td style="text-align: right;">0.06500</td>
+<td style="text-align: right;">0.010600</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">HDLchol.ukb.richardson</td>
+<td style="text-align: right;">-0.06560</td>
+<td style="text-align: right;">0.008860</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">weight.ukb</td>
+<td style="text-align: right;">0.10400</td>
+<td style="text-align: right;">0.010100</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">FBG.manning</td>
+<td style="text-align: right;">0.03510</td>
+<td style="text-align: right;">0.017700</td>
+<td style="text-align: right;">0.04760</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PBG.chen</td>
+<td style="text-align: right;">0.02090</td>
+<td style="text-align: right;">0.012900</td>
+<td style="text-align: right;">0.10400</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">T2D.xue</td>
+<td style="text-align: right;">0.02730</td>
+<td style="text-align: right;">0.004940</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">BMI.elsworth</td>
+<td style="text-align: right;">0.13600</td>
+<td style="text-align: right;">0.011100</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bloodglucose.barton</td>
+<td style="text-align: right;">0.01430</td>
+<td style="text-align: right;">0.010700</td>
+<td style="text-align: right;">0.18100</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HbA1C.soranzo</td>
+<td style="text-align: right;">-0.01800</td>
+<td style="text-align: right;">0.037600</td>
+<td style="text-align: right;">0.63200</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">schizophrenia.pgc</td>
+<td style="text-align: right;">0.00582</td>
+<td style="text-align: right;">0.005380</td>
+<td style="text-align: right;">0.28000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">MDD.pgc</td>
+<td style="text-align: right;">-0.00869</td>
+<td style="text-align: right;">0.023000</td>
+<td style="text-align: right;">0.70600</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">bipolar.pgc</td>
+<td style="text-align: right;">-0.02210</td>
+<td style="text-align: right;">0.007080</td>
+<td style="text-align: right;">0.00177</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">menopause.ukb</td>
+<td style="text-align: right;">-0.00796</td>
+<td style="text-align: right;">0.084700</td>
+<td style="text-align: right;">0.92500</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">SBP.tang</td>
+<td style="text-align: right;">0.01000</td>
+<td style="text-align: right;">0.000812</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">DBP.tang</td>
+<td style="text-align: right;">0.01640</td>
+<td style="text-align: right;">0.001410</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">EA.yearsofed</td>
+<td style="text-align: right;">-0.03480</td>
+<td style="text-align: right;">0.003020</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">EA.collegecomplete</td>
+<td style="text-align: right;">-0.38400</td>
+<td style="text-align: right;">0.032500</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">CVD.loh</td>
+<td style="text-align: right;">0.60300</td>
+<td style="text-align: right;">0.030100</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">cig.liu</td>
+<td style="text-align: right;">0.10200</td>
+<td style="text-align: right;">0.017700</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">alcohol.liu</td>
+<td style="text-align: right;">0.08870</td>
+<td style="text-align: right;">0.039700</td>
+<td style="text-align: right;">0.02560</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">fatmass.elsworth</td>
+<td style="text-align: right;">0.12700</td>
+<td style="text-align: right;">0.011800</td>
+<td style="text-align: right;">0.00000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="selection-slope-b_sh" class="level2">
+<h2 class="anchored" data-anchor-id="selection-slope-b_sh">Selection slope b_SH</h2>
+<p>One genome-wide, APOE-excluded SlopeHunter slope per AD GWAS. Bellenguez × this lifespan is reused from the smoking pipeline; a missing fit (e.g.&nbsp;Kunkle before you run the driver) yields <code>NA</code> and its exposures are reported as a gap rather than silently left uncorrected.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>load_bsh <span class="ot">&lt;-</span> <span class="cf">function</span>(ad_id) {</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a>  src <span class="ot">&lt;-</span> bsh_sources <span class="sc">|&gt;</span> <span class="fu">filter</span>(ad_id <span class="sc">==</span> <span class="sc">!!</span>ad_id)</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(src) <span class="sc">==</span> <span class="dv">0</span> <span class="sc">||</span> <span class="sc">!</span><span class="fu">file.exists</span>(src<span class="sc">$</span>fits_csv[<span class="dv">1</span>]))</span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">tibble</span>(<span class="at">ad_id =</span> ad_id, <span class="at">b_SH =</span> <span class="cn">NA_real_</span>, <span class="at">se_SH =</span> <span class="cn">NA_real_</span>, <span class="at">n_fit =</span> <span class="cn">NA_integer_</span>))</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">read_csv</span>(src<span class="sc">$</span>fits_csv[<span class="dv">1</span>], <span class="at">show_col_types =</span> <span class="cn">FALSE</span>) <span class="sc">|&gt;</span></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(set <span class="sc">==</span> src<span class="sc">$</span>fit_set[<span class="dv">1</span>]) <span class="sc">|&gt;</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">transmute</span>(<span class="at">ad_id =</span> ad_id, b_SH, se_SH, <span class="at">n_fit =</span> dplyr<span class="sc">::</span><span class="fu">coalesce</span>(n_fit, <span class="cn">NA_integer_</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">slice</span>(<span class="dv">1</span>)</span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a>bsh <span class="ot">&lt;-</span> <span class="fu">map</span>(<span class="fu">unname</span>(ad_gwas), load_bsh) <span class="sc">|&gt;</span> <span class="fu">list_rbind</span>() <span class="sc">|&gt;</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(<span class="fu">tibble</span>(<span class="at">ad_id =</span> <span class="fu">unname</span>(ad_gwas), <span class="at">ad =</span> <span class="fu">names</span>(ad_gwas)), <span class="at">by =</span> <span class="st">"ad_id"</span>)</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>bsh <span class="sc">|&gt;</span></span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(<span class="st">`</span><span class="at">AD GWAS</span><span class="st">`</span> <span class="ot">=</span> ad, <span class="at">b_SH =</span> <span class="fu">signif</span>(b_SH, <span class="dv">3</span>), <span class="at">se_SH =</span> <span class="fu">signif</span>(se_SH, <span class="dv">3</span>), n_fit) <span class="sc">|&gt;</span></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"SlopeHunter selection slope b_SH (genome-wide, APOE excluded)."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>SlopeHunter selection slope b_SH (genome-wide, APOE excluded).</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">AD GWAS</th>
+<th style="text-align: right;">b_SH</th>
+<th style="text-align: right;">se_SH</th>
+<th style="text-align: right;">n_fit</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: right;">-0.944</td>
+<td style="text-align: right;">0.0701</td>
+<td style="text-align: right;">2250</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: right;">1.100</td>
+<td style="text-align: right;">0.1120</td>
+<td style="text-align: right;">2250</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<p>To fit <code>b_SH</code> for an AD GWAS that has no cached fit yet (needs full sumstats + plink2 clumping — see <code>smoking/scripts/fetch_sumstats.sh</code>):</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Turnkey: `bash scripts/fetch_kunkle_sumstats.sh` downloads + normalizes the Kunkle and</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="co"># lifespan sumstats and the LD panel, then prints the prep + `plink2 --clump` commands. After</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="co"># clumping, this single call preps, filters to the clumped set, fits, and writes the fits CSV:</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="st">"R/fits"</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>, <span class="at">recursive =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">build_selection_slope</span>(</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>  <span class="at">ad_file      =</span> <span class="st">"data/cache/sumstats/AD_kunkle_harmonised.tsv.gz"</span>,</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>  <span class="at">life_file    =</span> <span class="st">"data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz"</span>,</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>  <span class="at">clumped_snps =</span> <span class="st">"data/cache/sumstats/kunkle_clumped.clumps"</span>,  <span class="co"># plink2 --clump output</span></span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>  <span class="at">out_csv      =</span> <span class="st">"R/fits/kunkle_lifespan_slopehunter_fits.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="callout callout-style-default callout-warning callout-titled">
+<div class="callout-header d-flex align-content-center">
+<div class="callout-icon-container">
+<i class="callout-icon"></i>
+</div>
+<div class="callout-title-container flex-fill">
+Warning
+</div>
+</div>
+<div class="callout-body-container callout-body">
+<p><strong>Verify the sign of a new <code>b_SH</code> before trusting it.</strong> The current Kunkle fit is <code>b_SH = +1.10</code>, opposite to the validated Bellenguez <code>−0.944</code>. Because AD → shorter lifespan holds regardless of ascertainment, an opposite sign is a red flag for an allele-orientation artefact in the AD sumstats — and it flips the direction of every Kunkle correction. Confirm before reporting the Kunkle column:</p>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Aligned AD betas for the same disease must correlate POSITIVELY across the two AD GWAS.</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="co"># A negative correlation =&gt; the test GWAS's effect alleles are inverted =&gt; its b_SH is artefactual.</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>m_bell <span class="ot">&lt;-</span> <span class="fu">prep_selection_merge</span>(<span class="st">"smoking/data/cache/sumstats/AD_bellenguez_harmonised.tsv.gz"</span>,</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz"</span>)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>m_kunk <span class="ot">&lt;-</span> <span class="fu">prep_selection_merge</span>(<span class="st">"data/cache/sumstats/AD_kunkle_harmonised.tsv.gz"</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>                               <span class="st">"data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz"</span>)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a><span class="fu">ad_orientation_check</span>(m_bell, m_kunk, <span class="st">"Bellenguez"</span>, <span class="st">"Kunkle"</span>)   <span class="co"># verdict: consistent vs FLIPPED</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="corrected-exposure-ad" class="level2">
+<h2 class="anchored" data-anchor-id="corrected-exposure-ad">Corrected exposure → AD</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>joined <span class="ot">&lt;-</span> naive_ad <span class="sc">|&gt;</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(es_arm, <span class="at">by =</span> <span class="st">"exposure"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">left_join</span>(bsh <span class="sc">|&gt;</span> <span class="fu">select</span>(ad, b_SH, se_SH), <span class="at">by =</span> <span class="st">"ad"</span>)</span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="co"># correct_estimate() is vectorized, so call it once on whole columns. This is NA-safe (b_SH NA</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="co"># -&gt; b_corr NA) and empty-safe (0 rows in -&gt; a 0-row tibble that still carries b_corr etc.),</span></span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a><span class="co"># unlike a per-row list-column + unnest() which cannot materialize columns from zero elements.</span></span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>corrected <span class="ot">&lt;-</span> <span class="fu">bind_cols</span>(</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>  joined,</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>  <span class="fu">correct_estimate</span>(joined<span class="sc">$</span>b_ad, joined<span class="sc">$</span>se_ad, joined<span class="sc">$</span>b_life, joined<span class="sc">$</span>se_life,</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>                   joined<span class="sc">$</span>b_SH, joined<span class="sc">$</span>se_SH)</span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">attenuation =</span> <span class="dv">1</span> <span class="sc">-</span> <span class="fu">abs</span>(b_corr) <span class="sc">/</span> <span class="fu">abs</span>(b_uncorr),</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">verdict =</span> <span class="fu">case_when</span>(</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">is.na</span>(b_corr)                                   <span class="sc">~</span> <span class="st">"no b_SH — run the fit for this AD GWAS"</span>,</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">sign</span>(b_corr) <span class="sc">!=</span> <span class="fu">sign</span>(b_uncorr) <span class="sc">&amp;</span> p_corr <span class="sc">&lt;</span> <span class="fl">0.05</span>  <span class="sc">~</span> <span class="st">"REVERSED after correction"</span>,</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>      p_ad <span class="sc">&gt;=</span> <span class="fl">0.05</span> <span class="sc">&amp;</span> p_corr <span class="sc">&lt;</span> <span class="fl">0.05</span>                    <span class="sc">~</span> <span class="st">"UNMASKED — null naive, significant after correction"</span>,</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>      p_ad <span class="sc">&lt;</span> <span class="fl">0.05</span> <span class="sc">&amp;</span> p_corr <span class="sc">&gt;=</span> <span class="fl">0.05</span>                    <span class="sc">~</span> <span class="st">"ABOLISHED — signal explained by survival bias"</span>,</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>      p_corr <span class="sc">&lt;</span> <span class="fl">0.05</span>                                   <span class="sc">~</span> <span class="st">"ROBUST — survives correction"</span>,</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                            <span class="sc">~</span> <span class="st">"inconclusive"</span></span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>  )</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a>corrected <span class="sc">|&gt;</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>    exposure, <span class="st">`</span><span class="at">AD GWAS</span><span class="st">`</span> <span class="ot">=</span> ad, model, n_snp,</span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">naive =</span> <span class="fu">signif</span>(b_ad, <span class="dv">3</span>), <span class="st">`</span><span class="at">p naive</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">signif</span>(p_ad, <span class="dv">2</span>),</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">b_SH =</span> <span class="fu">signif</span>(b_SH, <span class="dv">3</span>), <span class="st">`</span><span class="at">E→life</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">signif</span>(b_life, <span class="dv">3</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">corrected =</span> <span class="fu">signif</span>(b_corr, <span class="dv">3</span>),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">corr 95% CI</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(b_corr), <span class="cn">NA</span>,</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>                           <span class="fu">sprintf</span>(<span class="st">"[%.3f, %.3f]"</span>, ci_lo, ci_hi)),</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">p corr</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">signif</span>(p_corr, <span class="dv">2</span>),</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>    <span class="st">`</span><span class="at">% attenuated</span><span class="st">`</span> <span class="ot">=</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(attenuation), <span class="cn">NA</span>, <span class="fu">round</span>(<span class="dv">100</span> <span class="sc">*</span> attenuation)),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>    verdict</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="st">"Naive vs SlopeHunter-corrected exposure → AD. "</span>,</span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a>    <span class="st">"corrected = naive − b_SH × (E→lifespan)."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Naive vs SlopeHunter-corrected exposure → AD. corrected = naive − b_SH × (E→lifespan).</caption>
+<colgroup>
+<col style="width: 14%">
+<col style="width: 18%">
+<col style="width: 5%">
+<col style="width: 3%">
+<col style="width: 4%">
+<col style="width: 4%">
+<col style="width: 3%">
+<col style="width: 3%">
+<col style="width: 5%">
+<col style="width: 6%">
+<col style="width: 3%">
+<col style="width: 6%">
+<col style="width: 20%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">exposure</th>
+<th style="text-align: left;">AD GWAS</th>
+<th style="text-align: left;">model</th>
+<th style="text-align: right;">n_snp</th>
+<th style="text-align: right;">naive</th>
+<th style="text-align: right;">p naive</th>
+<th style="text-align: right;">b_SH</th>
+<th style="text-align: right;">E→life</th>
+<th style="text-align: right;">corrected</th>
+<th style="text-align: left;">corr 95% CI</th>
+<th style="text-align: right;">p corr</th>
+<th style="text-align: left;">% attenuated</th>
+<th style="text-align: left;">verdict</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">-0.1120</td>
+<td style="text-align: right;">0.0015</td>
+<td style="text-align: right;">-0.944</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">no b_SH — run the fit for this AD GWAS</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Smoking (GSCAN, ieu-b-142)</td>
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: right;">-0.0263</td>
+<td style="text-align: right;">0.7100</td>
+<td style="text-align: right;">1.100</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">no b_SH — run the fit for this AD GWAS</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">AD — Bellenguez 2022 (proxy-incl.)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: right;">161</td>
+<td style="text-align: right;">-0.0718</td>
+<td style="text-align: right;">0.0390</td>
+<td style="text-align: right;">-0.944</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">no b_SH — run the fit for this AD GWAS</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL-C</td>
+<td style="text-align: left;">AD — Kunkle 2019 IGAP (clinical)</td>
+<td style="text-align: left;">MR-PRESSO</td>
+<td style="text-align: right;">149</td>
+<td style="text-align: right;">0.0795</td>
+<td style="text-align: right;">0.2300</td>
+<td style="text-align: right;">1.100</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">no b_SH — run the fit for this AD GWAS</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="naive-vs-corrected-forest" class="level2">
+<h2 class="anchored" data-anchor-id="naive-vs-corrected-forest">Naive vs corrected — forest</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>plot_df <span class="ot">&lt;-</span> corrected <span class="sc">|&gt;</span> <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(b_corr))</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">nrow</span>(plot_df) <span class="sc">==</span> <span class="dv">0</span>) {</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">message</span>(<span class="st">"No corrected estimates to plot yet (naive pull empty or b_SH unavailable)."</span>)</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>  plot_df <span class="sc">|&gt;</span></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">lab =</span> <span class="fu">paste</span>(exposure, ad, <span class="at">sep =</span> <span class="st">" → "</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">select</span>(lab, <span class="at">Naive =</span> b_ad, <span class="at">Corrected =</span> b_corr,</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>           <span class="at">se_n =</span> se_ad, <span class="at">se_c =</span> se_corr) <span class="sc">|&gt;</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pivot_longer</span>(<span class="fu">c</span>(Naive, Corrected), <span class="at">names_to =</span> <span class="st">"estimate"</span>, <span class="at">values_to =</span> <span class="st">"b"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">mutate</span>(<span class="at">se =</span> <span class="fu">if_else</span>(estimate <span class="sc">==</span> <span class="st">"Naive"</span>, se_n, se_c)) <span class="sc">|&gt;</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>    <span class="fu">ggplot</span>(<span class="fu">aes</span>(b, lab, <span class="at">colour =</span> estimate)) <span class="sc">+</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> b <span class="sc">-</span> <span class="fl">1.96</span> <span class="sc">*</span> se, <span class="at">xmax =</span> b <span class="sc">+</span> <span class="fl">1.96</span> <span class="sc">*</span> se),</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a>                    <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.5</span>)) <span class="sc">+</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">Naive =</span> <span class="st">"#ffcb05"</span>, <span class="at">Corrected =</span> <span class="st">"#00274c"</span>)) <span class="sc">+</span></span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"effect on AD (log-OR)"</span>, <span class="at">y =</span> <span class="cn">NULL</span>, <span class="at">colour =</span> <span class="cn">NULL</span>,</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>         <span class="at">title =</span> <span class="st">"Survival-collider correction of exposure → AD"</span>) <span class="sc">+</span></span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="how-to-read-this" class="level2">
+<h2 class="anchored" data-anchor-id="how-to-read-this">How to read this</h2>
+<ul>
+<li><strong>ABOLISHED</strong> — the naive effect is explained by the survival collider: after removing <code>b_SH · (E→lifespan)</code> the corrected CI covers 0. Do not treat the naive <code>E → AD</code> effect as causal/druggable (this was the smoking→AD verdict).</li>
+<li><strong>ROBUST</strong> — significant before <em>and</em> after; the collider does not account for it (though see caveats).</li>
+<li><strong>UNMASKED</strong> — the naive was null but the corrected effect is significant. The collider was <em>suppressing</em> a real effect: <code>naive = true + bias</code>, and here the bias ≈ −true, so the two cancelled to ~0 until correction removed the bias. A null naive never means “no effect” — the collider can hide one.</li>
+<li><strong>REVERSED</strong> — correction flips the sign; the induced bias dominated the naive.</li>
+</ul>
+<p><strong>Trust caveat for UNMASKED/REVERSED.</strong> These “revealed” effects are only as reliable as <code>b_SH</code> and <code>E→lifespan</code>. A wrong selection slope (e.g.&nbsp;a mis-oriented <code>b_SH</code>) can <em>manufacture</em> a significant corrected effect out of a true null just as easily as it can reveal a real one — so verify the inputs (allele orientation, <code>b_SH</code> sign) before believing an UNMASKED result.</p>
+<p>The <code>induced_bias</code> direction from Step 1 predicts <em>which way</em> the naive estimate is pulled; this step quantifies <em>how much</em>. They should agree in sign: a “spurious PROTECTION” flag in Step 1 means correction should move the naive <code>E → AD</code> estimate in the harmful (less protective) direction.</p>
+<p>Caveats carried from Step 1 and the smoking analysis:</p>
+<ol type="1">
+<li><strong>b_SH is per AD GWAS.</strong> Bellenguez (proxy-inclusive) and Kunkle (clinical) can carry different selection slopes; fit each rather than reusing one.</li>
+<li><strong>The correction cannot separate collider-induced association from a genuine effect collinear with the mortality axis</strong> — strong evidence, not proof.</li>
+<li><strong><code>E → lifespan</code> uses kin-proxy parental lifespan</strong> (~halved per-allele effects), so the subtracted term is conservative.</li>
+</ol>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write_csv</span>(corrected, <span class="st">"exposure_ad_indexevent_corrected.csv"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

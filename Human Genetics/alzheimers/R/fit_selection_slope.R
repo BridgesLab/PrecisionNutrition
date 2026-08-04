@@ -131,6 +131,100 @@ ad_orientation_check <- function(m_ref, m_test, ref_label = "ref", test_label = 
               else                            "ambiguous — inspect")
 }
 
+# ---- orientation diagnostic 2: single-file anchor check ----------------------
+# ad_orientation_check() needs TWO prepped merges, so it cannot run when only one AD sumstats
+# file is on disk. This version needs just the one file: it reads published AD risk alleles at
+# well-established loci and asks whether the file's betas agree. APOE rs429358-C alone is
+# decisive (p ~ 1e-881 in Kunkle) — no correctly-oriented AD GWAS can get its sign wrong.
+# Returns one row per anchor plus an overall verdict attribute.
+AD_ANCHORS <- tibble::tribble(
+  ~SNP,         ~risk_allele, ~locus,
+  "rs429358",   "C",          "APOE e4 (decisive)",
+  "rs7412",     "C",          "APOE (non-e2)",
+  "rs6656401",  "A",          "CR1",
+  "rs6733839",  "T",          "BIN1",
+  "rs11136000", "C",          "CLU",
+  "rs3851179",  "C",          "PICALM",
+  "rs10948363", "G",          "CD2AP"
+)
+
+check_ad_orientation_anchors <- function(ad_file, anchors = AD_ANCHORS) {
+  cols <- c("variant_id", "effect_allele", "other_allele", "beta", "standard_error", "p_value")
+  ad <- data.table::fread(cmd = paste("gunzip -c", shQuote(ad_file)), select = cols,
+                          showProgress = FALSE)
+  data.table::setnames(ad, c("SNP", "ea", "oa", "beta", "se", "p"))
+  ad <- ad[SNP %in% anchors$SNP]
+  res <- dplyr::inner_join(anchors, tibble::as_tibble(ad), by = "SNP") |>
+    dplyr::mutate(
+      # beta re-expressed for the PUBLISHED risk allele; must be > 0 in a correct file.
+      beta_risk = dplyr::if_else(ea == risk_allele, beta, -beta),
+      ok        = beta_risk > 0)
+  n_ok <- sum(res$ok, na.rm = TRUE)
+  apoe <- res |> dplyr::filter(SNP == "rs429358")
+  verdict <-
+    if (nrow(apoe) == 1 && !apoe$ok[1]) "FLIPPED — rs429358 risk allele has a negative beta"
+    else if (n_ok == nrow(res))         "correct orientation (all anchors agree)"
+    else if (n_ok >= nrow(res) - 1)     "correct orientation (APOE + majority agree)"
+    else                                "ambiguous — inspect"
+  structure(res, verdict = verdict)
+}
+
+# ---- b_SH identifiability diagnostic ----------------------------------------
+# SlopeHunter ALWAYS returns a slope, with a bootstrap SE that looks precise, even when the two
+# axes are unrelated: its mixture model partitions whatever cloud it is given, and with no signal
+# the "hunted" cluster is carved out of noise. So a b_SH is only interpretable if the underlying
+# data actually carry a selection relationship. This reports the raw evidence for one, on the
+# SAME SNPs SlopeHunter fits (incidence p < xp_thresh). Near-zero r with ~0.5 sign agreement
+# means b_SH is not estimable from these data regardless of how tight its CI looks.
+bsh_identifiability <- function(m, xp_thresh = 1e-3) {
+  d <- m[p_life < xp_thresh]
+  r  <- stats::cor(d$beta_life, d$beta_ad_aligned)
+  ols <- stats::coef(stats::lm(beta_ad_aligned ~ 0 + beta_life, data = d))[[1]]
+  tibble::tibble(
+    n_fit          = nrow(d),
+    pearson_r      = r,
+    ols_slope      = ols,
+    sign_agreement = mean(sign(d$beta_life) == sign(d$beta_ad_aligned)),
+    sd_ratio       = stats::sd(d$beta_ad_aligned) / stats::sd(d$beta_life),
+    verdict        = if (abs(r) < 0.05)
+                       "NOT IDENTIFIED — no raw selection signal; b_SH reflects noise geometry"
+                     else if (abs(r) < 0.15) "weak — treat b_SH as provisional"
+                     else                    "signal present — b_SH interpretable")
+}
+
+# ---- null distribution of b_SH ----------------------------------------------
+# The definitive check on a b_SH. bsh_identifiability() shows whether raw signal exists; this
+# shows what SlopeHunter returns when it provably does NOT. The AD block (beta, se, p) is
+# permuted TOGETHER across SNPs, so each SNP keeps internally consistent AD statistics while the
+# lifespan<->AD pairing is destroyed. Whatever comes back is pure artefact of the data geometry.
+#
+# The key result: THE NULL IS NOT CENTRED ON ZERO. On the Kunkle merge, permuted data return
+# b_SH ~ -0.73 (range -0.73 to -0.53, sd 0.074) — a large negative slope produced by nothing but
+# the noise geometry of the two axes. The bootstrap SE (0.112) is not misleadingly narrow; it is
+# the *reference point* that is wrong. So "b_SH differs significantly from 0" is NOT evidence of
+# selection. Compare an observed b_SH against this permutation null, never against zero.
+#
+# Slow (~10-20 s per replicate); n_perm = 8 is enough to see the spread.
+bsh_null_permutation <- function(m, n_perm = 8, xp_thresh = 1e-3, seed = 42) {
+  suppressPackageStartupMessages(library(SlopeHunter))
+  set.seed(seed)
+  b <- vapply(seq_len(n_perm), function(i) {
+    k <- sample(nrow(m))
+    dat <- data.frame(
+      SNP            = m$SNP,
+      BETA.incidence = m$beta_life,           SE.incidence = m$se_life,
+      Pval.incidence = m$p_life,
+      BETA.prognosis = m$beta_ad_aligned[k],  SE.prognosis = m$se_ad[k],
+      Pval.prognosis = m$p_ad[k], stringsAsFactors = FALSE)
+    f <- tryCatch(SlopeHunter::hunt(dat, xp_thresh = xp_thresh, Plot = FALSE, seed = 7),
+                  error = function(e) NULL)
+    if (is.null(f)) NA_real_ else as.numeric(f$b)
+  }, numeric(1))
+  tibble::tibble(n_perm = n_perm, null_min = min(b, na.rm = TRUE),
+                 null_max = max(b, na.rm = TRUE), null_median = stats::median(b, na.rm = TRUE),
+                 null_sd = stats::sd(b, na.rm = TRUE))
+}
+
 # ---- driver: produce a fits CSV for one AD GWAS ------------------------------
 # clumped_snps: optional character vector (or path to a one-column file) of LD-independent rsIDs
 #   from plink2 --clump. If NULL, fits on all merged SNPs (not recommended — LD inflates n).

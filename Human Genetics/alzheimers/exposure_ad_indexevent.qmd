@@ -94,7 +94,9 @@ exposures <- tibble::tribble(
   "Cardiovascular Disease",       "ebi-a-GCST90029019", "IVW-MRE",         "no horizontal pleiotropy, heterogeneity",
   "Systolic Blood Pressure",      "ieu-b-5138",         "IVW-MRE",         "no horizontal pleiotropy, heterogeneity",
   "Diastolic Blood Pressure",     "ieu-b-5139",         "IVW-MRE",         "no horizontal pleiotropy, heterogeneity",
-  "Chronotype",                   "ieu-a-1087",         "Weighted Median", "why?",
+  # Spelling must match the `tsm` lookup in `run_naive_model` (matching is case-insensitive
+  # since 2026-08-04; "Weighted Median" previously fell through to IVW-MRE silently).
+  "Chronotype",                   "ieu-a-1087",         "Weighted median", "why?",
   "Sleep Duration",               "ukb-b-4424",         "IVW-MRE",         "no horizontal pleiotropy, heterogeneity",
   "Sleeplessness",                "ukb-b-3957",         "IVW-FE",          "no horizontal pleiotropy, no heterogeneity",
   "Educational Attainment (CC)",  "ebi-a-GCST90029012", "MR-RAPS",         "Weak Instruments (F<10)",
@@ -185,7 +187,11 @@ run_naive_model <- function(dat, model = "IVW-MRE") {
   # MR-PRESSO reports very small p-values as strings ("<0.001"); coerce to numeric so rows bind.
   as_num <- function(x) if (is.character(x)) suppressWarnings(as.numeric(sub("^<", "", x))) else as.numeric(x)
 
-  if (model == "MR-PRESSO") {                              # SOP: chosen when outliers seen / Q sig
+  # Case-insensitive so a capitalisation slip in the config cannot silently downgrade an
+  # exposure to IVW-MRE. That is exactly what happened to Chronotype ("Weighted Median" vs the
+  # table's "Weighted median"): it ran IVW-MRE while the config claimed weighted median, AND it
+  # made `cache_ok` below permanently FALSE, forcing a full 48-call OpenGWAS re-pull every render.
+  if (toupper(model) == "MR-PRESSO") {                     # SOP: chosen when outliers seen / Q sig
     pr <- tryCatch(suppressWarnings(run_mr_presso(dat, NbDistribution = 1000,
                                                   SignifThreshold = 0.05)), error = \(e) NULL)
     if (!is.null(pr)) {
@@ -204,9 +210,12 @@ run_naive_model <- function(dat, model = "IVW-MRE") {
     message("MR-PRESSO unavailable/failed — falling back to IVW-MRE"); model <- "IVW-MRE"
   }
 
-  meth <- unname(tsm[model])   # single-bracket: NA for an unknown model (not an error)
-  if (is.na(meth)) { message("unknown model '", model, "' — using IVW-MRE")
-                     model <- "IVW-MRE"; meth <- "mr_ivw_mre" }
+  meth <- unname(tsm[match(toupper(model), toupper(names(tsm)))])  # NA if genuinely unknown
+  if (is.na(meth)) {
+    warning("unknown naive_model '", model, "' — falling back to IVW-MRE. Fix the config: ",
+            "allowed values are ", paste(names(tsm), collapse = ", "), ", MR-PRESSO.")
+    model <- "IVW-MRE (fallback)"; meth <- "mr_ivw_mre"
+  }
   res <- tryCatch(mr(dat, method_list = meth), error = \(e) NULL)
   if (is.null(res) || nrow(res) == 0) {                                # e.g. mr.raps not installed
     res <- mr(dat, method_list = "mr_ivw_mre")
@@ -471,8 +480,8 @@ two fits share `n_fit = 2250` — that agreement is expected, not suspicious.
 
 **3. The actual cause — `b_SH` is not identified in Kunkle.** On the exact SNPs
 SlopeHunter fits (`p_life < 1e-3`, APOE excluded, n = 2250), the raw relationship
-between lifespan and Kunkle AD effects is *absent*: Pearson `r = −0.0008`, OLS
-slope `−0.002`, sign agreement `0.499` — a coin flip. There is no survival-collider
+between lifespan and Kunkle AD effects is *absent*: Pearson *r* = −0.0008, OLS
+slope −0.002, sign agreement 0.499 — a coin flip. There is no survival-collider
 signal in the data for the model to recover. SlopeHunter nonetheless returns a
 slope, because its mixture model always partitions the cloud it is given; with no
 signal, the "hunted" cluster is carved out of noise. The estimate is perfectly

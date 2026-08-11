@@ -1,0 +1,82 @@
+<!--
+  PLACEMENT
+  =========
+  Part A below is a new subsection 3.5 — insert it under "=== 3. Analytical Models to Test ==="
+  immediately AFTER "==== 3.4 Calculating I-squared GX for MR-Egger ====". Appending as 3.5
+  keeps every existing number (3.1-3.4, Section 4, Section 5) unchanged.
+
+  Part B is the updated "=== 5. Decision Matrix: Which Results to Report ===" — replace the
+  current Section 5 with it. Only the lead sentence and Scenarios 2 and 4 change (marked); the
+  other rows are reproduced verbatim so you can paste the whole table.
+-->
+
+
+<!-- ===================== PART A: insert as 3.5 ===================== -->
+
+==== 3.5 Visual Diagnostics: Scatter and Funnel Plots ====
+
+We generate a '''scatter plot''' and a '''funnel plot''' for '''every''' exposure–outcome
+association before adjudicating the model in [[#5. Decision Matrix: Which Results to Report|Section 5]].
+They reveal outlier and pleiotropic instruments that the summary statistics (Cochran's ''Q'',
+the MR-Egger intercept) can under-flag, and they frequently drive the model choice on inspection
+even when the numeric trigger is borderline. Record the model used '''and the reason''' for each
+association.
+
+'''Scatter plot.''' Each point is an instrument: SNP→exposure effect on ''x'', SNP→outcome effect
+on ''y''; the overlaid lines are the method estimates (IVW, MR-Egger, weighted median).
+* Points should scatter around a single line through the origin.
+* A high-leverage point sitting off the IVW line (e.g. the ''APOE'' region for lipid exposures) is a candidate outlier / pleiotropic SNP.
+* If the MR-Egger or weighted-median slope diverges from IVW, suspect pleiotropy.
+
+<syntaxhighlight lang="r">
+res <- mr(dat, method_list = c("mr_ivw_mre", "mr_egger_regression", "mr_weighted_median"))
+mr_scatter_plot(res, dat)[[1]]
+</syntaxhighlight>
+
+'''Funnel plot.''' Per-SNP Wald ratio on ''x'' against instrument precision (1/SE) on ''y''.
+* A '''symmetric''' inverted funnel around the pooled estimate ⇒ balanced pleiotropy; IVW valid.
+* '''Asymmetry''' ⇒ directional pleiotropy ⇒ MR-Egger or weighted mode.
+* A point far from the body of the funnel is the same outlier the scatter shows and a candidate for removal (MR-PRESSO).
+
+<syntaxhighlight lang="r">
+ss <- mr_singlesnp(dat)
+mr_funnel_plot(ss)[[1]]
+</syntaxhighlight>
+
+How the plots map onto the model choice is given in the [[#5. Decision Matrix: Which Results to Report|Decision Matrix (Section 5)]]; the plots can trigger a model (e.g. MR-PRESSO) on visual grounds even when the numeric rule is ambiguous.
+
+'''Worked example — LDL-C → Alzheimer's disease.''' The naive IVW estimate was a large positive
+effect (β ≈ +0.58 per SD LDL-C; OR ≈ 1.8), biologically implausible. The scatter showed a
+high-leverage ''APOE''-region cluster well off the IVW slope, and the funnel showed the matching
+outlier and asymmetry. We selected '''MR-PRESSO''' on that visual basis; it removed the ''APOE''
+outliers and the estimate attenuated to ≈ +0.03 (null). The naive positive was ''APOE''
+horizontal pleiotropy (''APOE'' acts on AD through amyloid, not through LDL), not an LDL causal
+effect. Cochran's ''Q'' is significant here too, but the plots identify the specific offending
+locus and are what triggered the decision.
+
+
+<!-- ===================== PART B: replace Section 5 ===================== -->
+
+=== 5. Decision Matrix: Which Results to Report ===
+
+Every scenario below is adjudicated '''together with the scatter and funnel plots''' ([[#3.5 Visual Diagnostics: Scatter and Funnel Plots|§3.5]]): visual identification of outlier SNPs or funnel asymmetry can select MR-PRESSO or an Egger/mode model even when the numeric trigger (Cochran's ''Q'', the Egger intercept) is borderline. Record the model used and the visual rationale per association.
+
+{| class="wikitable"
+! Scenario !! Data Presentation !! Adjudicated Result to Report
+|-
+| '''1. Clean Signal''' || F > 10. Cochran's Q p > 0.05. Egger Intercept p > 0.05. CAUSE Causal Model p < 0.05. || "IVW (Fixed Effects). All assumptions are met."
+|-
+| '''2. Balanced Pleiotropy''' || F > 10. Cochran's Q p < 0.05 '''or''' one/few outlier SNPs visible in the scatter/funnel (§3.5). Egger Intercept p > 0.05. || "MR-PRESSO (Outlier Corrected) or IVW (Random Effects). Support with Weighted Median."
+|-
+| '''3. Weak Instruments''' || Mean F < 10 OR Relaxed criteria (p < 5e-6) used. || "MR-RAPS. Baseline IVW is vulnerable to weak instrument bias."
+|-
+| '''4. Directional Pleiotropy''' || Egger Intercept p < 0.05 '''or''' clear funnel asymmetry (§3.5). || "Weighted Mode (if I2GX < 0.90) OR MR-Egger Slope (if I2GX >= 0.90). IVW is discarded."
+|-
+| '''5. Correlated Pleiotropy''' || CAUSE model comparison p > 0.05 (Sharing Model wins). || "Null Result (Discard Causality). The traits are correlated due to shared genetics, not a direct causal pathway."
+|-
+| '''6. Inconclusive''' || MR-PRESSO removes >30% of SNPs causing power loss, OR Median and Mode significantly contradict each other. || "Unresolved / Inconclusive. State that genetic evidence is too pleiotropic to reliably disentangle."
+|-
+| '''7. Selection/collider bias''' || Both arms present AND predicted bias same sign as observed AND predicted ≈ observed magnitude. || "Report as selection-bias-consistent, not causal. Give uncorrected + corrected estimates."
+|}
+
+<!-- If the wiki lacks the SyntaxHighlight extension, replace <syntaxhighlight lang="r">...</syntaxhighlight> with <pre>...</pre>. -->

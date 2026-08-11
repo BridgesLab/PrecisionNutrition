@@ -1,0 +1,673 @@
+---
+title: "Exposure → Survival Screen"
+subtitle: "Does each exposure instrument set have an edge into the survival collider?"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]  # Remove !expr, just use array syntax
+    fig.keep: "all"
+    autodep: true        # invalidate cached chunks when upstream vars (e.g. config) change
+execute:
+  echo: true
+  warning: false
+  cache: true
+---
+
+## Purpose
+
+In an Alzheimer's-disease MR the outcome GWAS is measured only in people who
+**survived to old age to be assessed**, so the conditioning variable — the
+collider — is *survival* `S`, not AD incidence. Conditioning on `S` opens the
+path shown below.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(ggdag)     # install.packages(c("ggdag", "dagitty"))
+library(ggplot2)
+
+collider_dag <- dagify(
+  S  ~ G + AD + CR,     # survival is caused by the exposure, AD, and competing risks
+  AD ~ U,               # AD and competing risks share etiology (latent U)
+  CR ~ U,
+  exposure = "G",
+  outcome  = "AD",
+  labels = c(
+    G  = "G_exposure\n(instrument)",
+    S  = "S = survival\n(conditioned on = collider)",
+    AD = "AD",
+    CR = "competing risks\n(IHD, stroke, cancer)",
+    U  = "shared etiology"
+  ),
+  coords = list(
+    x = c(G = 0, S = 2, AD = 4, CR = 2.9, U = 4),
+    y = c(G = 0, S = 0, AD = 0, CR = 1.3, U = 1.6)
+  )
+)
+
+ggdag(collider_dag, text = FALSE, use_labels = "label", node_size = 16) +
+  theme_dag(base_size = 11) +
+  labs(
+    title    = "Survival as the collider in an AD Mendelian randomization",
+    subtitle = "Conditioning on S (studying survivors) opens the G_exposure — AD path"
+  )
+```
+
+::: {.cell-output-display}
+![](figures/dag-collider-1.png){width=720}
+:::
+:::
+
+
+The known edge is `AD → S` (AD hastens death); competing risks feed `S` and
+share etiology with AD via a latent common cause `U`. Conditioning on `S`
+induces a spurious `G_exposure`–AD association. **That triangle only closes
+if the exposure instruments have an edge into survival** (`G → S`). This
+notebook estimates that edge directly: an MR of each exposure on a
+survival/longevity GWAS. A non-null effect means survival-collider bias is a
+live threat for that exposure in the downstream AD analysis and must be
+corrected; a near-null effect means that instrument set is comparatively safe
+(with caveats at the bottom).
+
+## Setup
+
+You need an OpenGWAS JWT (anonymous access is gone). Get one at
+<https://api.opengwas.io>, then add `OPENGWAS_JWT=<token>` to `~/.Renviron`
+and restart R. Treat it like a password — don't commit it.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(TwoSampleMR)   # install.packages("TwoSampleMR",
+                       #   repos = c("https://mrcieu.r-universe.dev",
+                       #             "https://cloud.r-project.org"))
+library(ieugwasr)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(ggplot2)
+library(readr)
+
+# Fail fast if the token isn't wired up
+stopifnot(nchar(ieugwasr::get_opengwas_jwt()) > 0)
+ieugwasr::user()   # prints your account + remaining allowance
+```
+
+::: {.cell-output .cell-output-stdout}
+
+```
+$user
+$user$account_id
+[1] "FefMNDLtgqaMN38b9zdeWo"
+
+$user$uid
+[1] "dave.bridges@gmail.com"
+
+$user$first_name
+[1] "Dave"
+
+$user$last_name
+[1] "Bridges"
+
+$user$most_recent_signin_method
+[1] "GitHub"
+
+$user$jwt_valid_until
+[1] "2026-07-23 21:10 UTC"
+
+$user$roles
+list()
+
+$user$tags
+[1] "trial"
+
+
+$request
+$request$client
+[1] "ieugwasr/1.1.0"
+
+$request$ip
+[1] "99.188.200.157"
+```
+
+
+:::
+:::
+
+
+## Configuration — EDIT THIS BLOCK
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# ---- Exposures: the risk-factor / nAChR instruments you'll use against AD. ----
+# Named vector: names are display labels, values are OpenGWAS ids.
+# Add new instruments by appending "label" = "id" — everything downstream fans out.
+exposures <- c(
+  "Smoking (GSCAN, ieu-b-142)" = "ieu-b-142",  # <-- example; append more here
+  "LDL-C"                    = "ieu-b-110"
+  # "CHRNA5 region cis-eQTL"   = "eqtl-a-XXXX",
+)
+
+# ---- AD GWAS: the downstream outcome; here used to size the AD -> S arm. ----
+# Two contrasting ascertainments so we can see if the AD->S edge is proxy-driven.
+ad_gwas <- c(
+  "AD — Bellenguez 2022 (proxy-incl.)" = "ebi-a-GCST90027158",  # 39k clin + 47k proxy; largest, selection-prone
+  "AD — Kunkle 2019 IGAP (clinical)"   = "ieu-b-2"              # 22k clinical cases, no UKB/proxy: clean comparator
+)
+PRIMARY_AD <- "ieu-b-2"   # reference AD->S edge for the induced-bias direction (clean, clinical)
+
+# ---- Longevity / survival outcomes = the collider S. ----
+# All four are Timmers et al. 2019 parental-lifespan phenotypes. The combined-
+# parents Martingale-residual analysis (GCST006697) is the best-powered headline
+# lifespan phenotype and the PRIMARY here; the others are sensitivity swaps.
+survival_outcomes <- c(
+  "Parental lifespan (combined, Martingale resid)" = "ebi-a-GCST006697",  # PRIMARY: N=389,166
+  "Combined parental age at death"                 = "ebi-a-GCST006702",  # N=208,118
+  "Father's age at death"                          = "ebi-a-GCST006700",  # N=317,652
+  "Mother's attained age"                          = "ebi-a-GCST006696"   # N=412,937
+)
+PRIMARY_SURVIVAL <- "ebi-a-GCST006697"   # headline longevity outcome
+
+# ---- ROPE / Bayesian settings ----
+# ROPE = region of practical equivalence, expressed in SD of the longevity outcome.
+# The MR slope is the causal effect per unit exposure in per-SD-outcome units, so
+# ROPE = 0.01 reads: "a shift in lifespan smaller than 0.01 SD is practically null
+# for collider purposes." Deliberately small — this is a bias-relevant threshold,
+# not a Cohen 'small-effect' cutoff: even a tiny survival edge opens the collider,
+# and kin-proxy lifespan GWAS already ~halve per-allele effects.
+# (Effects are read as per-SD of the outcome; rescale if an outcome GWAS you add
+#  reports in non-SD units such as years.)
+ROPE     <- 0.01    # SD of the longevity outcome
+PRIOR_SD <- 0.50    # weakly-informative prior effect ~ N(0, PRIOR_SD^2); ~flat at this scale
+
+# ---- Instrument / clumping parameters ----
+P_THRESH <- 5e-8
+R2       <- 0.001
+KB       <- 10000
+```
+:::
+
+
+## Discovery — find survival/longevity ids
+
+Run once to locate candidate datasets in the OpenGWAS catalogue, paste the ids
+into `survival_outcomes` above, then set `eval: false` again.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+ao <- TwoSampleMR::available_outcomes()   # full catalogue (large)
+
+ao |>
+  filter(grepl("lifespan|longevity|survival|age at death|parental|healthspan",
+               trait, ignore.case = TRUE)) |>
+  select(id, trait, sample_size, nsnp, consortium, author, year) |>
+  arrange(desc(year)) |>
+  print(n = 50)
+```
+:::
+
+
+## Screening function
+
+One exposure × one survival outcome → one tidy row. Robust to small instrument
+sets (falls back to Wald ratio) and to failed queries (returned as `NULL` by
+`possibly()` in the runner).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+screen_one <- function(exp_id, exp_label, out_id, out_label,
+                       p = P_THRESH, r2 = R2, kb = KB) {
+
+  # 1. GW-significant, LD-clumped instruments for the exposure
+  inst <- extract_instruments(exp_id, p1 = p, r2 = r2, kb = kb)
+  if (is.null(inst) || nrow(inst) == 0) stop("no instruments: ", exp_id)
+
+  # 2. look those SNPs up in the survival GWAS
+  out <- extract_outcome_data(snps = inst$SNP, outcomes = out_id)
+  if (is.null(out) || nrow(out) == 0) stop("no overlap: ", out_id)
+
+  # 3. harmonise (action = 2: align, drop ambiguous palindromes by frequency)
+  dat <- harmonise_data(inst, out, action = 2) |> filter(mr_keep)
+  if (nrow(dat) == 0) stop("nothing kept after harmonisation")
+
+  # 4. MR — default method set adapts to the number of SNPs
+  res     <- mr(dat)
+  pleio_p <- tryCatch(mr_pleiotropy_test(dat)$pval, error = \(e) NA_real_)
+
+  # pick a primary estimate by availability/priority
+  primary <- res |>
+    mutate(rank = match(method, c("Inverse variance weighted", "Wald ratio",
+                                  "Weighted median", "MR Egger"))) |>
+    arrange(rank) |> slice(1)
+
+  # mean instrument strength (approx per-SNP F)
+  mean_F <- mean((dat$beta.exposure / dat$se.exposure)^2, na.rm = TRUE)
+
+  tibble(
+    exposure    = exp_label,
+    survival    = out_label,
+    n_snp       = primary$nsnp,
+    method      = primary$method,
+    b           = primary$b,
+    se          = primary$se,
+    p           = primary$pval,
+    mean_F      = mean_F,
+    egger_int_p = pleio_p,
+    b_wmedian   = res$b[match("Weighted median", res$method)],
+    b_egger     = res$b[match("MR Egger",        res$method)]
+  )
+}
+```
+:::
+
+
+## The AD → longevity arm (the "known" edge)
+
+The collider needs *both* arms. Before screening exposures, pin down the arm the
+triangle cannot work without: `AD → S`. If AD-liability instruments do not move
+lifespan there is no collider and nothing to correct. We MR each AD GWAS onto the
+longevity outcomes; a **negative** effect (higher AD liability → shorter parental
+lifespan) confirms the collider node is real. Running both AD GWAS shows whether
+that edge is genuine or an artefact of Bellenguez's UK-Biobank by-proxy cases —
+Kunkle/IGAP is clinically ascertained with no proxy component as the clean check.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Closed-form Bayesian posterior for one MR estimate.
+# Conjugate normal: prior effect ~ N(0, tau^2); likelihood b ~ N(effect, se^2).
+# Returns posterior summaries and the ROPE decision quantities.
+bayes_rope <- function(b, se, rope = ROPE, tau = PRIOR_SD) {
+  if (is.na(b) || is.na(se) || se <= 0)
+    return(tibble(post_mean = NA_real_, post_sd = NA_real_,
+                  p_out_rope = NA_real_, p_direction = NA_real_))
+  prec_post <- 1 / se^2 + 1 / tau^2
+  mu_post   <- (b / se^2) / prec_post
+  sd_post   <- sqrt(1 / prec_post)
+  # posterior mass with |effect| > ROPE (i.e. effect is practically non-null)
+  p_out <- pnorm(-rope, mu_post, sd_post) +
+           pnorm( rope, mu_post, sd_post, lower.tail = FALSE)
+  # probability of direction: how sure we are of the sign
+  p_dir <- max(pnorm(0, mu_post, sd_post),
+               pnorm(0, mu_post, sd_post, lower.tail = FALSE))
+  tibble(post_mean = mu_post, post_sd = sd_post,
+         p_out_rope = p_out, p_direction = p_dir)
+}
+```
+:::
+
+
+The API pull (expensive) is cached; the ROPE/Bayesian layer that reads it is
+**not** cached, so retuning `ROPE` always re-computes without re-hitting OpenGWAS.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+safe_screen <- possibly(screen_one, otherwise = NULL)
+
+ad_grid <- expand_grid(
+  tibble(exp_id = unname(ad_gwas),           exp_label = names(ad_gwas)),
+  tibble(out_id = unname(survival_outcomes), out_label = names(survival_outcomes))
+)
+
+ad_raw <- pmap(ad_grid, safe_screen) |>
+  compact() |>
+  list_rbind()
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+ad_survival <- bind_cols(
+  ad_raw,
+  pmap(list(ad_raw$b, ad_raw$se), bayes_rope) |> list_rbind()
+)
+
+ad_survival |>
+  select(`AD GWAS` = exposure, survival, n_snp, method, b, se, p,
+         mean_F, `P(|AD→S|>ROPE)` = p_out_rope) |>
+  mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
+  knitr::kable(caption = "AD instruments → parental lifespan: the AD → S arm.")
+```
+
+::: {.cell-output-display}
+
+
+Table: AD instruments → parental lifespan: the AD → S arm.
+
+|AD GWAS                            |survival                                       | n_snp|method                    |       b|      se|       p| mean_F| P(&#124;AD→S&#124;>ROPE)|
+|:----------------------------------|:----------------------------------------------|-----:|:-------------------------|-------:|-------:|-------:|------:|------------------------:|
+|AD — Bellenguez 2022 (proxy-incl.) |Parental lifespan (combined, Martingale resid) |    54|Inverse variance weighted |  0.0351| 0.00547| 0.00000|   87.9|                    1.000|
+|AD — Bellenguez 2022 (proxy-incl.) |Combined parental age at death                 |    54|Inverse variance weighted | -0.0213| 0.00768| 0.00549|   87.9|                    0.930|
+|AD — Bellenguez 2022 (proxy-incl.) |Father's age at death                          |    54|Inverse variance weighted | -0.0119| 0.00558| 0.03290|   87.9|                    0.633|
+|AD — Bellenguez 2022 (proxy-incl.) |Mother's attained age                          |    54|Inverse variance weighted |  0.0324| 0.00485| 0.00000|   87.9|                    1.000|
+|AD — Kunkle 2019 IGAP (clinical)   |Parental lifespan (combined, Martingale resid) |    16|Inverse variance weighted |  0.0427| 0.00369| 0.00000|  313.0|                    1.000|
+|AD — Kunkle 2019 IGAP (clinical)   |Combined parental age at death                 |    16|Inverse variance weighted | -0.0302| 0.00458| 0.00000|  313.0|                    1.000|
+|AD — Kunkle 2019 IGAP (clinical)   |Father's age at death                          |    16|Inverse variance weighted | -0.0173| 0.00303| 0.00000|  313.0|                    0.992|
+|AD — Kunkle 2019 IGAP (clinical)   |Mother's attained age                          |    16|Inverse variance weighted |  0.0410| 0.00270| 0.00000|  313.0|                    1.000|
+
+
+:::
+:::
+
+
+The primary contrast (both AD GWAS against the headline longevity outcome):
+
+
+::: {.cell}
+
+```{.r .cell-code}
+primary_label <- names(survival_outcomes)[match(PRIMARY_SURVIVAL, survival_outcomes)]
+
+ad_survival |>
+  filter(survival == primary_label) |>
+  transmute(`AD GWAS` = exposure, n_snp, b = signif(b, 3), se = signif(se, 3),
+            p = signif(p, 3), `P(|AD→S|>ROPE)` = round(p_out_rope, 3)) |>
+  knitr::kable(caption = paste0("AD → ", primary_label,
+                                " (the known collider edge)."))
+```
+
+::: {.cell-output-display}
+
+
+Table: AD → Parental lifespan (combined, Martingale resid) (the known collider edge).
+
+|AD GWAS                            | n_snp|      b|      se|  p| P(&#124;AD→S&#124;>ROPE)|
+|:----------------------------------|-----:|------:|-------:|--:|------------------------:|
+|AD — Bellenguez 2022 (proxy-incl.) |    54| 0.0351| 0.00547|  0|                        1|
+|AD — Kunkle 2019 IGAP (clinical)   |    16| 0.0427| 0.00369|  0|                        1|
+
+
+:::
+:::
+
+
+A high `P(|AD→S| > ROPE)` with a negative `b` in both GWAS establishes the
+`AD → S` arm empirically, so the collider node is live. Whether *bias* reaches
+any given exposure then hinges entirely on the `E → S` arm screened next.
+
+## Run the screen
+
+
+::: {.cell}
+
+```{.r .cell-code}
+grid <- expand_grid(
+  tibble(exp_id = unname(exposures),         exp_label = names(exposures)),
+  tibble(out_id = unname(survival_outcomes), out_label = names(survival_outcomes))
+)
+
+safe_screen <- possibly(screen_one, otherwise = NULL)
+
+results <- pmap(grid, safe_screen) |>
+  compact() |>
+  list_rbind()
+
+results |>
+  select(exposure, survival, n_snp, method, b, se, p, mean_F, egger_int_p) |>
+  mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
+  knitr::kable(caption = "Exposure → survival screen: primary MR estimate per pair.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Exposure → survival screen: primary MR estimate per pair.
+
+|exposure                   |survival                                       | n_snp|method                    |       b|      se|        p| mean_F| egger_int_p|
+|:--------------------------|:----------------------------------------------|-----:|:-------------------------|-------:|-------:|--------:|------:|-----------:|
+|Smoking (GSCAN, ieu-b-142) |Parental lifespan (combined, Martingale resid) |    23|Inverse variance weighted |  0.1020| 0.01770| 0.00e+00|    100|     0.44400|
+|Smoking (GSCAN, ieu-b-142) |Combined parental age at death                 |    23|Inverse variance weighted | -0.0922| 0.02130| 1.44e-05|    100|     0.79300|
+|Smoking (GSCAN, ieu-b-142) |Father's age at death                          |    23|Inverse variance weighted | -0.0864| 0.01690| 3.00e-07|    100|     0.48200|
+|Smoking (GSCAN, ieu-b-142) |Mother's attained age                          |    23|Inverse variance weighted |  0.0533| 0.01360| 8.86e-05|    100|     0.46200|
+|LDL-C                      |Parental lifespan (combined, Martingale resid) |   157|Inverse variance weighted |  0.0650| 0.01060| 0.00e+00|    265|     0.00673|
+|LDL-C                      |Combined parental age at death                 |   156|Inverse variance weighted | -0.0651| 0.01220| 1.00e-07|    261|     0.14000|
+|LDL-C                      |Father's age at death                          |   157|Inverse variance weighted | -0.0529| 0.00937| 0.00e+00|    265|     0.11100|
+|LDL-C                      |Mother's attained age                          |   157|Inverse variance weighted |  0.0379| 0.00855| 9.40e-06|    265|     0.00804|
+
+
+:::
+:::
+
+
+## Flag the collider edge
+
+
+::: {.cell}
+
+```{.r .cell-code}
+results <- results |>
+  mutate(
+    edge = case_when(
+      p < 0.05 / n() ~ "STRONG survival edge (Bonferroni)",
+      p < 0.05       ~ "nominal survival edge",
+      TRUE           ~ "no clear edge"),
+    pleiotropy = if_else(!is.na(egger_int_p) & egger_int_p < 0.05,
+                         "Egger intercept p<0.05 — directional pleiotropy", "")
+  )
+
+results |>
+  select(exposure, survival, n_snp, method, b, se, p, mean_F, edge, pleiotropy) |>
+  mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
+  knitr::kable(caption = "Frequentist edge flags (Bonferroni / nominal) and pleiotropy check.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Frequentist edge flags (Bonferroni / nominal) and pleiotropy check.
+
+|exposure                   |survival                                       | n_snp|method                    |       b|      se|        p| mean_F|edge                              |pleiotropy                                      |
+|:--------------------------|:----------------------------------------------|-----:|:-------------------------|-------:|-------:|--------:|------:|:---------------------------------|:-----------------------------------------------|
+|Smoking (GSCAN, ieu-b-142) |Parental lifespan (combined, Martingale resid) |    23|Inverse variance weighted |  0.1020| 0.01770| 0.00e+00|    100|STRONG survival edge (Bonferroni) |                                                |
+|Smoking (GSCAN, ieu-b-142) |Combined parental age at death                 |    23|Inverse variance weighted | -0.0922| 0.02130| 1.44e-05|    100|STRONG survival edge (Bonferroni) |                                                |
+|Smoking (GSCAN, ieu-b-142) |Father's age at death                          |    23|Inverse variance weighted | -0.0864| 0.01690| 3.00e-07|    100|STRONG survival edge (Bonferroni) |                                                |
+|Smoking (GSCAN, ieu-b-142) |Mother's attained age                          |    23|Inverse variance weighted |  0.0533| 0.01360| 8.86e-05|    100|STRONG survival edge (Bonferroni) |                                                |
+|LDL-C                      |Parental lifespan (combined, Martingale resid) |   157|Inverse variance weighted |  0.0650| 0.01060| 0.00e+00|    265|STRONG survival edge (Bonferroni) |Egger intercept p<0.05 — directional pleiotropy |
+|LDL-C                      |Combined parental age at death                 |   156|Inverse variance weighted | -0.0651| 0.01220| 1.00e-07|    261|STRONG survival edge (Bonferroni) |                                                |
+|LDL-C                      |Father's age at death                          |   157|Inverse variance weighted | -0.0529| 0.00937| 0.00e+00|    265|STRONG survival edge (Bonferroni) |                                                |
+|LDL-C                      |Mother's attained age                          |   157|Inverse variance weighted |  0.0379| 0.00855| 9.40e-06|    265|STRONG survival edge (Bonferroni) |Egger intercept p<0.05 — directional pleiotropy |
+
+
+:::
+:::
+
+
+## Forest of exposure → survival effects
+
+Intervals clear of zero ⇒ the `G → S` edge is present ⇒ survival-collider bias
+is live for that exposure in the AD MR.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+results |>
+  mutate(lab = paste(exposure, survival, sep = " → ")) |>
+  ggplot(aes(b, reorder(lab, b))) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  geom_pointrange(aes(xmin = b - 1.96 * se, xmax = b + 1.96 * se)) +
+  labs(
+    x = "IVW/Wald effect of exposure on survival",
+    y = NULL,
+    title = "Step 1: does each exposure have an edge into the survival collider?"
+  ) +
+  theme_minimal(base_size = 12)
+```
+
+::: {.cell-output-display}
+![](figures/plot-1.png){width=768}
+:::
+:::
+
+
+## What collider bias is present — and is the E → C arm live?
+
+The downstream MR regresses AD liability on exposure instruments, but AD is only
+ever observed in people who **survived to be assessed**. Survival `S` is a
+collider on two arms: `AD → S` (established above) and, if present, `E → S`.
+Selecting on survivors conditions on `S`, opening the non-causal
+`G_exposure — AD` path and biasing the exposure→AD estimate — typically **toward
+spurious protection** (index-event / survival bias). Because the `AD → S` arm is
+already confirmed, the bias is *live for a given exposure exactly when its
+`E → S` (i.e. `E → C`) arm is present*. The table below nominates that,
+conditional on the collider node being real.
+
+For each exposure×outcome we combine the frequentist IVW p-value with a
+closed-form Bayesian posterior (normal-conjugate, prior `N(0, PRIOR_SD²)`) and
+report the probability the effect lies **outside the ROPE** — i.e. is
+practically non-null — and the probability of direction.
+
+**Direction of the induced bias.** Existence of the `E → C` arm says the collider
+is open; the *sign* of the spurious `G_exposure`–AD association it creates is set
+by the **product** of the two arms measured on the *same* outcome. For a linear
+collider `S = a·G_exp + c·AD`, conditioning on `S` gives
+`Cov(G_exp, AD | S) ∝ −a·c`, and that sign is **invariant to how the lifespan
+outcome is coded** (flipping `S` flips both `a` and `c`, leaving `a·c`
+unchanged) — so we can read it straight off the betas on the primary outcome:
+
+- `b_E · b_AD > 0` (exposure and AD push survival the *same* way) → induced
+  association is **negative** → the exposure's risk alleles look *protective* for
+  AD in survivors: **spurious protection** (the artifact that would fake a
+  druggable protective AD signal).
+- `b_E · b_AD < 0` → induced association is positive → **spurious harm**.
+
+The reference `AD → S` edge is the clean clinical GWAS (`PRIMARY_AD`); both AD
+GWAS agree in sign on the primary outcome, so the direction is robust to that
+choice. The label is only meaningful where the `E → C` arm is present — magnitude
+still scales with `|b_E · b_AD|`, so a within-ROPE arm induces negligible bias
+regardless of sign.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+primary_label <- names(survival_outcomes)[match(PRIMARY_SURVIVAL, survival_outcomes)]
+ad_ref_label  <- names(ad_gwas)[match(PRIMARY_AD, ad_gwas)]
+
+# Reference AD -> S beta on the primary outcome (sign sets the induced-bias direction)
+b_ad_primary <- ad_raw |>
+  filter(survival == primary_label, exposure == ad_ref_label) |>
+  pull(b) |> (\(x) if (length(x)) x[1] else NA_real_)()
+
+bayes_cols <- pmap(list(results$b, results$se), bayes_rope) |> list_rbind()
+
+verdict <- bind_cols(results, bayes_cols) |>
+  mutate(
+    E_to_C = case_when(
+      p_out_rope >= 0.95 & p_direction >= 0.975 ~ "PRESENT — edge into collider",
+      p_out_rope <= 0.05                        ~ "absent — within ROPE (≈ null)",
+      TRUE                                      ~ "indeterminate"
+    ),
+    # Induced-bias direction = sign of b_E * b_AD on the SAME (primary) outcome.
+    # Only defined against the primary outcome; NA elsewhere.
+    bias_product   = if_else(survival == primary_label, b * b_ad_primary, NA_real_),
+    induced_bias = case_when(
+      E_to_C == "absent — within ROPE (≈ null)" ~ "negligible (arm ≈ null)",
+      is.na(bias_product)                       ~ NA_character_,
+      bias_product > 0 ~ "spurious PROTECTION (mimics ↓AD)",
+      bias_product < 0 ~ "spurious HARM (mimics ↑AD)",
+      TRUE             ~ "—"
+    )
+  )
+
+# Reported only against the primary outcome (full verdict saved below).
+verdict |>
+  filter(survival == primary_label) |>
+  arrange(desc(p_out_rope)) |>
+  transmute(
+    exposure, n_snp,
+    b = signif(b, 3), se = signif(se, 3), p_ivw = signif(p, 3),
+    p_dir = round(p_direction, 3),
+    `P(|E→S|>ROPE)` = round(p_out_rope, 3),
+    `E → C arm` = E_to_C,
+    `induced bias` = induced_bias
+  ) |>
+  knitr::kable(
+    caption = paste0("Conditional collider verdict for ", primary_label,
+                     " (ROPE = ±", ROPE, " SD). Induced-bias direction ",
+                     "uses the reference AD→S edge (", ad_ref_label, ", b = ",
+                     signif(b_ad_primary, 3), "). The collider is live where the ",
+                     "E → C arm is PRESENT; its sign is the 'induced bias' column.")
+  )
+```
+
+::: {.cell-output-display}
+
+
+Table: Conditional collider verdict for Parental lifespan (combined, Martingale resid) (ROPE = ±0.01 SD). Induced-bias direction uses the reference AD→S edge (AD — Kunkle 2019 IGAP (clinical), b = 0.0427). The collider is live where the E → C arm is PRESENT; its sign is the 'induced bias' column.
+
+|exposure                   | n_snp|     b|     se| p_ivw| p_dir| P(&#124;E→S&#124;>ROPE)|E → C arm                    |induced bias                     |
+|:--------------------------|-----:|-----:|------:|-----:|-----:|-----------------------:|:----------------------------|:--------------------------------|
+|LDL-C                      |   157| 0.065| 0.0106|     0|     1|                       1|PRESENT — edge into collider |spurious PROTECTION (mimics ↓AD) |
+|Smoking (GSCAN, ieu-b-142) |    23| 0.102| 0.0177|     0|     1|                       1|PRESENT — edge into collider |spurious PROTECTION (mimics ↓AD) |
+
+
+:::
+:::
+
+
+## Save
+
+
+::: {.cell}
+
+```{.r .cell-code}
+write_csv(results,     "exposure_survival_screen.csv")
+write_csv(verdict,     "exposure_survival_verdict.csv")
+write_csv(ad_survival, "ad_longevity_arm.csv")
+```
+:::
+
+
+## How to read this — and what it does *not* rule out
+
+- **Non-null effect** → the exposure moves survival, the collider triangle
+  closes, and you must carry a survival-bias correction into the AD analysis
+  for that exposure (feed the survival GWAS as the "incidence" input to
+  SlopeHunter, or estimate `b` via MR of survival→AD, or MVMR on competing
+  risk). For your CHRNA5/A3/B4 instruments a strong edge is the expected /
+  worst case, since smoking-quantity variants drive mortality hard.
+- **Near-null effect** → that instrument set is comparatively insulated, which
+  *strengthens* a druggable-pharmacology reading of any protective AD signal.
+
+Three caveats before over-trusting a null:
+
+1. **Parental-lifespan attenuation.** Kin-based lifespan GWAS measure the
+   *parents'* survival through offspring genotype, so per-allele effects are
+   roughly halved (and on a years-of-life / hazard scale). Treat magnitudes as
+   conservative; a null here is a weaker null than it looks.
+2. **Competing risk still bites.** An exposure with a small *net* survival
+   effect can still bias the AD estimate if it kills through pathways sharing
+   etiology with AD (IHD, stroke). A clean survival screen does not fully
+   exonerate — consider MVMR conditioning on cardiovascular liability.
+3. **The survival GWAS is itself measured in survivors**, an imperfect proxy
+   for the exact selection your AD cohort underwent.
+
+- **Allowance:** each exposure×outcome pair is two API calls. Keep the lists
+  modest or add `Sys.sleep()`; if you hit rate limits, clump locally
+  (`ieugwasr::ld_clump_local()` with a plink binary + 1000G panel) after
+  `extract_instruments(..., clump = FALSE)`.

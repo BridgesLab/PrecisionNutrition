@@ -1,0 +1,53 @@
+# ---------------------------------------------------------------------------
+# Large external / derived data — NEVER commit.
+#
+# data/cache holds ~9.6 GB of downloaded reference data and derived intermediates.
+# Thirteen of those files exceed GitHub's 100 MB HARD limit, so committing them
+# would get the push rejected outright. All of it is re-fetchable:
+#
+#     bash scripts/fetch_sumstats.sh
+#
+# Ignoring data/cache takes the repo from ~9.6 GB to ~9 MB.
+# ---------------------------------------------------------------------------
+data/cache/*
+
+# ...but DO keep the tiny cached cis-instrument sets (a few KB each). These pin the
+# EXACT instruments that produced the L6/L4b/L4c estimates, so results stay
+# reproducible even if OpenGWAS drifts or a token expires.
+!data/cache/instr_*.rds
+
+# Explicit belt-and-braces for the biggest offenders (covered by data/cache/* above,
+# listed so the intent is obvious to a reader):
+data/cache/sumstats/
+data/cache/*.bed
+data/cache/*.bim
+data/cache/*.fam
+data/cache/1kg.v3.tgz
+
+# ---------------------------------------------------------------------------
+# OS / editor cruft
+# ---------------------------------------------------------------------------
+.DS_Store
+.Rhistory
+.RData
+.Rproj.user/
+*.Rproj
+
+# ---------------------------------------------------------------------------
+# Secrets — never commit the OpenGWAS JWT
+# ---------------------------------------------------------------------------
+.Renviron
+.env
+
+# ---------------------------------------------------------------------------
+# Quarto / knitr scratch
+# ---------------------------------------------------------------------------
+.quarto/
+*_cache/
+
+# NOTE: rendered *.html and their *_files/ asset directories ARE tracked on purpose —
+# they are small (<1 MB total) and let the analyses be read on GitHub without a rerun.
+# If you would rather keep the repo source-only, uncomment:
+# *.html
+# *_files/
+# *.html.md

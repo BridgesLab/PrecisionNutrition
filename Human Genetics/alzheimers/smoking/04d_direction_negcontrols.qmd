@@ -1,0 +1,82 @@
+---
+title: "Layer 4d — Direction negative controls (Task E): does the outcome itself smell selected?"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| message: false
+library(TwoSampleMR)
+library(ieugwasr)
+library(knitr)
+source(here::here("R", "helpers.R"))
+source(here::here("R", "run_taskE.R"))
+cfg <- load_config()
+set.seed(cfg$seed)
+```
+
+## Purpose
+
+This is an **outcome-level diagnostic, independent of any nAChR claim**. If the primary AD
+outcome (Bellenguez, proxy-majority) is survival/participation-selected, then unrelated
+exposures that affect *survival and study participation* should show paradoxical effects
+through it: **lung cancer** and **CAD** appearing "protective" against AD, and **education**
+appearing paradoxically protective (the GWAX/proxy signature reported by Jiang et al — the
+non-AD component of by-proxy AD correlating with lower CAD / diabetes / higher survival).
+
+We run **EA → AD**, **lung-cancer → AD**, and **CAD → AD** through the same primary outcome.
+A negative (protective) lung-cancer→AD or CAD→AD estimate is a positive selection signature.
+
+## Direction negative controls
+
+```{r negcontrols}
+live <- if (opengwas_ok()) tryCatch(run_taskE(cfg), error = function(e) NULL) else NULL
+res <- live_or_cache(live, here::here("results", "direction_negcontrols.csv"), "b")
+res |>
+  transmute(exposure, note, n = nsnp, b = round(b,3), OR = round(or,3),
+            `95% CI` = sprintf("[%.3f, %.3f]", ci_lo, ci_hi),
+            p = signif(pval,2), signature = selection_signature) |>
+  kable(caption = "Task E: exposures → primary AD outcome (selection diagnostic)")
+```
+
+## Interpretation
+
+```{r decision}
+for (i in seq_len(nrow(res))) {
+  r <- res[i,]
+  log_decision("L4d", sprintf("%s → AD (primary outcome)", r$exposure),
+               sprintf("b=%.3f, p=%.2g (n=%d)", r$b, r$pval, r$nsnp),
+               r$selection_signature)
+}
+sig <- res |> filter(grepl("SELECTION SIGNATURE", selection_signature))
+if (nrow(sig) > 0)
+  cat("Selection signature DETECTED at the outcome level via:",
+      paste(sig$exposure, collapse = ", "), "\n",
+      "=> the primary AD outcome shows survival/participation-selection structure.\n")
+else
+  cat("No lung-cancer/CAD 'protective-against-AD' selection signature detected at the",
+      "outcome level (survival-collider structure not evident in this diagnostic).\n")
+```
+
+::: callout-note
+**Caveats.** A clean genetic-correlation version (LDSC of the by-proxy AD residual vs CAD /
+longevity, the Jiang signature) needs genome-wide LD-score regression and full summary stats;
+this MR-direction diagnostic is a reachable proxy for it. Lung cancer and CAD are themselves
+smoking-related, so a non-null estimate has multiple readings — interpret jointly with Task A
+(instrument-level) and Task B (ascertainment swap).
+:::

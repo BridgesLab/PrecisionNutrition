@@ -1,0 +1,135 @@
+---
+title: "Layer 4c — Outcome ascertainment swap (Task B): the decisive test"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+```{r setup}
+#| message: false
+library(TwoSampleMR)
+library(ieugwasr)
+library(MendelianRandomization)
+library(knitr)
+source(here::here("R", "helpers.R"))
+source(here::here("R", "run_taskB.R"))
+cfg <- load_config()
+set.seed(cfg$seed)
+```
+
+## Purpose
+
+The primary outcome **Bellenguez 2022** is **proxy-majority** (≈39,106 clinical cases vs
+≈46,828 UK Biobank by-proxy cases; proxy fraction ≈ 0.55). Proxy / prevalent sampling biases
+AD *risk* alleles downward — toward apparent *protection*. If the protective smoking→AD
+signal is a selection/collider artefact of proxy ascertainment, it should **attenuate toward
+null** when the outcome is a **de-selected, clinically-ascertained** AD GWAS.
+
+This layer re-estimates the effect against a **gradient of by-proxy fraction**, on a
+harmonised per-SD-CPD log-OR scale (fixing the scale mismatch noted in SUMMARY.md), and tests
+attenuation formally:
+
+| Outcome | Proxy fraction | UKB / proxy |
+|---|---|---|
+| Kunkle 2019 (IGAP) | 0.00 | clinical, no UKB |
+| Lambert 2013 (IGAP) | 0.00 | clinical, no UKB |
+| Bellenguez 2022 (primary) | 0.55 | proxy-majority |
+| Schwartzentruber 2021 (family-history GWAX) | 1.00 | pure UKB by-proxy |
+
+The Schwartzentruber GWAX outcome is on a family-history scale; its MR estimate is rescaled
+×2 to approximate case-control log-OR (each first-degree relative shares ~50% of the genome).
+This rescale is **approximate and flagged**; the decisive contrast — proxy-majority Bellenguez
+vs the clinical-only Kunkle/Lambert — needs no rescaling and is fully scale-comparable.
+
+## Effect across the ascertainment gradient
+
+```{r swap}
+# live_or_cache: never overwrite verified results with a failed/empty OpenGWAS pull.
+live <- if (opengwas_ok()) tryCatch(run_taskB(cfg), error = function(e) NULL) else NULL
+res <- live_or_cache(live, here::here("results", "ascertainment_swap.csv"), "b")
+res |>
+  filter(status == "ok") |>
+  transmute(set, outcome, proxy_frac, n = nsnp,
+            b = round(b,3), OR = round(or,3),
+            `95% CI` = sprintf("[%.3f, %.3f]", ci_lo, ci_hi),
+            p = signif(pval,2)) |>
+  arrange(set, proxy_frac) |>
+  kable(caption = "Task B: smoking→AD effect by outcome proxy fraction (per-SD-CPD log-OR)")
+```
+
+## Formal attenuation test
+
+```{r tests}
+# Difference: proxy-majority Bellenguez vs the inverse-variance pooled clinical (proxy=0)
+# anchor; meta-regression of effect on proxy fraction across the gradient (per instrument set).
+tests <- live_or_cache(tryCatch(taskB_tests(res), error = function(e) NULL),
+                       here::here("results", "ascertainment_metareg.csv"), "b_clinical")
+tests |>
+  transmute(set,
+            b_clinical = round(b_clinical,3), b_proxymaj = round(b_proxymaj,3),
+            z_diff = round(z_diff,2), p_diff = signif(p_diff,2),
+            `metareg slope (b~proxy)` = round(metareg_slope,3),
+            metareg_p = signif(metareg_p,2)) |>
+  kable(caption = "Proxy→clinical difference + meta-regression of effect on proxy fraction")
+```
+
+A **negative meta-regression slope** (effect more protective as proxy fraction rises) with a
+**significant proxy-vs-clinical difference** is the collider/selection signature. A flat slope
+with overlapping CIs across the gradient supports a **genuine** effect.
+
+```{r forest}
+plot_df <- res |> filter(status == "ok", !is.na(b))
+if (nrow(plot_df) == 0) {
+  cat("No plottable rows (ascertainment swap returned no estimates).\n")
+} else {
+ggplot(plot_df, aes(x = b, y = reorder(outcome, proxy_frac), colour = factor(proxy_frac))) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "red") +
+  geom_point(size = 2.5) +
+  geom_errorbarh(aes(xmin = ci_lo, xmax = ci_hi), height = 0.25) +
+  facet_wrap(~ set, ncol = 1, scales = "free_y") +
+  theme_classic(base_size = 12) +
+  labs(x = "smoking→AD effect (per SD CPD, log-OR)", y = "",
+       colour = "proxy frac",
+       title = "Task B: ascertainment swap — does protection attenuate in clinical-only AD?")
+}
+```
+
+## Decision
+
+```{r decision}
+for (i in seq_len(nrow(tests))) {
+  t <- tests[i,]
+  if (is.na(t$p_diff)) next
+  patt <- if (!is.na(t$metareg_p) && t$metareg_p < 0.05 && !is.na(t$metareg_slope) && t$metareg_slope < 0)
+            "ATTENUATES in clinical-only (supports selection/collider bias)"
+          else if (!is.na(t$p_diff) && t$p_diff >= 0.05)
+            "persists with comparable CIs (supports genuine effect)"
+          else "mixed / inconclusive"
+  log_decision("L4c", sprintf("%s proxy→clinical (Δ test + meta-reg)", t$set),
+               sprintf("Δb z=%.2f p=%.2g; slope=%.3f p=%.2g",
+                       t$z_diff, t$p_diff, t$metareg_slope, t$metareg_p),
+               patt)
+  cat(sprintf("%-18s: %s\n", t$set, patt))
+}
+```
+
+::: callout-note
+**Caveats.** Clinical IGAP outcomes (Kunkle, Lambert) are smaller (≈22k / 17k cases) so CIs
+are wider — an apparent "persistence" must be read against power. The GWAX ×2 rescale is
+approximate. Incident / younger-onset AD was not reachable in OpenGWAS (gap). The decisive,
+scale-clean comparison is Bellenguez (proxy 0.55) vs Kunkle+Lambert (proxy 0).
+:::

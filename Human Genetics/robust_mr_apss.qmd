@@ -37,6 +37,11 @@ library(kableExtra)
 source(file.path(.root, "R", "robust_mr_helpers.R"))
 set_project_root(.root)
 cfg <- load_robust_cfg()
+# knitr caches key on chunk CODE only. Editing config_robust_mr.yml or the
+# helpers would otherwise leave stale results in place — silently, and with no
+# indication in the output. Hash both and hang every cached chunk off it.
+.inputs_hash <- tools::md5sum(c(file.path(.root, "config_robust_mr.yml"),
+                                file.path(.root, "R", "robust_mr_helpers.R")))
 set.seed(cfg$seed)
 dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
 ```
@@ -68,6 +73,7 @@ Runtime is minutes, not hours — this one does not need Great Lakes.
 
 ```{r load}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 read_cached <- function(nm) {
   p <- pp(cfg$paths$cache, paste0(nm, "_apss.rds"))
   if (!file.exists(p)) stop("Run robust_mr_prep.qmd first — missing ", p)
@@ -90,6 +96,7 @@ map_dfr(dat, ~ tibble(n_snp = nrow(.x), median_N = median(.x$N)), .id = "dataset
 
 ```{r est-paras}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 #| message: true
 library(MRAPSS)
 
@@ -148,6 +155,7 @@ bg |>
 
 ```{r clump}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 bfile     <- pp(cfg$paths$plink_bfile)
 plink_bin <- cfg$paths$plink_bin
 
@@ -198,6 +206,7 @@ bias, expressed in the units of the outcome.
 
 ```{r fit}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 exp_of <- function(arm) if (arm == "overlapping") "glgc2021_ldl" else "willer2013_ldl"
 
 fit_apss <- function(arm, use_C) {

@@ -37,6 +37,11 @@ library(kableExtra)
 source(file.path(.root, "R", "robust_mr_helpers.R"))
 set_project_root(.root)
 cfg <- load_robust_cfg()
+# knitr caches key on chunk CODE only. Editing config_robust_mr.yml or the
+# helpers would otherwise leave stale results in place — silently, and with no
+# indication in the output. Hash both and hang every cached chunk off it.
+.inputs_hash <- tools::md5sum(c(file.path(.root, "config_robust_mr.yml"),
+                                file.path(.root, "R", "robust_mr_helpers.R")))
 set.seed(cfg$seed)
 dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
 ```
@@ -80,6 +85,7 @@ in parallel on Great Lakes. Either way the result lands in
 
 ```{r merge}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 #| message: true
 library(cause)
 

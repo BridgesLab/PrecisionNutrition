@@ -186,7 +186,7 @@ variant set: HapMap3 restriction, MAF > 0.05, INFO > 0.9, unambiguous biallelic
 alleles, MHC excluded, and a $\chi^2$ cap of max(N/1000, 80).
 
 
-::: {.cell}
+::: {.cell cache.extra='["300fa520e3962a0596bb81c68cead500","7c82a6c1e37bd1eb5c66cb9c63abadbf"]'}
 
 ```{.r .cell-code}
 hm3 <- read_hm3(pp(cfg$paths$hm3))
@@ -242,37 +242,37 @@ qc_table |>
    <td style="text-align:left;"> unique rsID </td>
    <td style="text-align:right;"> 44,473,875 </td>
    <td style="text-align:right;"> 2,436,957 </td>
-   <td style="text-align:right;"> 13,753,401 </td>
+   <td style="text-align:right;"> 13,735,203 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> biallelic ACGT </td>
    <td style="text-align:right;"> 41,556,903 </td>
    <td style="text-align:right;"> 2,436,957 </td>
-   <td style="text-align:right;"> 13,753,343 </td>
+   <td style="text-align:right;"> 13,735,145 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> unambiguous strand </td>
    <td style="text-align:right;"> 35,282,762 </td>
    <td style="text-align:right;"> 2,061,312 </td>
-   <td style="text-align:right;"> 11,692,171 </td>
+   <td style="text-align:right;"> 11,679,331 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> in HapMap3 </td>
    <td style="text-align:right;"> 1,215,630 </td>
    <td style="text-align:right;"> 1,042,744 </td>
-   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1,168,014 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MAF &gt; 0.05 </td>
    <td style="text-align:right;"> 1,073,848 </td>
    <td style="text-align:right;"> 960,847 </td>
-   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1,033,337 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> MHC removed </td>
    <td style="text-align:right;"> 1,071,860 </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1,031,284 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> chi2 &lt; 1320 </td>
@@ -287,10 +287,16 @@ qc_table |>
    <td style="text-align:right;"> NA </td>
   </tr>
   <tr>
-   <td style="text-align:left;"> chi2 &lt; NA </td>
+   <td style="text-align:left;"> INFO &gt; 0.9 </td>
    <td style="text-align:right;"> NA </td>
    <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> 0 </td>
+   <td style="text-align:right;"> 1,033,189 </td>
+  </tr>
+  <tr>
+   <td style="text-align:left;"> chi2 &lt; 427 </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> NA </td>
+   <td style="text-align:right;"> 1,030,710 </td>
   </tr>
 </tbody>
 </table>
@@ -306,7 +312,7 @@ CAUSE and MR-APSS want different shapes. Both are written from the same QC'd
 object so they cannot silently diverge.
 
 
-::: {.cell}
+::: {.cell cache.extra='["300fa520e3962a0596bb81c68cead500","7c82a6c1e37bd1eb5c66cb9c63abadbf"]'}
 
 ```{.r .cell-code}
 dir.create(pp(cfg$paths$cache), recursive = TRUE, showWarnings = FALSE)
@@ -354,9 +360,9 @@ tibble(
   </tr>
   <tr>
    <td style="text-align:left;"> ebmd </td>
-   <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> NA </td>
-   <td style="text-align:right;"> NaN </td>
+   <td style="text-align:right;"> 1,030,710 </td>
+   <td style="text-align:right;"> 426,824 </td>
+   <td style="text-align:right;"> 4.365 </td>
   </tr>
 </tbody>
 </table>
@@ -374,7 +380,7 @@ BMD, β ≈ −0.051). If it does not, the harmonisation is wrong and nothing
 downstream is interpretable.
 
 
-::: {.cell}
+::: {.cell cache.extra='["300fa520e3962a0596bb81c68cead500","7c82a6c1e37bd1eb5c66cb9c63abadbf"]'}
 
 ```{.r .cell-code}
 ivw_check <- function(exp_name) {
@@ -429,19 +435,19 @@ ivw_baseline |>
 <tbody>
   <tr>
    <td style="text-align:left;"> glgc2021_ldl </td>
+   <td style="text-align:right;"> 432 </td>
+   <td style="text-align:right;"> -0.0672 </td>
+   <td style="text-align:right;"> 0.0056 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> NaN </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> NaN </td>
-   <td style="text-align:right;"> NaN </td>
+   <td style="text-align:right;"> 128.8672 </td>
   </tr>
   <tr>
    <td style="text-align:left;"> willer2013_ldl </td>
+   <td style="text-align:right;"> 73 </td>
+   <td style="text-align:right;"> -0.0539 </td>
+   <td style="text-align:right;"> 0.0068 </td>
    <td style="text-align:right;"> 0 </td>
-   <td style="text-align:right;"> NaN </td>
-   <td style="text-align:right;"> Inf </td>
-   <td style="text-align:right;"> NaN </td>
-   <td style="text-align:right;"> NaN </td>
+   <td style="text-align:right;"> 60.9976 </td>
   </tr>
 </tbody>
 </table>

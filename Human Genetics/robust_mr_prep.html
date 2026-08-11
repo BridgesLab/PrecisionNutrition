@@ -2830,7 +2830,7 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 <section id="step-2-read-qc-and-harmonise" class="level2">
 <h2 class="anchored" data-anchor-id="step-2-read-qc-and-harmonise">Step 2 — read, QC, and harmonise</h2>
 <p>QC follows the MR-APSS published criteria so that both methods see an identical variant set: HapMap3 restriction, MAF &gt; 0.05, INFO &gt; 0.9, unambiguous biallelic alleles, MHC excluded, and a <span class="math inline">\(\chi^2\)</span> cap of max(N/1000, 80).</p>
-<div class="cell">
+<div class="cell" data-cache.extra="[&quot;300fa520e3962a0596bb81c68cead500&quot;,&quot;7c82a6c1e37bd1eb5c66cb9c63abadbf&quot;]">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>hm3 <span class="ot">&lt;-</span> <span class="fu">read_hm3</span>(<span class="fu">pp</span>(cfg<span class="sc">$</span>paths<span class="sc">$</span>hm3))</span>
@@ -2884,37 +2884,37 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 <td style="text-align: left;">unique rsID</td>
 <td style="text-align: right;">44,473,875</td>
 <td style="text-align: right;">2,436,957</td>
-<td style="text-align: right;">13,753,401</td>
+<td style="text-align: right;">13,735,203</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">biallelic ACGT</td>
 <td style="text-align: right;">41,556,903</td>
 <td style="text-align: right;">2,436,957</td>
-<td style="text-align: right;">13,753,343</td>
+<td style="text-align: right;">13,735,145</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">unambiguous strand</td>
 <td style="text-align: right;">35,282,762</td>
 <td style="text-align: right;">2,061,312</td>
-<td style="text-align: right;">11,692,171</td>
+<td style="text-align: right;">11,679,331</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">in HapMap3</td>
 <td style="text-align: right;">1,215,630</td>
 <td style="text-align: right;">1,042,744</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">1,168,014</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">MAF &gt; 0.05</td>
 <td style="text-align: right;">1,073,848</td>
 <td style="text-align: right;">960,847</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">1,033,337</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">MHC removed</td>
 <td style="text-align: right;">1,071,860</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">1,031,284</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">chi2 &lt; 1320</td>
@@ -2929,10 +2929,16 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 <td style="text-align: right;">NA</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">chi2 &lt; NA</td>
+<td style="text-align: left;">INFO &gt; 0.9</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
-<td style="text-align: right;">0</td>
+<td style="text-align: right;">1,033,189</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">chi2 &lt; 427</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">1,030,710</td>
 </tr>
 </tbody>
 </table>
@@ -2942,7 +2948,7 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 <section id="step-3-write-the-two-input-formats" class="level2">
 <h2 class="anchored" data-anchor-id="step-3-write-the-two-input-formats">Step 3 — write the two input formats</h2>
 <p>CAUSE and MR-APSS want different shapes. Both are written from the same QC’d object so they cannot silently diverge.</p>
-<div class="cell">
+<div class="cell" data-cache.extra="[&quot;300fa520e3962a0596bb81c68cead500&quot;,&quot;7c82a6c1e37bd1eb5c66cb9c63abadbf&quot;]">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="fu">dir.create</span>(<span class="fu">pp</span>(cfg<span class="sc">$</span>paths<span class="sc">$</span>cache), <span class="at">recursive =</span> <span class="cn">TRUE</span>, <span class="at">showWarnings =</span> <span class="cn">FALSE</span>)</span>
@@ -2988,9 +2994,9 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ebmd</td>
-<td style="text-align: right;">0</td>
-<td style="text-align: right;">NA</td>
-<td style="text-align: right;">NaN</td>
+<td style="text-align: right;">1,030,710</td>
+<td style="text-align: right;">426,824</td>
+<td style="text-align: right;">4.365</td>
 </tr>
 </tbody>
 </table>
@@ -3000,7 +3006,7 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 <section id="step-4-sanity-check-against-the-existing-estimates" class="level2">
 <h2 class="anchored" data-anchor-id="step-4-sanity-check-against-the-existing-estimates">Step 4 — sanity check against the existing estimates</h2>
 <p>Before running anything Bayesian, confirm that a plain IVW on this variant set reproduces the effect already reported in <code>ANALYSIS.md</code> (all-cholesterol → heel BMD, β ≈ −0.051). If it does not, the harmonisation is wrong and nothing downstream is interpretable.</p>
-<div class="cell">
+<div class="cell" data-cache.extra="[&quot;300fa520e3962a0596bb81c68cead500&quot;,&quot;7c82a6c1e37bd1eb5c66cb9c63abadbf&quot;]">
 <details class="code-fold">
 <summary>Show the code</summary>
 <div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>ivw_check <span class="ot">&lt;-</span> <span class="cf">function</span>(exp_name) {</span>
@@ -3053,19 +3059,19 @@ variant_id  snp.1   chromosome  base_pair_location  effect_allele   other_allele
 <tbody>
 <tr class="odd">
 <td style="text-align: left;">glgc2021_ldl</td>
+<td style="text-align: right;">432</td>
+<td style="text-align: right;">-0.0672</td>
+<td style="text-align: right;">0.0056</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">NaN</td>
-<td style="text-align: right;">Inf</td>
-<td style="text-align: right;">NaN</td>
-<td style="text-align: right;">NaN</td>
+<td style="text-align: right;">128.8672</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">willer2013_ldl</td>
+<td style="text-align: right;">73</td>
+<td style="text-align: right;">-0.0539</td>
+<td style="text-align: right;">0.0068</td>
 <td style="text-align: right;">0</td>
-<td style="text-align: right;">NaN</td>
-<td style="text-align: right;">Inf</td>
-<td style="text-align: right;">NaN</td>
-<td style="text-align: right;">NaN</td>
+<td style="text-align: right;">60.9976</td>
 </tr>
 </tbody>
 </table>

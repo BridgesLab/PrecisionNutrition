@@ -37,6 +37,12 @@ library(kableExtra)
 source(file.path(.root, "R", "robust_mr_helpers.R"))
 set_project_root(.root)
 cfg <- load_robust_cfg()
+
+# knitr caches key on chunk CODE only. Editing config_robust_mr.yml or the
+# helpers would otherwise leave stale results in place — silently, and with no
+# indication in the output. Hash both and hang every cached chunk off it.
+.inputs_hash <- tools::md5sum(c(file.path(.root, "config_robust_mr.yml"),
+                                file.path(.root, "R", "robust_mr_helpers.R")))
 set.seed(cfg$seed)
 walk(c(cfg$paths$out, cfg$paths$cache, cfg$paths$raw, cfg$paths$ref),
      ~ dir.create(pp(.x), recursive = TRUE, showWarnings = FALSE))
@@ -148,6 +154,7 @@ alleles, MHC excluded, and a $\chi^2$ cap of max(N/1000, 80).
 
 ```{r read-qc}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 hm3 <- read_hm3(pp(cfg$paths$hm3))
 
 prep_one <- function(spec, label) {
@@ -185,6 +192,7 @@ object so they cannot silently diverge.
 
 ```{r write-formats}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 dir.create(pp(cfg$paths$cache), recursive = TRUE, showWarnings = FALSE)
 
 walk2(gwas, names(gwas), function(d, nm) {
@@ -212,6 +220,7 @@ downstream is interpretable.
 
 ```{r ivw-check}
 #| cache: true
+#| cache.extra: !expr .inputs_hash
 ivw_check <- function(exp_name) {
   e <- gwas[[exp_name]]; o <- gwas$ebmd
   if (is.null(e) || is.null(o)) return(NULL)

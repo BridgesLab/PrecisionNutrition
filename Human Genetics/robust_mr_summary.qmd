@@ -1,0 +1,173 @@
+---
+title: "Robust MR — Synthesis"
+author: "Dave Bridges"
+date: today
+editor: source
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    embed-resources: true    # self-contained: no _files/ dir needed to view it
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-robust-mr/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+.root <- local({
+  d <- normalizePath(getwd(), mustWork = FALSE)
+  while (!file.exists(file.path(d, "config_robust_mr.yml"))) {
+    p <- dirname(d)
+    if (identical(p, d)) stop("config_robust_mr.yml not found in ", getwd(),
+                              " or any parent — render from the analysis folder.")
+    d <- p
+  }
+  d
+})
+source(file.path(.root, "R", "robust_mr_helpers.R"))
+set_project_root(.root)
+cfg <- load_robust_cfg()
+dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
+```
+
+## Purpose
+
+Reconcile CAUSE and MR-APSS against the conventional estimates already reported in
+`ANALYSIS.md` §3, and state what the robust methods do and do not license us to
+conclude about **cholesterol → BMD**.
+
+```{r load-results}
+read_if <- function(f) {
+  p <- pp(cfg$paths$out, f)
+  if (file.exists(p)) read_csv(p, show_col_types = FALSE) else NULL
+}
+
+apss   <- read_if("mrapss_results.csv")
+cause  <- read_if("cause_results.csv")
+bg     <- read_if("apss_background_parameters.csv")
+ivw    <- read_if("ivw_baseline.csv")
+```
+
+## 1. Did we actually have a sample-overlap problem?
+
+Two independent measurements of the same thing, from two different model families.
+They should agree.
+
+```{r overlap}
+overlap_evidence <- bind_rows(
+  if (!is.null(bg)) bg |> transmute(arm, source = "MR-APSS cross-trait LDSC intercept (C12)",
+                                    value = C12) else NULL,
+  if (file.exists(pp(cfg$paths$out, "cause_nuisance.csv")))
+    read_csv(pp(cfg$paths$out, "cause_nuisance.csv"), show_col_types = FALSE) |>
+      transmute(arm, source = "CAUSE rho", value = rho) else NULL
+)
+
+if (nrow(overlap_evidence) > 0) {
+  overlap_evidence |>
+    pivot_wider(names_from = arm, values_from = value) |>
+    kable(caption = "Two estimates of shared sample structure. Both should be near zero in the overlap-free (GLGC 2013) arm and non-zero in the overlapping (GLGC 2021 + UKB eBMD) arm. If C12 and rho disagree in sign or magnitude, stop and check the harmonisation.",
+          digits = 4) |>
+    kable_styling(full_width = FALSE)
+}
+```
+
+## 2. All estimates side by side
+
+```{r combined}
+combined <- bind_rows(
+  if (!is.null(ivw)) ivw |> transmute(method = "IVW (5e-8, this pipeline)",
+                                      arm = if_else(exposure == "glgc2021_ldl",
+                                                    "overlapping", "overlap-free"),
+                                      b, se, lci = b - 1.96 * se, uci = b + 1.96 * se,
+                                      pval) else NULL,
+  if (!is.null(apss)) apss |> transmute(method = paste0("MR-APSS (", C_setting, ")"),
+                                        arm, b, se, lci, uci, pval) else NULL,
+  if (!is.null(cause)) cause |> transmute(method = "CAUSE (gamma, causal model)",
+                                          arm, b, se = NA_real_, lci, uci, pval) else NULL
+)
+write_csv(combined, pp(cfg$paths$out, "robust_mr_combined.csv"))
+
+combined |>
+  arrange(arm, method) |>
+  kable(caption = "LDL-C -> heel eBMD, SD per SD. The CAUSE p-value is the sharing-vs-causal ELPD test, not a Wald test on gamma - do not read it as the same quantity as the others.",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+```{r forest}
+#| fig-width: 8
+#| fig-height: 5
+if (nrow(combined) > 0) {
+  robust_mr_forest(combined,
+                   title = "LDL-C -> heel eBMD across estimators and exposure arms")
+}
+```
+
+## 3. Reading the result grid
+
+The four informative patterns, decided in advance so the interpretation is not
+chosen after seeing the numbers:
+
+| MR-APSS | CAUSE | Reading |
+|---|---|---|
+| $\beta<0$, significant | causal preferred | The strongest available support for a genuine cholesterol → BMD effect. Survives overlap, correlated pleiotropy, and winner's curse. |
+| $\beta<0$, significant | sharing not rejected | Effect is real *or* driven by a shared factor; CAUSE cannot separate them at this power. Report both; do not claim causality. |
+| $\beta \approx 0$ | sharing not rejected | The conventional IVW estimate (−0.051) was substantially overlap- and/or pleiotropy-driven. This would be a material revision to `ANALYSIS.md` §3. |
+| $\beta \approx 0$ | causal preferred | Unusual. Check the $C$ matrix — a large LDSC intercept inflates MR-APSS standard errors and can null out a real effect. |
+
+Note that none of these bear on the **HMGCR cis** result (β ≈ −0.115). That is a
+drug-target design with a different identifying assumption, and it is not
+adjudicated by genome-wide polygenic methods. The relationship between the two is
+the interesting part: if genome-wide LDL → BMD collapses under CAUSE/MR-APSS while
+the HMGCR cis effect stands, that *strengthens* the paper's central claim that the
+mechanism is mevalonate-specific rather than LDL-mediated.
+
+## 4. Limitations to carry into the write-up
+
+- **MRAID was not run.** It is a strict two-sample method and the primary design
+  shares UK Biobank across exposure and outcome. It is deferred to a UK Biobank →
+  MGI/BioVU design, mirroring the architecture already used for serum calcium.
+- **Both methods assume the LDSC/polygenic model.** MR-APSS inherits LDSC's
+  assumptions directly; CAUSE assumes the shared factor acts on both traits
+  through the same variants. Neither handles a *reverse* effect of BMD on lipids —
+  run the reverse direction separately if that is in question.
+- **European ancestry only.** `eur_w_ld_chr` and the 1000G EUR panel restrict this
+  to the European subsets; the multi-ancestry power of GLGC 2021 is not used.
+- **CAUSE is conservative by design.** A null CAUSE result is weak evidence of no
+  effect, not strong evidence.
+- **The eBMD outcome is heel quantitative ultrasound**, not DXA. The femoral-neck
+  DXA result in `ANALYSIS.md` was null but underpowered (GEFOS n ≈ 33k), and that
+  cohort is too small for LDSC-based methods.
+
+## 5. Suggested text for ANALYSIS.md
+
+```
+### 3b. Robustness of cholesterol -> BMD to overlap and correlated pleiotropy
+_Scripts: robust_mr_prep.qmd, robust_mr_apss.qmd, robust_mr_cause.qmd._
+
+The heel BMD result rests on UK Biobank on both sides of the analysis. Two
+genome-wide methods were applied that model this explicitly: MR-APSS (sample
+structure via bivariate LDSC intercepts, plus a winner's-curse correction that
+licenses a relaxed 5e-5 instrument threshold) and CAUSE (shared-factor model for
+correlated horizontal pleiotropy, robust to overlap via rho). Each was run on an
+overlapping exposure (GLGC 2021) and an overlap-free exposure (GLGC 2013,
+pre-UK-Biobank).
+
+[FILL: C12 = _, rho = _ in the overlapping arm vs _ and _ in the overlap-free arm]
+[FILL: MR-APSS beta = _ (95% CI _, _), vs _ with the correction disabled]
+[FILL: CAUSE delta_elpd = _, p = _ for sharing vs causal]
+
+MRAID was considered and excluded: it assumes non-overlapping samples, which this
+design violates by construction. It is planned for a UK Biobank -> MGI/BioVU
+replication.
+```

@@ -1,0 +1,240 @@
+---
+title: "Robust MR — CAUSE (correlated horizontal pleiotropy)"
+author: "Dave Bridges"
+date: today
+editor: source
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    embed-resources: true    # self-contained: no _files/ dir needed to view it
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-robust-mr/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+.root <- local({
+  d <- normalizePath(getwd(), mustWork = FALSE)
+  while (!file.exists(file.path(d, "config_robust_mr.yml"))) {
+    p <- dirname(d)
+    if (identical(p, d)) stop("config_robust_mr.yml not found in ", getwd(),
+                              " or any parent — render from the analysis folder.")
+    d <- p
+  }
+  d
+})
+source(file.path(.root, "R", "robust_mr_helpers.R"))
+set_project_root(.root)
+cfg <- load_robust_cfg()
+set.seed(cfg$seed)
+dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
+```
+
+## Purpose
+
+CAUSE tests whether the LDL → eBMD signal is better explained by a **causal
+effect** or by a **shared factor** $U$ acting on both traits — correlated
+horizontal pleiotropy. This is the failure mode that Egger, weighted median and
+mode-based estimators cannot detect, because a shared factor produces exactly the
+proportional, low-heterogeneity pattern those methods read as a clean causal
+effect.
+
+Two structural differences from every other MR in this repo:
+
+1. **It is a model comparison, not an effect estimate.** The primary output is an
+   ELPD difference between the sharing and causal models. $\hat\gamma$ exists, but
+   the inferential claim lives in the comparison. CAUSE is deliberately
+   conservative; a null here means "a shared factor explains this as well as
+   causation does", not "no effect".
+2. **It is robust to sample overlap** because the nuisance parameter $\rho$ — the
+   correlation of test statistics under the null — is estimated genome-wide from
+   ~1M variants, and overlap is one of the things that induces exactly that
+   correlation.
+
+::: callout-important
+## Runtime and memory
+
+`est_cause_params()` plus the three-model fit is the expensive part: expect
+**1–2 hours and 16–32 GB** per arm on the HapMap3-restricted input built by
+`robust_mr_prep.qmd` (~1M variants — which is also exactly the number of variants
+CAUSE wants for parameter estimation, so nothing is lost by the restriction).
+
+That is laptop-feasible overnight, but `scripts/run_cause_greatlakes.R` and
+`scripts/cause_greatlakes.sbatch` run the chunks below headless so both arms can go
+in parallel on Great Lakes. Either way the result lands in
+`cause_fit_<arm>.rds`, and the chunk below picks it up and skips recomputation.
+:::
+
+## Step 1 — merge and estimate nuisance parameters
+
+```{r merge}
+#| cache: true
+#| message: true
+library(cause)
+
+cache_rds <- function(nm) pp(cfg$paths$cache, nm)
+
+run_or_load <- function(arm, exp_name) {
+  fit_path <- cache_rds(paste0("cause_fit_", arm, ".rds"))
+  if (file.exists(fit_path)) {
+    message("Loading precomputed CAUSE fit for arm: ", arm)
+    return(readRDS(fit_path))
+  }
+
+  message("No cached fit for '", arm, "'. Computing locally — this is slow. ",
+          "Consider: sbatch scripts/cause_greatlakes.sbatch ", arm)
+
+  e <- readRDS(cache_rds(paste0(exp_name, "_cause.rds")))
+  o <- readRDS(cache_rds("ebmd_cause.rds"))
+
+  X <- cause::gwas_merge(
+    e, o,
+    snp_name_cols = c("SNP", "SNP"),
+    beta_hat_cols = c("beta_hat", "beta_hat"),
+    se_cols       = c("se", "se"),
+    A1_cols       = c("A1", "A1"),
+    A2_cols       = c("A2", "A2")
+  )
+
+  varlist <- with(X, sample(snp,
+                            size = min(cfg$cause$n_param_variants, nrow(X)),
+                            replace = FALSE))
+  params <- cause::est_cause_params(X, varlist)
+
+  # LD pruning: p < 1e-3, r2 < 0.01, using the project's local plink panel.
+  # (cause::ld_prune() with the Zenodo 1000G blocks is the alternative; see below.)
+  X <- X |> mutate(pval1 = 2 * pnorm(abs(beta_hat_1 / seb1), lower.tail = FALSE))
+  top <- clump_local(X, snp_col = "snp", p_col = "pval1",
+                     r2 = cfg$cause$prune_r2, kb = cfg$cause$prune_kb,
+                     p_thresh = cfg$cause$prune_p,
+                     bfile = pp(cfg$paths$plink_bfile),
+                     plink_bin = cfg$paths$plink_bin)
+
+  fit <- cause::cause(X = X, variants = top$snp, param_ests = params)
+  out <- list(fit = fit, params = params, n_variants = length(top$snp), n_merged = nrow(X))
+  saveRDS(out, fit_path)
+  out
+}
+
+cause_out <- list(
+  overlapping    = run_or_load("overlapping",   "glgc2021_ldl"),
+  `overlap-free` = run_or_load("overlap-free",  "willer2013_ldl")
+)
+```
+
+::: callout-note
+## Alternative pruning with CAUSE's own LD blocks
+
+If you would rather use the reference LD the CAUSE authors ship (1000 Genomes EUR,
+Zenodo record 1464357) instead of plink clumping:
+
+```r
+pruned <- purrr::map_dfr(1:22, function(chr) {
+  ld  <- readRDS(file.path(cfg$paths$cause_ld, sprintf("chr%s_AF0.05_0.1.RDS", chr)))
+  snp <- readRDS(file.path(cfg$paths$cause_ld, sprintf("chr%s_AF0.05_snpdata.RDS", chr)))
+  cause::ld_prune(variants = X |> dplyr::filter(snp %in% snp$SNP),
+                  ld = ld, total_ld_variants = snp$SNP,
+                  pval_cols = c("pval1"), pval_thresh = c(cfg$cause$prune_p))
+})
+```
+
+The two give very similar instrument sets; plink clumping is used by default
+because the panel is already in this repo for the MVMR work.
+:::
+
+### Nuisance parameters
+
+$\rho$ is the correlation of the two traits' test statistics under the null. It is
+non-zero when the GWAS share samples, share stratification, or the traits are
+genuinely correlated for non-causal reasons — and it is the reason CAUSE tolerates
+overlap.
+
+```{r rho}
+rho_tab <- imap_dfr(cause_out, ~ tibble(
+  arm = .y,
+  rho = .x$params$rho,
+  n_merged   = .x$n_merged,
+  n_variants = .x$n_variants
+))
+write_csv(rho_tab, pp(cfg$paths$out, "cause_nuisance.csv"))
+rho_tab |>
+  kable(caption = "CAUSE nuisance parameters. Larger |rho| in the overlapping arm than the overlap-free arm is the expected signature of shared samples.",
+        digits = 4, format.args = list(big.mark = ",")) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Step 2 — model comparison
+
+```{r elpd}
+elpd_tab <- imap_dfr(cause_out, function(x, arm) {
+  as_tibble(x$fit$elpd) |> mutate(arm = arm, .before = 1)
+})
+write_csv(elpd_tab, pp(cfg$paths$out, "cause_elpd.csv"))
+elpd_tab |>
+  kable(caption = "ELPD model comparison. The decisive row is model1 = sharing vs model2 = causal: a negative delta_elpd with a significant z favours the causal model.",
+        digits = 3) |>
+  kable_styling(full_width = FALSE)
+```
+
+```{r summary-table}
+cause_res <- imap_dfr(cause_out, function(x, arm) {
+  tidy_cause(x$fit,
+             exposure = if (arm == "overlapping") cfg$exposures$glgc2021_ldl$label
+                        else cfg$exposures$willer2013_ldl$label,
+             outcome  = cfg$outcomes$ebmd_morris2019$label,
+             arm      = arm,
+             ci_size  = cfg$cause$ci_size)
+})
+write_csv(cause_res, pp(cfg$paths$out, "cause_results.csv"))
+
+cause_res |>
+  select(arm, b, lci, uci, eta_med, q_med, delta_elpd, se_delta_elpd, z, pval, verdict) |>
+  kable(caption = "CAUSE. b is the posterior median gamma (causal model); eta is the shared-factor effect and q the proportion of variants acting through it.",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Step 3 — posterior plots
+
+```{r plots}
+#| fig-width: 9
+#| fig-height: 4
+walk2(cause_out, names(cause_out), function(x, arm) {
+  cat("\n\n### ", arm, "\n\n")
+  print(plot(x$fit))
+})
+```
+
+## Interpreting the three parameters
+
+| Parameter | Meaning | What a large value implies |
+|---|---|---|
+| $\gamma$ | Causal effect of LDL-C on eBMD | The effect we are after |
+| $\eta$ | Effect of the shared factor $U$ | Correlated pleiotropy is present |
+| $q$ | Proportion of variants acting through $U$ | How much of the instrument set is contaminated |
+
+The failure mode to watch for is $\gamma \approx 0$ with $\eta$ and $q$ both
+substantial: that is a signal driven entirely by a shared factor, and it would mean
+the conventional IVW estimate of −0.051 is confounded rather than causal.
+
+The opposite result — sharing decisively rejected in favour of causal in **both**
+arms — would be the strongest statement this project can make about
+cholesterol → BMD, because it survives the one criticism the existing IVW/Egger
+battery cannot answer.
+
+A third possibility deserves saying out loud in advance: CAUSE returning "sharing
+not rejected" while MR-APSS returns a clear non-zero $\beta$. That is a known
+pattern — CAUSE trades power for specificity against correlated pleiotropy — and
+should be reported as a discrepancy, not resolved by picking the friendlier
+answer.

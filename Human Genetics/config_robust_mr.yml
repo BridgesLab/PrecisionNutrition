@@ -1,0 +1,169 @@
+# config_robust_mr.yml ----------------------------------------------------------
+# Configuration for the overlap- and pleiotropy-robust MR arm (CAUSE + MR-APSS).
+# Read by R/robust_mr_helpers.R::load_robust_cfg().
+#
+# IMPORTANT: the `cols:` blocks below are best guesses at the upstream headers.
+# Run inspect_gwas_header() on each file (robust_mr_prep.qmd does this for you)
+# and correct them BEFORE running anything. A wrong effect-allele column is a
+# silent sign flip, not an error.
+
+seed: 20260810
+
+paths:
+  raw:        "raw_data/robust_mr"        # downloaded summary statistics
+  ref:        "raw_data/reference"        # LD scores, HapMap3 list, plink bfile
+  out:        "results/robust_mr"         # tidy result CSVs
+  cache:      "raw_data/robust_mr/cache"  # harmonised intermediates + fitted objects
+  hm3:        "raw_data/reference/w_hm3.snplist"
+  ldscore:    "raw_data/reference/eur_w_ld_chr"      # est_paras(ldscore.dir=)
+  cause_ld:   "raw_data/reference/cause_1000G_ld"    # optional, CAUSE-native pruning
+  # 1000G EUR panel already present from the smoking/AD work — no need to re-download.
+  # (fileserve.mrcieu.ac.uk is frequently unreachable; this is the same 1kg.v3 panel.)
+  plink_bfile: "alzheimers/data/cache/EUR"           # plink prefix (no extension)
+  plink_bin:  ~                                       # empty -> genetics.binaRies::get_plink_binary()
+
+# --- exposures -----------------------------------------------------------------
+# Two arms by design. glgc2021 is the powered primary and OVERLAPS UK Biobank;
+# willer2013 predates UK Biobank entirely and is the overlap-free control.
+# Running both under the same pipeline turns "is overlap biasing us?" into a
+# measurable quantity rather than an assumption.
+exposures:
+
+  glgc2021_ldl:
+    label: "LDL-C (GLGC 2021, EUR)"
+    arm: "overlapping"
+    file: "raw_data/robust_mr/LDL_INV_EUR_HRC_1KGP3_others_ALL.meta.singlevar.results.gz"
+    n_fixed: 1320016          # replace with the per-SNP N column if present
+    log10p: false
+    ukb_included: true        # VERIFY against Graham 2021 Supplementary Table 1
+    cols:
+      snp:  "rsID"
+      chr:  "CHROM"
+      bp:   "POS_b37"
+      a1:   "ALT"             # ALT is the effect allele in the GLGC 2021 release
+      a2:   "REF"
+      eaf:  "POOLED_ALT_AF"
+      beta: "EFFECT_SIZE"
+      se:   "SE"
+      pval: "pvalue"
+      n:    "N"
+
+  willer2013_ldl:
+    label: "LDL-C (GLGC 2013, pre-UKB)"
+    arm: "overlap-free"
+    file: "raw_data/jointGwasMc_LDL.txt.gz"   # already in the repo
+    # HEADER VERIFIED 2026-08-10 against the local file. 2,437,751 rows.
+    # Per-SNP N is used (column N): min 50,000 / median 89,872 / max 173,082.
+    # n_fixed is only a fallback and is set to the median, not the max, on purpose.
+    n_fixed: 89872
+    log10p: false
+    ukb_included: false
+    cols:
+      snp:  "rsid"
+      a1:   "A1"
+      a2:   "A2"
+      eaf:  "Freq.A1.1000G.EUR"
+      beta: "beta"
+      se:   "se"
+      pval: "P-value"
+      n:    "N"
+
+  # Optional third arm: total cholesterol, to mirror the existing TC analyses.
+  glgc2021_tc:
+    label: "Total cholesterol (GLGC 2021, EUR)"
+    arm: "overlapping"
+    file: "raw_data/robust_mr/TC_INV_EUR_HRC_1KGP3_others_ALL.meta.singlevar.results.gz"
+    n_fixed: 1320016
+    log10p: false
+    ukb_included: true
+    cols:
+      snp: "rsID"
+      chr: "CHROM"
+      bp:  "POS_b37"
+      a1:  "ALT"
+      a2:  "REF"
+      eaf: "POOLED_ALT_AF"
+      beta: "EFFECT_SIZE"
+      se:  "SE"
+      pval: "pvalue"
+      n:   "N"
+
+# --- outcomes ------------------------------------------------------------------
+outcomes:
+
+  ebmd_morris2019:
+    label: "Heel eBMD (Morris 2019, UKB)"
+    # GWAS Catalog GCST006979. Use the build37 "formatted" file, NOT the .h
+    # (harmonised) one: .h is remapped to GRCh38, and everything else in this
+    # pipeline — the GLGC POS_b37 column, the 1000G EUR clumping panel, and the
+    # chr6:26-34Mb MHC window in qc_gwas() — is build 37.
+    file: "raw_data/robust_mr/30598549-GCST006979-EFO_0009270-build37.f.tsv.gz"
+    n_fixed: 426824        # no per-SNP N column in the Catalog format; Morris N
+    log10p: false
+    source_cohort: "UK Biobank"
+    # Alternative source: the OpenGWAS bulk GWAS-VCF. Set `vcf: true` and point
+    # `file:` at the .vcf.gz; read_gwasvcf() then handles it and the cols: block
+    # below is ignored (GWAS-VCF has a fixed schema).
+    #   file: "raw_data/robust_mr/ebi-a-GCST006979.vcf.gz"
+    #   vcf: true
+    # VERIFY THE ID FIRST — ieugwasr::gwasinfo("ebi-a-GCST006979") should report
+    # Morris 2019 with sample_size 426824. This repo has been bitten by mislabelled
+    # OpenGWAS accessions before (see alzheimers/smoking/config.yml).
+    vcf: false
+    # HEADER VERIFIED 2026-08-11 against the downloaded file. Three traps here:
+    #
+    #  1. `variant_id` is chr:pos:ref:alt, NOT rsIDs. The rsIDs are in a second
+    #     column named `snp.1`. Mapping variant_id drops 100% of SNPs at the
+    #     HapMap3 step (11.7M -> 0).
+    #  2. There is NO sample-size column. The column labelled `n` is actually
+    #     BOLT-LMM's second p-value: for rs2977608, beta/se = -0.865 gives
+    #     p = 0.387, which matches `n` (0.37), not `p_value` (0.89). Morris 2019
+    #     was run in BOLT-LMM, which reports both infinitesimal and
+    #     non-infinitesimal p-values; the Catalog reformatting mislabelled one.
+    #     Hence n_fixed above, and `n:` is deliberately unmapped.
+    #  3. `pval` is deliberately NOT mapped either — read_gwas() derives it from
+    #     beta/se so it is guaranteed consistent with the effect estimates.
+    #     Given trap 2, neither p-value column is trustworthy as labelled.
+    cols:
+      snp:  "snp.1"
+      chr:  "chromosome"
+      bp:   "base_pair_location"
+      a1:   "effect_allele"
+      a2:   "other_allele"
+      eaf:  "effect_allele_frequency"
+      info: "info"
+      beta: "beta"
+      se:   "standard_error"
+
+# --- analysis parameters -------------------------------------------------------
+cause:
+  n_param_variants: 1000000   # random variants for est_cause_params()
+  prune_p: 1.0e-3             # CAUSE recommends p < 1e-3
+  prune_r2: 0.01
+  prune_kb: 10000
+  ci_size: 0.95
+
+mrapss:
+  iv_threshold: 5.0e-5        # MR-APSS default; relaxed on purpose (winner's curse corrected)
+  clump_r2: 0.001
+  clump_kb: 1000
+  cor_selection_bias: true    # the winner's-curse / weak-instrument correction
+  run_C_identity: true        # also fit with C = I to quantify what the overlap correction did
+
+qc:
+  maf_min: 0.05
+  info_min: 0.9
+  drop_mhc: true
+
+# --- comparison anchors --------------------------------------------------------
+# Conventional estimates already in the repo, for the summary forest plot.
+# Source: ANALYSIS.md section 3 (drug_target_mr_bmd.qmd, mr-downstream-analyses.qmd).
+anchors:
+  - method: "IVW (all-cholesterol -> heel BMD)"
+    b: -0.051
+    se: 0.0134           # back-calculated from p = 1.4e-4; replace with the stored SE
+    note: "ANALYSIS.md 3; verify SE from results/ before publishing"
+  - method: "IVW (HMGCR cis -> heel BMD, LDL)"
+    b: -0.115
+    se: 0.0160
+    note: "cis design; NOT comparable to genome-wide CAUSE/MR-APSS, shown for context only"

@@ -1,0 +1,35 @@
+# .gitignore — Human Genetics analyses
+#
+# Rule of thumb: anything reproducible from a script or a render does not belong
+# in the repo. Without the raw_data rules below, `git add -A` here stages ~5 GB.
+
+# ---- Downloaded data and reference panels (robust MR arm, ~4.9 GB) ------------
+# All regenerable via scripts/fetch_robust_mr_data.sh.
+raw_data/robust_mr/
+raw_data/reference/
+
+# ---- Render caches and intermediates -----------------------------------------
+# knitr caches are large (~60 MB for prep alone) and machine-specific.
+robust_mr_*_cache/
+*_cache/
+
+# Quarto's per-document asset directories (bootstrap/jquery/plotly bundles).
+# NOTE: a non-self-contained .html needs its _files/ dir to display correctly.
+# We commit the .html.md instead, which renders on GitHub and diffs cleanly.
+robust_mr_*_files/
+
+# ---- R session noise ---------------------------------------------------------
+.Rhistory
+.Rapp.history
+.RData
+.Rproj.user/
+.Renviron
+
+# ---- Cluster ------------------------------------------------------------------
+logs/
+slurm-*.out
+*.sbatch.log
+
+# ---- OS ----------------------------------------------------------------------
+.DS_Store
+._*

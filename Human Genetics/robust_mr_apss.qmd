@@ -1,0 +1,288 @@
+---
+title: "Robust MR — MR-APSS (pleiotropy + sample structure + winner's curse)"
+author: "Dave Bridges"
+date: today
+editor: source
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    embed-resources: true    # self-contained: no _files/ dir needed to view it
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-robust-mr/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+.root <- local({
+  d <- normalizePath(getwd(), mustWork = FALSE)
+  while (!file.exists(file.path(d, "config_robust_mr.yml"))) {
+    p <- dirname(d)
+    if (identical(p, d)) stop("config_robust_mr.yml not found in ", getwd(),
+                              " or any parent — render from the analysis folder.")
+    d <- p
+  }
+  d
+})
+source(file.path(.root, "R", "robust_mr_helpers.R"))
+set_project_root(.root)
+cfg <- load_robust_cfg()
+set.seed(cfg$seed)
+dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
+```
+
+## Purpose
+
+MR-APSS is the single method in this project that addresses all three of our
+concerns simultaneously. It decomposes each observed SNP effect into a
+**background** component — polygenicity ($\Omega$), correlated pleiotropy, and
+sample structure ($C$) — and a **foreground** component, on which causal
+inference is performed while allowing uncorrelated pleiotropy.
+
+Three properties matter for us:
+
+1. **$C$ absorbs sample overlap.** $C$ is a 2×2 matrix of LDSC intercepts; the
+   diagonal captures inflation within each GWAS, and $C_{12}$ — the cross-trait
+   intercept — is proportional to the sample overlap times the phenotypic
+   correlation. This makes overlap a *measured quantity*, not an assumption.
+2. **Relaxed instrument threshold with an explicit selection-bias correction.**
+   IVs are taken at $p<5\times10^{-5}$ rather than $5\times10^{-8}$. On its own
+   that would import winner's curse and weak-instrument bias; `Cor.SelectionBias
+   = TRUE` corrects for the selection step, which is what makes the relaxed
+   threshold a power gain rather than a bias.
+3. **$\Omega$ soaks up correlated pleiotropy** before the causal parameter is
+   estimated, so a shared polygenic background between lipids and bone does not
+   masquerade as a causal effect.
+
+Runtime is minutes, not hours — this one does not need Great Lakes.
+
+```{r load}
+#| cache: true
+read_cached <- function(nm) {
+  p <- pp(cfg$paths$cache, paste0(nm, "_apss.rds"))
+  if (!file.exists(p)) stop("Run robust_mr_prep.qmd first — missing ", p)
+  readRDS(p)
+}
+
+dat <- list(
+  glgc2021_ldl   = read_cached("glgc2021_ldl"),
+  willer2013_ldl = read_cached("willer2013_ldl"),
+  ebmd           = read_cached("ebmd")
+)
+
+map_dfr(dat, ~ tibble(n_snp = nrow(.x), median_N = median(.x$N)), .id = "dataset") |>
+  kable(caption = "MR-APSS input datasets (SNP / A1 / A2 / Z / P / N)",
+        format.args = list(big.mark = ",")) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Step 1 — background parameters ($C$, $\Omega$) by bivariate LDSC
+
+```{r est-paras}
+#| cache: true
+#| message: true
+library(MRAPSS)
+
+ldsc_dir <- pp(cfg$paths$ldscore)
+stopifnot("LD score directory not found — see scripts/fetch_robust_mr_data.sh" =
+            dir.exists(ldsc_dir))
+
+# Read once, pass as ld/M rather than ldscore.dir: est_paras() would otherwise
+# re-read all 22 chromosomes per trait pair, and its hard-coded filename pattern
+# only matches the eur_w_ld_chr layout. read_ldscores() handles both layouts.
+ldsc <- read_ldscores(ldsc_dir)
+
+fit_paras <- function(exp_name) {
+  MRAPSS::est_paras(
+    dat1 = dat[[exp_name]],
+    dat2 = dat$ebmd,
+    trait1.name = cfg$exposures[[exp_name]]$label,
+    trait2.name = cfg$outcomes$ebmd_morris2019$label,
+    ld = ldsc$ld,
+    M  = ldsc$M
+  )
+}
+
+paras <- list(
+  overlapping  = fit_paras("glgc2021_ldl"),
+  `overlap-free` = fit_paras("willer2013_ldl")
+)
+saveRDS(paras, pp(cfg$paths$cache, "apss_paras.rds"))
+```
+
+### The overlap measurement
+
+This is the table that answers the question directly. $C_{12}$ should be
+materially non-zero for the GLGC 2021 arm (UK Biobank on both sides) and close to
+zero for the pre-UK-Biobank GLGC 2013 arm. If it is *not* near zero in the second
+arm, either the arm is not as clean as we think or there is shared population
+stratification rather than shared samples.
+
+```{r background-table}
+bg <- imap_dfr(paras, ~ tidy_background(
+  .x,
+  exposure = cfg$exposures[[if (.y == "overlapping") "glgc2021_ldl" else "willer2013_ldl"]]$label,
+  outcome  = cfg$outcomes$ebmd_morris2019$label,
+  arm      = .y
+))
+write_csv(bg, pp(cfg$paths$out, "apss_background_parameters.csv"))
+
+bg |>
+  select(arm, C11, C22, C12, overlap_flag, rg) |>
+  kable(caption = "MR-APSS background parameters. C11/C22 are the univariate LDSC intercepts (confounding within each GWAS); C12 is the cross-trait intercept and is the direct estimate of sample overlap. rg is the genetic correlation implied by Omega — the correlated-pleiotropy channel.",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Step 2 — IV selection and LD clumping
+
+```{r clump}
+#| cache: true
+bfile     <- pp(cfg$paths$plink_bfile)
+plink_bin <- cfg$paths$plink_bin
+
+# MRAPSS ships its own clump() wrapper, but it has moved between versions.
+# Fall back to the project's ieugwasr-based clumper, which produces the same thing.
+clump_arm <- function(par) {
+  if (!is.null(getNamespace("MRAPSS")$clump)) {
+    out <- try(MRAPSS::clump(
+      par$dat,
+      IV.Threshold = cfg$mrapss$iv_threshold,
+      SNP_col   = "SNP",
+      pval_col  = "pval.exp",
+      clump_kb  = cfg$mrapss$clump_kb,
+      clump_r2  = cfg$mrapss$clump_r2,
+      bfile     = bfile,
+      plink_bin = plink_bin
+    ), silent = TRUE)
+    if (!inherits(out, "try-error")) return(out)
+    message("MRAPSS::clump() failed; falling back to clump_local().")
+  }
+  clump_local(par$dat, snp_col = "SNP", p_col = "pval.exp",
+              r2 = cfg$mrapss$clump_r2, kb = cfg$mrapss$clump_kb,
+              p_thresh = cfg$mrapss$iv_threshold,
+              bfile = bfile, plink_bin = plink_bin)
+}
+
+MRdat <- map(paras, clump_arm)
+saveRDS(MRdat, pp(cfg$paths$cache, "apss_MRdat.rds"))
+
+map_dfr(MRdat, ~ tibble(n_iv = nrow(.x)), .id = "arm") |>
+  kable(caption = sprintf("Instruments after selection at p < %.0e and clumping at r2 = %.3f",
+                          cfg$mrapss$iv_threshold, cfg$mrapss$clump_r2)) |>
+  kable_styling(full_width = FALSE)
+```
+
+::: callout-note
+The instrument count here should be in the hundreds to low thousands — far more
+than the ~230–280 SNPs the genome-wide-significant analyses in this repo use. That
+is the point of the 5e-5 threshold, and it is only defensible because
+`Cor.SelectionBias = TRUE` corrects the resulting winner's curse.
+:::
+
+## Step 3 — fit MR-APSS
+
+Each arm is fitted twice: once with the estimated $C$ (the correction switched on)
+and once with $C = I$ (switched off). The gap between them *is* the sample-overlap
+bias, expressed in the units of the outcome.
+
+```{r fit}
+#| cache: true
+exp_of <- function(arm) if (arm == "overlapping") "glgc2021_ldl" else "willer2013_ldl"
+
+fit_apss <- function(arm, use_C) {
+  par <- paras[[arm]]
+  MRAPSS::MRAPSS(
+    MRdat[[arm]],
+    exposure = cfg$exposures[[exp_of(arm)]]$label,
+    outcome  = cfg$outcomes$ebmd_morris2019$label,
+    C        = if (use_C) par$C else diag(2),
+    Omega    = par$Omega,
+    Cor.SelectionBias = cfg$mrapss$cor_selection_bias
+  )
+}
+
+grid <- tidyr::expand_grid(arm = names(paras), use_C = c(TRUE, FALSE))
+if (!isTRUE(cfg$mrapss$run_C_identity)) grid <- filter(grid, use_C)
+
+fits <- pmap(grid, fit_apss)
+saveRDS(list(grid = grid, fits = fits), pp(cfg$paths$cache, "apss_fits.rds"))
+
+apss_res <- pmap_dfr(list(grid$arm, grid$use_C, fits), function(arm, use_C, fit) {
+  tidy_apss(fit,
+            exposure  = cfg$exposures[[exp_of(arm)]]$label,
+            outcome   = cfg$outcomes$ebmd_morris2019$label,
+            arm       = arm,
+            C_setting = if (use_C) "corrected" else "uncorrected")
+})
+write_csv(apss_res, pp(cfg$paths$out, "mrapss_results.csv"))
+
+apss_res |>
+  select(arm, C_setting, b, se, lci, uci, pval, n_iv, n_valid_iv, pi0) |>
+  kable(caption = "MR-APSS causal effect of LDL-C on heel eBMD (SD per SD). 'uncorrected' rows are the identical model refitted with C = I, i.e. the sample-structure correction disabled. n_valid_iv is the posterior-expected number of instruments carrying foreground signal, sum(post$Pi).",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+### How much did the overlap correction move the estimate?
+
+```{r overlap-delta}
+if (n_distinct(apss_res$C_setting) == 2) {
+  delta <- apss_res |>
+    select(arm, C_setting, b, se) |>
+    pivot_wider(names_from = C_setting, values_from = c(b, se)) |>
+    mutate(shift       = b_corrected - b_uncorrected,
+           shift_in_se = shift / se_corrected)
+  write_csv(delta, pp(cfg$paths$out, "mrapss_overlap_shift.csv"))
+  delta |>
+    kable(caption = "Effect of switching the sample-structure correction on. A shift of more than ~0.5 SE in the overlapping arm but not the overlap-free arm is the signature of genuine overlap bias.",
+          digits = 4) |>
+    kable_styling(full_width = FALSE)
+}
+```
+
+## Step 4 — diagnostic plot
+
+```{r plot}
+#| fig-width: 6
+#| fig-height: 5
+walk(seq_along(fits), function(i) {
+  ok <- try(print(MRAPSS::MRplot(
+    fits[[i]],
+    exposure = "LDL-C",
+    outcome  = "heel eBMD"
+  )), silent = TRUE)
+  invisible(ok)
+})
+```
+
+Triangles are observed SNP effects; colour is the posterior probability that the
+instrument carries foreground (i.e. valid) signal — the per-SNP `post$Pi`, whose
+sum is the `n_valid_iv` column above. Expect it to be well below the raw
+instrument count: that gap is the model discounting background-driven variants,
+and it is the mechanism by which the relaxed $5\times10^{-5}$ threshold buys power
+without buying bias.
+
+## Interpretation notes
+
+- The MR-APSS $\beta$ is on a **per-SD-exposure, per-SD-outcome** scale by
+  construction ($b = Z/\sqrt{N}$ internally), so it is directly comparable to the
+  IVW estimates in `ANALYSIS.md` provided those were also run on standardised
+  traits.
+- A large $C_{11}$ or $C_{22}$ (LDSC intercept well above 1) means one of the
+  GWAS is inflated by confounding. The MR-APSS authors flag that in that regime
+  the causal estimate carries larger standard errors than IVW or RAPS — that is
+  the correction being honest, not a failure.
+- MR-APSS assumes LDSC's assumptions hold, which means it inherits LDSC's
+  requirements: European-ancestry samples matched to `eur_w_ld_chr`, N > ~5k, and
+  HapMap3 variants. All satisfied here.

@@ -17,8 +17,12 @@ paths:
   hm3:        "raw_data/reference/w_hm3.snplist"
   ldscore:    "raw_data/reference/eur_w_ld_chr"      # est_paras(ldscore.dir=)
   cause_ld:   "raw_data/reference/cause_1000G_ld"    # optional, CAUSE-native pruning
-  # 1000G EUR panel already present from the smoking/AD work — no need to re-download.
+  # 1000G EUR panel, shared with the AD/smoking analyses — no need to re-download.
   # (fileserve.mrcieu.ac.uk is frequently unreachable; this is the same 1kg.v3 panel.)
+  # Locally this sits in a SIBLING directory (../alzheimers/...) since the project
+  # moved into calcium-cholesterol/; on GreatLakes it was uploaded flat under the
+  # project root. resolve_bfile() tries the path as given, then ../ and ../../,
+  # so this one entry works on both. An absolute path also works.
   plink_bfile: "alzheimers/data/cache/EUR"           # plink prefix (no extension)
   plink_bin:  ~                                       # empty -> genetics.binaRies::get_plink_binary()
 

@@ -156,7 +156,7 @@ bg |>
 ```{r clump}
 #| cache: true
 #| cache.extra: !expr .inputs_hash
-bfile     <- pp(cfg$paths$plink_bfile)
+bfile     <- resolve_bfile(cfg$paths$plink_bfile)
 plink_bin <- cfg$paths$plink_bin
 
 # MRAPSS ships its own clump() wrapper, but it has moved between versions.

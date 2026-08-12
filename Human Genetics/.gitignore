@@ -1,41 +1,30 @@
-# .gitignore — Human Genetics analyses
+# .gitignore — Human Genetics (repo root)
 #
-# Rule of thumb: anything reproducible from a script or a render does not belong
-# in the repo. Without the raw_data rules below, `git add -A` here stages ~5 GB.
+# Only generic, path-free rules belong here: they match at any depth, so they
+# cover every analysis subdirectory. Anything anchored to a particular project
+# lives in that project's own .gitignore — see calcium-cholesterol/.gitignore
+# for the data and reference-panel rules (~5 GB) that used to sit here.
 
-# ---- Downloaded data and reference panels (robust MR arm, ~4.9 GB) ------------
-# All regenerable via scripts/fetch_robust_mr_data.sh.
-raw_data/robust_mr/
-raw_data/reference/
-
-# ---- Render caches and intermediates -----------------------------------------
-# knitr caches are large (~60 MB for prep alone) and machine-specific.
-robust_mr_*_cache/
+# ---- Render caches --------------------------------------------------------------
+# knitr caches are large (~60 MB for one document) and machine-specific.
 *_cache/
 
 # Quarto project state and freeze cache.
 .quarto/
 _freeze/
 
-# Quarto's per-document asset directories (bootstrap/jquery/plotly bundles).
-# The robust_mr_*.qmd files set embed-resources: true, so their .html is
-# self-contained and these directories are disposable. Do NOT add a blanket
-# *_files/ rule — the older analyses in this repo are not self-contained and
-# their .html would render unstyled without them.
-robust_mr_*_files/
-
-# ---- R session noise ---------------------------------------------------------
+# ---- R session noise ------------------------------------------------------------
 .Rhistory
 .Rapp.history
 .RData
 .Rproj.user/
 .Renviron
 
-# ---- Cluster ------------------------------------------------------------------
+# ---- Cluster --------------------------------------------------------------------
 logs/
 slurm-*.out
 *.sbatch.log
 
-# ---- OS ----------------------------------------------------------------------
+# ---- OS -------------------------------------------------------------------------
 .DS_Store
 ._*

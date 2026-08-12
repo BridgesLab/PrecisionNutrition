@@ -95,7 +95,7 @@ if (file.exists(prep_path)) {
   top <- clump_local(
     X, snp_col = "snp", p_col = "pval1",
     r2 = cfg$cause$prune_r2, kb = cfg$cause$prune_kb, p_thresh = cfg$cause$prune_p,
-    bfile     = pp(cfg$paths$plink_bfile),
+    bfile     = resolve_bfile(cfg$paths$plink_bfile),
     plink_bin = cfg$paths$plink_bin
   )
   msg(sprintf("  %s variants retained", format(nrow(top), big.mark = ",")))

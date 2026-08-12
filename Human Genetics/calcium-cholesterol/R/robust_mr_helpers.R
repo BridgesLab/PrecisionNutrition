@@ -62,6 +62,23 @@ load_robust_cfg <- function(path = pp("config_robust_mr.yml")) {
   yaml::read_yaml(path)
 }
 
+#' Resolve a plink bfile prefix, tolerating where it sits relative to the project.
+#'
+#' The 1000G panel lives in a sibling directory locally (`../alzheimers/data/...`,
+#' shared with the AD analyses) but under the project root on the cluster, where
+#' it was uploaded flat. Rather than maintain two configs, try the obvious
+#' candidates and use whichever has a .bed next to it.
+resolve_bfile <- function(bfile, extra = character()) {
+  cands <- unique(c(bfile, file.path("..", bfile), file.path("../..", bfile), extra))
+  for (b in cands) {
+    p <- if (grepl("^(/|~)", b)) path.expand(b) else pp(b)
+    if (file.exists(paste0(p, ".bed"))) return(p)
+  }
+  stop("No plink bfile found. Tried (relative to ", getOption("robust_mr.root"), "):\n",
+       paste0("  ", cands, ".bed", collapse = "\n"),
+       "\n  Set paths$plink_bfile in config_robust_mr.yml to an absolute path.")
+}
+
 #' Resolve the plink binary, in precedence order:
 #'   1. explicit `plink_bin` argument
 #'   2. the PLINK_BIN environment variable  <- how the Great Lakes sbatch passes

@@ -124,7 +124,7 @@ run_or_load <- function(arm, exp_name) {
   top <- clump_local(X, snp_col = "snp", p_col = "pval1",
                      r2 = cfg$cause$prune_r2, kb = cfg$cause$prune_kb,
                      p_thresh = cfg$cause$prune_p,
-                     bfile = pp(cfg$paths$plink_bfile),
+                     bfile = resolve_bfile(cfg$paths$plink_bfile),
                      plink_bin = cfg$paths$plink_bin)
 
   fit <- cause::cause(X = X, variants = top$snp, param_ests = params)

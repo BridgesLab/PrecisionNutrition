@@ -229,7 +229,7 @@ ivw_check <- function(exp_name) {
     filter(pval < 5e-8) |>
     clump_local(snp_col = "snp", p_col = "pval",
                 r2 = 0.001, kb = 1000, p_thresh = 5e-8,
-                bfile = pp(cfg$paths$plink_bfile),
+                bfile = resolve_bfile(cfg$paths$plink_bfile),
                 plink_bin = cfg$paths$plink_bin)
 
   d <- iv |>

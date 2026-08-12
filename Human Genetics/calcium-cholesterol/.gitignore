@@ -1,0 +1,31 @@
+# .gitignore — calcium-cholesterol analysis
+#
+# Paths here are anchored to this directory. Generic, path-free rules (OS junk,
+# R session files, *_cache/, logs/) live in the repo-root .gitignore and apply
+# recursively, so they are not repeated here.
+#
+# Rule of thumb: anything reproducible from a script or a render stays out of git.
+# Without the raw_data rules below, `git add -A` stages ~5 GB.
+
+# ---- Downloaded data and reference panels (robust MR arm, ~4.9 GB) ------------
+# All regenerable via scripts/fetch_robust_mr_data.sh.
+raw_data/robust_mr/
+raw_data/reference/
+
+# ---- PheWeb / consortium summary statistics (~649 MB) --------------------------
+# The phenocode-*.tsv.gz files are MGI-BioVU LabWAS results, restricted to
+# University of Michigan researchers and NOT redistributable (see README.md
+# "Reproducibility Notes"). The GEFOS/fracture files are public but large and
+# re-downloadable. Ignore the data, keep the provenance README tracked.
+PheWeb Summary Statistics/*
+!PheWeb Summary Statistics/README.md
+
+# Harmonised intermediates and fitted model objects (regenerable from prep)
+raw_data/robust_mr/cache/
+
+# ---- Quarto asset directories --------------------------------------------------
+# The robust_mr_*.qmd files set embed-resources: true, so their .html is
+# self-contained and these are disposable. Do NOT add a blanket *_files/ rule —
+# the older analyses here are not self-contained and their committed .html would
+# render unstyled without them.
+robust_mr_*_files/

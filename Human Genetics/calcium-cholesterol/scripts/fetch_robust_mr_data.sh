@@ -135,9 +135,17 @@ echo "     LDscore.1.l2.ldscore.gz  (S-LDSC bundles)"
 
 echo
 echo "== 5. 1000 Genomes EUR plink panel (LD clumping for both methods)"
-LOCAL_PANEL="${TARGET}/../alzheimers/data/cache/EUR.bed"
-if [[ -s "${LOCAL_PANEL}" ]]; then
-  echo "  [skip] already present at alzheimers/data/cache/EUR.{bed,bim,fam}"
+# The panel is shared with the AD analyses and lives in a sibling directory now
+# that this project sits in calcium-cholesterol/. resolve_bfile() in R searches
+# the configured path plus ../ and ../../, so either layout works.
+LOCAL_PANEL=""
+for cand in "${TARGET}/../alzheimers/data/cache/EUR.bed" \
+            "${TARGET}/../../alzheimers/data/cache/EUR.bed" \
+            "${TARGET}/alzheimers/data/cache/EUR.bed"; do
+  [[ -s "${cand}" ]] && { LOCAL_PANEL="${cand}"; break; }
+done
+if [[ -n "${LOCAL_PANEL}" ]]; then
+  echo "  [skip] already present at ${LOCAL_PANEL%/EUR.bed}/EUR.{bed,bim,fam}"
   echo "         config_robust_mr.yml points at it — nothing to download."
 else
   mkdir -p "${REF}/1kg_eur"

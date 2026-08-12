@@ -155,14 +155,21 @@ Great Lakes home directories have an 80 GB quota.
 | `scripts/run_cause_greatlakes.R` | the actual job |
 | `R/robust_mr_helpers.R` | sourced by the job for `load_robust_cfg()` and `clump_local()` |
 | `config_robust_mr.yml` | paths, seed, pruning thresholds |
-| `raw_data/robust_mr/cache/*_cause.rds` | the harmonised inputs from step 2 |
-| `raw_data/reference/1kg_eur/EUR.{bed,bim,fam}` | LD panel — `clump_local()` needs it |
+| `raw_data/robust_mr/cache/*_cause.rds` | the harmonised inputs from step 2 (~47 MB) |
+| `alzheimers/data/cache/EUR.{bed,bim,fam}` | LD panel for pruning (~1.35 GB) |
 
 None of the raw GWAS downloads are needed; `robust_mr_prep.qmd` already distilled
 them. The LD panel is the bulk of the transfer.
 
+> **Note on the LD panel path.** Locally the panel lives in a *sibling* directory
+> (`../alzheimers/data/cache/EUR`), shared with the AD analyses, because this
+> project moved into `calcium-cholesterol/`. On the cluster it was uploaded flat,
+> *under* the project root. `resolve_bfile()` tries the configured path, then `../`
+> and `../../`, so the single `plink_bfile` entry in `config_robust_mr.yml` works
+> in both places. Absolute paths also pass through unchanged.
+
 ```bash
-REMOTE=greatlakes.arc-ts.umich.edu:/scratch/<account>/<uniqname>/cholesterol-calcium
+REMOTE=greatlakes.arc-ts.umich.edu:/nfs/turbo/sph-davebrid/GWAS_Calcium/robust_mr
 
 rsync -avR \
   scripts/cause_greatlakes.sbatch \
@@ -170,21 +177,29 @@ rsync -avR \
   R/robust_mr_helpers.R \
   config_robust_mr.yml \
   raw_data/robust_mr/cache/ \
-  raw_data/reference/1kg_eur/ \
   "${REMOTE}/"
+
+# the LD panel is a sibling of this directory, so send it separately
+rsync -av ../alzheimers/data/cache/EUR.{bed,bim,fam} \
+  "${REMOTE}/alzheimers/data/cache/"
 ```
+
+`-R` matters: it preserves the relative paths so `config_robust_mr.yml` finds
+everything. Without it the files flatten into one directory.
 
 One-time setup on the cluster:
 
 ```bash
 ssh greatlakes.arc-ts.umich.edu
-cd /scratch/<account>/<uniqname>/cholesterol-calcium
-mkdir -p logs                 # slurm opens --output BEFORE the script runs; without
+cd /nfs/turbo/sph-davebrid/GWAS_Calcium/robust_mr
+mkdir -p ~/logs               # slurm opens --output BEFORE the script runs; without
                               # this the job dies with no error message
 
-module load R/4.4.0 gcc
-Rscript -e 'install.packages(c("remotes","tidyverse","data.table","yaml","here","ieugwasr"), repos="https://cloud.r-project.org")'
+module load R gcc Bioinformatics plink/1.9
+Rscript -e 'install.packages(c("remotes","tidyverse","data.table","yaml","ieugwasr"), repos="https://cloud.r-project.org")'
 Rscript -e 'remotes::install_github(c("stephenslab/mixsqp","stephens999/ashr","jean997/cause"))'
+# CAUSE 1.2.0 indexes loo_compare() positionally; loo >= 2.3 broke that.
+Rscript -e 'remotes::install_version("loo", version="2.4.1", repos="https://cloud.r-project.org")'
 ```
 
 `MRAPSS` is **not** needed on the cluster — MR-APSS runs locally in step 3.
@@ -201,7 +216,7 @@ the transfer was incomplete, rather than failing 40 minutes in.
 Both arms are independent, so submit them together. Then pull the fits back:
 
 ```bash
-rsync -av greatlakes.arc-ts.umich.edu:/scratch/<account>/<uniqname>/cholesterol-calcium/raw_data/robust_mr/cache/cause_fit_*.rds \
+rsync -av "${REMOTE}/raw_data/robust_mr/cache/cause_fit_*.rds" \
   raw_data/robust_mr/cache/
 quarto render robust_mr_cause.qmd    # detects the .rds, skips the slow chunks
 ```

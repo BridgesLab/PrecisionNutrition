@@ -182,11 +182,17 @@ clump_arm <- function(par) {
               bfile = bfile, plink_bin = plink_bin)
 }
 
-MRdat <- map(paras, clump_arm)
+MRdat <- map(paras, clump_arm) |>
+  map(sanitise_mrdat, iv_threshold = cfg$mrapss$iv_threshold)
 saveRDS(MRdat, pp(cfg$paths$cache, "apss_MRdat.rds"))
 
-map_dfr(MRdat, ~ tibble(n_iv = nrow(.x)), .id = "arm") |>
-  kable(caption = sprintf("Instruments after selection at p < %.0e and clumping at r2 = %.3f",
+map_dfr(MRdat, ~ tibble(
+  n_iv         = nrow(.x),
+  threshold    = unique(.x$Threshold),
+  min_pval_exp = min(.x$pval.exp),
+  max_pval_exp = max(.x$pval.exp)
+), .id = "arm") |>
+  kable(caption = sprintf("Instruments after selection at p < %.0e and clumping at r2 = %.3f. max_pval_exp must not exceed the threshold — if it does, the clumping step did not actually filter on p.",
                           cfg$mrapss$iv_threshold, cfg$mrapss$clump_r2)) |>
   kable_styling(full_width = FALSE)
 ```

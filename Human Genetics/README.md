@@ -29,6 +29,14 @@ Mediation and mechanism follow-up analyses (build on the drug-target results; al
 10. `mediator_screen.qmd` — second-leg screen of candidate mediators (mediator → calcium) to decide what is worth conditioning on
 11. `calcium_artefact_checks.qmd` — outcome-robustness checks on serum calcium (albumin assay artefact; phosphate co-regulation)
 
+Overlap- and pleiotropy-robust sensitivity arm for cholesterol → BMD (independent of the above; needs genome-wide summary statistics rather than the OpenGWAS API — see `ROBUST_MR.md`):
+
+12. `bash scripts/fetch_robust_mr_data.sh` — downloads GLGC 2021, Morris 2019 eBMD, LDSC reference panels (~12 GB; resumable)
+13. `robust_mr_prep.qmd` — QC/harmonisation of genome-wide sumstats + IVW sanity anchor. **Inspect the printed headers and correct `config_robust_mr.yml` before proceeding**
+14. `robust_mr_apss.qmd` — MR-APSS (runs locally, minutes)
+15. `robust_mr_cause.qmd` — CAUSE. Fits are computed on GreatLakes via `scripts/cause_greatlakes.sbatch`; the qmd detects `cause_fit_*.rds` and skips recomputation
+16. `robust_mr_summary.qmd` — reconciles robust vs conventional estimates
+
 ## Software Requirements
 
 * plink2 (v2.00a5.12LM AVX2 AMD (25 Jun 2024))
@@ -139,6 +147,27 @@ Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium 
   PCSK9-LDLR axis does not affect BMD
 - **Output**: `MR Results - Drug Target BMD.csv`
 
+### Overlap- and pleiotropy-robust sensitivity analysis (completed 2026-08-11)
+- **Scripts**: `robust_mr_prep.qmd`, `robust_mr_apss.qmd`, `robust_mr_cause.qmd`,
+  `robust_mr_summary.qmd` (rationale and method matrix: `ROBUST_MR.md`)
+- **Question**: the heel-BMD result uses a UKB exposure against a UKB outcome.
+  Does it survive methods that model sample overlap, correlated horizontal
+  pleiotropy, and weak-instrument/winner's-curse bias?
+- **Design**: two exposure arms — GLGC 2021 (N ≈ 1.32M, overlaps UKB) and
+  GLGC 2013 (N ≈ 90k median, entirely pre-UKB) — against Morris 2019 heel eBMD,
+  so the overlap correction is measured rather than assumed
+- **Methods**: MR-APSS (bivariate-LDSC C matrix, relaxed 5e-5 threshold with
+  selection-bias correction) and CAUSE (shared-factor model). MRAID was considered
+  and **excluded**: it assumes non-overlapping samples, which this design violates
+- **Finding**: overlap is detectable (C₁₂ = 0.023 vs ~0 in the clean arm) but
+  immaterial (0.17 SE). Effect attenuates but survives: MR-APSS β = −0.056
+  (p = 0.034) and −0.037 (p = 0.045). CAUSE γ = −0.040 directionally consistent,
+  but its model comparison cannot separate causal from sharing or from null
+- **Interpretation**: cholesterol → BMD is not an artefact of overlap. Correlated
+  pleiotropy cannot be excluded on power grounds, which is why the HMGCR cis
+  design — untouchable by these polygenic methods — carries the argument
+- **Outputs**: `results/robust_mr/*.csv`
+
 ### Joint significance
 Together these two drug-target MR analyses establish that HMGCR/mevalonate
 activity affects both BMD and serum calcium. Whether these sit on a single
@@ -247,6 +276,9 @@ strong, and HMGCR-specific, but the mediator is not bone mineral density.
 | calcium_artefact_checks | Outcome | Serum Albumin | UKB Barton et al. 2021 | ebi-a-GCST90025992 | 400,938 |
 | calcium_artefact_checks | Outcome | Serum Phosphate | UKB Barton et al. 2021 | ebi-a-GCST90025948 | ~400,000 |
 | calcium_artefact_checks | Outcome | Serum Calcium | UKB Barton et al. 2021 | ebi-a-GCST90025990 | 400,792 |
+| robust_mr_* | Exposure | LDL-C (overlapping arm) | GLGC 2021, Graham et al., EUR | csg.sph.umich.edu/willer/public/glgc-lipids2021 | 1,320,016 |
+| robust_mr_* | Exposure | LDL-C (overlap-free arm) | GLGC 2013, Willer et al., pre-UKB | `raw_data/jointGwasMc_LDL.txt.gz` | 89,872 (median) |
+| robust_mr_* | Outcome | Heel eBMD | Morris et al. 2019, UKB | GCST006979 (build37 `.f` file) | 426,824 |
 
 ### Outcome GWAS
 

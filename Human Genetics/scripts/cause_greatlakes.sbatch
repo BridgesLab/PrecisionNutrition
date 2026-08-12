@@ -12,11 +12,11 @@
 #   config_robust_mr.yml                 paths and thresholds
 #   raw_data/robust_mr/cache/*_cause.rds harmonised inputs from robust_mr_prep.qmd
 #   raw_data/reference/1kg_eur/EUR.{bed,bim,fam}   LD panel for pruning
-#   logs/                                MUST EXIST BEFORE SUBMITTING — slurm opens
+#   ~/logs/                              MUST EXIST BEFORE SUBMITTING — slurm opens
 #                                        --output before this script runs
 #
 # Submit both arms (they are independent, so run them in parallel):
-#   mkdir -p logs
+#   mkdir -p ~/logs
 #   sbatch --export=ALL,ARM=overlapping  scripts/cause_greatlakes.sbatch
 #   sbatch --export=ALL,ARM=overlap-free scripts/cause_greatlakes.sbatch
 #
@@ -34,8 +34,10 @@
 # 48G/6h is sized for the HapMap3-restricted input produced by robust_mr_prep.qmd
 # (~1M variants). If you drop the HM3 restriction to run CAUSE's native
 # full-genome-wide workflow (~8M variants), raise this to --mem=96G --time=12:00:00.
-#SBATCH --output=logs/cause_%x_%j.out
-#SBATCH --error=logs/cause_%x_%j.err
+# %u = username, %x = job name, %j = job id. These paths are resolved by slurm
+# BEFORE the script runs, so the directory must already exist:  mkdir -p ~/logs
+#SBATCH --output=/home/%u/logs/%x_%j.out
+#SBATCH --error=/home/%u/logs/%x_%j.err
 #SBATCH --mail-type=END,FAIL
 #SBATCH --mail-user=davebrid@umich.edu
 
@@ -44,14 +46,40 @@ set -euo pipefail
 ARM="${ARM:-overlapping}"
 PROJECT_ROOT="${PROJECT_ROOT:-${SLURM_SUBMIT_DIR}}"
 
-module purge
-module load R/4.4.0            # `module spider R` to see what Great Lakes currently offers
-module load gcc
-module load plink/1.9
+# Module names drift between cluster upgrades, and `set -e` would turn a failed
+# `module load` into a silent job death. Try, and carry on if unavailable.
+module purge 2>/dev/null || true
+for m in R gcc; do
+  module load "$m" 2>/dev/null && echo "loaded module: $m" || echo "no module: $m"
+done
 
-# clump_local() picks this up via resolve_plink(); genetics.binaRies is often not
-# installed on the cluster, so hand it the module-provided binary explicitly.
-export PLINK_BIN="$(command -v plink)"
+# Great Lakes uses a hierarchical module tree: the Bioinformatics collection has
+# to be loaded before plink is visible.
+module load Bioinformatics 2>/dev/null && echo "loaded module: Bioinformatics" \
+  || echo "no module: Bioinformatics"
+
+# plink/1.9 SPECIFICALLY. ieugwasr::ld_clump() uses plink 1.9's --clump syntax
+# and output format; plink 2.x changed both, and would fail at the pruning step
+# after the expensive parameter estimation has already run.
+module load plink/1.9 2>/dev/null && echo "loaded module: plink/1.9" \
+  || echo "WARNING: could not load plink/1.9"
+
+command -v Rscript >/dev/null || { echo "FATAL: no Rscript after module load. Try 'module spider R'."; exit 1; }
+
+PLINK_BIN="$(command -v plink || true)"
+export PLINK_BIN
+if [[ -z "${PLINK_BIN}" ]]; then
+  echo "no plink on PATH — resolve_plink() will try genetics.binaRies"
+else
+  PLINK_VER="$(plink --version 2>/dev/null | head -1)"
+  echo "plink version : ${PLINK_VER}"
+  case "${PLINK_VER}" in
+    *v1.9*|*v1.90*) : ;;
+    *) echo "FATAL: ld_clump() requires plink 1.9, got: ${PLINK_VER}"
+       echo "       module load Bioinformatics && module load plink/1.9"
+       exit 1 ;;
+  esac
+fi
 
 echo "Host          : $(hostname)"
 echo "Arm           : ${ARM}"

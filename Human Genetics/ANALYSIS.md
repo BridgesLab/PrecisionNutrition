@@ -76,6 +76,60 @@ in the *same* direction), but this does **not** translate to fracture risk, and
 vitamin D moves *inversely* — so a "cholesterol → ↑vitamin D → ↑calcium" route is
 refuted (wrong sign). These set up the mediation tests below.
 
+### 3b. Robustness of cholesterol → BMD to sample overlap and correlated pleiotropy
+_Scripts: `robust_mr_prep.qmd`, `robust_mr_apss.qmd`, `robust_mr_cause.qmd`,
+`robust_mr_summary.qmd`. Rationale: `ROBUST_MR.md`._
+
+The heel-BMD result above rests on a UK Biobank exposure against a UK Biobank
+outcome. Two genome-wide methods were applied that model this explicitly:
+**MR-APSS** (sample structure via bivariate LDSC intercepts, plus a winner's-curse
+correction licensing a relaxed 5e-5 instrument threshold) and **CAUSE**
+(shared-factor model for correlated horizontal pleiotropy). Each was run on an
+overlapping exposure (GLGC 2021, N≈1.32M) and an overlap-free one (GLGC 2013,
+entirely pre-UK-Biobank), so the overlap correction is *measured* rather than
+assumed.
+
+**Overlap is detectable but immaterial.** Two independent estimates agree:
+
+| | MR-APSS C₁₂ | CAUSE ρ |
+|---|---|---|
+| GLGC 2021 (overlapping) | 0.0226 (SE 0.0122) | −0.0109 |
+| GLGC 2013 (pre-UKB) | −0.0074 (SE 0.0095) | −0.0146 |
+
+C₁₂ is ~1.9 SE from zero in the overlapping arm and on zero in the clean arm — so
+GLGC 2021 *does* share samples with UKB eBMD. But switching the correction on
+moves the estimate only **0.17 SE** (0.07 SE in the clean arm), and ρ is
+essentially identical across arms. Overlap is real and not worth worrying about
+here.
+
+**The effect attenuates as methods get more conservative, but does not vanish:**
+
+| Method | overlapping | overlap-free |
+|---|---|---|
+| IVW (5e-8, this pipeline) | −0.067 (p = 4e-33) | −0.054 (p = 2e-15) |
+| MR-APSS (C corrected) | −0.056 (p = 0.034) | −0.037 (p = 0.045) |
+| CAUSE γ (causal model) | −0.040 (95% CrI −0.079, −0.003) | −0.021 (−0.052, +0.007) |
+
+**CAUSE cannot discriminate.** Sharing vs causal: Δelpd = −1.54 (SE 1.53, p = 0.16)
+and −0.40 (SE 1.28, p = 0.38). Null vs causal is *also* non-significant, so no
+model wins — every ELPD difference is smaller than its own standard error.
+Pseudo-BMA weights put 0.74 of the predictive support on the causal model in the
+overlapping arm but only 0.40 in the underpowered one. Read Bayesianly and
+conditional on the causal model, P(γ < 0) ≈ 0.98 and ≈ 0.92.
+
+**Read:** cholesterol → heel BMD survives explicit modelling of sample overlap and
+correlated pleiotropy, with ~16–30 % attenuation and substantially wider intervals.
+Sample overlap is not the explanation. Correlated pleiotropy cannot be *excluded* —
+not because CAUSE finds evidence for it (q ≈ 0.02–0.03, i.e. 2–3 % of variants) but
+because CAUSE lacks the power to exclude anything. This is why the HMGCR cis
+result (§2, §7) carries the argumentative weight: it is a design these genome-wide
+polygenic methods cannot address, and cannot undermine.
+
+**Attenuation in the clean arm is weak instruments, not overlap.** GLGC 2013 has
+73 instruments at F = 61 versus GLGC 2021's 432 at F = 129, and weak instruments
+bias two-sample MR toward the null — a simpler explanation than overlap inflation,
+and the one the C = I comparison supports.
+
 ### 4. Mediation MVMR — BMD does not carry the effect
 _Script: `mvmr_analyses.qmd` (spec: `MVMR_Analysis_Specification.md`)._
 
@@ -166,6 +220,10 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
 | PTH → calcium | — | — | untestable (no cis instrument) |
 | **HMGCR expression (blood eQTL) → BMD** | **−0.044** | 4.4e-5 | solid; ↓BMD, osteoclast-lineage |
 | HMGCR expression (blood eQTL) → calcium | — | — | untestable (multiallelic lead absent from calcium GWAS) |
+| LDL-C → heel BMD, MR-APSS (GLGC 2021) | −0.056 | 0.034 | survives overlap + pleiotropy modelling |
+| LDL-C → heel BMD, MR-APSS (GLGC 2013, no overlap) | −0.037 | 0.045 | replicates in an overlap-free arm |
+| LDL-C → heel BMD, CAUSE γ (GLGC 2021) | −0.040 | 0.16 | directionally consistent; model comparison inconclusive |
+| Sample-overlap effect on the estimate (MR-APSS C vs C=I) | 0.004 | — | **0.17 SE — immaterial** |
 
 ---
 
@@ -180,8 +238,27 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
   readout — so graded genetic variation in *any* bone measure is expected to be
   buffered. This is the physiological reason BMD → calcium (and likely turnover →
   calcium) comes back null.
-- **One-sample UKB overlap** (LDL / BMD / calcium all UKB) biases estimates toward
-  the null — so positive findings here are conservative.
+- **One-sample UKB overlap biases toward the null — but the magnitude here is
+  negligible, and we have now measured it rather than assumed it** (§3b). MR-APSS
+  puts the cross-trait LDSC intercept at C₁₂ = 0.023 for GLGC 2021 × UKB eBMD
+  versus ~0 for a pre-UKB exposure, confirming shared samples; yet switching the
+  correction on moves the estimate 0.17 SE, and CAUSE's ρ is unchanged between
+  arms. Direction of the old assumption was right, magnitude was not worth the
+  worry. Do not spend further effort on overlap for this exposure/outcome pair.
+- **Attenuation between a big overlapping GWAS and a small clean one is usually
+  weak instruments, not overlap.** GLGC 2013 gives a smaller effect than GLGC 2021,
+  which looks like overlap inflation until you notice F = 61 vs 129 and that the
+  explicit overlap correction does nothing.
+- **Genome-wide polygenic MR methods cannot adjudicate a cis design.** CAUSE and
+  MR-APSS need thousands of instruments and a polygenic background model; they say
+  nothing about the HMGCR cis result, and a null from them would not undermine it.
+  Keep the two arms rhetorically separate.
+- **Verify GWAS-Catalog column semantics, never trust the header.** In GCST006979
+  (Morris 2019 eBMD) `variant_id` is `chr:pos:ref:alt` and the rsIDs live in a
+  column called `snp.1`; the column labelled `n` is BOLT-LMM's second p-value, not
+  a sample size. Mapping the obvious names silently produced a zero-row dataset.
+  `read_gwas()` now cross-checks any p-value column against the one implied by
+  beta/se, which catches this class of error immediately.
 - **For pQTL instruments, cis strength beats discovery N.** The PTH pQTLs failed
   not because n≈1–3k is small, but because PTH has *no* strong cis-pQTL (pulsatile,
   physiologically regulated). Use a cis-pQTL (clean, avoids calcium-feedback loci)
@@ -207,7 +284,9 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
 | **PCSK9 pQTL MR (UKB-PPP)** | not started | From `TODO.md` — strengthen the PCSK9-null leg with protein-level instruments. |
 | **Colocalization of HMGCR signals (LDL-C / BMD / eQTL)** | not started | From `TODO.md` — H4 vs H3 to defend cis-instrument validity. |
 | **HMGCR eQTL-based MR across tissues** | **CLOSED — limitation recorded** (`hmgcr_eqtl_mvmr.qmd`, evidence-chain §7) | Kept the one solid result (blood eQTL → BMD). Total-expression eQTL MR not viable for HMGCR (splice-regulated; functional variants null for `ge`; GTEx underpowered). Reopen only via splice-QTL (`leafcutter`/rs3846662) or eQTLGen-full — not critical since the drug-target cis-MR already gives a valid HMGCR instrument. |
-| **Sample-overlap correction method** | not decided | From `TODO.md`. |
+| **Sample-overlap correction method** | **CLOSED — resolved 2026-08-11** (`robust_mr_*.qmd`, evidence-chain §3b) | Settled on MR-APSS (LDSC-based C matrix + winner's-curse correction) and CAUSE (shared-factor model, robust to overlap via ρ), each run on an overlapping and an overlap-free exposure arm. Overlap is detectable (C₁₂ = 0.023) but immaterial (0.17 SE). No further work needed for this exposure/outcome pair. |
+| **MRAID** | deferred by design | Excluded from §3b because it is a strict two-sample method and UKB sits on both sides. Appropriate under a genuinely non-overlapping design — **UKB exposure → MGI/BioVU outcome**, the same architecture already used for calcium in `mr-tc-calcium.qmd`. Blocked on an MGI or BioVU BMD/fracture phenotype. |
+| **Winner's-curse correction, quantified** | not started | §3b ran MR-APSS with `Cor.SelectionBias = TRUE` throughout, so we know what the *overlap* correction does (nothing) but not what the *selection* correction does. A third fit with `Cor.SelectionBias = FALSE` would separate the two, ~2 min of compute. |
 
 ---
 
@@ -222,6 +301,10 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
 | `mvmr_analyses.qmd` | Mediation MVMR: does BMD carry cholesterol → calcium? (spec: `MVMR_Analysis_Specification.md`) |
 | `mediator_screen.qmd` | Second-leg screen: which mediators affect calcium? |
 | `calcium_artefact_checks.qmd` | Outcome robustness: albumin (artefact) & phosphate (co-regulation) |
+| `robust_mr_prep.qmd` | Genome-wide sumstats QC/harmonisation for the robust MR arm + IVW sanity anchor |
+| `robust_mr_apss.qmd` | MR-APSS: sample structure (C), correlated pleiotropy (Ω), winner's curse |
+| `robust_mr_cause.qmd` | CAUSE: shared-factor model + Bayesian reading of γ |
+| `robust_mr_summary.qmd` | Reconciles robust vs conventional estimates (rationale: `ROBUST_MR.md`) |
 | `summary-tables.qmd` | Collates outputs for figures/tables |
 
 See `README.md` for execution order, datasets, and software/reproducibility notes.
@@ -244,3 +327,13 @@ See `README.md` for execution order, datasets, and software/reproducibility note
   total-expression (`ge`) eQTL MR is not viable (functional variants null for `ge`;
   GTEx underpowered; eQTLGen lead multiallelic & absent from the calcium GWAS).
   Future avenues noted (splice-QTL / eQTLGen-full); not critical.
+- **2026-08-11** — **Closed the sample-overlap thread** (evidence-chain §3b). Added
+  an overlap- and pleiotropy-robust arm for cholesterol → heel BMD: MR-APSS and
+  CAUSE, each on an overlapping (GLGC 2021) and an overlap-free (GLGC 2013,
+  pre-UKB) exposure. Overlap is detectable (C₁₂ = 0.023 vs ~0) but immaterial
+  (0.17 SE). The effect survives at −0.056 (MR-APSS, p = 0.034) and −0.037 in the
+  clean arm; CAUSE is directionally consistent (γ = −0.040) but its model
+  comparison is inconclusive in both arms — it cannot separate causal from sharing
+  *or* from null. MRAID excluded by design (two-sample assumption violated);
+  deferred to a UKB → MGI/BioVU design. Rationale and full method matrix in
+  `ROBUST_MR.md`.

@@ -13,9 +13,15 @@ raw_data/reference/
 robust_mr_*_cache/
 *_cache/
 
+# Quarto project state and freeze cache.
+.quarto/
+_freeze/
+
 # Quarto's per-document asset directories (bootstrap/jquery/plotly bundles).
-# NOTE: a non-self-contained .html needs its _files/ dir to display correctly.
-# We commit the .html.md instead, which renders on GitHub and diffs cleanly.
+# The robust_mr_*.qmd files set embed-resources: true, so their .html is
+# self-contained and these directories are disposable. Do NOT add a blanket
+# *_files/ rule — the older analyses in this repo are not self-contained and
+# their .html would render unstyled without them.
 robust_mr_*_files/
 
 # ---- R session noise ---------------------------------------------------------

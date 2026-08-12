@@ -211,6 +211,72 @@ cause_res |>
   kable_styling(full_width = FALSE)
 ```
 
+## Step 2b — Bayesian reading
+
+The ELPD z-test above is a frequentist wrapper on a model that is Bayesian
+underneath. It also conflates two distinct questions. Separating them is more
+informative than either p-value.
+
+### Question 1 — given the causal model, what is $\gamma$?
+
+```{r posterior-quantiles}
+qtabs <- imap_dfr(cause_out, function(x, arm) {
+  cause_posterior_quantiles(x$fit, model = "causal") |> mutate(arm = arm, .before = 1)
+})
+write_csv(qtabs, pp(cfg$paths$out, "cause_posterior_quantiles.csv"))
+
+qtabs |>
+  filter(param == "gamma") |>
+  select(arm, q0.025, q0.25, q0.5, q0.75, q0.975) |>
+  kable(caption = "Posterior quantiles of gamma under the causal model. The interquartile range (q0.25-q0.75) is the honest 'where is the effect' statement; no null hypothesis required.",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+
+p_neg <- imap_dfr(cause_out, function(x, arm) {
+  q <- cause_posterior_quantiles(x$fit, model = "causal")
+  tibble(arm = arm,
+         `P(gamma < 0)`      = cause_p_below(q, "gamma", 0),
+         `P(gamma < -0.02)`  = cause_p_below(q, "gamma", -0.02),
+         `P(gamma < -0.05)`  = cause_p_below(q, "gamma", -0.05))
+})
+write_csv(p_neg, pp(cfg$paths$out, "cause_posterior_probabilities.csv"))
+p_neg |>
+  kable(caption = "Posterior probability that the causal effect is below a threshold, conditional on the causal model.",
+        digits = 3) |>
+  kable_styling(full_width = FALSE)
+```
+
+### Question 2 — is the causal model the right model?
+
+Pseudo-BMA weights spread the predictive support across all three models instead
+of testing one pairwise contrast, which suits an inconclusive comparison far
+better than a p-value.
+
+```{r model-weights}
+wts <- imap_dfr(cause_out, function(x, arm) {
+  el <- as_tibble(x$fit$elpd)
+  cause_model_weights(el) |> mutate(arm = arm, .before = 1)
+})
+write_csv(wts, pp(cfg$paths$out, "cause_model_weights.csv"))
+wts |>
+  select(arm, model, elpd_rel_null, weight) |>
+  pivot_wider(id_cols = arm, names_from = model, values_from = weight) |>
+  kable(caption = "Pseudo-BMA weights: share of predictive support for each model.",
+        digits = 3) |>
+  kable_styling(full_width = FALSE)
+
+# The weights above ignore the SE on delta_elpd, which here is comparable to
+# delta_elpd itself. Propagate it so the weights carry their own uncertainty.
+wts_boot <- imap_dfr(cause_out, function(x, arm) {
+  cause_model_weights_boot(as_tibble(x$fit$elpd)) |> mutate(arm = arm, .before = 1)
+})
+write_csv(wts_boot, pp(cfg$paths$out, "cause_model_weights_boot.csv"))
+wts_boot |>
+  kable(caption = "Model weights with uncertainty propagated from se_delta_elpd. Wide intervals here are the real message: the data do not identify which model is right.",
+        digits = 3) |>
+  kable_styling(full_width = FALSE)
+```
+
 ## Step 3 — posterior plots
 
 ```{r plots}

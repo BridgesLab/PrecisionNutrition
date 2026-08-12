@@ -43,7 +43,14 @@ set_project_root <- function(path = find_project_root()) {
 }
 
 #' Build a path relative to the project root. Drop-in replacement for here::here().
+#' Absolute paths (and ~) pass through untouched, so config entries can point at
+#' shared cluster locations — e.g. an LD panel already on /nfs/turbo — instead of
+#' being forced under the project root.
 pp <- function(...) {
+  parts <- as.character(c(...))
+  if (length(parts) && grepl("^(/|~)", parts[1])) {
+    return(path.expand(do.call(file.path, as.list(parts))))
+  }
   root <- getOption("robust_mr.root")
   if (is.null(root)) root <- set_project_root()
   file.path(root, ...)
@@ -426,11 +433,19 @@ read_hm3 <- function(path) {
 
 # ---- format converters --------------------------------------------------------
 
-#' Canonical -> MR-APSS input. est_paras() requires exactly: SNP, A1, A2, Z, P, N.
+#' Canonical -> MR-APSS input: SNP, A1, A2, Z, P, N, chi2.
+#'
+#' chi2 is NOT optional even though it is trivially Z^2. est_paras() merges dat1
+#' and dat2 by SNP and hands the result to ldsc_GC(), which selects
+#' c("SNP","chi2.x","chi2.y","N.x","N.y","Zxy","L2") — it derives Zxy itself but
+#' expects chi2 to already be present on each side. Omitting it fails deep in the
+#' call stack with "undefined columns selected". MR-APSS's own format_data()
+#' adds it; we add it here so we can keep control of the QC.
 to_apss <- function(dat) {
   dat %>%
     dplyr::transmute(SNP = .data$snp, A1 = .data$a1, A2 = .data$a2,
-                     Z = .data$z, P = .data$pval, N = .data$n) %>%
+                     Z = .data$z, P = .data$pval, N = .data$n,
+                     chi2 = .data$z^2) %>%
     dplyr::filter(is.finite(.data$Z), is.finite(.data$N))
 }
 
@@ -471,6 +486,42 @@ clump_local <- function(dat, snp_col = "SNP", p_col = "pval",
     bfile = bfile, plink_bin = plink_bin
   )
   keep %>% dplyr::filter(as.character(.data[[snp_col]]) %in% cl$rsid)
+}
+
+#' Make a clumped MR-APSS dataset safe to pass to MRAPSS().
+#'
+#' MRAPSS() reads its selection threshold as `unique(MRdat$Threshold)` and feeds it
+#' straight to qnorm(Threshold/2) with no coercion, so a Threshold column that is
+#' character/factor (as some clump() versions produce) fails deep in the EM with
+#' "non-numeric argument to binary operator". The threshold is ours to define, so
+#' set it explicitly rather than inheriting whatever clump() wrote. Also coerces
+#' the numeric columns the EM relies on, and reports anything it had to change.
+sanitise_mrdat <- function(MRdat, iv_threshold) {
+  MRdat <- as.data.frame(MRdat)
+  notes <- character()
+
+  before <- if ("Threshold" %in% names(MRdat)) class(MRdat$Threshold)[1] else "absent"
+  if (!identical(before, "numeric")) {
+    notes <- c(notes, sprintf("Threshold was %s -> set to %.0e", before, iv_threshold))
+  }
+  MRdat$Threshold <- as.numeric(iv_threshold)
+
+  num_cols <- c("b.exp", "b.out", "se.exp", "se.out", "pval.exp", "pval.out", "L2")
+  for (nm in intersect(num_cols, names(MRdat))) {
+    if (!is.numeric(MRdat[[nm]])) {
+      notes <- c(notes, sprintf("%s was %s -> as.numeric", nm, class(MRdat[[nm]])[1]))
+      MRdat[[nm]] <- as.numeric(as.character(MRdat[[nm]]))
+    }
+  }
+
+  need <- intersect(c("b.exp", "b.out", "se.exp", "se.out", "L2"), names(MRdat))
+  keep <- stats::complete.cases(MRdat[, need, drop = FALSE])
+  if (any(!keep)) notes <- c(notes, sprintf("dropped %d row(s) with NA", sum(!keep)))
+  MRdat <- MRdat[keep, , drop = FALSE]
+
+  if (length(notes)) message("  sanitise_mrdat: ", paste(notes, collapse = "; "))
+  if (nrow(MRdat) < 4) stop("Fewer than 4 instruments after sanitising — MRAPSS needs >= 4.")
+  MRdat
 }
 
 # ---- result tidiers -----------------------------------------------------------
@@ -554,6 +605,103 @@ tidy_cause <- function(res, exposure, outcome, arm, ci_size = 0.95) {
       TRUE ~ "sharing not rejected"
     )
   )
+}
+
+# ---- Bayesian reading of CAUSE ------------------------------------------------
+# CAUSE fits full posteriors for gamma (causal effect), eta (shared-factor effect)
+# and q (proportion of variants acting through the shared factor). The ELPD z-test
+# is a frequentist wrapper on top of that. These helpers go back to the posterior.
+
+#' Posterior quantiles for a CAUSE model's parameters.
+#'
+#' summary.cause(ci_size = c) returns the median plus the (1-c)/2 and (1+c)/2
+#' quantiles. Sweeping ci_size therefore recovers an arbitrary quantile ladder
+#' without touching CAUSE's internals — which is the robust way to do this, since
+#' the layout of the fitted object has changed between versions.
+cause_posterior_quantiles <- function(fit, model = c("causal", "sharing"),
+                                      probs = c(0.025, 0.05, 0.1, 0.25,
+                                                0.75, 0.9, 0.95, 0.975)) {
+  model <- match.arg(model)
+  idx   <- if (model == "causal") 2L else 1L
+
+  med    <- summary(fit, ci_size = 0.5)$quants[[idx]]
+  params <- colnames(med)
+
+  rows <- purrr::map_dfr(sort(unique(probs)), function(p) {
+    s   <- summary(fit, ci_size = abs(1 - 2 * p))$quants[[idx]]
+    row <- if (p < 0.5) 2L else 3L
+    tibble::tibble(param = params, prob = p, value = as.numeric(s[row, ]))
+  })
+  rows <- dplyr::bind_rows(
+    rows,
+    tibble::tibble(param = params, prob = 0.5, value = as.numeric(med[1, ]))
+  )
+
+  rows %>%
+    dplyr::arrange(.data$param, .data$prob) %>%
+    tidyr::pivot_wider(names_from = "prob", values_from = "value",
+                       names_prefix = "q") %>%
+    dplyr::mutate(model = model, .before = 1)
+}
+
+#' Posterior probability that a parameter lies below a threshold, interpolated
+#' from the quantile ladder. P(gamma < 0) is the natural "is the effect negative"
+#' statement, and needs no null hypothesis.
+cause_p_below <- function(qtab, param = "gamma", threshold = 0) {
+  row <- qtab %>% dplyr::filter(.data$param == !!param)
+  if (nrow(row) == 0) return(NA_real_)
+  qcols <- grep("^q0", names(row), value = TRUE)
+  qs <- as.numeric(unlist(row[, qcols]))
+  ps <- as.numeric(sub("^q", "", qcols))
+  o  <- order(qs)
+  stats::approx(qs[o], ps[o], xout = threshold, rule = 2)$y
+}
+
+#' Pseudo-BMA model weights from the CAUSE ELPD table.
+#'
+#' CAUSE reports delta_elpd = elpd(model1) - elpd(model2). Anchoring on the null
+#' model, weight_k proportional to exp(elpd_k) gives an interpretable share of
+#' predictive support across null / sharing / causal — a far better summary of an
+#' inconclusive comparison than a p-value on one pairwise contrast.
+#'
+#' NOTE: these are naive (pseudo-BMA) weights. They ignore the standard error on
+#' delta_elpd, which here is comparable to delta_elpd itself, so treat them as a
+#' point summary of a very uncertain quantity. cause_model_weights_boot() gives
+#' the uncertainty.
+cause_model_weights <- function(elpd_tab) {
+  g <- function(m1, m2) {
+    v <- elpd_tab$delta_elpd[elpd_tab$model1 == m1 & elpd_tab$model2 == m2]
+    if (length(v) == 0) NA_real_ else v[1]
+  }
+  elpd <- c(null = 0, sharing = -g("null", "sharing"), causal = -g("null", "causal"))
+  w <- exp(elpd - max(elpd)); w <- w / sum(w)
+  tibble::tibble(model = names(elpd), elpd_rel_null = as.numeric(elpd),
+                 weight = as.numeric(w))
+}
+
+#' Uncertainty on the model weights, by resampling the ELPD differences from
+#' their reported standard errors. Shows how much of the "74% causal" is signal.
+cause_model_weights_boot <- function(elpd_tab, n = 10000, seed = 1) {
+  set.seed(seed)
+  g <- function(m1, m2, col) {
+    v <- elpd_tab[[col]][elpd_tab$model1 == m1 & elpd_tab$model2 == m2]
+    if (length(v) == 0) NA_real_ else v[1]
+  }
+  draws <- purrr::map_dfr(seq_len(n), function(i) {
+    e_sh <- rnorm(1, -g("null", "sharing", "delta_elpd"),
+                  g("null", "sharing", "se_delta_elpd"))
+    e_ca <- rnorm(1, -g("null", "causal", "delta_elpd"),
+                  g("null", "causal", "se_delta_elpd"))
+    e <- c(null = 0, sharing = e_sh, causal = e_ca)
+    w <- exp(e - max(e)); w <- w / sum(w)
+    tibble::tibble(model = names(w), weight = as.numeric(w))
+  })
+  draws %>%
+    dplyr::group_by(.data$model) %>%
+    dplyr::summarise(weight_med = stats::median(.data$weight),
+                     weight_lo  = stats::quantile(.data$weight, 0.025),
+                     weight_hi  = stats::quantile(.data$weight, 0.975),
+                     .groups = "drop")
 }
 
 #' Summarise the MR-APSS background parameters. C[1,2] is the cross-trait LDSC

@@ -35,7 +35,12 @@ Overlap- and pleiotropy-robust sensitivity arm for cholesterol → BMD (independ
 13. `robust_mr_prep.qmd` — QC/harmonisation of genome-wide sumstats + IVW sanity anchor. **Inspect the printed headers and correct `config_robust_mr.yml` before proceeding**
 14. `robust_mr_apss.qmd` — MR-APSS (runs locally, minutes)
 15. `robust_mr_cause.qmd` — CAUSE. Fits are computed on GreatLakes via `scripts/cause_greatlakes.sbatch`; the qmd detects `cause_fit_*.rds` and skips recomputation
-16. `robust_mr_summary.qmd` — reconciles robust vs conventional estimates
+16. `robust_mr_raps.qmd` — MR-RAPS (random-effects pleiotropy + weak-instrument correction), runs locally in seconds
+17. `robust_mr_mrbee.qmd` — MRBEE (bias-corrected estimating equation; overlap via the estimation-error covariance), runs locally in seconds
+18. `robust_mr_summary.qmd` — reconciles all five estimators against the conventional ones
+
+Steps 14, 16 and 17 all read the harmonised substrate written by `robust_mr_apss.qmd`
+(`apss_paras.rds`), so run that before RAPS or MRBEE.
 
 ## Software Requirements
 
@@ -159,13 +164,20 @@ Our first approach was to use UKBB-based cholesterol SNPs and MGI-BioVU calcium 
 - **Methods**: MR-APSS (bivariate-LDSC C matrix, relaxed 5e-5 threshold with
   selection-bias correction) and CAUSE (shared-factor model). MRAID was considered
   and **excluded**: it assumes non-overlapping samples, which this design violates
-- **Finding**: overlap is detectable (C₁₂ = 0.023 vs ~0 in the clean arm) but
-  immaterial (0.17 SE). Effect attenuates but survives: MR-APSS β = −0.056
-  (p = 0.034) and −0.037 (p = 0.045). CAUSE γ = −0.040 directionally consistent,
-  but its model comparison cannot separate causal from sharing or from null
-- **Interpretation**: cholesterol → BMD is not an artefact of overlap. Correlated
-  pleiotropy cannot be excluded on power grounds, which is why the HMGCR cis
-  design — untouchable by these polygenic methods — carries the argument
+- **Methods**: five estimators spanning two assumption classes — IVW and MR-APSS /
+  CAUSE (model correlated pleiotropy) versus MR-RAPS / MRBEE (assume InSIDE, i.e.
+  pleiotropy uncorrelated with instrument strength)
+- **Finding**: the effect is negative and non-null under all five, in both arms,
+  at both thresholds. Sample overlap is immaterial (0.17 SE) and not reliably
+  measurable — three estimators disagree on its sign. At a fixed 5e-5 threshold
+  MR-RAPS(l2) and MR-APSS both give −0.056 despite opposite pleiotropy
+  assumptions, so the apparent method gradient is mostly a threshold effect
+- **Interpretation**: cholesterol → BMD is not an artefact of overlap or of
+  correlated pleiotropy. What was wrong with the conventional analysis is
+  precision, not direction: pleiotropy is heavy but diffuse (τ̂ ≈ 0.005), and
+  IVW's SE was ~4× too narrow. Correlated pleiotropy still cannot be positively
+  excluded on power grounds, which is why the HMGCR cis design — untouchable by
+  these polygenic methods — carries the argument
 - **Outputs**: `results/robust_mr/*.csv`
 
 ### Joint significance

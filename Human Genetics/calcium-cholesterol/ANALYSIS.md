@@ -89,26 +89,52 @@ overlapping exposure (GLGC 2021, N≈1.32M) and an overlap-free one (GLGC 2013,
 entirely pre-UK-Biobank), so the overlap correction is *measured* rather than
 assumed.
 
-**Overlap is detectable but immaterial.** Two independent estimates agree:
+**Overlap is not reliably measurable, and does not matter.** Three independent
+estimators, from three model families:
 
-| | MR-APSS C₁₂ | CAUSE ρ |
+| | MR-APSS C₁₂ | CAUSE ρ | MRBEE R_xy |
+|---|---|---|---|
+| GLGC 2021 (overlapping) | +0.0226 (SE 0.0122) | −0.0109 | −0.0045 |
+| GLGC 2013 (pre-UKB) | −0.0074 (SE 0.0095) | −0.0146 | −0.0023 |
+
+They disagree on sign, and CAUSE's is *larger* in the arm with no overlap by
+construction — so none of them is resolving overlap precisely. What they agree on
+is magnitude: all are within ±0.023 of zero. Switching MR-APSS's correction on
+moves the estimate **0.17 SE** (0.07 SE in the clean arm). Overlap is immaterial
+here, and we should not claim to have detected it.
+
+**Threshold matters more than method class.** Comparing like-for-like at a fixed
+instrument threshold, the two assumption classes agree closely:
+
+| Method | @ 5e-8 | @ 5e-5 |
 |---|---|---|
-| GLGC 2021 (overlapping) | 0.0226 (SE 0.0122) | −0.0109 |
-| GLGC 2013 (pre-UKB) | −0.0074 (SE 0.0095) | −0.0146 |
+| IVW | −0.067 | — |
+| MR-RAPS (l2) | −0.084 | −0.056 |
+| MR-RAPS (tukey, robust) | −0.062 | −0.043 |
+| MRBEE | −0.072 | −0.051 |
+| MR-APSS | — | −0.056 |
+| CAUSE γ | — | −0.040 |
 
-C₁₂ is ~1.9 SE from zero in the overlapping arm and on zero in the clean arm — so
-GLGC 2021 *does* share samples with UKB eBMD. But switching the correction on
-moves the estimate only **0.17 SE** (0.07 SE in the clean arm), and ρ is
-essentially identical across arms. Overlap is real and not worth worrying about
-here.
+(overlapping arm; the overlap-free arm shows the same pattern at ~60 % the
+magnitude). MR-RAPS(l2) and MR-APSS land on −0.056 and −0.056 at the same
+threshold despite opposite assumptions about correlated pleiotropy. **The apparent
+"more conservative method, smaller estimate" gradient is largely a threshold
+effect**, not evidence about pleiotropy.
 
-**The effect attenuates as methods get more conservative, but does not vanish:**
+**Two corrections that nearly cancel.** Weak-instrument correction pushes away
+from the null (IVW −0.067 → RAPS-l2 −0.084 on identical instruments); robust loss
+pushes back (−0.084 → −0.062). IVW lands between them by coincidence, not validity.
 
-| Method | overlapping | overlap-free |
-|---|---|---|
-| IVW (5e-8, this pipeline) | −0.067 (p = 4e-33) | −0.054 (p = 2e-15) |
-| MR-APSS (C corrected) | −0.056 (p = 0.034) | −0.037 (p = 0.045) |
-| CAUSE γ (causal model) | −0.040 (95% CrI −0.079, −0.003) | −0.021 (−0.052, +0.007) |
+**Pleiotropy is heavy but diffuse.** MR-RAPS estimates τ̂² ≈ 2×10⁻⁵, i.e. a
+pleiotropy SD of ~0.005 — roughly 3× the outcome standard error. Yet MRBEE's
+iterative outlier test flags only 1–3 % of instruments (7/443, 12/948). Those are
+consistent only if pleiotropy is spread thinly across many variants rather than
+concentrated in outliers, which favours a random-effects treatment (RAPS) over
+deletion (MRBEE) — and explains why MRBEE tracks RAPS-l2 rather than RAPS-tukey.
+
+**IVW's precision was indefensible.** Its SE of 0.0056 is contradicted by RAPS,
+MRBEE and MR-APSS independently, all of which put it at 0.017–0.027. Three model
+families agree the conventional interval was ~4× too narrow.
 
 **CAUSE cannot discriminate.** Sharing vs causal: Δelpd = −1.54 (SE 1.53, p = 0.16)
 and −0.40 (SE 1.28, p = 0.38). Null vs causal is *also* non-significant, so no
@@ -117,18 +143,25 @@ Pseudo-BMA weights put 0.74 of the predictive support on the causal model in the
 overlapping arm but only 0.40 in the underpowered one. Read Bayesianly and
 conditional on the causal model, P(γ < 0) ≈ 0.98 and ≈ 0.92.
 
-**Read:** cholesterol → heel BMD survives explicit modelling of sample overlap and
-correlated pleiotropy, with ~16–30 % attenuation and substantially wider intervals.
-Sample overlap is not the explanation. Correlated pleiotropy cannot be *excluded* —
-not because CAUSE finds evidence for it (q ≈ 0.02–0.03, i.e. 2–3 % of variants) but
-because CAUSE lacks the power to exclude anything. This is why the HMGCR cis
-result (§2, §7) carries the argumentative weight: it is a design these genome-wide
-polygenic methods cannot address, and cannot undermine.
+**Read:** cholesterol → heel BMD is negative and non-null across five estimators
+spanning both assumption classes, at every threshold, in both exposure arms. The
+effect is real. What changes is precision, not direction: the honest interval is
+roughly −0.09 to −0.01 rather than IVW's −0.078 to −0.056.
+
+Neither of the two things this arm was built to test turns out to be the
+explanation for anything. Sample overlap is immaterial (0.17 SE) and not reliably
+detectable. Correlated pleiotropy cannot be *excluded* — not because CAUSE finds
+evidence for it (q ≈ 0.02–0.03) but because CAUSE lacks the power to exclude
+anything. The variation across methods is driven by instrument threshold and by
+how each handles diffuse balanced pleiotropy.
+
+This is why the HMGCR cis result (§2, §7) carries the argumentative weight: it is
+a design these genome-wide polygenic methods cannot address, and cannot undermine.
 
 **Attenuation in the clean arm is weak instruments, not overlap.** GLGC 2013 has
-73 instruments at F = 61 versus GLGC 2021's 432 at F = 129, and weak instruments
+75 instruments at F = 61 versus GLGC 2021's 443 at F = 129, and weak instruments
 bias two-sample MR toward the null — a simpler explanation than overlap inflation,
-and the one the C = I comparison supports.
+and the one both the C = I comparison and the RAPS threshold contrast support.
 
 ### 4. Mediation MVMR — BMD does not carry the effect
 _Script: `mvmr_analyses.qmd` (spec: `MVMR_Analysis_Specification.md`)._
@@ -223,7 +256,11 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
 | LDL-C → heel BMD, MR-APSS (GLGC 2021) | −0.056 | 0.034 | survives overlap + pleiotropy modelling |
 | LDL-C → heel BMD, MR-APSS (GLGC 2013, no overlap) | −0.037 | 0.045 | replicates in an overlap-free arm |
 | LDL-C → heel BMD, CAUSE γ (GLGC 2021) | −0.040 | 0.16 | directionally consistent; model comparison inconclusive |
+| LDL-C → heel BMD, MR-RAPS l2 @5e-5 (GLGC 2021) | −0.056 | 0.007 | matches MR-APSS exactly, opposite assumptions |
+| LDL-C → heel BMD, MR-RAPS tukey @5e-5 | −0.043 | 0.010 | robust loss; outliers inflate the l2 fit |
+| LDL-C → heel BMD, MRBEE @5e-5 (GLGC 2021) | −0.051 | 0.009 | overlap + weak-IV corrected |
 | Sample-overlap effect on the estimate (MR-APSS C vs C=I) | 0.004 | — | **0.17 SE — immaterial** |
+| Horizontal pleiotropy SD (MR-RAPS τ̂) | 0.005 | — | ~3× the outcome SE — heavy but balanced |
 
 ---
 
@@ -249,6 +286,17 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
   weak instruments, not overlap.** GLGC 2013 gives a smaller effect than GLGC 2021,
   which looks like overlap inflation until you notice F = 61 vs 129 and that the
   explicit overlap correction does nothing.
+- **Compare methods at a fixed instrument threshold, or you are measuring the
+  threshold.** Across five estimators the p-value threshold moved the estimate
+  more than the choice of method did: everything sits near −0.07 at 5e-8 and near
+  −0.05 at 5e-5, and MR-RAPS(l2) and MR-APSS agree to three decimals at 5e-5
+  despite opposite assumptions about correlated pleiotropy. A "more conservative
+  method gives a smaller estimate" narrative is easy to construct by accident.
+- **Distinguish diffuse from concentrated pleiotropy before choosing a method.**
+  Here τ̂ ≈ 0.005 (≈3× the outcome SE) while MRBEE's outlier test flags only 1–3 %
+  of instruments — pleiotropy spread thinly across many variants. Random-effects
+  methods (RAPS) suit that; outlier-deletion methods (MRBEE, MR-PRESSO) are built
+  for the opposite case and will under-correct.
 - **Genome-wide polygenic MR methods cannot adjudicate a cis design.** CAUSE and
   MR-APSS need thousands of instruments and a polygenic background model; they say
   nothing about the HMGCR cis result, and a null from them would not undermine it.
@@ -304,6 +352,8 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
 | `robust_mr_prep.qmd` | Genome-wide sumstats QC/harmonisation for the robust MR arm + IVW sanity anchor |
 | `robust_mr_apss.qmd` | MR-APSS: sample structure (C), correlated pleiotropy (Ω), winner's curse |
 | `robust_mr_cause.qmd` | CAUSE: shared-factor model + Bayesian reading of γ |
+| `robust_mr_raps.qmd` | MR-RAPS: random-effects pleiotropy (τ²) + weak-instrument profile score |
+| `robust_mr_mrbee.qmd` | MRBEE: bias-corrected estimating equation; overlap via R_xy |
 | `robust_mr_summary.qmd` | Reconciles robust vs conventional estimates (rationale: `ROBUST_MR.md`) |
 | `summary-tables.qmd` | Collates outputs for figures/tables |
 
@@ -337,3 +387,14 @@ See `README.md` for execution order, datasets, and software/reproducibility note
   *or* from null. MRAID excluded by design (two-sample assumption violated);
   deferred to a UKB → MGI/BioVU design. Rationale and full method matrix in
   `ROBUST_MR.md`.
+- **2026-08-12** — Extended §3b with the InSIDE-assumption class: **MR-RAPS**
+  (`robust_mr_raps.qmd`) and **MRBEE** (`robust_mr_mrbee.qmd`), both run at 5e-8
+  and 5e-5 on the same harmonised substrate. Two revisions to the previous
+  entry: (1) the "overlap is detectable" claim is **withdrawn** — a third
+  estimator (MRBEE R_xy = −0.0045) disagrees in sign with MR-APSS C₁₂ (+0.023),
+  so overlap is immaterial but not reliably measurable; (2) the apparent
+  method-conservatism gradient is largely a **threshold** effect — at a fixed 5e-5
+  threshold MR-RAPS(l2) and MR-APSS both give −0.056 despite opposite assumptions
+  about correlated pleiotropy. New finding: pleiotropy is heavy (τ̂ ≈ 0.005, ~3×
+  the outcome SE) but diffuse, so IVW's SE was ~4× too narrow and outlier-deletion
+  methods under-correct.

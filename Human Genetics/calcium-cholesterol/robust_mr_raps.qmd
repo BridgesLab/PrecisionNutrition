@@ -1,0 +1,200 @@
+---
+title: "Robust MR — MR-RAPS (uncorrelated pleiotropy, weak instruments)"
+author: "Dave Bridges"
+date: today
+editor: source
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    embed-resources: true    # self-contained: no _files/ dir needed to view it
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-robust-mr/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+.root <- local({
+  d <- normalizePath(getwd(), mustWork = FALSE)
+  while (!file.exists(file.path(d, "config_robust_mr.yml"))) {
+    p <- dirname(d)
+    if (identical(p, d)) stop("config_robust_mr.yml not found in ", getwd(),
+                              " or any parent — render from the analysis folder.")
+    d <- p
+  }
+  d
+})
+source(file.path(.root, "R", "robust_mr_helpers.R"))
+set_project_root(.root)
+cfg <- load_robust_cfg()
+.inputs_hash <- tools::md5sum(c(file.path(.root, "config_robust_mr.yml"),
+                                file.path(.root, "R", "robust_mr_helpers.R")))
+set.seed(cfg$seed)
+dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
+```
+
+## Purpose
+
+MR-RAPS (Zhao et al., *Ann. Statist.* 2020) sits deliberately between IVW and the
+confounder-modelling methods. It assumes horizontal pleiotropy exists and may be
+large, models it as random effects $\alpha_j \sim N(0, \tau^2)$, and — critically —
+assumes those effects are **independent of the instrument–exposure effects**
+(the InSIDE assumption). It does *not* posit a shared confounder.
+
+Two properties earn it a place here:
+
+1. **Weak-instrument correction by profile score.** This is RAPS's core
+   contribution and the reason it tolerates a relaxed p-value threshold. It lets
+   us ask whether the attenuation seen in MR-APSS is really about pleiotropy or
+   just about instrument quality.
+2. **$\hat\tau^2$ is reported.** Unlike IVW, RAPS estimates how much pleiotropy
+   there is. A large $\tau^2$ with a stable $\beta$ is the signature of *balanced*
+   pleiotropy — exactly the situation IVW handles badly and RAPS handles well.
+
+::: callout-note
+## Where this sits among the five methods
+
+| | uncorrelated pleiotropy | **correlated** pleiotropy | overlap | weak IV |
+|---|---|---|---|---|
+| IVW | ✗ | ✗ | ✗ | ✗ |
+| **MR-RAPS** | ✓ $\tau^2$ | ✗ | ✗ | ✓ |
+| **MRBEE** | ✓ outlier removal | ✗ | ✓ | ✓ |
+| CAUSE | ✓ | ✓ | ✓ | partial |
+| MR-APSS | ✓ | ✓ | ✓ | ✓ |
+
+RAPS is the only method here that corrects weak instruments *without* also
+touching overlap or correlated pleiotropy. That isolation is the point: it tells
+us what the weak-instrument correction alone is worth.
+:::
+
+## Data
+
+Instruments come from the same harmonised substrate as MR-APSS and CAUSE
+(`est_paras()$dat`), so differences between methods are attributable to the
+method rather than to QC or harmonisation.
+
+```{r load}
+#| cache: true
+#| cache.extra: !expr .inputs_hash
+paras_path <- pp(cfg$paths$cache, "apss_paras.rds")
+if (!file.exists(paras_path)) stop("Run robust_mr_apss.qmd first — missing ", paras_path)
+paras <- readRDS(paras_path)
+
+exp_of <- function(arm) if (arm == "overlapping") "glgc2021_ldl" else "willer2013_ldl"
+
+map_dfr(paras, ~ tibble(n_snp = nrow(.x$dat)), .id = "arm") |>
+  kable(caption = "Harmonised variants available per arm",
+        format.args = list(big.mark = ",")) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Instruments at two thresholds
+
+RAPS is run at both the conventional 5e-8 and the relaxed 5e-5 used by MR-APSS.
+If the estimate is stable across thresholds, weak-instrument bias is not driving
+anything.
+
+```{r instruments}
+#| cache: true
+#| cache.extra: !expr .inputs_hash
+thresholds <- c(`5e-8` = 5e-8, `5e-5` = cfg$mrapss$iv_threshold)
+
+ivs <- purrr::map(names(paras), function(arm) {
+  purrr::map(names(thresholds), function(th) {
+    robust_iv_set(paras[[arm]]$dat, thresholds[[th]], cfg,
+                  r2 = cfg$mrapss$clump_r2, kb = cfg$mrapss$clump_kb)
+  }) |> setNames(names(thresholds))
+}) |> setNames(names(paras))
+
+map_dfr(names(ivs), function(arm) {
+  map_dfr(names(thresholds), function(th) {
+    d <- ivs[[arm]][[th]]
+    tibble(arm = arm, threshold = th, n_iv = nrow(d),
+           mean_F = mean((d$b.exp / d$se.exp)^2))
+  })
+}) |>
+  kable(caption = "Instruments by arm and threshold. Mean F below ~10 at the relaxed threshold is precisely the regime RAPS is built for.",
+        digits = 1) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Fit
+
+Two loss functions: plain `l2` (efficient if there are no outliers) and `tukey`
+(robust, downweights idiosyncratic pleiotropic outliers). `over.dispersion = TRUE`
+estimates $\tau^2$ rather than assuming no pleiotropy.
+
+```{r fit}
+#| cache: true
+#| cache.extra: !expr .inputs_hash
+library(mr.raps)
+
+fit_one <- function(arm, th, loss) {
+  d <- ivs[[arm]][[th]]
+  if (nrow(d) < 4) return(NULL)
+  res <- try(fit_raps(b_exp = d$b.exp, b_out = d$b.out,
+                      se_exp = d$se.exp, se_out = d$se.out,
+                      loss = loss, over.dispersion = TRUE),
+             silent = TRUE)
+  if (inherits(res, "try-error")) {
+    message("RAPS failed for ", arm, " / ", th, " / ", loss, ":\n",
+            conditionMessage(attr(res, "condition")))
+    return(NULL)
+  }
+  tidy_raps(res, arm = arm, threshold = th, loss = loss, n_iv = nrow(d))
+}
+
+raps_res <- tidyr::expand_grid(arm = names(ivs), th = names(thresholds),
+                               loss = c("l2", "tukey")) |>
+  purrr::pmap_dfr(function(arm, th, loss) fit_one(arm, th, loss))
+
+if (nrow(raps_res) == 0) {
+  stop("All MR-RAPS fits failed — the messages above list what each interface reported.")
+}
+message("MR-RAPS interface used: ", paste(unique(raps_res$interface), collapse = ", "))
+write_csv(raps_res, pp(cfg$paths$out, "raps_results.csv"))
+
+raps_res |>
+  select(arm, threshold, method, n_iv, b, se, lci, uci, pval, tau2, interface) |>
+  arrange(arm, threshold, method) |>
+  kable(caption = "MR-RAPS. tau2 is the estimated variance of horizontal pleiotropic effects; a large value with a stable beta indicates balanced pleiotropy.",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+```{r plot}
+#| fig-width: 8
+#| fig-height: 4.5
+if (nrow(raps_res) > 0) {
+  raps_res |>
+    mutate(label = paste0(method, " @ ", threshold)) |>
+    robust_mr_forest(title = "MR-RAPS: LDL-C -> heel eBMD, by threshold and loss") +
+    facet_wrap(~arm)
+}
+```
+
+## Reading it
+
+- **Stable across thresholds** → weak-instrument bias is not the story, and the
+  relaxed threshold in MR-APSS is safe.
+- **Larger $|\beta|$ at 5e-8 than 5e-5** → the extra weak instruments carry
+  proportionally more pleiotropy than signal.
+- **$\tau^2$ substantially above zero** → real horizontal pleiotropy, but *balanced*.
+  RAPS accommodates it; IVW's standard errors would be too narrow.
+- **`tukey` and `l2` disagree** → a few outlying variants are driving the estimate;
+  prefer the robust fit and check which SNPs.
+
+What RAPS *cannot* tell you is whether pleiotropy is correlated with instrument
+strength. If a shared factor drives both LDL-C and eBMD, RAPS is biased and will
+not warn you. That is what CAUSE and MR-APSS are for, and why the two classes are
+reported side by side in `robust_mr_summary.qmd`.

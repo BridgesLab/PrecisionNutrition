@@ -1,0 +1,199 @@
+---
+title: "Robust MR — MRBEE (bias-corrected estimating equations)"
+author: "Dave Bridges"
+date: today
+editor: source
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    embed-resources: true    # self-contained: no _files/ dir needed to view it
+    code-fold: true
+    code-summary: "Show the code"
+    fig-path: "figures-robust-mr/"
+theme: journal
+execute:
+  echo: true
+  warning: false
+---
+
+```{r global_options}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(knitr)
+library(kableExtra)
+.root <- local({
+  d <- normalizePath(getwd(), mustWork = FALSE)
+  while (!file.exists(file.path(d, "config_robust_mr.yml"))) {
+    p <- dirname(d)
+    if (identical(p, d)) stop("config_robust_mr.yml not found in ", getwd(),
+                              " or any parent — render from the analysis folder.")
+    d <- p
+  }
+  d
+})
+source(file.path(.root, "R", "robust_mr_helpers.R"))
+set_project_root(.root)
+cfg <- load_robust_cfg()
+.inputs_hash <- tools::md5sum(c(file.path(.root, "config_robust_mr.yml"),
+                                file.path(.root, "R", "robust_mr_helpers.R")))
+set.seed(cfg$seed)
+dir.create(pp(cfg$paths$out), recursive = TRUE, showWarnings = FALSE)
+```
+
+## Purpose
+
+MRBEE (Lorincz-Comi et al., *HGG Advances* 2024) treats MR as an
+**errors-in-variables** problem. GWAS effect estimates carry measurement error;
+that error biases ordinary IVW, and the direction of the bias depends on sample
+overlap while its magnitude depends on instrument strength. MRBEE subtracts the
+bias exactly, using the estimation-error covariance matrix $R_{xy}$.
+
+Two things make it a genuinely different check from what we have run:
+
+1. **$R_{xy}$ is estimated from insignificant SNPs**, and its off-diagonal is a
+   direct estimate of the correlation induced by sample overlap. This is a
+   **third, independent measurement** of the same quantity as MR-APSS's $C_{12}$
+   and CAUSE's $\rho$ — from a third model family.
+2. **Pleiotropy is removed by iterative outlier detection** (IMRP) rather than
+   modelled as a distribution. Like MR-RAPS it assumes the *remaining* pleiotropy
+   is uncorrelated with instrument strength; unlike MR-RAPS it also corrects for
+   overlap.
+
+::: callout-important
+MRBEE handles overlap, weak instruments and *uncorrelated* pleiotropy. It does
+**not** model a shared confounder. If correlated pleiotropy is present, MRBEE is
+biased in the same way MR-RAPS is — the outlier test removes variants that look
+anomalous, not variants that are systematically confounded.
+:::
+
+## Data and the error-covariance matrix
+
+```{r load}
+#| cache: true
+#| cache.extra: !expr .inputs_hash
+library(MRBEE)
+
+paras_path <- pp(cfg$paths$cache, "apss_paras.rds")
+if (!file.exists(paras_path)) stop("Run robust_mr_apss.qmd first — missing ", paras_path)
+paras <- readRDS(paras_path)
+
+# Rxy from genome-wide Z-scores; exposures first, OUTCOME LAST (MRBEE convention).
+Rxy <- purrr::map(paras, ~ mrbee_error_cov(.x$dat))
+saveRDS(Rxy, pp(cfg$paths$cache, "mrbee_Rxy.rds"))
+
+rxy_tab <- imap_dfr(Rxy, ~ tibble(
+  arm          = .y,
+  var_exposure = .x[1, 1],
+  var_outcome  = .x[2, 2],
+  cov_overlap  = .x[1, 2]
+))
+write_csv(rxy_tab, pp(cfg$paths$out, "mrbee_error_cov.csv"))
+
+rxy_tab |>
+  kable(caption = "MRBEE estimation-error covariance. The off-diagonal is the overlap-induced correlation between the two GWAS' estimation errors — compare with MR-APSS C12 (0.023 / -0.007) and CAUSE rho (-0.011 / -0.015).",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+## Instruments
+
+Same clumped sets as MR-RAPS, at both thresholds.
+
+```{r instruments}
+#| cache: true
+#| cache.extra: !expr .inputs_hash
+thresholds <- c(`5e-8` = 5e-8, `5e-5` = cfg$mrapss$iv_threshold)
+
+ivs <- purrr::map(names(paras), function(arm) {
+  purrr::map(names(thresholds), function(th) {
+    robust_iv_set(paras[[arm]]$dat, thresholds[[th]], cfg,
+                  r2 = cfg$mrapss$clump_r2, kb = cfg$mrapss$clump_kb)
+  }) |> setNames(names(thresholds))
+}) |> setNames(names(paras))
+
+map_dfr(names(ivs), function(arm) {
+  map_dfr(names(thresholds), function(th) {
+    tibble(arm = arm, threshold = th, n_iv = nrow(ivs[[arm]][[th]]))
+  })
+}) |>
+  kable(caption = "Instruments by arm and threshold") |>
+  kable_styling(full_width = FALSE)
+```
+
+## Fit
+
+```{r fit}
+#| cache: true
+#| cache.extra: !expr .inputs_hash
+fit_one <- function(arm, th) {
+  d <- ivs[[arm]][[th]]
+  if (nrow(d) < 4) return(NULL)
+
+  # NOTE the argument names. The univariable entry point takes lowercase bx/bxse
+  # as VECTORS; the multivariable MRBEE.IMRP() takes bX/bXse as matrices. Passing
+  # the MVMR names to the UV function fails with "unused argument".
+  res <- if (!is.null(getNamespace("MRBEE")$MRBEE.IMRP.UV)) {
+    try(MRBEE::MRBEE.IMRP.UV(
+      by = d$b.out, bx = d$b.exp,
+      byse = d$se.out, bxse = d$se.exp,
+      Rxy = Rxy[[arm]]
+    ), silent = TRUE)
+  } else {
+    try(MRBEE::MRBEE.IMRP(
+      by = d$b.out, bX = matrix(d$b.exp, ncol = 1),
+      byse = d$se.out, bXse = matrix(d$se.exp, ncol = 1),
+      Rxy = Rxy[[arm]], var.est = "ordinal"
+    ), silent = TRUE)
+  }
+
+  if (inherits(res, "try-error")) {
+    message("MRBEE failed for ", arm, " / ", th, ": ",
+            conditionMessage(attr(res, "condition")))
+    return(NULL)
+  }
+  tidy_mrbee(res, arm = arm, threshold = th, n_iv = nrow(d))
+}
+
+mrbee_res <- tidyr::expand_grid(arm = names(ivs), th = names(thresholds)) |>
+  purrr::pmap_dfr(function(arm, th) fit_one(arm, th))
+
+if (nrow(mrbee_res) == 0) {
+  stop("All MRBEE fits failed — see the messages above for the underlying error.")
+}
+write_csv(mrbee_res, pp(cfg$paths$out, "mrbee_results.csv"))
+
+mrbee_res |>
+  select(arm, threshold, n_iv, n_pleiotropic, b, se, lci, uci, pval) |>
+  arrange(arm, threshold) |>
+  kable(caption = "MRBEE. n_pleiotropic is the number of instruments flagged and removed by the iterative pleiotropy test.",
+        digits = 4) |>
+  kable_styling(full_width = FALSE)
+```
+
+```{r plot}
+#| fig-width: 8
+#| fig-height: 4
+if (nrow(mrbee_res) > 0) {
+  mrbee_res |>
+    mutate(label = paste0("MRBEE @ ", threshold)) |>
+    robust_mr_forest(title = "MRBEE: LDL-C -> heel eBMD") +
+    facet_wrap(~arm)
+}
+```
+
+## Reading it
+
+The most valuable single number here is `cov_overlap`. We now have three
+independent estimates of sample overlap, from three model families — MRBEE's
+error covariance, MR-APSS's cross-trait LDSC intercept, and CAUSE's $\rho$. If all
+three agree the overlap picture is settled; if MRBEE's disagrees materially, the
+LDSC-based estimates deserve a second look, since they rest on assumptions
+(HapMap3 restriction, LD-score model) that MRBEE's does not.
+
+`n_pleiotropic` is the second thing to check. A large number of removed
+instruments means the IMRP test is doing heavy lifting, and the estimate is
+conditional on those removals being the right ones — worth a sensitivity check
+against MR-RAPS's `tukey` fit, which downweights rather than deletes.

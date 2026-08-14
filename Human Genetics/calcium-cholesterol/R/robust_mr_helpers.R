@@ -122,10 +122,11 @@ resolve_plink <- function(plink_bin = NULL, cfg = NULL) {
 #' Check (and optionally install) the packages this arm needs.
 #' CAUSE and MR-APSS are GitHub-only; both pull a non-trivial dependency tree.
 check_robust_mr_deps <- function(install = FALSE) {
-  cran   <- c("tidyverse", "data.table", "yaml", "here", "R.utils",
-              "ieugwasr", "TwoSampleMR", "knitr", "kableExtra")
+  cran   <- c("tidyverse", "data.table", "yaml", "R.utils",
+              "ieugwasr", "TwoSampleMR", "knitr", "kableExtra", "mr.raps")
   github <- c(cause = "jean997/cause", MRAPSS = "YangLabHKUST/MR-APSS",
-              mixsqp = "stephenslab/mixsqp", ashr = "stephens999/ashr")
+              mixsqp = "stephenslab/mixsqp", ashr = "stephens999/ashr",
+              MRBEE = "noahlorinczcomi/MRBEE")
 
   status <- tibble::tibble(
     package = c(cran, names(github)),
@@ -621,6 +622,149 @@ tidy_cause <- function(res, exposure, outcome, arm, ci_size = 0.95) {
       pnorm(as.numeric(row$z), lower.tail = TRUE) < 0.05 ~ "causal preferred over sharing",
       TRUE ~ "sharing not rejected"
     )
+  )
+}
+
+# ---- InSIDE-class methods (MR-RAPS, MRBEE) ------------------------------------
+# Both assume horizontal pleiotropy is uncorrelated with the instrument-exposure
+# effects (InSIDE), unlike CAUSE/MR-APSS which model a shared confounder. They are
+# run on the SAME harmonised substrate (apss_paras$dat) as everything else, so any
+# difference between methods is the method, not the data.
+
+#' Clumped instrument set from the harmonised MR-APSS data frame.
+#'
+#' `dat` is `est_paras()$dat`: SNP, A1, A2, b.exp, b.out, se.exp, se.out,
+#' pval.exp, pval.out, L2 — already harmonised and on a per-SD scale.
+robust_iv_set <- function(dat, p_thresh, cfg, r2 = 0.001, kb = 1000) {
+  clump_local(dat, snp_col = "SNP", p_col = "pval.exp",
+              r2 = r2, kb = kb, p_thresh = p_thresh,
+              bfile = resolve_bfile(cfg$paths$plink_bfile),
+              plink_bin = cfg$paths$plink_bin)
+}
+
+#' Call MR-RAPS, tolerating the interface differences between versions.
+#'
+#' mr.raps has shipped two incompatible signatures: older releases take vectors
+#' (`b_exp`, `b_out`, `se_exp`, `se_out`), newer ones take a data frame whose
+#' columns are `beta.exposure` / `beta.outcome` / `se.exposure` / `se.outcome`.
+#' TwoSampleMR::mr_raps() is a third, stable wrapper. Try each in turn and report
+#' which one worked rather than failing silently.
+fit_raps <- function(b_exp, b_out, se_exp, se_out, loss = "tukey",
+                     over.dispersion = TRUE) {
+  errs <- character()
+  attempt <- function(label, expr) {
+    out <- try(expr, silent = TRUE)
+    if (inherits(out, "try-error")) {
+      errs[[length(errs) + 1]] <<- paste0(label, ": ",
+                                          conditionMessage(attr(out, "condition")))
+      return(NULL)
+    }
+    attr(out, "raps_interface") <- label
+    out
+  }
+
+  df <- data.frame(beta.exposure = b_exp, beta.outcome = b_out,
+                   se.exposure = se_exp, se.outcome = se_out)
+
+  res <- attempt("mr.raps(data.frame)",
+                 mr.raps::mr.raps(df, over.dispersion = over.dispersion,
+                                  loss.function = loss))
+  if (is.null(res)) {
+    res <- attempt("mr.raps(vectors)",
+                   mr.raps::mr.raps(b_exp = b_exp, b_out = b_out,
+                                    se_exp = se_exp, se_out = se_out,
+                                    over.dispersion = over.dispersion,
+                                    loss.function = loss))
+  }
+  if (is.null(res)) {
+    res <- attempt("mr.raps.overdispersed.robust",
+                   mr.raps::mr.raps.overdispersed.robust(
+                     b_exp = b_exp, b_out = b_out,
+                     se_exp = se_exp, se_out = se_out,
+                     loss.function = loss))
+  }
+  if (is.null(res) && requireNamespace("TwoSampleMR", quietly = TRUE)) {
+    res <- attempt("TwoSampleMR::mr_raps",
+                   TwoSampleMR::mr_raps(b_exp, b_out, se_exp, se_out))
+  }
+  if (is.null(res)) {
+    stop("All MR-RAPS interfaces failed:\n  ", paste(errs, collapse = "\n  "))
+  }
+  res
+}
+
+#' MR-RAPS -> one-row tibble.
+#'
+#' mr.raps models pleiotropy as random effects alpha_j ~ N(0, tau^2) independent
+#' of the instrument strength, and corrects weak-instrument bias via the profile
+#' score. tau2.hat is the estimated pleiotropy variance — report it, since it is
+#' the quantity that distinguishes RAPS from plain IVW.
+tidy_raps <- function(res, arm, threshold, loss, n_iv) {
+  # Field names also differ by interface: beta.hat/beta.se/beta.p.value in mr.raps,
+  # b/se/pval in the TwoSampleMR wrapper.
+  b  <- pluck_num(res, "beta.hat", "beta", "b")
+  se <- pluck_num(res, "beta.se", "se")
+  # Some mr.raps interfaces omit the p-value entirely; fall back to the Wald test,
+  # which is what mr.raps computes internally anyway.
+  p  <- pluck_num(res, "beta.p.value", "pval", "p.value", "p")
+  if (is.na(p) && is.finite(b) && is.finite(se) && se > 0) {
+    p <- 2 * stats::pnorm(abs(b / se), lower.tail = FALSE)
+  }
+  tibble::tibble(
+    method    = paste0("MR-RAPS (", loss, ")"),
+    arm       = arm,
+    threshold = threshold,
+    b = b, se = se,
+    lci = b - 1.96 * se, uci = b + 1.96 * se,
+    pval = p,
+    tau2 = pluck_num(res, "tau2.hat", "tau2"),
+    n_iv = n_iv,
+    interface = attr(res, "raps_interface") %||% NA_character_
+  )
+}
+
+#' Estimation-error covariance for MRBEE, from genome-wide Z-scores.
+#'
+#' MRBEE's Rxy is estimated from *insignificant* SNPs, and its off-diagonal is a
+#' direct estimate of the correlation induced by sample overlap — a third,
+#' independent read on the same quantity as MR-APSS's C12 and CAUSE's rho.
+#' Column order matters: exposures first, OUTCOME LAST.
+mrbee_error_cov <- function(dat, p_min = 0.05) {
+  Z <- cbind(exposure = dat$b.exp / dat$se.exp,
+             outcome  = dat$b.out / dat$se.out)
+  if (requireNamespace("MRBEE", quietly = TRUE) &&
+      !is.null(getNamespace("MRBEE")$errorCov)) {
+    out <- try(MRBEE::errorCov(ZMatrix = Z), silent = TRUE)
+    if (!inherits(out, "try-error")) return(as.matrix(out))
+  }
+  # Fallback, the Zhu et al. 2015 estimator MRBEE::errorCov implements: correlate
+  # the Z-scores of SNPs that are null for BOTH traits.
+  message("MRBEE::errorCov() unavailable; using the insignificant-SNP estimator directly.")
+  keep <- dat$pval.exp > p_min & dat$pval.out > p_min
+  stats::cor(Z[keep, , drop = FALSE], use = "complete.obs")
+}
+
+#' MRBEE -> one-row tibble.
+#'
+#' Field names differ between the univariable and multivariable entry points:
+#' MRBEE.IMRP.UV() returns `vartheta` (a scalar variance), MRBEE.IMRP() returns
+#' `covtheta` (a matrix). `delta` holds the residuals with valid instruments set
+#' to zero, so the non-zero entries are the variants the IMRP test flagged as
+#' pleiotropic and excluded.
+tidy_mrbee <- function(res, arm, threshold, n_iv) {
+  b  <- as.numeric(res$theta)[1]
+  v  <- if (!is.null(res$vartheta)) res$vartheta else res$covtheta
+  se <- sqrt(as.numeric(v)[1])
+  n_pleio <- if (!is.null(res$delta)) sum(abs(as.numeric(res$delta)) > 1e-8) else NA_integer_
+  tibble::tibble(
+    method    = "MRBEE",
+    arm       = arm,
+    threshold = threshold,
+    b = b, se = se,
+    lci = b - 1.96 * se, uci = b + 1.96 * se,
+    pval = 2 * stats::pnorm(abs(b / se), lower.tail = FALSE),
+    n_pleiotropic = n_pleio,
+    n_iv = n_iv
   )
 }
 

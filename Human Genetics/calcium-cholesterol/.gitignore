@@ -29,3 +29,8 @@ raw_data/robust_mr/cache/
 # the older analyses here are not self-contained and their committed .html would
 # render unstyled without them.
 robust_mr_*_files/
+
+# ---- GWAS Catalog FTP summary statistics (~1 GB per accession) ----------------
+# Public and re-downloadable; drug_target_mr_bmd.qmd fetches GCST90726625
+# (Chai 2026 heel eBMD) here automatically on first render.
+raw_data/gwas_catalog/

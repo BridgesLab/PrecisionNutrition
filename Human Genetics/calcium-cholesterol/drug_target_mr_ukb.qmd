@@ -882,10 +882,17 @@ appropriate sensitivity check for whether any single SNP drives the result.
 #| label: leave-one-out-hmgcr
 
 loo_mr <- function(df, outcome_label, exposure_label, gene_label) {
+  # `.env$` is defensive here rather than corrective: this file's harmonised
+  # frames happen to carry no column named `outcome_label`, so the bare form
+  # currently resolves to the argument and the filter works. The same function
+  # in drug_target_mr_bmd.qmd DID break, because there the outcome join brings
+  # an `outcome_label` column along and dplyr's data mask wins — silently
+  # pooling every outcome into one leave-one-out. Pinning the scope means
+  # adding such a column here can never reintroduce that.
   d <- df %>%
-    filter(outcome == outcome_label,
-           exposure_name == exposure_label,
-           gene == gene_label)
+    filter(outcome       == .env$outcome_label,
+           exposure_name == .env$exposure_label,
+           gene          == .env$gene_label)
   
   if (nrow(d) < 2) return(tibble())
   

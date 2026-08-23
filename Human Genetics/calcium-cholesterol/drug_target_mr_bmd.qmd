@@ -62,28 +62,57 @@ experiments proposed in Aim 1A2.
 
 ### Outcomes
 
-This script evaluates four outcomes:
+This script evaluates five outcomes:
 
 - **Heel BMD** (Morris et al. 2019, UK Biobank quantitative ultrasound,
-  n = 426,824): primary BMD outcome
+  n = 426,824, 13.7M variants): primary BMD outcome
+- **Heel eBMD** (Chai et al. 2026, UK Biobank quantitative ultrasound,
+  n = 448,010, 21.6M variants): replication / higher-density re-analysis
+  of the same phenotype (see below)
 - **Femoral neck BMD** (Zheng et al. 2015, GEFOS, n = 32,735): secondary
   lower-powered BMD outcome
 - **Fractures** (Dönertaş et al. 2021, UK Biobank, n = 484,598):
   clinical endpoint
 - **25-hydroxyvitamin D** (MGI-BioVU LabWAS, n = 12,250): negative control
 
+### Why add Chai 2026?
+
+`GCST90726625` (Chai RC et al., *Nat Genet*, 2026;
+[PMID 42432248](https://www.ebi.ac.uk/gwas/publications/42432248)) is the
+same UK Biobank heel quantitative-ultrasound eBMD phenotype as Morris 2019,
+with a 5.0% larger sample (448,010 vs 426,824) — worth only ≈2.4% narrower
+confidence intervals, which will not move the HMGCR or PCSK9 conclusions.
+It is **not** an independent replication: the participants are ~95% shared.
+
+The reason to add it is **variant density**, not power. Morris 2019 as hosted
+on OpenGWAS carries 13,705,641 variants; Chai 2026 carries 21,628,442
+(+58%). This matters for exactly one thing in this script:
+
+> The single NPC1L1 cis-instrument surviving `p < 5e-8` / `r² < 0.001`
+> is **absent from the Morris 2019 summary statistics**, so ezetimibe has no
+> heel-BMD estimate at all in the primary analysis (it appears only for
+> Fractures and Vitamin D). The denser Chai variant set is the most direct
+> route to recovering it.
+
+Note, however, that outcome density is only *half* of the NPC1L1 problem —
+the other half is on the exposure side, where strict clumping leaves a single
+instrument regardless of which outcome GWAS is used. The
+[NPC1L1 sensitivity section](#npc1l1-relaxed-cis-instrument-sensitivity)
+addresses that separately.
+
 ### Sample Overlap Considerations
 
 The LDL-C exposure GWAS (`ieu-b-110`, UKB Neale Lab, n ≈ 440,546) overlaps
-with the UK Biobank-derived outcome GWAS for both heel BMD (Morris 2019,
-UKB) and fractures (Dönertaş 2021, UKB). This means the analysis is
-effectively a *one-sample* MR for those outcome × exposure combinations.
-With strong instruments (F >> 10), one-sample bias is generally toward the
-null. The total cholesterol exposure (`ebi-a-GCST90025953`, GLGC
+with the UK Biobank-derived outcome GWAS for heel BMD (Morris 2019, UKB),
+heel eBMD (Chai 2026, UKB) and fractures (Dönertaş 2021, UKB). This means the
+analysis is effectively a *one-sample* MR for those outcome × exposure
+combinations. With strong instruments (F >> 10), one-sample bias is generally
+toward the null. The total cholesterol exposure (`ebi-a-GCST90025953`, GLGC
 meta-analysis) is non-overlapping with UKB, so estimates from that
 exposure are immune to sample overlap concerns. Zheng 2015 femoral neck
 BMD (GEFOS) and the MGI-BioVU vitamin D GWAS are non-overlapping with
-both exposures.
+both exposures. Chai 2026 does **not** improve the overlap situation — if
+anything it is marginally worse than Morris 2019.
 
 ---
 
@@ -122,6 +151,7 @@ kable(gene_windows %>% select(gene, chr, region_start, region_end, region_str),
 outcome_gwas <- tribble(
   ~label,                              ~gwas_id,              ~n,       ~year, ~pmid,    ~kind,
   "Heel BMD (Morris 2019)",            "ebi-a-GCST006979",    426824,   2019,  30598549, "ukb",
+  "Heel eBMD (Chai 2026)",             "GCST90726625",        448010,   2026,  42432248, "gwascat",
   "Femoral neck BMD (Zheng 2015)",     "ieu-a-980",           32735,    2015,  26367794, "ukb",
   "Fractures (Donertas 2021)",         "ebi-a-GCST90038703",  484598,   2021,  34187969, "ukb",
   "Vitamin D (MGI-BioVU)",             "local",               12250,    2020,  32907938, "mgi"
@@ -129,6 +159,25 @@ outcome_gwas <- tribble(
 
 kable(outcome_gwas %>% select(label, gwas_id, n, year, pmid),
       caption = "Outcome GWAS for drug-target MR")
+
+# ── Colour / shape keys reused by every figure ───────────────────────────────
+outcome_colours <- c(
+  "Heel BMD (Morris 2019)"        = "#00274c",  # U-M blue
+  "Heel eBMD (Chai 2026)"         = "#9a3324",  # U-M tappan red
+  "Femoral neck BMD (Zheng 2015)" = "#5e92a8",
+  "Fractures (Donertas 2021)"     = "#ffcb05",  # U-M maize
+  "Vitamin D (MGI-BioVU)"         = "#a0a0a0"
+)
+
+outcome_shapes <- c(
+  "Heel BMD (Morris 2019)"        = 16,
+  "Heel eBMD (Chai 2026)"         = 8,
+  "Femoral neck BMD (Zheng 2015)" = 17,
+  "Fractures (Donertas 2021)"     = 15,
+  "Vitamin D (MGI-BioVU)"         = 18
+)
+
+outcome_levels <- names(outcome_colours)
 ```
 
 ---
@@ -255,6 +304,157 @@ instruments_final %>%
   kable(caption = "Final instrument sets across all three drug targets")
 ```
 
+### Relaxed NPC1L1 Instrument Sets (Sensitivity Only)
+
+At `p < 5e-8` / `r² < 0.001` the NPC1L1 window yields a **single** instrument
+per exposure, which caps the analysis at a Wald ratio with no heterogeneity
+or pleiotropy diagnostics. A denser *outcome* GWAS cannot fix this — the
+constraint is on the exposure side.
+
+Relaxing the significance threshold inside a *cis* window is standard practice
+for drug-target MR, because the biological validity of the instrument comes
+from its location in the drug-target gene rather than from genome-wide
+significance. Two relaxed sets are built:
+
+- **`relaxed_indep`** — `p < 1e-6`, `r² < 0.001`. SNPs remain approximately
+  independent, so the standard IVW / weighted-median machinery below is valid
+  as-is. This is the set reported as the NPC1L1 sensitivity analysis.
+- **`relaxed_corr`** — `p < 1e-6`, `r² < 0.30` (matching the HMGCR allele-score
+  convention). These SNPs are correlated, so naïve IVW understates the standard
+  error. Used only with the correlation-aware IVW below.
+
+These sets are held **entirely separate** from `instruments_final` so that the
+primary HMGCR / PCSK9 / NPC1L1 results are unchanged.
+
+::: {.callout-warning}
+## `clump_gene()` fails silently
+
+The `clump_gene()` helper above catches `ld_clump` errors with
+`warning(e$message); .x` — it returns the **unclumped** SNP set on failure.
+With `warning: false` in the document header that warning is invisible, so a
+dead or unauthenticated OpenGWAS LD endpoint yields hundreds of correlated
+SNPs that look like a legitimate instrument set. At `p < 1e-6` the NPC1L1
+window holds 407 (LDL-C) and 25 (total cholesterol) variants, so the failure
+mode is not subtle once it propagates downstream.
+
+`select_cis_instruments()` below therefore checks whether clumping actually
+removed anything and falls back to **distance-based pruning** — which needs no
+API — reporting which method was used. `clump_gene()` is left untouched so the
+cached primary instrument sets stay valid.
+:::
+
+```{r npc1l1-relaxed-instruments}
+#| label: npc1l1-relaxed-instruments
+#| message: true
+
+# Deliberately NOT cached. Both this chunk and the OpenGWAS top-up below can
+# "succeed" in a degraded state when the API is unavailable — distance pruning
+# instead of LD clumping, zero recovered rsIDs. Caching that state freezes the
+# degraded result in place: the code is unchanged, so fixing the token would
+# not invalidate the cache and the failure would silently persist across every
+# later render. Two ld_clump calls are cheap enough to repeat.
+
+NPC1L1_P_RELAXED <- 1e-6
+NPC1L1_R2_INDEP  <- 0.001
+NPC1L1_R2_CORR   <- 0.30
+NPC1L1_MAX_SNPS  <- 30
+
+# Greedy distance pruning: keep the most significant SNP, then any SNP at
+# least min_kb away from every SNP already kept. LD-free, so it works with no
+# API access at all.
+prune_by_distance <- function(d, min_kb) {
+  d    <- d %>% arrange(p)
+  pos  <- d$position
+  keep <- integer(0)
+  for (i in seq_len(nrow(d))) {
+    if (!length(keep) || all(abs(pos[i] - pos[keep]) > min_kb * 1000)) {
+      keep <- c(keep, i)
+    }
+  }
+  d[keep, ]
+}
+
+select_cis_instruments <- function(df, gene_name, p_thresh, r2_thresh,
+                                   min_kb, max_snps) {
+  sub <- df %>% filter(gene == gene_name, p <= p_thresh, !is.na(position))
+  if (!nrow(sub)) return(tibble())
+
+  map_dfr(unique(sub$exposure_name), function(ex) {
+    d <- sub %>% filter(exposure_name == ex) %>% arrange(p)
+    if (nrow(d) < 2) return(d %>% mutate(selection = "single SNP"))
+
+    cl <- tryCatch(
+      ieugwasr::ld_clump(
+        tibble(rsid = d$rsid, pval = d$p, id = d$gwas_id),
+        clump_r2 = r2_thresh, clump_kb = 10000, pop = "EUR"
+      ),
+      error = function(e) {
+        message("  [", ex, "] ld_clump failed: ", conditionMessage(e))
+        NULL
+      }
+    )
+
+    # "Returned everything" from a dense window means the call no-oped.
+    clump_ok <- !is.null(cl) && nrow(cl) > 0 &&
+      (nrow(cl) < nrow(d) || nrow(d) <= 5)
+
+    out <- if (clump_ok) {
+      d %>% filter(rsid %in% cl$rsid) %>% mutate(selection = "LD-clumped")
+    } else {
+      if (!is.null(cl) && nrow(cl) == nrow(d) && nrow(d) > 5) {
+        message("  [", ex, "] ld_clump returned all ", nrow(d),
+                " SNPs unchanged — treating as a failure.")
+      }
+      message("  [", ex, "] falling back to ", min_kb, " kb distance pruning.")
+      prune_by_distance(d, min_kb) %>%
+        mutate(selection = paste0("distance-pruned (", min_kb, " kb)"))
+    }
+
+    out %>% arrange(p) %>% slice_head(n = max_snps)
+  })
+}
+
+instruments_npc1l1_indep <- select_cis_instruments(
+  regional_raw, "NPC1L1", NPC1L1_P_RELAXED, NPC1L1_R2_INDEP,
+  min_kb = 250, max_snps = NPC1L1_MAX_SNPS
+) %>% mutate(instrument_set = "relaxed_indep")
+
+instruments_npc1l1_corr <- select_cis_instruments(
+  regional_raw, "NPC1L1", NPC1L1_P_RELAXED, NPC1L1_R2_CORR,
+  min_kb = 50, max_snps = NPC1L1_MAX_SNPS
+) %>% mutate(instrument_set = "relaxed_corr")
+
+instruments_npc1l1_relaxed <- bind_rows(instruments_npc1l1_indep,
+                                        instruments_npc1l1_corr)
+
+# Hard stop before these rsIDs are handed to any API call.
+if (nrow(instruments_npc1l1_relaxed) > 2 * NPC1L1_MAX_SNPS * 2) {
+  stop("Relaxed NPC1L1 sets are implausibly large (",
+       nrow(instruments_npc1l1_relaxed),
+       " rows) — instrument selection did not converge.")
+}
+
+bind_rows(
+  instruments_npc1l1 %>% mutate(instrument_set = "primary (5e-8, r2<0.001)",
+                                selection = "LD-clumped (cached)"),
+  instruments_npc1l1_relaxed
+) %>%
+  mutate(F_stat = (beta / se)^2) %>%
+  group_by(instrument_set, exposure_name, selection) %>%
+  summarise(
+    n_SNPs   = n(),
+    min_F    = round(min(F_stat), 1),
+    median_F = round(median(F_stat), 1),
+    min_p    = signif(min(p), 2),
+    .groups  = "drop"
+  ) %>%
+  kable(caption = paste0(
+    "NPC1L1 instrument counts — primary vs relaxed cis-selection. ",
+    "Check the 'selection' column: 'distance-pruned' means the OpenGWAS LD ",
+    "endpoint was unreachable and these are only approximately independent."
+  ))
+```
+
 ---
 
 ## Outcomes: Fetching from OpenGWAS
@@ -316,6 +516,28 @@ opengwas_outcome_raw %>%
   kable(caption = "OpenGWAS outcome SNP recovery (direct rsID match)")
 ```
 
+```{r opengwas-sanity-check}
+#| label: opengwas-sanity-check
+#| echo: false
+
+# The chunk above silently swallows API errors and returns empty tibbles, which
+# surfaces much later as an opaque "Column `outcome_label` is not found".
+# Fail here instead, with the actual cause.
+if (nrow(opengwas_outcome_raw) == 0) {
+  stop(
+    "Every OpenGWAS outcome query returned zero rows.\n",
+    "This is an API problem, not a data problem. Most likely causes:\n",
+    "  1. No OpenGWAS token. ieugwasr now requires a JWT for all queries.\n",
+    "     Get one at https://api.opengwas.io/profile/ and add to ~/.Renviron:\n",
+    "       OPENGWAS_JWT=<your token>\n",
+    "     then restart R and check with ieugwasr::user().\n",
+    "  2. Rate limiting — wait and re-render.\n",
+    "  3. Too many variants in one call (keep it to a few hundred).\n",
+    "Scroll up for the per-outcome 'Failed:' messages."
+  )
+}
+```
+
 ### Coverage by Gene
 
 ```{r opengwas-coverage-by-gene}
@@ -369,6 +591,74 @@ cat("OpenGWAS outcomes standardised:",
     "SNP-outcome pairs ready for harmonisation\n")
 ```
 
+### Topping Up Morris 2019 with the Relaxed NPC1L1 rsIDs
+
+The relaxed NPC1L1 instruments are fetched **separately** and in small
+batches, rather than being folded into `all_rsids` above. Two reasons: it
+keeps the cached primary query byte-identical so it is never re-run against
+the API, and a failure here degrades only the NPC1L1 sensitivity rather than
+emptying every outcome.
+
+```{r npc1l1-relaxed-opengwas}
+#| label: npc1l1-relaxed-opengwas
+
+# Not cached — see the note on the relaxed-instruments chunk. This is a single
+# call for a handful of rsIDs; caching a zero-recovery failure is far more
+# costly than repeating it.
+extra_rsids <- setdiff(unique(instruments_npc1l1_relaxed$rsid), all_rsids)
+
+cat("Extra rsIDs needed for the relaxed NPC1L1 sets:",
+    length(extra_rsids), "\n")
+
+extra_std <- tibble()
+
+if (length(extra_rsids)) {
+  batches   <- split(extra_rsids, ceiling(seq_along(extra_rsids) / 100))
+  extra_raw <- map_dfr(batches, function(b) {
+    tryCatch(
+      ieugwasr::associations(variants = b,
+                             id       = "ebi-a-GCST006979",
+                             proxies  = FALSE) %>% as_tibble(),
+      error = function(e) {
+        cat("    batch of", length(b), "failed:", e$message, "\n")
+        tibble()
+      }
+    )
+  })
+
+  if (nrow(extra_raw)) {
+    if ("pos" %in% names(extra_raw) && !"position" %in% names(extra_raw)) {
+      extra_raw <- dplyr::rename(extra_raw, position = pos)
+    }
+    extra_std <- extra_raw %>%
+      transmute(
+        rsid,
+        CHR      = suppressWarnings(as.integer(chr)),
+        POS      = suppressWarnings(as.integer(position)),
+        REF      = nea,
+        ALT      = ea,
+        beta_out = as.numeric(beta),
+        se_out   = as.numeric(se),
+        pval_out = as.numeric(p),
+        eaf_out  = as.numeric(eaf),
+        outcome_label   = "Heel BMD (Morris 2019)",
+        outcome_gwas_id = "ebi-a-GCST006979"
+      )
+    cat("Recovered", nrow(extra_std), "of", length(extra_rsids),
+        "extra rsIDs from Morris 2019\n")
+  } else {
+    cat("WARNING: no extra rsIDs recovered. The relaxed NPC1L1 comparison\n",
+        "will show Chai 2026 only; the Morris arm will be under-covered.\n")
+  }
+}
+
+opengwas_outcome_std <- bind_rows(opengwas_outcome_std, extra_std) %>%
+  distinct(rsid, outcome_label, .keep_all = TRUE)
+
+cat("Standardised OpenGWAS table now holds",
+    scales::comma(nrow(opengwas_outcome_std)), "SNP-outcome pairs\n")
+```
+
 ---
 
 ## Outcome: Vitamin D (MGI-BioVU LabWAS, Negative Control)
@@ -410,6 +700,306 @@ vitd_gwas <- vitd_gwas_raw %>%
 
 cat("\nMGI-BioVU vitamin D GWAS:",
     scales::comma(nrow(vitd_gwas)), "SNPs\n")
+```
+
+---
+
+## Outcome: Heel eBMD (Chai 2026, GWAS Catalog `GCST90726625`)
+
+This outcome is **not** on OpenGWAS, so it is read from the GWAS Catalog FTP
+flat file. The full file is ~21.6M rows, so it is never loaded into memory:
+the instrument rsIDs are written to a temp file and `awk` streams the
+gzipped summary statistics, keeping only matching rows.
+
+Matching is by **rsID**, not position, which sidesteps the genome-build
+question entirely (the harmonised file reports `hm_coordinate_conversion = lo`,
+i.e. lifted over to GRCh38, while the `gene_windows` above and the OpenGWAS
+exposures are GRCh37).
+
+One wrinkle: `GCST90726625.h.tsv.gz` ships **two** rsID columns, `rsid`
+(field 10) and `rs_id` (field 12), and they disagree on a minority of
+variants — at 1:10177 A/AC, `rsid` is rs367896724 (the correct dbSNP ID for
+that position and allele pair) while `rs_id` is rs201752861. One is the
+harmoniser's dbSNP assignment and the other the author-submitted ID. Since
+picking wrong would silently lose instruments — the exact failure this
+outcome was added to fix — the extraction matches on **both** and reports
+which column produced each hit.
+
+```{r chai-download}
+#| label: chai-download
+#| cache: true
+
+CHAI_ACC   <- "GCST90726625"
+CHAI_DIR   <- file.path("raw_data", "gwas_catalog", CHAI_ACC)
+CHAI_FTP   <- paste0(
+  "http://ftp.ebi.ac.uk/pub/databases/gwas/summary_statistics/",
+  "GCST90726001-GCST90727000/", CHAI_ACC
+)
+
+dir.create(CHAI_DIR, recursive = TRUE, showWarnings = FALSE)
+
+# ── Resolve the actual filename on the FTP mirror ────────────────────────────
+# Prefer the harmonised (GWAS-SSF) file when present; fall back to the
+# author-submitted file.
+list_gwascat_files <- function(dir_url) {
+  txt <- tryCatch(
+    paste(readLines(dir_url, warn = FALSE), collapse = "\n"),
+    error = function(e) NA_character_
+  )
+  if (is.na(txt)) return(character(0))
+  unique(str_extract_all(txt, '(?<=href=")[^"]+\\.tsv\\.gz')[[1]])
+}
+
+harm_listed <- list_gwascat_files(paste0(CHAI_FTP, "/harmonised/"))
+root_listed <- list_gwascat_files(paste0(CHAI_FTP, "/"))
+
+remote_files <- character(0)
+if (length(harm_listed)) {
+  remote_files <- c(remote_files,
+                    paste0(CHAI_FTP, "/harmonised/", basename(harm_listed)))
+}
+if (length(root_listed)) {
+  remote_files <- c(remote_files,
+                    paste0(CHAI_FTP, "/", basename(root_listed)))
+}
+
+# Deterministic fallback if directory listing is blocked
+if (!length(remote_files)) {
+  remote_files <- c(
+    paste0(CHAI_FTP, "/harmonised/", CHAI_ACC, ".h.tsv.gz"),
+    paste0(CHAI_FTP, "/", CHAI_ACC, ".h.tsv.gz"),
+    paste0(CHAI_FTP, "/", CHAI_ACC, ".tsv.gz")
+  )
+}
+
+cat("Candidate remote files:\n"); print(remote_files)
+
+chai_local <- file.path(CHAI_DIR, basename(remote_files[1]))
+
+# Accept ANY already-downloaded .tsv.gz in CHAI_DIR (lets you wget it yourself)
+existing <- list.files(CHAI_DIR, pattern = "\\.tsv\\.gz$", full.names = TRUE)
+if (length(existing)) {
+  chai_local <- existing[1]
+  cat("Using existing local file:", chai_local, "\n")
+} else {
+  options(timeout = max(7200, getOption("timeout")))
+  ok <- FALSE
+  for (u in remote_files) {
+    cat("Attempting download:", u, "\n")
+    ok <- tryCatch({
+      download.file(u, destfile = file.path(CHAI_DIR, basename(u)),
+                    mode = "wb", quiet = FALSE)
+      chai_local <- file.path(CHAI_DIR, basename(u))
+      TRUE
+    }, error = function(e) { cat("  failed:", e$message, "\n"); FALSE })
+    if (ok) break
+  }
+  if (!ok) {
+    stop(
+      "Could not download ", CHAI_ACC, ".\n",
+      "Fetch it manually into ", CHAI_DIR, " and re-render, e.g.:\n\n",
+      "  mkdir -p '", CHAI_DIR, "'\n",
+      "  curl -L -o '", CHAI_DIR, "/", CHAI_ACC, ".tsv.gz' \\\n",
+      "    '", CHAI_FTP, "/", CHAI_ACC, ".tsv.gz'\n"
+    )
+  }
+}
+
+cat("\nLocal file:", chai_local, "—",
+    round(file.size(chai_local) / 1e9, 2), "GB\n")
+```
+
+```{r chai-header-sniff}
+#| label: chai-header-sniff
+
+# Peek at the header and first rows without decompressing the whole file.
+chai_peek <- data.table::fread(
+  cmd = paste("gzip -dc", shQuote(chai_local), "| head -n 5"),
+  showProgress = FALSE
+) %>% as_tibble()
+
+cat("Columns in", basename(chai_local), ":\n")
+print(names(chai_peek))
+print(chai_peek)
+
+# Identify EVERY column whose values look like rsIDs. The harmonised
+# GCST90726625 file carries two of them — `rsid` and `rs_id` — and they do not
+# always agree (e.g. at 1:10177 A/AC, rsid = rs367896724 while
+# rs_id = rs201752861). One is the harmoniser's dbSNP assignment, the other the
+# author-submitted ID; rather than bet on which, match on both and record
+# which column produced each hit.
+rs_cols <- intersect(
+  c("rsid", "rs_id", "rsID", "RSID", "SNP", "variant_id"),
+  names(chai_peek)
+)
+rs_cols <- rs_cols[
+  map_lgl(rs_cols,
+          ~ any(str_detect(as.character(chai_peek[[.x]]), "^rs\\d+$")))
+]
+
+if (!length(rs_cols)) {
+  stop("No rsID-like column found in ", basename(chai_local),
+       ". Columns present: ", paste(names(chai_peek), collapse = ", "),
+       "\nPositional matching would require lifting the GRCh37 gene windows ",
+       "over to GRCh38 — handle that before proceeding.")
+}
+
+rs_idx <- match(rs_cols, names(chai_peek))
+cat("\nrsID-like columns:", paste0(rs_cols, " (field ", rs_idx, ")",
+                                   collapse = ", "), "\n")
+if (length(rs_cols) > 1) {
+  cat("Matching on all of them; provenance reported after extraction.\n")
+}
+```
+
+```{r chai-extract}
+#| label: chai-extract
+
+# Not cached, deliberately. knitr hashes chunk SOURCE, not the values a chunk
+# reads, so a cached version here would keep returning rows filtered against
+# whatever `chai_query_rsids` held on the first run. The relaxed NPC1L1 rsIDs
+# change the moment LD clumping starts working, and this chunk's code would
+# not change with them — a silently stale extraction. The download above stays
+# cached (that is the expensive part); rescanning the gzip costs under a
+# minute and is always consistent with the current instrument set.
+scan_started <- Sys.time()
+
+# rsIDs to pull: every primary instrument plus the relaxed NPC1L1 sets.
+# Free here — it is a local grep, not an API call.
+chai_query_rsids <- union(all_rsids, unique(instruments_npc1l1_relaxed$rsid))
+
+ids_file <- tempfile(fileext = ".txt")
+writeLines(chai_query_rsids, ids_file)
+
+# awk reads the ID list in BEGIN (no process substitution — portable to /bin/sh)
+# and keeps a row if ANY rsID-like column matches.
+match_expr <- paste(sprintf("($%d in ids)", rs_idx), collapse = " || ")
+awk_prog <- sprintf(
+  'BEGIN{while((getline l < "%s") > 0) ids[l]=1} FNR==1 || %s',
+  ids_file, match_expr
+)
+
+chai_hits <- data.table::fread(
+  cmd = paste("gzip -dc", shQuote(chai_local), "| awk", shQuote(awk_prog)),
+  showProgress = FALSE
+) %>% as_tibble()
+
+cat("Queried", length(chai_query_rsids), "rsIDs; matched",
+    nrow(chai_hits), "rows in Chai 2026 (",
+    round(100 * nrow(chai_hits) / length(chai_query_rsids), 1), "% )\n")
+cat("Full-file scan took",
+    round(as.numeric(difftime(Sys.time(), scan_started, units = "secs")), 1),
+    "s\n")
+```
+
+### Standardising the Chai 2026 Outcome
+
+```{r chai-standardise}
+#| label: chai-standardise
+
+# ── Collapse the rsID-like columns into one canonical `rsid` ────────────────
+# A row was kept because at least one of rs_cols matched an instrument. Take
+# the matching value as the join key, preferring the earlier column in rs_cols
+# when both match, and drop the originals so no rename can collide.
+match_key <- rep(NA_character_, nrow(chai_hits))
+match_src <- rep(NA_character_, nrow(chai_hits))
+
+for (cn in rs_cols) {
+  v   <- as.character(chai_hits[[cn]])
+  hit <- is.na(match_key) & !is.na(v) & v %in% chai_query_rsids
+  match_key[hit] <- v[hit]
+  match_src[hit] <- cn
+}
+
+cat("Match provenance across the", length(rs_cols), "rsID column(s):\n")
+print(table(match_src, useNA = "ifany"))
+
+# New object rather than overwriting chai_hits, so re-running this chunk
+# interactively is idempotent.
+chai_keyed <- chai_hits %>%
+  mutate(.rsid_canonical = match_key, .rsid_source = match_src) %>%
+  filter(!is.na(.rsid_canonical)) %>%
+  select(-all_of(rs_cols)) %>%
+  dplyr::rename(rsid = .rsid_canonical)
+
+# Rename whichever of the GWAS-SSF / common aliases are present. Any
+# pre-existing column that would collide with a target is parked as
+# <name>_file rather than silently dropped.
+rename_present <- function(df, mapping) {
+  present <- mapping[mapping %in% names(df)]
+  if (!length(present)) return(df)
+
+  collisions <- names(present)[names(present) %in% names(df) &
+                                 names(present) != unname(present)]
+  if (length(collisions)) {
+    message("Parking pre-existing column(s) colliding with rename targets: ",
+            paste(collisions, collapse = ", "))
+    df <- dplyr::rename_with(df, ~ paste0(.x, "_file"), all_of(collisions))
+  }
+
+  dplyr::rename(df, !!!setNames(as.list(unname(present)), names(present)))
+}
+
+chai_map <- c(
+  CHR      = "chromosome",
+  POS      = "base_pair_location",
+  ALT      = "effect_allele",
+  REF      = "other_allele",
+  beta_out = "beta",
+  se_out   = "standard_error",
+  pval_out = "p_value",
+  eaf_out  = "effect_allele_frequency"
+)
+
+chai_renamed <- rename_present(chai_keyed, chai_map)
+
+# Some depositions omit allele frequency; harmonise_alleles() only needs it for
+# the ambiguous-palindrome check, so an explicit NA column is safe.
+for (col in c("CHR", "POS", "eaf_out")) {
+  if (!col %in% names(chai_renamed)) chai_renamed[[col]] <- NA
+}
+
+stopifnot(all(c("rsid", "REF", "ALT", "beta_out", "se_out") %in%
+                names(chai_renamed)))
+
+# GWAS-SSF permits -log10(p) in place of p; reconstruct if needed.
+if (!"pval_out" %in% names(chai_renamed)) {
+  nlp <- intersect(c("neg_log_10_p_value", "log10p", "LOG10P"),
+                   names(chai_renamed))
+  chai_renamed$pval_out <- if (length(nlp)) {
+    10^(-as.numeric(chai_renamed[[nlp[1]]]))
+  } else {
+    2 * pnorm(-abs(as.numeric(chai_renamed$beta_out) /
+                     as.numeric(chai_renamed$se_out)))
+  }
+}
+
+chai_outcome_std <- chai_renamed %>%
+  mutate(
+    CHR      = suppressWarnings(as.integer(CHR)),
+    POS      = suppressWarnings(as.integer(POS)),
+    REF      = toupper(as.character(REF)),
+    ALT      = toupper(as.character(ALT)),
+    beta_out = as.numeric(beta_out),
+    se_out   = as.numeric(se_out),
+    pval_out = as.numeric(pval_out),
+    eaf_out  = as.numeric(eaf_out),
+    outcome_label   = "Heel eBMD (Chai 2026)",
+    outcome_gwas_id = CHAI_ACC
+  ) %>%
+  # Multi-allelic sites can return >1 row per rsID; keep the most significant
+  # (ranked on |z| so this works even if p is degenerate at the tail).
+  group_by(rsid) %>%
+  slice_max(abs(beta_out / se_out), n = 1, with_ties = FALSE) %>%
+  ungroup() %>%
+  select(rsid, CHR, POS, REF, ALT,
+         beta_out, se_out, pval_out, eaf_out,
+         outcome_label, outcome_gwas_id)
+
+cat("Chai 2026 outcome standardised:",
+    scales::comma(nrow(chai_outcome_std)), "unique SNPs\n")
+
+glimpse(chai_outcome_std)
 ```
 
 ---
@@ -578,13 +1168,17 @@ build_harmonised <- function(instruments_df, outcome_df, outcome_label,
 }
 ```
 
-### Run Harmonisation for All Four Outcomes
+### Run Harmonisation for All Five Outcomes
 
 ```{r harmonise-all-outcomes}
 #| label: harmonise-all-outcomes
 
 harm_heelbmd <- build_harmonised(instruments_final, opengwas_outcome_std,
                                   outcome_label = "Heel BMD (Morris 2019)",
+                                  outcome_kind  = "opengwas")
+
+harm_chai    <- build_harmonised(instruments_final, chai_outcome_std,
+                                  outcome_label = "Heel eBMD (Chai 2026)",
                                   outcome_kind  = "opengwas")
 
 harm_fembmd  <- build_harmonised(instruments_final, opengwas_outcome_std,
@@ -599,7 +1193,8 @@ harm_vitd    <- build_harmonised(instruments_final, vitd_gwas,
                                   outcome_label = "Vitamin D (MGI-BioVU)",
                                   outcome_kind  = "vitd")
 
-harm_combined <- bind_rows(harm_heelbmd, harm_fembmd, harm_frac, harm_vitd)
+harm_combined <- bind_rows(harm_heelbmd, harm_chai,
+                           harm_fembmd, harm_frac, harm_vitd)
 ```
 
 ### Coverage Comparison Across Outcomes
@@ -788,6 +1383,338 @@ mr_results %>%
   kable(caption = "Heel BMD — all methods across drug targets and exposures")
 ```
 
+---
+
+## Morris 2019 vs Chai 2026 — Is the Swap Justified?
+
+### Are the two GWAS on the same scale?
+
+Both should report effects in SD units of heel eBMD, but this is worth
+verifying rather than assuming — if Chai reports on a raw g/cm² scale, or
+uses the opposite effect-allele convention, every downstream estimate would
+be silently wrong. Regressing the harmonised Chai per-SNP effects on the
+Morris ones across the shared instruments gives a slope that should be
+**≈ 1** with a very high correlation (the samples are ~95% overlapping).
+
+```{r morris-chai-units-check}
+#| label: morris-chai-units-check
+
+units_check <- harm_heelbmd %>%
+  select(rsid, exposure_name, gene,
+         beta_morris = beta_out_h, se_morris = se_out_h) %>%
+  inner_join(
+    harm_chai %>%
+      select(rsid, exposure_name, gene,
+             beta_chai = beta_out_h, se_chai = se_out_h),
+    by = c("rsid", "exposure_name", "gene")
+  )
+
+if (nrow(units_check) >= 3) {
+  fit_units <- lm(beta_chai ~ 0 + beta_morris,
+                  data = units_check,
+                  weights = 1 / units_check$se_chai^2)
+  s_units <- summary(fit_units)
+
+  tibble(
+    `Shared SNPs`      = nrow(units_check),
+    `Slope (Chai~Morris)` = round(coef(fit_units)[["beta_morris"]], 4),
+    `Slope 95% CI`     = str_glue(
+      "({round(confint(fit_units)[1, 1], 3)}–{round(confint(fit_units)[1, 2], 3)})"
+    ),
+    `Pearson r`        = round(cor(units_check$beta_morris,
+                                   units_check$beta_chai), 4),
+    `Median |SE| ratio (Chai/Morris)` =
+      round(median(units_check$se_chai / units_check$se_morris), 4),
+    `Expected SE ratio (sqrt(N ratio))` =
+      round(sqrt(426824 / 448010), 4)
+  ) %>%
+    pivot_longer(everything(), names_to = "Check", values_to = "Value",
+                 values_transform = as.character) %>%
+    kable(caption = paste0(
+      "Scale / orientation check. Slope ≈ 1 and r ≈ 1 confirm the two ",
+      "GWAS are on the same SD scale with consistent allele orientation. ",
+      "The observed SE ratio should track the sample-size expectation."
+    ))
+} else {
+  cat("Too few shared SNPs (", nrow(units_check), ") for a units check.\n")
+}
+```
+
+```{r morris-chai-scatter}
+#| label: morris-chai-scatter
+#| fig-width: 7
+#| fig-height: 6
+
+if (nrow(units_check) >= 3) {
+  ggplot(units_check, aes(x = beta_morris, y = beta_chai)) +
+    geom_abline(slope = 1, intercept = 0,
+                linetype = "dashed", colour = "grey50") +
+    geom_errorbar(aes(ymin = beta_chai - 1.96 * se_chai,
+                      ymax = beta_chai + 1.96 * se_chai),
+                  colour = "grey75", linewidth = 0.3) +
+    geom_errorbarh(aes(xmin = beta_morris - 1.96 * se_morris,
+                       xmax = beta_morris + 1.96 * se_morris),
+                   colour = "grey75", height = 0, linewidth = 0.3) +
+    geom_point(aes(colour = gene), size = 2.5) +
+    scale_colour_manual(values = c(HMGCR  = "#00274c",
+                                   PCSK9  = "#ffcb05",
+                                   NPC1L1 = "#9a3324")) +
+    labs(
+      title    = "Per-SNP effects on heel eBMD: Morris 2019 vs Chai 2026",
+      subtitle = "Dashed line = identity; ~95% sample overlap so points should lie on it",
+      x        = "SNP effect, Morris 2019 (SD)",
+      y        = "SNP effect, Chai 2026 (SD)",
+      colour   = "Drug target"
+    ) +
+    theme_minimal(base_size = 12) +
+    theme(panel.grid.minor = element_blank())
+} else {
+  cat("Too few shared SNPs to plot.\n")
+}
+```
+
+### Instrument recovery — where the extra variant density pays off
+
+```{r morris-chai-coverage}
+#| label: morris-chai-coverage
+
+recovery <- instruments_final %>%
+  distinct(rsid, exposure_name, gene) %>%
+  mutate(
+    in_morris = rsid %in% harm_heelbmd$rsid,
+    in_chai   = rsid %in% harm_chai$rsid
+  )
+
+recovery %>%
+  group_by(exposure_name, gene) %>%
+  summarise(
+    n_instruments = n(),
+    Morris_2019   = sum(in_morris),
+    Chai_2026     = sum(in_chai),
+    `Recovered by Chai only` = sum(!in_morris & in_chai),
+    `Lost vs Morris`         = sum(in_morris & !in_chai),
+    .groups = "drop"
+  ) %>%
+  kable(caption = paste0(
+    "Harmonised instrument recovery by outcome GWAS. Positive values in ",
+    "'Recovered by Chai only' are the payoff from 21.6M vs 13.7M variants."
+  ))
+
+recovery %>%
+  filter(!in_morris & in_chai) %>%
+  arrange(gene, exposure_name) %>%
+  kable(caption = "Instruments present in Chai 2026 but missing from Morris 2019")
+```
+
+### Do the estimates actually move?
+
+```{r morris-chai-estimates}
+#| label: morris-chai-estimates
+
+heel_compare <- run_drug_target_mr(
+  harm_combined %>%
+    filter(outcome %in% c("Heel BMD (Morris 2019)", "Heel eBMD (Chai 2026)"))
+) %>%
+  filter(method %in% c("IVW-RE", "Wald ratio"))
+
+heel_compare %>%
+  mutate(
+    est = str_glue("{round(estimate, 4)} ({round(ci_lo, 3)}–{round(ci_hi, 3)})"),
+    src = if_else(str_detect(outcome, "Morris"), "Morris 2019", "Chai 2026")
+  ) %>%
+  select(exposure, gene, src, n_snps, est, p_value) %>%
+  pivot_wider(names_from = src, values_from = c(n_snps, est, p_value)) %>%
+  mutate(across(starts_with("p_value"),
+                ~ format.pval(.x, digits = 3, eps = 0.001))) %>%
+  arrange(exposure, gene) %>%
+  kable(caption = paste0(
+    "Primary MR estimates side by side. Expect near-identical point estimates ",
+    "with ~2.4% tighter CIs; the material difference is NPC1L1 availability."
+  ))
+```
+
+```{r morris-chai-forest}
+#| label: morris-chai-forest
+#| fig-width: 10
+#| fig-height: 5
+
+heel_compare %>%
+  mutate(label = str_glue("{gene}\n({exposure})")) %>%
+  ggplot(aes(x = estimate, xmin = ci_lo, xmax = ci_hi,
+             y = label, colour = outcome, shape = outcome)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(height = 0.25, position = position_dodge(width = 0.55)) +
+  geom_point(size = 3, position = position_dodge(width = 0.55)) +
+  scale_colour_manual(values = outcome_colours) +
+  scale_shape_manual(values = outcome_shapes) +
+  labs(
+    title    = "Heel eBMD drug-target MR — Morris 2019 vs Chai 2026",
+    subtitle = "Same UK Biobank phenotype; 448,010 vs 426,824 participants",
+    x        = "Change in heel eBMD (SD) per SD cholesterol increase",
+    y        = NULL, colour = "Outcome GWAS", shape = "Outcome GWAS"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank())
+```
+
+---
+
+## NPC1L1: Relaxed *cis*-Instrument Sensitivity {#npc1l1-relaxed-cis-instrument-sensitivity}
+
+Two distinct fixes for the thin NPC1L1 evidence are separated here so their
+contributions can be told apart:
+
+1. **Outcome density** — does Chai 2026 contain the strict NPC1L1 instrument
+   that Morris 2019 is missing?
+2. **Exposure selection** — does relaxing the *cis* p-value threshold to
+   `1e-6` yield enough instruments for an IVW estimate with diagnostics?
+
+```{r npc1l1-relaxed-harmonise}
+#| label: npc1l1-relaxed-harmonise
+
+npc1l1_sets <- if (nrow(instruments_npc1l1_relaxed)) {
+  distinct(instruments_npc1l1_relaxed, instrument_set) %>% pull(instrument_set)
+} else {
+  character(0)
+}
+
+harm_npc1l1_relaxed <- map_dfr(npc1l1_sets, function(set_name) {
+  instr <- instruments_npc1l1_relaxed %>% filter(instrument_set == set_name)
+
+  bind_rows(
+    build_harmonised(instr, opengwas_outcome_std,
+                     "Heel BMD (Morris 2019)", "opengwas"),
+    build_harmonised(instr, chai_outcome_std,
+                     "Heel eBMD (Chai 2026)",  "opengwas")
+  ) %>%
+    mutate(instrument_set = set_name)
+})
+
+if (nrow(harm_npc1l1_relaxed)) {
+  harm_npc1l1_relaxed %>%
+    count(instrument_set, outcome, exposure_name, name = "n_harmonised") %>%
+    pivot_wider(names_from = outcome, values_from = n_harmonised,
+                values_fill = 0L) %>%
+    kable(caption = "NPC1L1 harmonised SNP counts — relaxed sets by outcome GWAS")
+} else {
+  cat("No relaxed NPC1L1 instruments harmonised against either heel BMD GWAS.\n")
+}
+```
+
+```{r npc1l1-relaxed-mr}
+#| label: npc1l1-relaxed-mr
+
+npc1l1_relaxed_mr <- if (nrow(harm_npc1l1_relaxed) &&
+                         any(harm_npc1l1_relaxed$instrument_set ==
+                               "relaxed_indep")) {
+  run_drug_target_mr(
+    harm_npc1l1_relaxed %>% filter(instrument_set == "relaxed_indep")
+  )
+} else {
+  tibble()
+}
+
+if (nrow(npc1l1_relaxed_mr)) {
+  npc1l1_relaxed_mr %>%
+    mutate(
+      across(c(estimate, ci_lo, ci_hi), ~round(.x, 4)),
+      p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+      `95% CI` = str_glue("({ci_lo}–{ci_hi})")
+    ) %>%
+    select(outcome, exposure, method, n_snps, estimate, `95% CI`,
+           p_value, Q, Q_p, egger_int_p) %>%
+    arrange(exposure, outcome, method) %>%
+    kable(caption = paste0(
+      "NPC1L1 sensitivity — relaxed independent cis-instruments ",
+      "(p < 1e-6, r² < 0.001). Compare with the single-SNP Wald ratio ",
+      "in the primary analysis."
+    ))
+} else {
+  cat("No NPC1L1 instruments survived at p < 1e-6 with r2 < 0.001.\n")
+}
+```
+
+### Correlation-aware IVW for the `relaxed_corr` set
+
+With `r² < 0.30` the instruments are correlated, so the independence
+assumption behind the IVW standard error fails. This block uses
+`MendelianRandomization::mr_ivw(..., correl = TRUE)` with a 1000G EUR LD
+matrix from `ieugwasr::ld_matrix()`. It is skipped cleanly if either the
+package or the LD reference is unavailable.
+
+```{r npc1l1-correlated-ivw}
+#| label: npc1l1-correlated-ivw
+
+corr_ok <- requireNamespace("MendelianRandomization", quietly = TRUE)
+
+if (!corr_ok) {
+  cat("Package 'MendelianRandomization' not installed — skipping.\n",
+      "install.packages('MendelianRandomization') to enable.\n")
+} else {
+  corr_input <- if (nrow(harm_npc1l1_relaxed)) {
+    harm_npc1l1_relaxed %>% filter(instrument_set == "relaxed_corr")
+  } else {
+    tibble(outcome = character(), exposure_name = character())
+  }
+
+  corr_results <- corr_input %>%
+    group_by(outcome, exposure_name) %>%
+    group_map(~ {
+      d <- .x; key <- .y
+      if (nrow(d) < 2) return(tibble())
+
+      ld <- tryCatch(
+        ieugwasr::ld_matrix(d$rsid, pop = "EUR", with_alleles = FALSE),
+        error = function(e) { cat("  LD matrix failed:", e$message, "\n"); NULL }
+      )
+      if (is.null(ld)) return(tibble())
+
+      keep <- d$rsid %in% rownames(ld)
+      d    <- d[keep, ]
+      ld   <- ld[d$rsid, d$rsid, drop = FALSE]
+      if (nrow(d) < 2) return(tibble())
+
+      obj <- MendelianRandomization::mr_input(
+        bx = d$beta_exp,   bxse = d$se_exp,
+        by = d$beta_out_h, byse = d$se_out_h,
+        correlation = ld, snps = d$rsid
+      )
+      res <- MendelianRandomization::mr_ivw(obj, correl = TRUE)
+
+      tibble(
+        outcome  = key[["outcome"]],
+        exposure = key[["exposure_name"]],
+        n_snps   = nrow(d),
+        estimate = res$Estimate,
+        se       = res$StdError,
+        ci_lo    = res$CILower,
+        ci_hi    = res$CIUpper,
+        p_value  = res$Pvalue
+      )
+    }, .keep = TRUE) %>%
+    bind_rows()
+
+  if (nrow(corr_results)) {
+    corr_results %>%
+      mutate(
+        across(c(estimate, ci_lo, ci_hi), ~round(.x, 4)),
+        p_value  = format.pval(p_value, digits = 3, eps = 0.001),
+        `95% CI` = str_glue("({ci_lo}–{ci_hi})")
+      ) %>%
+      select(outcome, exposure, n_snps, estimate, `95% CI`, p_value) %>%
+      kable(caption = paste0(
+        "NPC1L1 — correlation-aware IVW (p < 1e-6, r² < 0.30, ",
+        "1000G EUR LD matrix)"
+      ))
+  } else {
+    cat("Correlation-aware IVW produced no estimable groups.\n")
+  }
+}
+```
+
+
+---
+
 ### Leave-One-Out Sensitivity (HMGCR for Heel BMD)
 
 The HMGCR allele score uses SNPs at `r²<0.30` so leave-one-out is the
@@ -797,10 +1724,17 @@ appropriate sensitivity check for whether any single SNP drives the result.
 #| label: leave-one-out-hmgcr
 
 loo_mr <- function(df, outcome_label, exposure_label, gene_label) {
+  # `.env$` is load-bearing, not decoration. `harm_combined` carries a column
+  # literally named `outcome_label` (it rides along from the outcome join), so
+  # a bare `filter(outcome == outcome_label)` resolves the right-hand side to
+  # that COLUMN, not to this function's argument. The comparison is then
+  # column-vs-column, always TRUE, and no filtering happens — every outcome
+  # gets pooled into one leave-one-out analysis, mixing SD-scaled BMD with
+  # fracture log-odds. `.env$` forces the argument.
   d <- df %>%
-    filter(outcome == outcome_label,
-           exposure_name == exposure_label,
-           gene == gene_label)
+    filter(outcome       == .env$outcome_label,
+           exposure_name == .env$exposure_label,
+           gene          == .env$gene_label)
 
   if (nrow(d) < 2) return(tibble())
 
@@ -827,6 +1761,7 @@ loo_mr <- function(df, outcome_label, exposure_label, gene_label) {
 }
 
 loo_outcomes <- c("Heel BMD (Morris 2019)",
+                  "Heel eBMD (Chai 2026)",
                   "Femoral neck BMD (Zheng 2015)",
                   "Fractures (Donertas 2021)",
                   "Vitamin D (MGI-BioVU)")
@@ -838,7 +1773,7 @@ loo_results <- map_dfr(loo_outcomes, function(o) {
   )
 })
 
-loo_results %>%
+loo_summary <- loo_results %>%
   group_by(outcome, exposure) %>%
   summarise(
     n_iterations = n(),
@@ -846,10 +1781,29 @@ loo_results %>%
     range_hi     = round(max(estimate), 4),
     `% iterations p<0.05` = round(100 * mean(p_value < 0.05), 0),
     .groups = "drop"
-  ) %>%
+  )
+
+# Regression guard. One leave-one-out iteration per harmonised HMGCR SNP, per
+# outcome. If the outcome filter ever silently stops working again, iteration
+# counts collapse to the same pooled number for every outcome and this fires.
+loo_expected <- harm_combined %>%
+  filter(gene == "HMGCR") %>%
+  count(outcome, exposure = exposure_name, name = "n_expected")
+
+loo_check <- loo_summary %>%
+  left_join(loo_expected, by = c("outcome", "exposure"))
+
+if (!isTRUE(all(loo_check$n_iterations == loo_check$n_expected))) {
+  print(loo_check %>% select(outcome, exposure, n_iterations, n_expected))
+  stop("Leave-one-out iteration counts do not match harmonised SNP counts — ",
+       "the per-outcome filter in loo_mr() is not working.")
+}
+
+loo_summary %>%
   kable(caption = paste0(
     "HMGCR leave-one-out IVW summary across outcomes — ",
-    "robustness across instruments"
+    "robustness across instruments. One iteration per harmonised SNP; ",
+    "counts must differ across outcomes."
   ))
 ```
 
@@ -868,12 +1822,7 @@ mr_results %>%
   filter(method %in% c("IVW-RE", "Wald ratio")) %>%
   mutate(
     label   = str_glue("{gene}\n({exposure})"),
-    outcome = factor(outcome, levels = c(
-      "Heel BMD (Morris 2019)",
-      "Femoral neck BMD (Zheng 2015)",
-      "Fractures (Donertas 2021)",
-      "Vitamin D (MGI-BioVU)"
-    ))
+    outcome = factor(outcome, levels = outcome_levels)
   ) %>%
   ggplot(aes(x = estimate, xmin = ci_lo, xmax = ci_hi,
              y = label, colour = outcome, shape = outcome)) +
@@ -882,18 +1831,8 @@ mr_results %>%
                  position = position_dodge(width = 0.7)) +
   geom_point(size = 3,
              position = position_dodge(width = 0.7)) +
-  scale_colour_manual(values = c(
-    "Heel BMD (Morris 2019)"        = "#00274c",
-    "Femoral neck BMD (Zheng 2015)" = "#5e92a8",
-    "Fractures (Donertas 2021)"     = "#ffcb05",
-    "Vitamin D (MGI-BioVU)"         = "#a0a0a0"
-  )) +
-  scale_shape_manual(values = c(
-    "Heel BMD (Morris 2019)"        = 16,
-    "Femoral neck BMD (Zheng 2015)" = 17,
-    "Fractures (Donertas 2021)"     = 15,
-    "Vitamin D (MGI-BioVU)"         = 18
-  )) +
+  scale_colour_manual(values = outcome_colours) +
+  scale_shape_manual(values = outcome_shapes) +
   facet_wrap(~exposure, ncol = 1, scales = "free_y") +
   labs(
     title    = "Drug-target MR — bone and vitamin D outcomes",
@@ -985,6 +1924,28 @@ mr_results_out %>%
 
 cat("Wrote", nrow(mr_results_out),
     "rows to 'MR Results - Drug Target BMD.csv'\n")
+
+# ── Morris vs Chai comparison and NPC1L1 sensitivity ────────────────────────
+heel_compare %>%
+  mutate(across(c(estimate, se, ci_lo, ci_hi), ~round(.x, 5)),
+         p_value = signif(p_value, 3)) %>%
+  select(outcome, exposure, gene, method, n_snps,
+         estimate, se, ci_lo, ci_hi, p_value, Q, Q_p) %>%
+  write_csv("MR Results - Heel BMD Morris vs Chai.csv")
+
+if (nrow(npc1l1_relaxed_mr)) {
+  npc1l1_relaxed_mr %>%
+    mutate(across(c(estimate, se, ci_lo, ci_hi), ~round(.x, 5)),
+           p_value = signif(p_value, 3)) %>%
+    select(outcome, exposure, gene, method, n_snps,
+           estimate, se, ci_lo, ci_hi, p_value, Q, Q_p, egger_int_p) %>%
+    write_csv("MR Results - NPC1L1 Relaxed Instruments.csv")
+}
+
+recovery %>%
+  write_csv("Instrument Recovery - Morris vs Chai.csv")
+
+cat("Wrote comparison and sensitivity CSVs\n")
 ```
 
 ---

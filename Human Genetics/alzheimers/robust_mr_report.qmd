@@ -1,0 +1,161 @@
+---
+title: "Robust univariable MR — results and diagnostics"
+subtitle: "Lean mass, fat-free mass, BMI, glycemic traits → AD (targets pipeline, pipeline/)"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: true
+    code-summary: "Show the code"
+    embed-resources: true
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+Everything here is read from `results/pipeline/`, written by the `targets` pipeline
+(`_targets.R`, settings in `pipeline/config.yml`, design in `pipeline/README.md`). Nothing is
+recomputed, so this renders in seconds and always matches the CSVs.
+
+**Design.** Main: **MR-APSS** (models correlated pleiotropy and sample overlap). Sensitivity:
+**CAUSE** (credible-interval rule). Category-2 comparison: **MRBEE** and **MR-RAPS** (assume
+InSIDE; more power), reported always and flagged unstable only on process grounds. Classical
+suite alongside. **Scales differ:** MR-APSS and CAUSE are per SD of exposure on per SD of outcome;
+the classical methods and MRBEE are per unit of each GWAS's beta (log-OR for AD).
+
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(knitr)
+
+res_dir <- "results/pipeline"
+res   <- read_csv(file.path(res_dir, "results.csv"), show_col_types = FALSE)
+# Columns added in later pipeline versions; present-but-empty if the CSV predates them.
+for (col in c("stable", "p_gamma_below_0")) if (!col %in% names(res)) res[[col]] <- NA
+assoc <- read_csv(file.path(res_dir, "associations.csv"), show_col_types = FALSE)
+ds    <- read_csv(file.path(res_dir, "datasets.csv"), show_col_types = FALSE)
+bg    <- if (file.exists(f <- file.path(res_dir, "mrapss_background.csv"))) read_csv(f, show_col_types = FALSE)
+gap   <- read_csv(file.path(res_dir, "step2_lifespan_gap_fill.csv"), show_col_types = FALSE)
+bsh   <- read_csv(file.path(res_dir, "bsh_null_checks.csv"), show_col_types = FALSE)
+
+labels <- setNames(ds$label, ds$key)
+nice <- function(x) dplyr::coalesce(labels[x], x)
+block_order <- c("exposure_to_mediator", "bmi_to_glycemic", "to_ad", "to_lifespan")
+```
+
+## Datasets
+
+```{r datasets}
+ds |>
+  transmute(key, Dataset = label, N = n, Type = type, Cohorts = cohorts,
+            `Adjusted for (collider risk)` = coalesce(adjusted_for, "—")) |>
+  kable()
+```
+
+## Main, sensitivity and category-2 estimates
+
+One row per association. **Main = MR-APSS** and **sensitivity = CAUSE** (per SD), then **MRBEE,
+MR-RAPS** and **IVW-MRE** (per unit). `†` marks a category-2 fit flagged unstable.
+
+```{r main-table, results='asis'}
+fmt <- function(b, lo, hi) ifelse(is.na(b), "", sprintf("%.3f [%.3f, %.3f]", b, lo, hi))
+wide <- res |>
+  filter(method %in% c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE")) |>
+  mutate(cell = paste0(fmt(b, ci_lo, ci_hi),
+                       ifelse(method %in% c("MR-APSS", "MRBEE", "MR-RAPS", "IVW-MRE") & !is.na(p),
+                              sprintf(" p=%.2g", p), ""),
+                       ifelse(method == "CAUSE" & !is.na(p_gamma_below_0),
+                              sprintf(" P(γ<0)=%.2f", p_gamma_below_0), ""),
+                       ifelse(!is.na(stable) & !stable, " †", ""))) |>
+  select(assoc_id, block, exposure, outcome, arm, method, cell) |>
+  pivot_wider(names_from = method, values_from = cell) |>
+  mutate(block = factor(block, block_order)) |>
+  arrange(block, exposure, outcome, arm)
+
+for (blk in intersect(block_order, unique(as.character(wide$block)))) {
+  cat("\n")
+  print(kable(wide |> filter(block == blk) |>
+                transmute(Exposure = nice(exposure), Outcome = nice(outcome), Arm = arm,
+                          across(any_of(c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE")))),
+              caption = blk))
+  cat("\n")
+}
+```
+
+## Forest plots
+
+Main and sensitivity (per SD) and the per-unit comparison methods are on separate panels, because
+their scales differ.
+
+```{r forest, fig.width=10, fig.height=11}
+res |>
+  filter(method %in% c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE"),
+         is.na(stable) | stable, block != "to_lifespan") |>
+  mutate(label = paste0(nice(exposure), " → ", nice(outcome),
+                        ifelse(arm == "slopehunter", " [SH]", "")),
+         panel = ifelse(method %in% c("MR-APSS", "CAUSE"), "Main / sensitivity (SD per SD)",
+                        "Category 2 + IVW (per unit)"),
+         method = factor(method, c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE"))) |>
+  ggplot(aes(b, label, colour = method)) +
+  geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+  geom_pointrange(aes(xmin = ci_lo, xmax = ci_hi), position = position_dodge(width = 0.7), size = 0.25) +
+  facet_wrap(~ panel, scales = "free_x") +
+  scale_colour_manual(values = c("MR-APSS" = "#ffcb05", CAUSE = "#d86018", MRBEE = "#702082",
+                                 "MR-RAPS" = "#75988d", "IVW-MRE" = "#00274c")) +
+  labs(x = "Estimate (95% CI)", y = NULL, colour = NULL) +
+  theme_minimal(base_size = 11) + theme(legend.position = "bottom")
+```
+
+## Sample overlap and genetic correlation (MR-APSS background)
+
+`C12` is the cross-trait LDSC intercept, a direct estimate of sample overlap; `rg` is the
+genetic correlation implied by the background model (the correlated-pleiotropy channel).
+
+```{r background}
+if (!is.null(bg)) bg |>
+  left_join(assoc |> select(assoc_id, overlap), by = "assoc_id") |>
+  transmute(assoc_id, `cohort overlap (config)` = overlap, C12 = round(C12, 4),
+            `overlap flag` = overlap_flag, rg = round(rg, 3)) |>
+  kable()
+```
+
+## Survival collider
+
+```{r collider}
+bsh |> mutate(across(where(is.numeric), \(x) signif(x, 3))) |> kable(caption = "b_SH identifiability and permutation null")
+gap |> mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
+  kable(caption = "Step 2's estimate-level correction: naive − b_SH × (E → lifespan), IVW-MRE")
+```
+
+## Diagnostics by association
+
+Scatter (classical instruments, method lines), funnel (single-SNP Wald ratios with the IVW-MRE
+line and pseudo-95% cone), leave-one-out (IVW-MRE), and the MR-APSS scatter on its own
+instruments. Leave-one-out tables are next to the figures as `leave_one_out.csv`.
+
+```{r diagnostics, results='asis'}
+fig_dir <- file.path(res_dir, "figures")
+figs <- c(scatter_classical = "Scatter (classical)", funnel = "Funnel",
+          leave_one_out = "Leave-one-out", scatter_mrapss = "Scatter (MR-APSS)")
+ids <- assoc |> mutate(block = factor(block, block_order)) |> arrange(block, exposure, outcome, arm)
+for (blk in levels(ids$block)) {
+  sub <- ids |> filter(block == blk)
+  if (!nrow(sub)) next
+  cat("\n### ", blk, "\n\n", sep = "")
+  for (i in seq_len(nrow(sub))) {
+    id <- sub$assoc_id[i]
+    cat("\n#### ", nice(sub$exposure[i]), " → ", nice(sub$outcome[i]),
+        if (sub$arm[i] == "slopehunter") " [SlopeHunter]" else "", "\n\n::: {.panel-tabset}\n\n", sep = "")
+    for (f in names(figs)) {
+      path <- file.path(fig_dir, id, paste0(f, ".png"))
+      if (file.exists(path)) cat("## ", figs[[f]], "\n\n![](", path, "){width=80%}\n\n", sep = "")
+    }
+    cat(":::\n\n")
+  }
+}
+```

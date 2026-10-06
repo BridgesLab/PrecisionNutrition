@@ -1,0 +1,11 @@
+key,id,label,source,file,n,type,cohorts,adjusted_for,p_from_beta
+leanmass_pei,ebi-a-GCST90000025,Appendicular lean mass (Pei 2020),opengwas_vcf,NA,450243,continuous,UKB,appendicular fat mass (Pei 2020 Methods),FALSE
+ffm_ukb,ukb-b-13354,"Whole-body fat-free mass (UKB, MRC-IEU)",opengwas_vcf,NA,454850,continuous,UKB,NA,FALSE
+glu2h_chen,ebi-a-GCST90002227,"2-h glucose (Chen 2021, EUR)",opengwas_vcf,NA,63396,continuous,MAGIC,BMI (Chen 2021 Methods),FALSE
+fg_dupuis,ieu-b-4761,Fasting glucose (Dupuis 2010) [primary FG],opengwas_vcf,NA,46186,continuous,MAGIC,NA,FALSE
+fg_manning,ebi-a-GCST005186,Fasting glucose (Manning 2012) [original analysis],opengwas_vcf,NA,58074,continuous,MAGIC,unclear: Manning 2012 fit models with and without BMI,FALSE
+t2d_xue,ebi-a-GCST006867,Type 2 diabetes (Xue 2018),opengwas_vcf,NA,655666,binary,DIAGRAM+GERA+UKB,NA,FALSE
+bmi_ukb,ukb-b-2303,"BMI (UKB, MRC-IEU)",opengwas_vcf,NA,454884,continuous,UKB,NA,FALSE
+ad_bellenguez,ebi-a-GCST90027158,AD: Bellenguez 2022 (proxy + clinical),opengwas_vcf,NA,487511,binary,EADB+UKB,NA,FALSE
+ad_kunkle,ieu-b-2,AD: Kunkle 2019 IGAP (clinical only),local_tsv,data/cache/sumstats/AD_kunkle_harmonised.tsv.gz,63926,binary,IGAP,NA,FALSE
+lifespan,ebi-a-GCST006697,Parental lifespan (Martingale residual; + = shorter life),local_tsv,data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz,389166,continuous,UKB,NA,FALSE

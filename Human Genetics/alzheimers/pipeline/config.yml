@@ -1,0 +1,186 @@
+# pipeline/config.yml — univariable robust-MR pipeline (run with targets::tar_make() from alzheimers/).
+#
+# Edit datasets / associations here; _targets.R builds every target from this file. Changing a
+# value invalidates exactly the targets that depend on it.
+
+seed: 20261004
+
+paths:
+  gwas_dir: data/cache/gwas                 # OpenGWAS VCF downloads (gitignored)
+  ld_bfile: data/cache/EUR                  # 1000G EUR plink panel (same panel OpenGWAS clumps on)
+  hapmap3: ../calcium-cholesterol/raw_data/reference/w_hm3.snplist
+  plink2: ~/bin/plink2                      # arm64 build; overridden by env PLINK2_BIN on Great Lakes
+  results_dir: results/pipeline             # CSV outputs (tracked)
+  ldscores: ../calcium-cholesterol/raw_data/reference/eur_w_ld_chr   # MR-APSS background (LDSC)
+
+qc:
+  maf_min: 0.01
+
+# ---- datasets ---------------------------------------------------------------------------------
+# cohorts: used ONLY to decide sample overlap (MRAID needs none; CAUSE models it). UKB is the
+# overlap that matters here and is verified for every dataset; smaller consortium overlaps (e.g.
+# CHARGE cohorts in both MAGIC and the AD consortia) are NOT exhaustively checked.
+# adjusted_for: heritable covariates in the GWAS model (collider risk in MR); null = none known.
+datasets:
+  leanmass_pei:
+    id: ebi-a-GCST90000025
+    label: "Appendicular lean mass (Pei 2020)"
+    source: opengwas_vcf
+    sample_size: 450243
+    type: continuous
+    cohorts: [UKB]
+    adjusted_for: "appendicular fat mass (Pei 2020 Methods)"
+  ffm_ukb:
+    id: ukb-b-13354
+    label: "Whole-body fat-free mass (UKB, MRC-IEU)"
+    source: opengwas_vcf
+    sample_size: 454850
+    type: continuous
+    cohorts: [UKB]
+    adjusted_for: null                       # MRC-IEU pipeline: sex + array (to confirm)
+  glu2h_chen:
+    id: ebi-a-GCST90002227
+    label: "2-h glucose (Chen 2021, EUR)"
+    source: opengwas_vcf
+    sample_size: 63396
+    type: continuous
+    cohorts: [MAGIC]
+    adjusted_for: "BMI (Chen 2021 Methods)"
+    # beta is raw mmol/L but p comes from the inverse-normal model (Catalog README). The file's own
+    # p is used for selection, as in the prior analyses; set true to select on beta/se instead.
+    p_from_beta: false
+  fg_dupuis:
+    id: ieu-b-4761
+    label: "Fasting glucose (Dupuis 2010) [primary FG]"
+    source: opengwas_vcf
+    sample_size: 46186
+    type: continuous
+    cohorts: [MAGIC]
+    adjusted_for: null                       # primary analysis not BMI-adjusted (Dupuis 2010)
+  fg_manning:
+    id: ebi-a-GCST005186
+    label: "Fasting glucose (Manning 2012) [original analysis]"
+    source: opengwas_vcf
+    sample_size: 58074
+    type: continuous
+    cohorts: [MAGIC]
+    adjusted_for: "unclear: Manning 2012 fit models with and without BMI"
+  t2d_xue:
+    id: ebi-a-GCST006867
+    label: "Type 2 diabetes (Xue 2018)"
+    source: opengwas_vcf
+    sample_size: 655666                                # OpenGWAS lists ncontrol = 1178, which is wrong
+    type: binary
+    cohorts: [DIAGRAM, GERA, UKB]
+    adjusted_for: null
+  bmi_ukb:
+    id: ukb-b-2303
+    label: "BMI (UKB, MRC-IEU)"
+    source: opengwas_vcf
+    sample_size: 454884
+    type: continuous
+    cohorts: [UKB]
+    adjusted_for: null
+  ad_bellenguez:
+    id: ebi-a-GCST90027158
+    label: "AD: Bellenguez 2022 (proxy + clinical)"
+    source: opengwas_vcf
+    sample_size: 487511
+    type: binary
+    cohorts: [EADB, UKB]
+    adjusted_for: null
+  ad_kunkle:
+    id: ieu-b-2
+    label: "AD: Kunkle 2019 IGAP (clinical only)"
+    source: local_tsv
+    file: data/cache/sumstats/AD_kunkle_harmonised.tsv.gz
+    sample_size: 63926
+    type: binary
+    cohorts: [IGAP]
+    adjusted_for: null
+  lifespan:
+    id: ebi-a-GCST006697
+    label: "Parental lifespan (Martingale residual; + = shorter life)"
+    source: local_tsv
+    file: data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz
+    sample_size: 389166
+    type: continuous
+    cohorts: [UKB]
+    adjusted_for: null
+
+# ---- associations -----------------------------------------------------------------------------
+# Each block is exposures x outcomes. classical_only blocks get the classical suite but no
+# MRAID/CAUSE (lifespan rows exist to fill Step 2's missing E -> lifespan term).
+associations:
+  exposure_to_mediator:
+    exposures: [leanmass_pei, ffm_ukb]
+    outcomes: [glu2h_chen, fg_dupuis, fg_manning, t2d_xue]
+  bmi_to_glycemic:                          # context for the adiposity pathway; BMI is not a mediator
+    exposures: [bmi_ukb]
+    outcomes: [glu2h_chen, fg_dupuis, fg_manning, t2d_xue]
+  to_ad:
+    exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb]
+    outcomes: [ad_bellenguez, ad_kunkle]
+  to_lifespan:
+    exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb]
+    outcomes: [lifespan]
+    classical_only: true
+
+# ---- survival-collider adjustment -------------------------------------------------------------
+# Every association into an outcome listed here gets a second, SlopeHunter-adjusted arm, but only
+# if that outcome's fit is trusted (Step 2's gate). Fits are Step 2's, not refit.
+slopehunter:
+  selection_axis: lifespan
+  fits:
+    ad_bellenguez:
+      fits_csv: smoking/results/indexevent_slopehunter_fits.csv
+      fit_set: "excl_APOE (PRIMARY)"
+      trusted: true
+      reason: "validated in the smoking pipeline; permutation null checked by this pipeline"
+    ad_kunkle:
+      fits_csv: R/fits/kunkle_lifespan_slopehunter_fits.csv
+      fit_set: "excl_APOE (PRIMARY)"
+      trusted: false
+      reason: "not identified: raw r = -0.0008, sign agreement 0.499"
+  null_permutations: 8
+
+# ---- instruments and methods ------------------------------------------------------------------
+instruments:
+  classical: {p: 5.0e-8, r2: 0.001, kb: 10000}           # prior univariable criteria
+  mraid: {p: 5.0e-8, r2_ladder: [0.5, 0.3, 0.2, 0.1], kb: 1000, cap: 10000}
+
+methods:
+  presso_nboot: 1000
+  mraid: {gibbs: 1000, burnin: 0.2}
+  cause: {n_param_variants: 1000000, prune_p: 1.0e-3, prune_r2: 0.01, prune_kb: 10000}
+
+# ---- analysis design (2026-10-05) --------------------------------------------------------------
+# MAIN: MR-APSS (category 1: correlated pleiotropy + sample overlap) for every association.
+# SENSITIVITY: CAUSE (category 1), credible interval for gamma as its decision rule.
+# Category-2 comparison: MRBEE and MR-RAPS, always reported, flagged unstable only on process grounds
+# (pipeline/R/stability.R). MRAID dropped: its fits for UKB-scale exposures (3-5k correlated
+# candidates, 1000G LD) were unreliable (effects > 1 SD/SD, opposite signs for two FG GWAS).
+# NB: kept separate from `methods:` above so editing it does not invalidate the classical targets.
+analysis:
+  main: MR-APSS
+  sensitivity: CAUSE
+  run_mraid: false
+
+mrapss:
+  iv_threshold: 5.0e-5          # MR-APSS default; winner's curse corrected by cor_selection_bias
+  clump_r2: 0.001
+  clump_kb: 1000
+  cor_selection_bias: true
+
+# ---- Great Lakes (used when env PIPELINE_PROFILE=greatlakes) -----------------------------------
+greatlakes:
+  account: davebrid0
+  partition: standard
+  workers: 8
+  memory_gb: 48
+  cpus: 4
+  time_minutes: 360
+  script_lines:
+    - "module load R gcc"
+    # plink2 from ~/bin: the cluster's plink2 modules (newest 2.00a4, Jan 2023) cannot --clump.
+    - "export PLINK2_BIN=$HOME/bin/plink2"

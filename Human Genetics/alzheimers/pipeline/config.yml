@@ -81,6 +81,14 @@ datasets:
     type: continuous
     cohorts: [UKB]
     adjusted_for: null
+  fatmass_ukb:
+    id: ukb-b-19393
+    label: "Whole-body fat mass (UKB, MRC-IEU)"
+    source: opengwas_vcf
+    sample_size: 454137
+    type: continuous
+    cohorts: [UKB]
+    adjusted_for: null
   ad_bellenguez:
     id: ebi-a-GCST90027158
     label: "AD: Bellenguez 2022 (proxy + clinical)"
@@ -115,14 +123,14 @@ associations:
   exposure_to_mediator:
     exposures: [leanmass_pei, ffm_ukb]
     outcomes: [glu2h_chen, fg_dupuis, fg_manning, t2d_xue]
-  bmi_to_glycemic:                          # context for the adiposity pathway; BMI is not a mediator
-    exposures: [bmi_ukb]
+  adiposity_to_glycemic:                    # context for the adiposity pathway; not mediators
+    exposures: [bmi_ukb, fatmass_ukb]
     outcomes: [glu2h_chen, fg_dupuis, fg_manning, t2d_xue]
   to_ad:
-    exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb]
+    exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb, fatmass_ukb]
     outcomes: [ad_bellenguez, ad_kunkle]
   to_lifespan:
-    exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb]
+    exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb, fatmass_ukb]
     outcomes: [lifespan]
     classical_only: true
 
@@ -164,7 +172,19 @@ methods:
 analysis:
   main: MR-APSS
   sensitivity: CAUSE
-  run_mraid: false
+  # MRAID as an extra sensitivity (2026-10-07), under a rule fixed before re-examining it:
+  # run only where (1) the two GWAS share no cohort (MRAID assumes independent samples) and
+  # (2) the candidate set is at most max_candidates. Its fits for lean mass / fat-free mass
+  # (3.5-5.3k correlated candidates, 1000G LD) were unreliable: effects > 1 SD/SD and opposite signs
+  # for two FG GWAS. Pairs over the cap are recorded as "not run", not dropped.
+  run_mraid: true
+  mraid_rule:
+    require_no_overlap: true
+    max_candidates: 1000
+  # Every non-classical-only pair is also run in the REVERSE direction (raw outcomes only; the
+  # SlopeHunter arm has no meaningful reverse). Reverse causation can load onto the latent
+  # confounding terms (latent.R), so both directions are needed to read them.
+  reverse_directions: true
 
 mrapss:
   iv_threshold: 5.0e-5          # MR-APSS default; winner's curse corrected by cor_selection_bias
@@ -172,11 +192,18 @@ mrapss:
   clump_kb: 1000
   cor_selection_bias: true
 
+# MR-APSS threshold sensitivity (2026-10-07): genome-wide-significant instruments only. Separates
+# "the robust model discounts the signal" from "the 5e-5 instrument set dilutes it" (e.g. 2hGlu ->
+# AD, where p < 5e-8 methods agree and p < 5e-5 / p < 1e-3 methods do not).
+mrapss_sensitivity:
+  label: "MR-APSS (p<5e-8)"
+  iv_threshold: 5.0e-8
+
 # ---- Great Lakes (used when env PIPELINE_PROFILE=greatlakes) -----------------------------------
 greatlakes:
   account: davebrid0
   partition: standard
-  workers: 8
+  workers: 16
   memory_gb: 48
   cpus: 4
   time_minutes: 360

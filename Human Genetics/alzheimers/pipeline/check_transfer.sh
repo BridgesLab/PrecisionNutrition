@@ -16,7 +16,7 @@ while read -r sum path; do
   got=$(md5sum "$path" | cut -d' ' -f1)
   if [[ "$got" == "$sum" ]]; then ok=$((ok+1)); else echo "DIFFERENT $path"; bad=$((bad+1)); fi
 done <<'MANIFEST'
-98918326f73fd810e33dc28fa74c0bf5 alzheimers/_targets.R
+61f84451076fe2ce70bf547eabf457b3 alzheimers/_targets.R
 d029145ee895f68e54719ed36b9ea68b alzheimers/smoking/results/indexevent_slopehunter_fits.csv
 ea5e00d768d3447928f16858486d9b25 alzheimers/R/fits/kunkle_lifespan_slopehunter_fits.csv
 faacc65d63e056c415d5ddea5711ad79 alzheimers/R/fit_selection_slope.R
@@ -29,23 +29,25 @@ de479e68dc868de1713178a50a38b032 alzheimers/data/cache/sumstats/AD_kunkle_harmon
 69ca4f96733ceb241cf2df5cbc945fb3 alzheimers/data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz
 99c65705dde7ea2b482f28e814c2ae40 alzheimers/pipeline/run_greatlakes.sbatch
 156817d6c5f67aa30dc727eb7f842830 alzheimers/pipeline/make_transfer_check.sh
-153142a978b26cd92eafaaa57f25ab3f alzheimers/pipeline/R/apss.R
+3ca12a4496247f4729e8ef303c7606df alzheimers/pipeline/R/apss.R
 a657296110b40ca48f2cdf30e6ee0dff alzheimers/pipeline/R/mraid.R
 c11032e59640008036209292eb5d8651 alzheimers/pipeline/R/classical.R
 1c535210875108ec8213a31d19ef8251 alzheimers/pipeline/R/plots.R
 dc42797b451e0bc2d9f000d19df33289 alzheimers/pipeline/R/instruments.R
+b70177192ffe6b0b113e69ff0680b327 alzheimers/pipeline/R/latent.R
 fcc681f75557d9a459f2e8187752f411 alzheimers/pipeline/R/fetch.R
-aad296035af4e3b47fef2f7a56fafc4e alzheimers/pipeline/R/cause.R
-ce6ebed50b55c13c1e97327c54bab439 alzheimers/pipeline/R/pipeline.R
+41e512bb5ae55ae6bab0cd513a4a1b6e alzheimers/pipeline/R/cause.R
+4ca2549387fdb6a1d1ea7037b02fc573 alzheimers/pipeline/R/pipeline.R
 260372e36d505176b1dc1aee457de774 alzheimers/pipeline/R/selection.R
 822ee1bb3ed4c4e2a2171c9afdeed7a5 alzheimers/pipeline/R/stability.R
 7915a76b9c2153c2fb852c9df9967a7e alzheimers/pipeline/R/read.R
-c298ffcdd283f859cba76dfe0b224e08 alzheimers/pipeline/README.md
-da817096fde74c1eddc58c9cef5aead1 alzheimers/pipeline/config.yml
+7a11e7604f07a3a48d3f6eba26ebc9a0 alzheimers/pipeline/README.md
+f1a79729391a61d9e75204729402458e alzheimers/pipeline/config.yml
 ad1d81ec23d9f689b93450a4c6384510 alzheimers/data/cache/gwas/ukb-b-2303.vcf.gz
 0ce87533d04ad61a3dae744cd72473b8 alzheimers/data/cache/gwas/ukb-b-13354.vcf.gz
 48362a9b48a488042d8fc0515fb405ab alzheimers/data/cache/gwas/ebi-a-GCST005186.vcf.gz
 924703828e93bd508b9c12fc4d155b90 alzheimers/data/cache/gwas/ebi-a-GCST006867.vcf.gz
+e974972d738bfb948f87649659d39840 alzheimers/data/cache/gwas/ukb-b-19393.vcf.gz
 213e85bd46c81ea3cf7399d544fcb226 alzheimers/data/cache/gwas/ebi-a-GCST90002227.vcf.gz
 25d748ae8c69f9c7dab57c211c5cb208 alzheimers/data/cache/gwas/ebi-a-GCST90000025.vcf.gz
 31e194e7390586ec7b645e213f57506c alzheimers/data/cache/gwas/ebi-a-GCST90027158.vcf.gz

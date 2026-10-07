@@ -20,10 +20,21 @@ association_table <- function(cfg, ds) {
   coh <- setNames(ds$cohorts, ds$key)
   trusted <- names(keep(cfg$slopehunter$fits, \(f) isTRUE(f$trusted)))
   life <- cfg$slopehunter$selection_axis
-  imap(cfg$associations, \(blk, block) expand_grid(exposure = blk$exposures, outcome = blk$outcomes) |>
-         mutate(block = block, classical_only = isTRUE(blk$classical_only))) |>
+  fwd <- imap(cfg$associations, \(blk, block) expand_grid(exposure = blk$exposures, outcome = blk$outcomes) |>
+                mutate(block = block, classical_only = isTRUE(blk$classical_only))) |>
     bind_rows() |>
-    filter(exposure != outcome) |>
+    filter(exposure != outcome)
+  # Reverse directions (analysis$reverse_directions): every non-classical-only pair, swapped. The
+  # reversed outcome is never a SlopeHunter-trusted AD GWAS, so these get the raw arm only.
+  rev <- if (isTRUE(cfg$analysis$reverse_directions))
+    fwd |> filter(!classical_only) |> distinct(exposure, outcome, block) |>
+      # Swap through a temporary column: transmute() evaluates in order, so a direct swap would
+      # read the already-overwritten exposure.
+      transmute(tmp = exposure, exposure = outcome, outcome = tmp, block = paste0(block, "_reverse"),
+                classical_only = FALSE) |>
+      select(-tmp) |>
+      anti_join(fwd, by = c("exposure", "outcome"))
+  bind_rows(fwd, rev) |>
     mutate(arm = map(outcome, \(o) c("raw", if (o %in% trusted) "slopehunter"))) |>
     unnest(arm) |>
     mutate(
@@ -48,6 +59,11 @@ assemble_results <- function(assoc, classical_rows, primary_rows, stability) {
            ci_lo = if ("ci_lo" %in% names(pick(everything()))) coalesce(ci_lo, b - 1.96 * se) else b - 1.96 * se,
            ci_hi = if ("ci_hi" %in% names(pick(everything()))) coalesce(ci_hi, b + 1.96 * se) else b + 1.96 * se) |>
     left_join(stability, by = c("assoc_id", "method")) |>
+    # Overlap, to filter overlap-naive methods: the configured shared cohorts (`overlap`), MR-APSS's
+    # empirical cross-trait LDSC intercept per pair, and whether each method models overlap.
+    left_join(primary_rows |> filter(method == "MR-APSS") |> select(assoc_id, overlap_C12 = any_of("apss_C12")),
+              by = "assoc_id") |>
+    mutate(method_handles_overlap = method %in% c("MR-APSS", "MR-APSS (p<5e-8)", "CAUSE", "MRBEE")) |>
     relocate(assoc_id, exposure, outcome, arm, method, is_primary, is_sensitivity, scale, b, se,
              ci_lo, ci_hi, p, n_snp) |>
     arrange(block, exposure, outcome, arm, desc(is_primary), desc(is_sensitivity), method)
@@ -87,7 +103,18 @@ analyse_classical <- function(inst_sel, g_exp, g_out, assoc_id, exposure, outcom
 }
 
 analyse_mraid <- function(inst_sel, g_out, assoc_id, exposure, outcome, arm, bim, bfile, plink2,
-                          n_exp, n_out, cfg) {
+                          n_exp, n_out, cfg, max_candidates = Inf) {
+  # Pre-specified rule (config analysis$mraid_rule): MRAID was unreliable with thousands of
+  # correlated candidates (lean mass, fat-free mass), so above the cap it is recorded as not run.
+  n_cand <- nrow(inst_sel$inst)
+  if (n_cand > max_candidates)
+    return(list(rows = bind_cols(meta_cols(assoc_id, exposure, outcome, arm),
+                                 tibble(method = "MRAID", scale = "SD(outcome) per SD(exposure)",
+                                        n_snp = as.integer(n_cand),
+                                        note = sprintf("not run: %d candidates > %d (pre-specified cap)",
+                                                       n_cand, as.integer(max_candidates)))),
+                instruments = NULL,
+                attrition = inst_sel$attrition |> mutate(association = assoc_id)))
   r <- run_mraid(inst_sel$inst, g_out, assoc_id, bim, bfile, plink2, n_exp, n_out, cfg)
   list(rows = bind_cols(meta_cols(assoc_id, exposure, outcome, arm), r$result,
                         tibble(mraid_r2_used = inst_sel$r2_used)),
@@ -102,7 +129,8 @@ analyse_cause <- function(g_exp, g_out, assoc_id, exposure, outcome, arm, hm3, n
   list(rows = bind_cols(meta_cols(assoc_id, exposure, outcome, arm), r$result),
        instruments = as_tibble(r$instruments) |> mutate(assoc_id = assoc_id, instrument_set = "cause", .before = 1),
        attrition = r$attrition, weights = r$weights |> mutate(assoc_id = assoc_id, .before = 1),
-       elpd = r$elpd |> mutate(assoc_id = assoc_id, .before = 1))
+       elpd = r$elpd |> mutate(assoc_id = assoc_id, .before = 1),
+       posterior = r$posterior)
 }
 
 # Step 2's missing term, filled: E -> lifespan (IVW-MRE, classical instruments) and the

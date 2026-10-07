@@ -14,7 +14,10 @@ Definition: [`../_targets.R`](../_targets.R). Settings: [`config.yml`](config.ym
 | **Main method** | **MR-APSS** for every association. It models correlated pleiotropy (background genetic correlation Ω) *and* sample overlap (LDSC intercepts C), so one method covers UKB-overlapping and non-overlapping pairs alike. Instruments p < 5×10⁻⁵ with the winner's-curse correction, clumped r² < 0.001 / 1 Mb. |
 | **Sensitivity** | **CAUSE**, also category 1, for every association. Its 95% credible interval for γ and P(γ < 0) are the decision rule; the ELPD test is reported alongside. |
 | **Category-2 comparison** | **MRBEE** and **MR-RAPS** (assume InSIDE; more powerful), always reported. They are flagged unstable only on process grounds (fit error, no finite SE, or RAPS's over-dispersion optimiser failing), never on their estimates. See `R/stability.R`. |
-| **Dropped** | **MRAID** (2026-10-05). Fits for UKB-scale exposures (3–5k correlated candidates, 1000G LD) were implausible: effects > 1 SD/SD, opposite signs for two FG GWAS. Re-enable with `analysis: run_mraid: true`. |
+| **Threshold sensitivity** | **MR-APSS at p < 5×10⁻⁸** (config `mrapss_sensitivity`), separating "the robust model discounts the signal" from "the 5×10⁻⁵ instrument set dilutes it". |
+| **Latent confounding** | CAUSE **q·η** (joint posterior draws) and q·η/(γ + q·η); MR-APSS **background slope Ω_xy/Ω_xx** with a 200-block jackknife interval, plus the sample-structure slope C_xy/C_xx. See `R/latent.R`, which logs the exact package object paths used. |
+| **Reverse directions** | Every non-classical-only pair is also run reversed (raw arm), because reverse causation can load onto the latent terms. |
+| **MRAID** (extra sensitivity) | Run only where (1) the two GWAS share no cohort (MRAID assumes independent samples) and (2) there are at most 1,000 candidate instruments (`analysis: mraid_rule`). Pairs over the cap appear as "not run" with the count. Reason: for lean mass and fat-free mass (3.5–5.3k correlated candidates, 1000G LD) MRAID's estimates were **unreliable**: effects > 1 SD/SD, and opposite signs for two fasting-glucose GWAS. With 25–300 candidates (glucose traits, T2D) it behaved well. |
 | **Classical suite** | IVW-MRE, IVW-FE, MR-Egger (+ intercept), weighted median, weighted mode, MR-RAPS, MR-PRESSO, MRBEE, on the classical instrument set. |
 | **Diagnostics** (every classical row) | Q, Rücker's Q′, I², I²_GX, R² (z-based), mean F, total F, Steiger (z-based R², approximate for binary traits). |
 | **Survival collider** | Outcomes whose Step 2 b_SH is trusted (Bellenguez) get a second, SlopeHunter-adjusted arm, built genome-wide as β − b_SH·β_lifespan. Kunkle is never adjusted. The Bellenguez b_SH is checked against its permutation null (`bsh_null_checks.csv`). |
@@ -59,7 +62,7 @@ biallelic SNV, valid beta/SE/p, MAF ≥ 0.01, one row per rsID.
 
 | File | Contents |
 |---|---|
-| `results.csv` | one row per association × method; `is_primary` marks the pre-specified estimate; diagnostics on classical rows |
+| `results.csv` | one row per association × method; `is_primary` marks the pre-specified estimate; diagnostics on classical rows | Columns for filtering overlap-naive methods: `overlap` (shared cohorts from the config), `overlap_C12` (MR-APSS's empirical cross-trait LDSC intercept) and `method_handles_overlap` (TRUE for MR-APSS, CAUSE, MRBEE).
 | `instruments_primary.csv` | the SNPs each association's primary method used (alleles, effects on both traits) |
 | `instrument_attrition.csv.gz` | every step from file → final set, with counts and the SNPs removed at each step |
 | `associations.csv` | association list, cohort overlap, primary method |
@@ -67,6 +70,8 @@ biallelic SNV, valid beta/SE/p, MAF ≥ 0.01, one row per rsID.
 | `step2_lifespan_gap_fill.csv`, `bsh_null_checks.csv` | survival-collider outputs above |
 | `instruments_classical.csv` | every association's classical instrument set (for custom scatter/LOO/funnel plots) |
 | `mrapss_background.csv` | MR-APSS background per association: C12 (sample overlap), rg (genetic correlation) |
+| `latent_confounding.csv` | one row per pair × method (CAUSE, MR-APSS): causal estimate, latent term with interval, fraction shared, CAUSE q / ΔELPD, MR-APSS sample-structure slope, flags |
+| `cause_posteriors.rds` | CAUSE grid posteriors (causal and sharing) per pair, so latent terms can be recomputed without re-running CAUSE |
 | `figures/<assoc_id>/` | `scatter_classical.png`, `funnel.png` (Wald ratios, IVW line, pseudo-95% cone), `leave_one_out.png` + `.csv`, `scatter_mrapss.png` |
 
 **Report:** [`../robust_mr_report.qmd`](../robust_mr_report.qmd) reads only these files: datasets, a

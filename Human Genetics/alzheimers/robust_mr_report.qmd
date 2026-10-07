@@ -36,7 +36,8 @@ library(knitr)
 res_dir <- "results/pipeline"
 res   <- read_csv(file.path(res_dir, "results.csv"), show_col_types = FALSE)
 # Columns added in later pipeline versions; present-but-empty if the CSV predates them.
-for (col in c("stable", "p_gamma_below_0")) if (!col %in% names(res)) res[[col]] <- NA
+for (col in c("stable", "p_gamma_below_0", "note", "overlap_C12", "method_handles_overlap"))
+  if (!col %in% names(res)) res[[col]] <- NA
 assoc <- read_csv(file.path(res_dir, "associations.csv"), show_col_types = FALSE)
 ds    <- read_csv(file.path(res_dir, "datasets.csv"), show_col_types = FALSE)
 bg    <- if (file.exists(f <- file.path(res_dir, "mrapss_background.csv"))) read_csv(f, show_col_types = FALSE)
@@ -45,7 +46,10 @@ bsh   <- read_csv(file.path(res_dir, "bsh_null_checks.csv"), show_col_types = FA
 
 labels <- setNames(ds$label, ds$key)
 nice <- function(x) dplyr::coalesce(labels[x], x)
-block_order <- c("exposure_to_mediator", "bmi_to_glycemic", "to_ad", "to_lifespan")
+block_order <- c("exposure_to_mediator", "adiposity_to_glycemic", "to_ad", "to_lifespan",
+                 "exposure_to_mediator_reverse", "adiposity_to_glycemic_reverse", "to_ad_reverse")
+lat <- if (file.exists(f <- file.path(res_dir, "latent_confounding.csv"))) read_csv(f, show_col_types = FALSE)
+main_methods <- c("MR-APSS", "MR-APSS (p<5e-8)", "CAUSE", "MRAID", "MRBEE", "MR-RAPS", "IVW-MRE")
 ```
 
 ## Datasets
@@ -59,15 +63,20 @@ ds |>
 
 ## Main, sensitivity and category-2 estimates
 
-One row per association. **Main = MR-APSS** and **sensitivity = CAUSE** (per SD), then **MRBEE,
-MR-RAPS** and **IVW-MRE** (per unit). `†` marks a category-2 fit flagged unstable.
+One row per association. **Main = MR-APSS** (instruments p < 5×10⁻⁵), its **threshold sensitivity
+at p < 5×10⁻⁸**, and **sensitivity = CAUSE** (all per SD); then **MRBEE, MR-RAPS** and **IVW-MRE**
+(per unit). **MRAID** (per SD) is an extra sensitivity analysis, run only where the samples
+don't overlap and there are at most 1,000 candidate instruments. Its lean mass / fat-free mass
+fits were unreliable, so those show "not run (cap)". `†` marks a category-2 fit flagged unstable. Blocks ending `_reverse` are the same pairs
+run in the opposite direction.
 
 ```{r main-table, results='asis'}
 fmt <- function(b, lo, hi) ifelse(is.na(b), "", sprintf("%.3f [%.3f, %.3f]", b, lo, hi))
 wide <- res |>
-  filter(method %in% c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE")) |>
-  mutate(cell = paste0(fmt(b, ci_lo, ci_hi),
-                       ifelse(method %in% c("MR-APSS", "MRBEE", "MR-RAPS", "IVW-MRE") & !is.na(p),
+  filter(method %in% main_methods) |>
+  mutate(cell = paste0(ifelse(!is.na(note) & grepl("^not run", note) & method == "MRAID", "not run (cap)",
+                              fmt(b, ci_lo, ci_hi)),
+                       ifelse(method != "CAUSE" & !is.na(p),
                               sprintf(" p=%.2g", p), ""),
                        ifelse(method == "CAUSE" & !is.na(p_gamma_below_0),
                               sprintf(" P(γ<0)=%.2f", p_gamma_below_0), ""),
@@ -81,7 +90,7 @@ for (blk in intersect(block_order, unique(as.character(wide$block)))) {
   cat("\n")
   print(kable(wide |> filter(block == blk) |>
                 transmute(Exposure = nice(exposure), Outcome = nice(outcome), Arm = arm,
-                          across(any_of(c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE")))),
+                          across(any_of(main_methods))),
               caption = blk))
   cat("\n")
 }
@@ -94,21 +103,74 @@ their scales differ.
 
 ```{r forest, fig.width=10, fig.height=11}
 res |>
-  filter(method %in% c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE"),
-         is.na(stable) | stable, block != "to_lifespan") |>
+  filter(method %in% main_methods, is.na(stable) | stable,
+         block %in% c("exposure_to_mediator", "adiposity_to_glycemic", "to_ad")) |>
   mutate(label = paste0(nice(exposure), " → ", nice(outcome),
                         ifelse(arm == "slopehunter", " [SH]", "")),
-         panel = ifelse(method %in% c("MR-APSS", "CAUSE"), "Main / sensitivity (SD per SD)",
-                        "Category 2 + IVW (per unit)"),
-         method = factor(method, c("MR-APSS", "CAUSE", "MRBEE", "MR-RAPS", "IVW-MRE"))) |>
+         panel = ifelse(method %in% c("MR-APSS", "MR-APSS (p<5e-8)", "CAUSE"),
+                        "Main / sensitivity (SD per SD)", "Category 2 + IVW (per unit)"),
+         method = factor(method, main_methods)) |>
   ggplot(aes(b, label, colour = method)) +
   geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
   geom_pointrange(aes(xmin = ci_lo, xmax = ci_hi), position = position_dodge(width = 0.7), size = 0.25) +
   facet_wrap(~ panel, scales = "free_x") +
-  scale_colour_manual(values = c("MR-APSS" = "#ffcb05", CAUSE = "#d86018", MRBEE = "#702082",
+  scale_colour_manual(values = c("MR-APSS" = "#ffcb05", "MR-APSS (p<5e-8)" = "#989c97",
+                                 CAUSE = "#d86018", MRBEE = "#702082",
                                  "MR-RAPS" = "#75988d", "IVW-MRE" = "#00274c")) +
   labs(x = "Estimate (95% CI)", y = NULL, colour = NULL) +
   theme_minimal(base_size = 11) + theme(legend.position = "bottom")
+```
+
+## Latent residual heritable confounding
+
+For each pair, a latent term for **all heritable shared factors** acting on both traits,
+next to the causal estimate (`latent_confounding.csv`). It is not a named confounder: explicit
+confounders are handled separately through MVMR triads. Purely environmental confounding does not
+bias MR and is not part of it. All values are per SD of exposure on per SD of outcome.
+
+- **CAUSE q·η** (latent shared-factor slope, from the joint posterior of γ, η, q under the causal
+  model) is the **cleaner** estimate. `frac_shared` = q·η / (γ + q·η) is the share of the naive
+  slope due to shared factors. It is withheld when its denominator's interval spans 0, and flagged
+  unreliable when q > 0.5.
+- **MR-APSS background slope** Ω_xy/Ω_xx (block-jackknife interval) is **broader, likely an upper
+  bound**: it includes residual heritable confounding but may also include causal signal carried
+  by non-instrument SNPs. Sample overlap and stratification are reported separately (sample-structure
+  slope, C_xy/C_xx on the β scale) and are not counted as confounding.
+- **Reverse causation can load onto the latent term**, so each pair is shown in both directions.
+- When an explicit confounder is modelled via MVMR, re-running CAUSE / MR-APSS and seeing how much
+  q·η or the background slope shrinks approximates how much of the latent term it explains.
+
+```{r latent, results='asis'}
+if (is.null(lat)) {
+  cat("_latent_confounding.csv not found: run the pipeline (CAUSE on Great Lakes) first._\n")
+} else {
+  ci3 <- function(e, l, h) ifelse(is.na(e), "", sprintf("%.3f [%.3f, %.3f]", e, l, h))
+  tab <- lat |>
+    left_join(assoc |> select(pair_id = assoc_id, block, exposure, outcome, arm), by = "pair_id") |>
+    mutate(direction = ifelse(grepl("_reverse$", block), "reverse", "forward"),
+           pair = paste(nice(pmin(exposure, outcome)), "↔", nice(pmax(exposure, outcome))),
+           causal = ci3(causal_est, causal_lo, causal_hi),
+           latent = ci3(latent_conf_est, latent_conf_lo, latent_conf_hi),
+           `frac shared` = ci3(frac_shared_est, frac_shared_lo, frac_shared_hi),
+           `q (causal / sharing)` = ifelse(is.na(cause_q), "", sprintf("%.2f / %.2f", cause_q, cause_q_sharing)),
+           `ΔELPD (SE)` = ifelse(is.na(cause_delta_elpd), "", sprintf("%.2f (%.2f)", cause_delta_elpd, cause_delta_elpd_se)),
+           `sample-structure slope` = ifelse(is.na(apss_sample_structure_slope), "", sprintf("%.4f", apss_sample_structure_slope))) |>
+    arrange(pair, arm, method, direction)
+  for (m in c("CAUSE", "MR-APSS")) {
+    cat("\n")
+    print(kable(tab |> filter(method == m) |>
+                  transmute(Exposure = nice(exposure), Outcome = nice(outcome), Arm = arm, Direction = direction,
+                            Causal = causal, `Latent term` = latent,
+                            !!!(if (m == "CAUSE") list(`Frac shared` = quote(`frac shared`),
+                                                     `q (causal / sharing)` = quote(`q (causal / sharing)`),
+                                                     `ΔELPD (SE)` = quote(`ΔELPD (SE)`))
+                                else list(`Sample-structure slope` = quote(`sample-structure slope`))),
+                            Flags = flags),
+                caption = if (m == "CAUSE") "CAUSE: q·η (latent shared-factor slope)"
+                          else "MR-APSS: background (non-foreground) slope Ω_xy/Ω_xx"))
+    cat("\n")
+  }
+}
 ```
 
 ## Sample overlap and genetic correlation (MR-APSS background)

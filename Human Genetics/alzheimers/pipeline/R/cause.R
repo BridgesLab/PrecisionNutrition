@@ -52,10 +52,15 @@ run_cause <- function(g_exp, g_out, key, hm3, n_exp, n_out, bfile, plink2, cfg, 
                 cause_eta_median = td$eta_med, cause_q_median = td$q_med,
                 elpd_sharing_vs_causal = td$delta_elpd, elpd_se = td$se_delta_elpd,
                 elpd_p = td$pval)
+  # Latent confounding (pipeline/R/latent.R): q*eta and q*eta/(gamma + q*eta) per joint posterior
+  # draw. The grid posteriors are kept so this never needs another CAUSE run.
+  post <- list(causal = fit$causal$joint_post, sharing = fit$sharing$joint_post)
+  res <- bind_cols(res, cause_latent(post$causal, post$sharing, as.data.frame(fit$elpd), seed = seed))
   inst <- as.data.table(X)[snp %chin% top, .(SNP = snp, effect_allele = A1, other_allele = A2,
                                              beta_exposure = beta_hat_1, se_exposure = seb1,
                                              p_exposure = pval1, beta_outcome = beta_hat_2,
                                              se_outcome = seb2)]
   list(result = res, instruments = inst, attrition = att,
-       weights = cause_model_weights_boot(as.data.frame(fit$elpd)), elpd = as.data.frame(fit$elpd))
+       weights = cause_model_weights_boot(as.data.frame(fit$elpd)), elpd = as.data.frame(fit$elpd),
+       posterior = post)
 }

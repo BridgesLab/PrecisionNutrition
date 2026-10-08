@@ -147,8 +147,17 @@ mass → Bellenguez −0.099 log-OR [−0.144, −0.056]). But **every arm fails
 conditional-F gate for the mediator** (F ≈ 1.7–2.0 against > 10), so M → Y | X is unidentified, the
 indirect effect is **not estimable**, and no proportion is reported (equivalence: inconclusive).
 Reasons: 2hGlu has only 14 instruments (N = 63k), and the pooled re-clumping kept just 4 of them,
-because the far stronger lean-mass p-values win every LD conflict. Mediator-priority clumping and
-larger mediator instrument sets (lower threshold, T2D-derived) are the next step.
+because the far stronger lean-mass p-values win every LD conflict.
+
+**Re-run with mediator-priority clumping** (same day; `MV_CLUMP_PRIORITY = "mediator"`, rationale in
+`mr_mediation.qmd`): all 14 2hGlu instruments kept (lean mass loses 22 of ~576, fat-free mass 13).
+Mediator conditional F rose from 1.7–2.0 to **2.4–2.6**, still far below 10, so every arm still
+fails the gate. Fourteen informative SNPs among ~520 are diluted however they are clumped. One arm
+(lean mass → Bellenguez, SlopeHunter) shows an indirect interval excluding 0 (−0.012
+[−0.024, −0.002]); with F ≈ 2.6 that is weak-instrument-biased and **not interpreted**. Kunkle gives
+≈ 0 with the opposite sign. Only a larger mediator instrument set can help: a lower 2hGlu threshold
+(39 instruments at 5×10⁻⁶, 132 at 5×10⁻⁵) with multivariable MRBEE, or T2D-derived instruments
+(118, of which 46 are nominally associated with 2hGlu).
 
 Mediation through 2 h glucose is neither supported nor ruled out. The decisive missing piece is a
 BMI-**unadjusted** 2hGlu GWAS. With it, BMI → 2hGlu should turn positive (a built-in check the

@@ -127,7 +127,10 @@ window.Quarto = {
   <li><a href="#selection-slope-monte-carlo-and-gates" id="toc-selection-slope-monte-carlo-and-gates" class="nav-link" data-scroll-target="#selection-slope-monte-carlo-and-gates">Selection slope, Monte Carlo and gates</a></li>
   </ul></li>
   <li><a href="#data-checks" id="toc-data-checks" class="nav-link" data-scroll-target="#data-checks">Dataset checks</a></li>
-  <li><a href="#instruments" id="toc-instruments" class="nav-link" data-scroll-target="#instruments">Instruments</a></li>
+  <li><a href="#instruments" id="toc-instruments" class="nav-link" data-scroll-target="#instruments">Instruments</a>
+  <ul class="collapse">
+  <li><a href="#mediator-priority" id="toc-mediator-priority" class="nav-link" data-scroll-target="#mediator-priority">Why the mediator’s instruments get priority</a></li>
+  </ul></li>
   <li><a href="#outcome-tables-built-once-per-outcome" id="toc-outcome-tables-built-once-per-outcome" class="nav-link" data-scroll-target="#outcome-tables-built-once-per-outcome">Outcome tables (built once per outcome)</a></li>
   <li><a href="#selection-slope-b_sh" id="toc-selection-slope-b_sh" class="nav-link" data-scroll-target="#selection-slope-b_sh">Selection slope b_SH</a></li>
   <li><a href="#estimation" id="toc-estimation" class="nav-link" data-scroll-target="#estimation">Estimation</a></li>
@@ -359,7 +362,13 @@ Warning
 <span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># chosen before the indirect effect is seen.</span></span>
 <span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>ALLOW_UNSET_EQUIV_BOUND <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
 <span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="st">"data/cache/mediation"</span>   <span class="co"># gitignored with the rest of data/cache</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="st">"data/cache/mediation"</span>   <span class="co"># gitignored with the rest of data/cache</span></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Which instrument wins when an X and an M instrument are in LD during the MVMR re-clump.</span></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># "mediator" (default since 2026-10-08): the M instrument always wins. "pooled": the smaller</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># p-value wins, i.e. TwoSampleMR::mv_extract_exposures() unmodified (the original spec).</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Why: see "Why the mediator's instruments get priority" under Instruments.</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>MV_CLUMP_PRIORITY <span class="ot">&lt;-</span> <span class="st">"mediator"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p><code>common_snp_set = TRUE</code> means the <strong>raw</strong> arm also drops SNPs that have no lifespan association. Raw and SlopeHunter-adjusted estimates then share an identical SNP set, so the difference between them reflects the adjustment alone and not a change in instruments. With <code>FALSE</code>, the raw arm reproduces the prior univariable instrument set exactly.</p>
@@ -575,7 +584,33 @@ Warning
 <section id="instruments" class="level2">
 <h2 class="anchored" data-anchor-id="instruments">Instruments</h2>
 <p>Selection reuses the prior univariable pipeline exactly: p &lt; 5×10⁻⁸, clumping at r² &lt; 0.001 within 10 Mb on the OpenGWAS 1000G-EUR LD server, harmonisation <code>action = 2</code> (palindromes inferred from allele frequency, ambiguous ones dropped), LD proxies at r² ≥ 0.8 (TwoSampleMR defaults), and <strong>no</strong> F-statistic filter. The relaxed drug-target criteria (<code>smoking/config.yml: cis_drugtarget</code>) are not used. Any per-triad change goes through <code>inst_override</code> and is written to the deviation log.</p>
-<p>The MVMR instrument set is the union of X and M instruments, re-clumped with the same parameters and extracted for both traits (<code>TwoSampleMR::mv_extract_exposures</code>).</p>
+<p>The MVMR instrument set is the union of X and M instruments, re-clumped with the same parameters and extracted for both traits. <strong>When an X instrument and an M instrument are in LD, the M instrument is kept</strong> (<code>MV_CLUMP_PRIORITY = "mediator"</code>). This is a deliberate deviation from the original spec, explained next.</p>
+<section id="mediator-priority" class="level3">
+<h3 class="anchored" data-anchor-id="mediator-priority">Why the mediator’s instruments get priority</h3>
+<p>The spec asked for the union of X and M instruments re-clumped as one set (<code>TwoSampleMR::mv_extract_exposures</code>). In a clump, the SNP with the smaller p-value wins each LD conflict. That rule assumes the two traits’ GWAS have comparable power, and here they don’t:</p>
+<table class="caption-top table">
+<thead>
+<tr class="header">
+<th></th>
+<th>Lean mass (Pei 2020)</th>
+<th>2 h glucose (Chen 2021)</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>GWAS N</td>
+<td>450,243</td>
+<td>63,396</td>
+</tr>
+<tr class="even">
+<td>Genome-wide-significant instruments</td>
+<td>687</td>
+<td>14</td>
+</tr>
+</tbody>
+</table>
+<p>Lean-mass p-values are orders of magnitude smaller, so in the first run (2026-10-08, commit <code>df2718c</code>) pooled re-clumping <strong>kept only 4 of the 14 2hGlu instruments</strong>. Each 2hGlu SNP within 10 Mb of a lean-mass SNP with r² &gt; 0.001 was replaced by that lean-mass SNP, which has little or no effect on 2hGlu (only 2 of the 551 lean-mass instruments found in the 2hGlu GWAS reach p &lt; 5×10⁻⁸ for 2hGlu). The mediator’s conditional F fell to <strong>1.7–2.0</strong> (gate: &gt; 10), so M → Y | X was unidentified and the indirect effect not estimable in any arm.</p>
+<p>Giving the mediator priority keeps all of its instruments and drops only the lean-mass SNPs that conflict with them. Lean mass loses a handful of its ~700 instruments; the mediator keeps its whole set. Nothing else changes: same thresholds, LD panel, r²/kb and harmonisation. The SNPs dropped either way are in the instrument log (<code>mvmr_reclump</code>), and the table below shows the instrument counts under both rules. This does not by itself guarantee the gate is met: conditional F is computed over all ~580 MVMR SNPs, and 14 informative ones are diluted by the rest. The point is not to throw away the mediator’s information before the model sees it.</p>
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
@@ -594,42 +629,54 @@ Warning
 <span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>  }</span>
 <span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>  x_inst <span class="ot">&lt;-</span> <span class="fu">need</span>(<span class="fu">pull_instruments</span>(x, par, CACHE_DIR), <span class="fu">paste</span>(<span class="st">"instruments for"</span>, x))</span>
 <span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  m_inst <span class="ot">&lt;-</span> <span class="fu">need</span>(<span class="fu">pull_instruments</span>(m, par, CACHE_DIR), <span class="fu">paste</span>(<span class="st">"instruments for"</span>, m))</span>
-<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  mv_exp <span class="ot">&lt;-</span> <span class="fu">need</span>(<span class="fu">pull_mv_exposures</span>(x, m, par, CACHE_DIR), <span class="st">"mv_extract_exposures (re-clump X u M)"</span>)</span>
-<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">x_id =</span> x, <span class="at">m_id =</span> m, <span class="at">x_inst =</span> x_inst, <span class="at">m_inst =</span> m_inst, <span class="at">mv_exp =</span> mv_exp,</span>
-<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>       <span class="at">x_in_m =</span> <span class="fu">pull_snps</span>(x_inst<span class="sc">$</span>SNP, m, par, CACHE_DIR),</span>
-<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>       <span class="at">m_in_x =</span> <span class="fu">pull_snps</span>(m_inst<span class="sc">$</span>SNP, x, par, CACHE_DIR))</span>
-<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>}</span>
-<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>pulls <span class="ot">&lt;-</span> par_tbl <span class="sc">|&gt;</span></span>
-<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pulls =</span> <span class="fu">pmap</span>(<span class="fu">list</span>(triad_id, exposure_id, mediator_id, rp), pull_triad))</span>
-<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>pulls_by_triad <span class="ot">&lt;-</span> <span class="fu">setNames</span>(pulls<span class="sc">$</span>pulls, pulls<span class="sc">$</span>triad_id)</span>
-<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>par_by_triad   <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">map</span>(pulls<span class="sc">$</span>rp, <span class="st">"par"</span>), pulls<span class="sc">$</span>triad_id)</span>
-<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>instrument_log <span class="ot">&lt;-</span> <span class="fu">list_rbind</span>(<span class="fu">map</span>(pulls<span class="sc">$</span>rp, <span class="st">"log"</span>))</span>
-<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>pulls <span class="sc">|&gt;</span></span>
-<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(triad_id,</span>
-<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_X =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">nrow</span>(p<span class="sc">$</span>x_inst)),</span>
-<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_M =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">nrow</span>(p<span class="sc">$</span>m_inst)),</span>
-<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>            <span class="at">union_before_reclump =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">length</span>(<span class="fu">union</span>(p<span class="sc">$</span>x_inst<span class="sc">$</span>SNP, p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP))),</span>
-<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>            <span class="at">mvmr_after_reclump =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">n_distinct</span>(p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP)),</span>
-<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>            <span class="at">X_in_M_gwas =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">n_distinct</span>(p<span class="sc">$</span>x_in_m<span class="sc">$</span>SNP)),</span>
-<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>            <span class="at">mean_F_X =</span> <span class="fu">map_dbl</span>(pulls, \(p) <span class="fu">mean</span>((p<span class="sc">$</span>x_inst<span class="sc">$</span>beta.exposure <span class="sc">/</span> p<span class="sc">$</span>x_inst<span class="sc">$</span>se.exposure)<span class="sc">^</span><span class="dv">2</span>)),</span>
-<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>            <span class="at">mean_F_M =</span> <span class="fu">map_dbl</span>(pulls, \(p) <span class="fu">mean</span>((p<span class="sc">$</span>m_inst<span class="sc">$</span>beta.exposure <span class="sc">/</span> p<span class="sc">$</span>m_inst<span class="sc">$</span>se.exposure)<span class="sc">^</span><span class="dv">2</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.double), \(x) <span class="fu">round</span>(x, <span class="dv">1</span>))) <span class="sc">|&gt;</span></span>
-<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Instrument counts per triad."</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Both rules are pulled so the table can show what the choice changed; estimation uses</span></span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  <span class="co"># MV_CLUMP_PRIORITY. The pooled set is the original spec's (cached from the first run).</span></span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  mv_pooled <span class="ot">&lt;-</span> <span class="fu">need</span>(<span class="fu">pull_mv_exposures</span>(x, m, par, CACHE_DIR, <span class="st">"pooled"</span>), <span class="st">"MVMR re-clump (pooled)"</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  mv_exp <span class="ot">&lt;-</span> <span class="cf">if</span> (MV_CLUMP_PRIORITY <span class="sc">==</span> <span class="st">"pooled"</span>) mv_pooled <span class="cf">else</span></span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">need</span>(<span class="fu">pull_mv_exposures</span>(x, m, par, CACHE_DIR, MV_CLUMP_PRIORITY), <span class="st">"MVMR re-clump (mediator priority)"</span>)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">x_id =</span> x, <span class="at">m_id =</span> m, <span class="at">x_inst =</span> x_inst, <span class="at">m_inst =</span> m_inst, <span class="at">mv_exp =</span> mv_exp, <span class="at">mv_pooled =</span> mv_pooled,</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a>       <span class="at">x_in_m =</span> <span class="fu">pull_snps</span>(x_inst<span class="sc">$</span>SNP, m, par, CACHE_DIR),</span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a>       <span class="at">m_in_x =</span> <span class="fu">pull_snps</span>(m_inst<span class="sc">$</span>SNP, x, par, CACHE_DIR))</span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>pulls <span class="ot">&lt;-</span> par_tbl <span class="sc">|&gt;</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">pulls =</span> <span class="fu">pmap</span>(<span class="fu">list</span>(triad_id, exposure_id, mediator_id, rp), pull_triad))</span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a>pulls_by_triad <span class="ot">&lt;-</span> <span class="fu">setNames</span>(pulls<span class="sc">$</span>pulls, pulls<span class="sc">$</span>triad_id)</span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>par_by_triad   <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="fu">map</span>(pulls<span class="sc">$</span>rp, <span class="st">"par"</span>), pulls<span class="sc">$</span>triad_id)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a>instrument_log <span class="ot">&lt;-</span> <span class="fu">list_rbind</span>(<span class="fu">map</span>(pulls<span class="sc">$</span>rp, <span class="st">"log"</span>))</span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>pulls <span class="sc">|&gt;</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>  <span class="fu">transmute</span>(triad_id,</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_X =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">nrow</span>(p<span class="sc">$</span>x_inst)),</span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>            <span class="at">n_M =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">nrow</span>(p<span class="sc">$</span>m_inst)),</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a>            <span class="at">union_before_reclump =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">length</span>(<span class="fu">union</span>(p<span class="sc">$</span>x_inst<span class="sc">$</span>SNP, p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP))),</span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a>            <span class="at">mvmr_after_reclump =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">n_distinct</span>(p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP)),</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a>            <span class="at">M_kept_pooled =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">sum</span>(<span class="fu">unique</span>(p<span class="sc">$</span>mv_pooled<span class="sc">$</span>SNP) <span class="sc">%in%</span> p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP)),</span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a>            <span class="at">M_kept_used =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">sum</span>(<span class="fu">unique</span>(p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP) <span class="sc">%in%</span> p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP)),</span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>            <span class="at">X_kept_used =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">sum</span>(<span class="fu">unique</span>(p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP) <span class="sc">%in%</span> p<span class="sc">$</span>x_inst<span class="sc">$</span>SNP)),</span>
+<span id="cb9-41"><a href="#cb9-41" aria-hidden="true" tabindex="-1"></a>            <span class="at">X_in_M_gwas =</span> <span class="fu">map_int</span>(pulls, \(p) <span class="fu">n_distinct</span>(p<span class="sc">$</span>x_in_m<span class="sc">$</span>SNP)),</span>
+<span id="cb9-42"><a href="#cb9-42" aria-hidden="true" tabindex="-1"></a>            <span class="at">mean_F_X =</span> <span class="fu">map_dbl</span>(pulls, \(p) <span class="fu">mean</span>((p<span class="sc">$</span>x_inst<span class="sc">$</span>beta.exposure <span class="sc">/</span> p<span class="sc">$</span>x_inst<span class="sc">$</span>se.exposure)<span class="sc">^</span><span class="dv">2</span>)),</span>
+<span id="cb9-43"><a href="#cb9-43" aria-hidden="true" tabindex="-1"></a>            <span class="at">mean_F_M =</span> <span class="fu">map_dbl</span>(pulls, \(p) <span class="fu">mean</span>((p<span class="sc">$</span>m_inst<span class="sc">$</span>beta.exposure <span class="sc">/</span> p<span class="sc">$</span>m_inst<span class="sc">$</span>se.exposure)<span class="sc">^</span><span class="dv">2</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb9-44"><a href="#cb9-44" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.double), \(x) <span class="fu">round</span>(x, <span class="dv">1</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb9-45"><a href="#cb9-45" aria-hidden="true" tabindex="-1"></a>  knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="at">caption =</span> <span class="fu">paste0</span>(<span class="st">"Instrument counts per triad. M_kept_pooled / M_kept_used: mediator "</span>,</span>
+<span id="cb9-46"><a href="#cb9-46" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"instruments surviving the MVMR re-clump under the original pooled rule / "</span>,</span>
+<span id="cb9-47"><a href="#cb9-47" aria-hidden="true" tabindex="-1"></a>                                <span class="st">"under the rule used (MV_CLUMP_PRIORITY = </span><span class="sc">\"</span><span class="st">"</span>, MV_CLUMP_PRIORITY, <span class="st">"</span><span class="sc">\"</span><span class="st">)."</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <table class="caption-top table table-sm table-striped small">
-<caption>Instrument counts per triad.</caption>
+<caption>Instrument counts per triad. M_kept_pooled / M_kept_used: mediator instruments surviving the MVMR re-clump under the original pooled rule / under the rule used (MV_CLUMP_PRIORITY = “mediator”).</caption>
 <colgroup>
+<col style="width: 11%">
+<col style="width: 3%">
+<col style="width: 3%">
 <col style="width: 16%">
-<col style="width: 4%">
-<col style="width: 4%">
-<col style="width: 22%">
-<col style="width: 20%">
-<col style="width: 12%">
+<col style="width: 14%">
+<col style="width: 10%">
 <col style="width: 9%">
 <col style="width: 9%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -638,6 +685,9 @@ Warning
 <th style="text-align: right;">n_M</th>
 <th style="text-align: right;">union_before_reclump</th>
 <th style="text-align: right;">mvmr_after_reclump</th>
+<th style="text-align: right;">M_kept_pooled</th>
+<th style="text-align: right;">M_kept_used</th>
+<th style="text-align: right;">X_kept_used</th>
 <th style="text-align: right;">X_in_M_gwas</th>
 <th style="text-align: right;">mean_F_X</th>
 <th style="text-align: right;">mean_F_M</th>
@@ -649,7 +699,10 @@ Warning
 <td style="text-align: right;">687</td>
 <td style="text-align: right;">14</td>
 <td style="text-align: right;">700</td>
-<td style="text-align: right;">579</td>
+<td style="text-align: right;">567</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">554</td>
 <td style="text-align: right;">645</td>
 <td style="text-align: right;">97.0</td>
 <td style="text-align: right;">56.6</td>
@@ -659,7 +712,10 @@ Warning
 <td style="text-align: right;">553</td>
 <td style="text-align: right;">14</td>
 <td style="text-align: right;">566</td>
-<td style="text-align: right;">502</td>
+<td style="text-align: right;">496</td>
+<td style="text-align: right;">7</td>
+<td style="text-align: right;">14</td>
+<td style="text-align: right;">483</td>
 <td style="text-align: right;">551</td>
 <td style="text-align: right;">84.5</td>
 <td style="text-align: right;">56.6</td>
@@ -669,11 +725,19 @@ Warning
 </div>
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Log the SNPs lost at re-clumping (union -&gt; MVMR set).</span></span>
-<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>instrument_log <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(instrument_log, <span class="fu">imap</span>(pulls_by_triad, \(p, t)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Log the SNPs lost at re-clumping (union -&gt; MVMR set), and the deviation from the spec's rule.</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>instrument_log <span class="ot">&lt;-</span> <span class="fu">bind_rows</span>(instrument_log, <span class="fu">imap</span>(pulls_by_triad, \(p, t) <span class="fu">bind_rows</span>(</span>
 <span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">log_row</span>(t, <span class="cn">NA</span>, <span class="st">"mvmr_reclump"</span>, <span class="st">"dropped"</span>,</span>
-<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>          <span class="st">"X or M instruments removed by re-clumping the union (or missing in the other trait)"</span>,</span>
-<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>          <span class="fu">setdiff</span>(<span class="fu">union</span>(p<span class="sc">$</span>x_inst<span class="sc">$</span>SNP, p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP), p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP))) <span class="sc">|&gt;</span> <span class="fu">bind_rows</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a>          <span class="fu">paste0</span>(<span class="st">"X or M instruments removed by re-clumping the union (rule: "</span>, MV_CLUMP_PRIORITY,</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>                 <span class="st">") or missing in the other trait"</span>),</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>          <span class="fu">setdiff</span>(<span class="fu">union</span>(p<span class="sc">$</span>x_inst<span class="sc">$</span>SNP, p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP), p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP)),</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (MV_CLUMP_PRIORITY <span class="sc">!=</span> <span class="st">"pooled"</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="fu">log_row</span>(t, <span class="cn">NA</span>, <span class="st">"mvmr_reclump"</span>, <span class="st">"deviation"</span>,</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>            <span class="fu">paste0</span>(<span class="st">"MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p "</span>,</span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"wins). Pooled rule would have kept "</span>, <span class="fu">sum</span>(<span class="fu">unique</span>(p<span class="sc">$</span>mv_pooled<span class="sc">$</span>SNP) <span class="sc">%in%</span> p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP),</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>                   <span class="st">" of "</span>, <span class="fu">nrow</span>(p<span class="sc">$</span>m_inst), <span class="st">" mediator instruments; this rule keeps "</span>,</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>                   <span class="fu">sum</span>(<span class="fu">unique</span>(p<span class="sc">$</span>mv_exp<span class="sc">$</span>SNP) <span class="sc">%in%</span> p<span class="sc">$</span>m_inst<span class="sc">$</span>SNP), <span class="st">". See section 'Why the mediator's "</span>,</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>                   <span class="st">"instruments get priority'."</span>)))) <span class="sc">|&gt;</span> <span class="fu">bind_rows</span>())</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p>The 2hGlu file reports a raw-scale beta with an inverse-normal-model p-value. This shows how far the reported p-values diverge from the ones implied by beta/se among the selected instruments (the same class of mislabelling <code>read_gwas()</code> in the calcium arm checks for).</p>
@@ -742,6 +806,7 @@ Warning
 </table>
 </div>
 </div>
+</section>
 </section>
 <section id="outcome-tables-built-once-per-outcome" class="level2">
 <h2 class="anchored" data-anchor-id="outcome-tables-built-once-per-outcome">Outcome tables (built once per outcome)</h2>
@@ -970,20 +1035,20 @@ Important
 <table class="caption-top table table-sm table-striped small">
 <caption>Primary analysis (per-outcome adjustment from the config). Point estimate with 95% Monte Carlo percentile interval. % mediated is shown only when every gate passes.</caption>
 <colgroup>
-<col style="width: 4%">
-<col style="width: 11%">
 <col style="width: 3%">
+<col style="width: 9%">
 <col style="width: 2%">
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 7%">
-<col style="width: 7%">
+<col style="width: 1%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 2%">
 <col style="width: 3%">
-<col style="width: 3%">
-<col style="width: 5%">
-<col style="width: 20%">
+<col style="width: 18%">
+<col style="width: 17%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1009,14 +1074,14 @@ Important
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">run</td>
-<td style="text-align: left;">-0.1927 [-0.2704, -0.1142]</td>
-<td style="text-align: left;">-0.3300 [-0.4025, -0.2562]</td>
-<td style="text-align: left;">0.0468 [-0.0267, 0.1216]</td>
-<td style="text-align: left;">-0.1512 [-0.2326, -0.0677]</td>
-<td style="text-align: left;">-0.0155 [-0.0414, 0.0088]</td>
-<td style="text-align: left;">0.0128 / 0.0128</td>
+<td style="text-align: left;">-0.1927 [-0.2698, -0.1131]</td>
+<td style="text-align: left;">-0.3300 [-0.4028, -0.2591]</td>
+<td style="text-align: left;">0.0650 [-0.0040, 0.1345]</td>
+<td style="text-align: left;">-0.1440 [-0.2292, -0.0582]</td>
+<td style="text-align: left;">-0.0215 [-0.0465, 0.0013]</td>
+<td style="text-align: left;">0.0122 / 0.0118</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.064</td>
 <td style="text-align: left;">conditional F &lt;= 10</td>
 <td style="text-align: left;">COLLIDER RISK: M adjusted for BMI</td>
 </tr>
@@ -1025,14 +1090,14 @@ Important
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">run</td>
-<td style="text-align: left;">-0.2604 [-0.3958, -0.1262]</td>
-<td style="text-align: left;">-0.3300 [-0.4030, -0.2564]</td>
-<td style="text-align: left;">0.0182 [-0.1141, 0.1485]</td>
-<td style="text-align: left;">-0.2026 [-0.3468, -0.0625]</td>
-<td style="text-align: left;">-0.0060 [-0.0505, 0.0366]</td>
-<td style="text-align: left;">0.0222 / 0.0217</td>
+<td style="text-align: left;">-0.2604 [-0.3999, -0.1217]</td>
+<td style="text-align: left;">-0.3300 [-0.4014, -0.2578]</td>
+<td style="text-align: left;">0.0121 [-0.1086, 0.1301]</td>
+<td style="text-align: left;">-0.2000 [-0.3456, -0.0529]</td>
+<td style="text-align: left;">-0.0040 [-0.0438, 0.0360]</td>
+<td style="text-align: left;">0.0204 / 0.0204</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: right;">0.98</td>
+<td style="text-align: right;">0.850</td>
 <td style="text-align: left;">conditional F &lt;= 10</td>
 <td style="text-align: left;">COLLIDER RISK: M adjusted for BMI</td>
 </tr>
@@ -1041,14 +1106,14 @@ Important
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">run</td>
-<td style="text-align: left;">-0.1045 [-0.1484, -0.0601]</td>
-<td style="text-align: left;">-0.1692 [-0.2143, -0.1243]</td>
-<td style="text-align: left;">0.0577 [-0.0157, 0.1285]</td>
-<td style="text-align: left;">-0.0926 [-0.1395, -0.0460]</td>
-<td style="text-align: left;">-0.0098 [-0.0231, 0.0025]</td>
-<td style="text-align: left;">0.0065 / 0.0062</td>
+<td style="text-align: left;">-0.1045 [-0.1477, -0.0596]</td>
+<td style="text-align: left;">-0.1692 [-0.2151, -0.1245]</td>
+<td style="text-align: left;">0.0731 [0.0145, 0.1336]</td>
+<td style="text-align: left;">-0.0922 [-0.1383, -0.0445]</td>
+<td style="text-align: left;">-0.0124 [-0.0244, -0.0024]</td>
+<td style="text-align: left;">0.0056 / 0.0055</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: right;">0.22</td>
+<td style="text-align: right;">0.035</td>
 <td style="text-align: left;">conditional F &lt;= 10</td>
 <td style="text-align: left;">COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI</td>
 </tr>
@@ -1057,15 +1122,15 @@ Important
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">run</td>
-<td style="text-align: left;">-0.1294 [-0.2077, -0.0480]</td>
-<td style="text-align: left;">-0.1692 [-0.2143, -0.1240]</td>
-<td style="text-align: left;">0.0002 [-0.1246, 0.1243]</td>
-<td style="text-align: left;">-0.1257 [-0.2090, -0.0409]</td>
-<td style="text-align: left;">-0.0000 [-0.0214, 0.0217]</td>
-<td style="text-align: left;">0.0110 / 0.0109</td>
+<td style="text-align: left;">-0.1294 [-0.2104, -0.0516]</td>
+<td style="text-align: left;">-0.1692 [-0.2130, -0.1243]</td>
+<td style="text-align: left;">-0.0130 [-0.1278, 0.0992]</td>
+<td style="text-align: left;">-0.1270 [-0.2141, -0.0450]</td>
+<td style="text-align: left;">0.0022 [-0.0166, 0.0219]</td>
+<td style="text-align: left;">0.0098 / 0.0098</td>
 <td style="text-align: left;">—</td>
-<td style="text-align: right;">0.98</td>
-<td style="text-align: left;">conditional F &lt;= 10</td>
+<td style="text-align: right;">0.850</td>
+<td style="text-align: left;">conditional F &lt;= 10; indirect/total discordant; proportion outside [0,1]</td>
 <td style="text-align: left;">COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI</td>
 </tr>
 </tbody>
@@ -1141,20 +1206,20 @@ Warning
 <table class="caption-top table table-sm table-striped small">
 <caption>Gate outcomes for every arm that ran.</caption>
 <colgroup>
-<col style="width: 6%">
-<col style="width: 16%">
 <col style="width: 5%">
+<col style="width: 13%">
+<col style="width: 4%">
+<col style="width: 2%">
 <col style="width: 3%">
 <col style="width: 3%">
 <col style="width: 3%">
 <col style="width: 4%">
-<col style="width: 5%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 5%">
-<col style="width: 9%">
-<col style="width: 8%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 7%">
+<col style="width: 24%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1180,8 +1245,8 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">19.3</td>
-<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">20.7</td>
+<td style="text-align: right;">2.6</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">TRUE</td>
@@ -1196,8 +1261,8 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">19.3</td>
-<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">20.7</td>
+<td style="text-align: right;">2.6</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">TRUE</td>
@@ -1212,8 +1277,8 @@ Warning
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">25.7</td>
-<td style="text-align: right;">2.0</td>
+<td style="text-align: right;">26.1</td>
+<td style="text-align: right;">2.4</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">TRUE</td>
@@ -1228,8 +1293,8 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: right;">22.2</td>
-<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">29.3</td>
+<td style="text-align: right;">2.6</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">TRUE</td>
@@ -1244,14 +1309,14 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">22.2</td>
-<td style="text-align: right;">1.7</td>
+<td style="text-align: right;">29.3</td>
+<td style="text-align: right;">2.6</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">FALSE</td>
-<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">indirect non-zero</td>
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">conditional F &lt;= 10</td>
 </tr>
@@ -1260,16 +1325,16 @@ Warning
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: right;">32.2</td>
-<td style="text-align: right;">1.8</td>
+<td style="text-align: right;">39.1</td>
+<td style="text-align: right;">2.4</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">TRUE</td>
-<td style="text-align: left;">FALSE</td>
-<td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">inconclusive</td>
-<td style="text-align: left;">TRUE</td>
-<td style="text-align: left;">conditional F &lt;= 10</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">conditional F &lt;= 10; indirect/total discordant; proportion outside [0,1]</td>
 </tr>
 </tbody>
 </table>
@@ -1325,10 +1390,10 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.2470</td>
-<td style="text-align: right;">-0.2220</td>
-<td style="text-align: right;">-0.03800</td>
-<td style="text-align: right;">-0.012500</td>
-<td style="text-align: right;">0.65</td>
+<td style="text-align: right;">-0.223</td>
+<td style="text-align: right;">-0.04110</td>
+<td style="text-align: right;">-0.01720</td>
+<td style="text-align: right;">0.61</td>
 <td style="text-align: right;">0.92</td>
 </tr>
 <tr class="even">
@@ -1336,21 +1401,21 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: right;">-0.1930</td>
-<td style="text-align: right;">-0.1670</td>
-<td style="text-align: right;">-0.04150</td>
-<td style="text-align: right;">-0.015500</td>
-<td style="text-align: right;">0.65</td>
-<td style="text-align: right;">0.93</td>
+<td style="text-align: right;">-0.165</td>
+<td style="text-align: right;">-0.04870</td>
+<td style="text-align: right;">-0.02150</td>
+<td style="text-align: right;">0.68</td>
+<td style="text-align: right;">0.91</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.2600</td>
-<td style="text-align: right;">-0.2090</td>
-<td style="text-align: right;">-0.05770</td>
-<td style="text-align: right;">-0.006020</td>
-<td style="text-align: right;">0.75</td>
+<td style="text-align: right;">-0.204</td>
+<td style="text-align: right;">-0.06040</td>
+<td style="text-align: right;">-0.00401</td>
+<td style="text-align: right;">0.82</td>
 <td style="text-align: right;">0.93</td>
 </tr>
 <tr class="even">
@@ -1358,33 +1423,33 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.0988</td>
-<td style="text-align: right;">-0.0978</td>
-<td style="text-align: right;">-0.00887</td>
-<td style="text-align: right;">-0.007790</td>
-<td style="text-align: right;">0.05</td>
-<td style="text-align: right;">0.95</td>
+<td style="text-align: right;">-0.100</td>
+<td style="text-align: right;">-0.00838</td>
+<td style="text-align: right;">-0.00980</td>
+<td style="text-align: right;">-0.06</td>
+<td style="text-align: right;">0.93</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: right;">-0.1040</td>
-<td style="text-align: right;">-0.1020</td>
-<td style="text-align: right;">-0.01190</td>
-<td style="text-align: right;">-0.009770</td>
-<td style="text-align: right;">0.09</td>
-<td style="text-align: right;">0.95</td>
+<td style="text-align: right;">-0.105</td>
+<td style="text-align: right;">-0.01220</td>
+<td style="text-align: right;">-0.01240</td>
+<td style="text-align: right;">-0.01</td>
+<td style="text-align: right;">0.93</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.1290</td>
-<td style="text-align: right;">-0.1260</td>
-<td style="text-align: right;">-0.00365</td>
-<td style="text-align: right;">-0.000033</td>
-<td style="text-align: right;">0.09</td>
-<td style="text-align: right;">0.96</td>
+<td style="text-align: right;">-0.125</td>
+<td style="text-align: right;">-0.00244</td>
+<td style="text-align: right;">0.00219</td>
+<td style="text-align: right;">0.11</td>
+<td style="text-align: right;">0.94</td>
 </tr>
 </tbody>
 </table>
@@ -1456,12 +1521,12 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">506</td>
 <td style="text-align: right;">532</td>
-<td style="text-align: right;">472</td>
 <td style="text-align: right;">467</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: right;">19.3</td>
-<td style="text-align: right;">2.0</td>
-<td style="text-align: right;">694.4</td>
+<td style="text-align: right;">456</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">20.7</td>
+<td style="text-align: right;">2.6</td>
+<td style="text-align: right;">693.4</td>
 <td style="text-align: right;">0.0e+00</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
@@ -1473,12 +1538,12 @@ Warning
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: right;">506</td>
 <td style="text-align: right;">532</td>
-<td style="text-align: right;">472</td>
 <td style="text-align: right;">467</td>
-<td style="text-align: right;">6</td>
-<td style="text-align: right;">19.3</td>
-<td style="text-align: right;">2.0</td>
-<td style="text-align: right;">683.1</td>
+<td style="text-align: right;">456</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">20.7</td>
+<td style="text-align: right;">2.6</td>
+<td style="text-align: right;">682.8</td>
 <td style="text-align: right;">0.0e+00</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
@@ -1490,13 +1555,13 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">447</td>
 <td style="text-align: right;">532</td>
-<td style="text-align: right;">416</td>
-<td style="text-align: right;">412</td>
-<td style="text-align: right;">5</td>
-<td style="text-align: right;">25.7</td>
-<td style="text-align: right;">2.0</td>
-<td style="text-align: right;">526.0</td>
-<td style="text-align: right;">1.3e-04</td>
+<td style="text-align: right;">410</td>
+<td style="text-align: right;">402</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">26.1</td>
+<td style="text-align: right;">2.4</td>
+<td style="text-align: right;">518.9</td>
+<td style="text-align: right;">1.4e-04</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">mv_ivw_mre</td>
@@ -1507,12 +1572,12 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">571</td>
 <td style="text-align: right;">613</td>
-<td style="text-align: right;">533</td>
-<td style="text-align: right;">530</td>
-<td style="text-align: right;">4</td>
-<td style="text-align: right;">22.2</td>
-<td style="text-align: right;">1.7</td>
-<td style="text-align: right;">796.1</td>
+<td style="text-align: right;">524</td>
+<td style="text-align: right;">513</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">29.3</td>
+<td style="text-align: right;">2.6</td>
+<td style="text-align: right;">776.8</td>
 <td style="text-align: right;">0.0e+00</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
@@ -1524,12 +1589,12 @@ Warning
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: right;">571</td>
 <td style="text-align: right;">613</td>
-<td style="text-align: right;">533</td>
-<td style="text-align: right;">530</td>
-<td style="text-align: right;">4</td>
-<td style="text-align: right;">22.2</td>
-<td style="text-align: right;">1.7</td>
-<td style="text-align: right;">760.4</td>
+<td style="text-align: right;">524</td>
+<td style="text-align: right;">513</td>
+<td style="text-align: right;">12</td>
+<td style="text-align: right;">29.3</td>
+<td style="text-align: right;">2.6</td>
+<td style="text-align: right;">744.0</td>
 <td style="text-align: right;">0.0e+00</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
@@ -1541,13 +1606,13 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">500</td>
 <td style="text-align: right;">613</td>
-<td style="text-align: right;">473</td>
-<td style="text-align: right;">470</td>
-<td style="text-align: right;">4</td>
-<td style="text-align: right;">32.2</td>
-<td style="text-align: right;">1.8</td>
-<td style="text-align: right;">635.8</td>
-<td style="text-align: right;">5.0e-07</td>
+<td style="text-align: right;">463</td>
+<td style="text-align: right;">455</td>
+<td style="text-align: right;">9</td>
+<td style="text-align: right;">39.1</td>
+<td style="text-align: right;">2.4</td>
+<td style="text-align: right;">628.5</td>
+<td style="text-align: right;">3.0e-07</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">mv_ivw_mre</td>
@@ -1615,8 +1680,8 @@ Warning
 <td style="text-align: right;">8.86e-04</td>
 <td style="text-align: right;">0.459</td>
 <td style="text-align: right;">0.001</td>
-<td style="text-align: right;">7</td>
-<td style="text-align: right;">-0.159</td>
+<td style="text-align: right;">5</td>
+<td style="text-align: right;">-0.165</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
@@ -1628,7 +1693,7 @@ Warning
 <td style="text-align: right;">7.94e-05</td>
 <td style="text-align: right;">0.948</td>
 <td style="text-align: right;">0.001</td>
-<td style="text-align: right;">5</td>
+<td style="text-align: right;">3</td>
 <td style="text-align: right;">-0.314</td>
 </tr>
 </tbody>
@@ -1847,8 +1912,8 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">run</td>
 <td style="text-align: right;">-0.2470</td>
-<td style="text-align: right;">-0.2090</td>
-<td style="text-align: right;">-0.012500</td>
+<td style="text-align: right;">-0.2060</td>
+<td style="text-align: right;">-0.01720</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="even">
@@ -1857,8 +1922,8 @@ Warning
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">run</td>
 <td style="text-align: right;">-0.1930</td>
-<td style="text-align: right;">-0.1510</td>
-<td style="text-align: right;">-0.015500</td>
+<td style="text-align: right;">-0.1440</td>
+<td style="text-align: right;">-0.02150</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="odd">
@@ -1867,8 +1932,8 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">run</td>
 <td style="text-align: right;">-0.2600</td>
-<td style="text-align: right;">-0.2030</td>
-<td style="text-align: right;">-0.006020</td>
+<td style="text-align: right;">-0.2000</td>
+<td style="text-align: right;">-0.00401</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="even">
@@ -1887,8 +1952,8 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">run</td>
 <td style="text-align: right;">-0.0988</td>
-<td style="text-align: right;">-0.0900</td>
-<td style="text-align: right;">-0.007790</td>
+<td style="text-align: right;">-0.0905</td>
+<td style="text-align: right;">-0.00980</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="even">
@@ -1897,8 +1962,8 @@ Warning
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">run</td>
 <td style="text-align: right;">-0.1040</td>
-<td style="text-align: right;">-0.0926</td>
-<td style="text-align: right;">-0.009770</td>
+<td style="text-align: right;">-0.0922</td>
+<td style="text-align: right;">-0.01240</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="odd">
@@ -1907,8 +1972,8 @@ Warning
 <td style="text-align: left;">none</td>
 <td style="text-align: left;">run</td>
 <td style="text-align: right;">-0.1290</td>
-<td style="text-align: right;">-0.1260</td>
-<td style="text-align: right;">-0.000033</td>
+<td style="text-align: right;">-0.1270</td>
+<td style="text-align: right;">0.00219</td>
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="even">
@@ -1964,15 +2029,15 @@ Warning
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: right;">1.40</td>
-<td style="text-align: right;">1.40</td>
-<td style="text-align: right;">-0.24</td>
+<td style="text-align: right;">1.48</td>
+<td style="text-align: right;">-0.38</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: right;">-0.25</td>
-<td style="text-align: right;">-0.11</td>
-<td style="text-align: right;">-0.32</td>
+<td style="text-align: right;">-0.07</td>
+<td style="text-align: right;">-0.48</td>
 </tr>
 </tbody>
 </table>
@@ -2052,12 +2117,12 @@ Warning
 <table class="caption-top table table-sm table-striped small">
 <caption>Instrument deviations and dropped SNPs (SNP lists are in the CSV).</caption>
 <colgroup>
+<col style="width: 5%">
 <col style="width: 6%">
-<col style="width: 8%">
-<col style="width: 8%">
-<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 6%">
 <col style="width: 1%">
-<col style="width: 65%">
+<col style="width: 74%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -2075,16 +2140,32 @@ Warning
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">mvmr_reclump</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">121</td>
-<td style="text-align: left;">X or M instruments removed by re-clumping the union (or missing in the other trait)</td>
+<td style="text-align: right;">133</td>
+<td style="text-align: left;">X or M instruments removed by re-clumping the union (rule: mediator) or missing in the other trait</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">mvmr_reclump</td>
+<td style="text-align: left;">deviation</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p wins). Pooled rule would have kept 4 of 14 mediator instruments; this rule keeps 14. See section ‘Why the mediator’s instruments get priority’.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">mvmr_reclump</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">70</td>
+<td style="text-align: left;">X or M instruments removed by re-clumping the union (rule: mediator) or missing in the other trait</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">mvmr_reclump</td>
-<td style="text-align: left;">dropped</td>
-<td style="text-align: right;">64</td>
-<td style="text-align: left;">X or M instruments removed by re-clumping the union (or missing in the other trait)</td>
+<td style="text-align: left;">deviation</td>
+<td style="text-align: right;">0</td>
+<td style="text-align: left;">MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p wins). Pooled rule would have kept 7 of 14 mediator instruments; this rule keeps 14. See section ‘Why the mediator’s instruments get priority’.</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">NA</td>
@@ -2179,7 +2260,7 @@ Warning
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">26</td>
+<td style="text-align: right;">25</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
 <tr class="odd">
@@ -2227,7 +2308,7 @@ Warning
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">26</td>
+<td style="text-align: right;">25</td>
 <td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
 </tr>
 <tr class="odd">
@@ -2307,7 +2388,7 @@ Warning
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">harmonise_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">15</td>
 <td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
 </tr>
 <tr class="odd">
@@ -2323,7 +2404,7 @@ Warning
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">31</td>
+<td style="text-align: right;">29</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
 <tr class="odd">
@@ -2347,7 +2428,7 @@ Warning
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">harmonise_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">16</td>
+<td style="text-align: right;">15</td>
 <td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
 </tr>
 <tr class="even">
@@ -2363,7 +2444,7 @@ Warning
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">31</td>
+<td style="text-align: right;">29</td>
 <td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
 </tr>
 <tr class="even">
@@ -2403,7 +2484,7 @@ Warning
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
-<td style="text-align: right;">28</td>
+<td style="text-align: right;">26</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
 <tr class="odd">

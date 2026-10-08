@@ -207,6 +207,12 @@ ADJUSTMENTS <- c("slopehunter", "none")
 ALLOW_UNSET_EQUIV_BOUND <- FALSE
 
 CACHE_DIR <- "data/cache/mediation"   # gitignored with the rest of data/cache
+
+# Which instrument wins when an X and an M instrument are in LD during the MVMR re-clump.
+# "mediator" (default since 2026-10-08): the M instrument always wins. "pooled": the smaller
+# p-value wins, i.e. TwoSampleMR::mv_extract_exposures() unmodified (the original spec).
+# Why: see "Why the mediator's instruments get priority" under Instruments.
+MV_CLUMP_PRIORITY <- "mediator"
 ```
 
 `common_snp_set = TRUE` means the **raw** arm also drops SNPs that have no lifespan
@@ -281,7 +287,35 @@ r² < 0.001 within 10 Mb on the OpenGWAS 1000G-EUR LD server, harmonisation `act
 `inst_override` and is written to the deviation log.
 
 The MVMR instrument set is the union of X and M instruments, re-clumped with the same parameters
-and extracted for both traits (`TwoSampleMR::mv_extract_exposures`).
+and extracted for both traits. **When an X instrument and an M instrument are in LD, the M
+instrument is kept** (`MV_CLUMP_PRIORITY = "mediator"`). This is a deliberate deviation from the
+original spec, explained next.
+
+### Why the mediator's instruments get priority {#mediator-priority}
+
+The spec asked for the union of X and M instruments re-clumped as one set
+(`TwoSampleMR::mv_extract_exposures`). In a clump, the SNP with the smaller p-value wins each LD
+conflict. That rule assumes the two traits' GWAS have comparable power, and here they don't:
+
+| | Lean mass (Pei 2020) | 2 h glucose (Chen 2021) |
+|---|---|---|
+| GWAS N | 450,243 | 63,396 |
+| Genome-wide-significant instruments | 687 | 14 |
+
+Lean-mass p-values are orders of magnitude smaller, so in the first run (2026-10-08, commit
+`df2718c`) pooled re-clumping **kept only 4 of the 14 2hGlu instruments**. Each 2hGlu SNP within
+10 Mb of a lean-mass SNP with r² > 0.001 was replaced by that lean-mass SNP, which has little or
+no effect on 2hGlu (only 2 of the 551 lean-mass instruments found in the 2hGlu GWAS reach
+p < 5×10⁻⁸ for 2hGlu). The mediator's conditional F fell to **1.7–2.0** (gate: > 10), so
+M → Y | X was unidentified and the indirect effect not estimable in any arm.
+
+Giving the mediator priority keeps all of its instruments and drops only the lean-mass SNPs that
+conflict with them. Lean mass loses a handful of its ~700 instruments; the mediator keeps its whole
+set. Nothing else changes: same thresholds, LD panel, r²/kb and harmonisation. The SNPs dropped
+either way are in the instrument log (`mvmr_reclump`), and the table below shows the instrument
+counts under both rules. This does not by itself guarantee the gate is met: conditional F is computed
+over all ~580 MVMR SNPs, and 14 informative ones are diluted by the rest. The point is not to
+throw away the mediator's information before the model sees it.
 
 ```{r instruments}
 par_tbl <- triads |>
@@ -299,8 +333,12 @@ pull_triad <- function(triad_id, exposure_id, mediator_id, rp) {
   }
   x_inst <- need(pull_instruments(x, par, CACHE_DIR), paste("instruments for", x))
   m_inst <- need(pull_instruments(m, par, CACHE_DIR), paste("instruments for", m))
-  mv_exp <- need(pull_mv_exposures(x, m, par, CACHE_DIR), "mv_extract_exposures (re-clump X u M)")
-  list(x_id = x, m_id = m, x_inst = x_inst, m_inst = m_inst, mv_exp = mv_exp,
+  # Both rules are pulled so the table can show what the choice changed; estimation uses
+  # MV_CLUMP_PRIORITY. The pooled set is the original spec's (cached from the first run).
+  mv_pooled <- need(pull_mv_exposures(x, m, par, CACHE_DIR, "pooled"), "MVMR re-clump (pooled)")
+  mv_exp <- if (MV_CLUMP_PRIORITY == "pooled") mv_pooled else
+    need(pull_mv_exposures(x, m, par, CACHE_DIR, MV_CLUMP_PRIORITY), "MVMR re-clump (mediator priority)")
+  list(x_id = x, m_id = m, x_inst = x_inst, m_inst = m_inst, mv_exp = mv_exp, mv_pooled = mv_pooled,
        x_in_m = pull_snps(x_inst$SNP, m, par, CACHE_DIR),
        m_in_x = pull_snps(m_inst$SNP, x, par, CACHE_DIR))
 }
@@ -317,17 +355,30 @@ pulls |>
             n_M = map_int(pulls, \(p) nrow(p$m_inst)),
             union_before_reclump = map_int(pulls, \(p) length(union(p$x_inst$SNP, p$m_inst$SNP))),
             mvmr_after_reclump = map_int(pulls, \(p) n_distinct(p$mv_exp$SNP)),
+            M_kept_pooled = map_int(pulls, \(p) sum(unique(p$mv_pooled$SNP) %in% p$m_inst$SNP)),
+            M_kept_used = map_int(pulls, \(p) sum(unique(p$mv_exp$SNP) %in% p$m_inst$SNP)),
+            X_kept_used = map_int(pulls, \(p) sum(unique(p$mv_exp$SNP) %in% p$x_inst$SNP)),
             X_in_M_gwas = map_int(pulls, \(p) n_distinct(p$x_in_m$SNP)),
             mean_F_X = map_dbl(pulls, \(p) mean((p$x_inst$beta.exposure / p$x_inst$se.exposure)^2)),
             mean_F_M = map_dbl(pulls, \(p) mean((p$m_inst$beta.exposure / p$m_inst$se.exposure)^2))) |>
   mutate(across(where(is.double), \(x) round(x, 1))) |>
-  knitr::kable(caption = "Instrument counts per triad.")
+  knitr::kable(caption = paste0("Instrument counts per triad. M_kept_pooled / M_kept_used: mediator ",
+                                "instruments surviving the MVMR re-clump under the original pooled rule / ",
+                                "under the rule used (MV_CLUMP_PRIORITY = \"", MV_CLUMP_PRIORITY, "\")."))
 
-# Log the SNPs lost at re-clumping (union -> MVMR set).
-instrument_log <- bind_rows(instrument_log, imap(pulls_by_triad, \(p, t)
+# Log the SNPs lost at re-clumping (union -> MVMR set), and the deviation from the spec's rule.
+instrument_log <- bind_rows(instrument_log, imap(pulls_by_triad, \(p, t) bind_rows(
   log_row(t, NA, "mvmr_reclump", "dropped",
-          "X or M instruments removed by re-clumping the union (or missing in the other trait)",
-          setdiff(union(p$x_inst$SNP, p$m_inst$SNP), p$mv_exp$SNP))) |> bind_rows())
+          paste0("X or M instruments removed by re-clumping the union (rule: ", MV_CLUMP_PRIORITY,
+                 ") or missing in the other trait"),
+          setdiff(union(p$x_inst$SNP, p$m_inst$SNP), p$mv_exp$SNP)),
+  if (MV_CLUMP_PRIORITY != "pooled")
+    log_row(t, NA, "mvmr_reclump", "deviation",
+            paste0("MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p ",
+                   "wins). Pooled rule would have kept ", sum(unique(p$mv_pooled$SNP) %in% p$m_inst$SNP),
+                   " of ", nrow(p$m_inst), " mediator instruments; this rule keeps ",
+                   sum(unique(p$mv_exp$SNP) %in% p$m_inst$SNP), ". See section 'Why the mediator's ",
+                   "instruments get priority'.")))) |> bind_rows())
 ```
 
 The 2hGlu file reports a raw-scale beta with an inverse-normal-model p-value. This shows how far

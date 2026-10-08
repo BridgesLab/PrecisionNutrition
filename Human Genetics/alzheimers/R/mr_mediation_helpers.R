@@ -132,12 +132,62 @@ pull_snps <- function(snps, id, par, cache_dir) {
 
 # Re-clump X u M with the same parameters and extract both exposures for the survivors, aligned
 # to X's alleles. This is TwoSampleMR::mv_extract_exposures(), which does exactly that.
-pull_mv_exposures <- function(x_id, m_id, par, cache_dir) {
-  cache_rds(cache_dir, paste0("mvexp_", x_id, "_", m_id), list(x_id, m_id, par),
-            og_retry(function() TwoSampleMR::mv_extract_exposures(
-              c(x_id, m_id), clump_r2 = par$clump_r2, clump_kb = par$clump_kb,
-              harmonise_strictness = par$harmonise_action, find_proxies = par$proxies,
-              pval_threshold = par$p_thresh, pop = par$ld_pop)))
+#
+# `priority` decides which SNP survives when an X instrument and an M instrument are in LD:
+#   "pooled"   TwoSampleMR::mv_extract_exposures() as is: the smaller p-value wins (the spec's rule).
+#   "mediator" the M instrument always wins. Everything else is identical to mv_extract_exposures()
+#              (copied step for step below); only the ranking used by the LD clump changes.
+# Why "mediator" exists (2026-10-08): with lean mass (N = 450k, 687 instruments) and 2hGlu
+# (N = 63k, 14 instruments), lean-mass p-values are orders of magnitude smaller, so pooled clumping
+# kept only 4 of the 14 2hGlu instruments, and the mediator's conditional F fell to ~2. Each SNP
+# lost was replaced by a lean-mass SNP with little or no 2hGlu effect. See mr_mediation.qmd,
+# section "Why the mediator's instruments get priority".
+pull_mv_exposures <- function(x_id, m_id, par, cache_dir, priority = c("pooled", "mediator")) {
+  priority <- match.arg(priority)
+  key <- if (priority == "pooled") list(x_id, m_id, par) else list(x_id, m_id, par, priority)
+  cache_rds(cache_dir, paste0("mvexp_", x_id, "_", m_id, if (priority != "pooled") "_mpriority"), key,
+            og_retry(function() {
+              if (priority == "pooled")
+                return(TwoSampleMR::mv_extract_exposures(
+                  c(x_id, m_id), clump_r2 = par$clump_r2, clump_kb = par$clump_kb,
+                  harmonise_strictness = par$harmonise_action, find_proxies = par$proxies,
+                  pval_threshold = par$p_thresh, pop = par$ld_pop))
+              mv_extract_mediator_priority(x_id, m_id, par)
+            }))
+}
+
+# mv_extract_exposures() with one change: before the pooled LD clump, mediator instruments get a
+# rank p-value below every exposure p-value, so the clump keeps them in every X-M LD conflict.
+# Within each trait the instruments are already independent (clumped separately), so the order
+# among M instruments does not matter. The returned layout matches mv_extract_exposures().
+mv_extract_mediator_priority <- function(x_id, m_id, par) {
+  ids <- c(x_id, m_id)
+  exposure_dat <- TwoSampleMR::extract_instruments(ids, p1 = par$p_thresh, r2 = par$clump_r2,
+                                                   kb = par$clump_kb)
+  if (is.null(exposure_dat) || !all(ids %in% exposure_dat$id.exposure)) return(NULL)
+  temp <- exposure_dat
+  temp$rank_p <- ifelse(temp$id.exposure == m_id, 1e-300, temp$pval.exposure)
+  temp <- temp[order(temp$rank_p), ]
+  temp <- temp[!duplicated(temp$SNP), ]                   # a SNP in both lists counts as M's
+  cl <- ieugwasr::ld_clump(dplyr::tibble(rsid = temp$SNP, pval = temp$rank_p),
+                           clump_kb = par$clump_kb, clump_r2 = par$clump_r2,
+                           clump_p = par$p_thresh, pop = par$ld_pop)
+  if (is.null(cl) || !nrow(cl)) return(NULL)
+  exposure_dat <- exposure_dat[exposure_dat$SNP %in% cl$rsid, ]
+  # From here on, identical to TwoSampleMR::mv_extract_exposures().
+  d1 <- TwoSampleMR::extract_outcome_data(exposure_dat$SNP, ids, proxies = par$proxies)
+  if (is.null(d1) || length(unique(d1$id.outcome)) != 2) return(NULL)
+  d1 <- d1[d1$mr_keep.outcome, ]
+  d2 <- d1[d1$id.outcome != x_id, ]
+  d1 <- TwoSampleMR::convert_outcome_to_exposure(d1[d1$id.outcome == x_id, ])
+  d <- suppressMessages(TwoSampleMR::harmonise_data(d1, d2, action = par$harmonise_action))
+  d <- d[d$mr_keep, ]
+  dh1 <- d[, c("SNP", "exposure", "id.exposure", "effect_allele.exposure", "other_allele.exposure",
+               "eaf.exposure", "beta.exposure", "se.exposure", "pval.exposure")]
+  dh2 <- d[, c("SNP", "outcome", "id.outcome", "effect_allele.outcome", "other_allele.outcome",
+               "eaf.outcome", "beta.outcome", "se.outcome", "pval.outcome")]
+  names(dh2) <- gsub("outcome", "exposure", names(dh2))
+  rbind(dh1, dh2)
 }
 
 # Which SNPs came back as an LD proxy rather than themselves. extract_outcome_data() marks these

@@ -234,6 +234,12 @@ ADJUSTMENTS <- c("slopehunter", "none")
 ALLOW_UNSET_EQUIV_BOUND <- FALSE
 
 CACHE_DIR <- "data/cache/mediation"   # gitignored with the rest of data/cache
+
+# Which instrument wins when an X and an M instrument are in LD during the MVMR re-clump.
+# "mediator" (default since 2026-10-08): the M instrument always wins. "pooled": the smaller
+# p-value wins, i.e. TwoSampleMR::mv_extract_exposures() unmodified (the original spec).
+# Why: see "Why the mediator's instruments get priority" under Instruments.
+MV_CLUMP_PRIORITY <- "mediator"
 ```
 :::
 
@@ -352,7 +358,35 @@ r² < 0.001 within 10 Mb on the OpenGWAS 1000G-EUR LD server, harmonisation `act
 `inst_override` and is written to the deviation log.
 
 The MVMR instrument set is the union of X and M instruments, re-clumped with the same parameters
-and extracted for both traits (`TwoSampleMR::mv_extract_exposures`).
+and extracted for both traits. **When an X instrument and an M instrument are in LD, the M
+instrument is kept** (`MV_CLUMP_PRIORITY = "mediator"`). This is a deliberate deviation from the
+original spec, explained next.
+
+### Why the mediator's instruments get priority {#mediator-priority}
+
+The spec asked for the union of X and M instruments re-clumped as one set
+(`TwoSampleMR::mv_extract_exposures`). In a clump, the SNP with the smaller p-value wins each LD
+conflict. That rule assumes the two traits' GWAS have comparable power, and here they don't:
+
+| | Lean mass (Pei 2020) | 2 h glucose (Chen 2021) |
+|---|---|---|
+| GWAS N | 450,243 | 63,396 |
+| Genome-wide-significant instruments | 687 | 14 |
+
+Lean-mass p-values are orders of magnitude smaller, so in the first run (2026-10-08, commit
+`df2718c`) pooled re-clumping **kept only 4 of the 14 2hGlu instruments**. Each 2hGlu SNP within
+10 Mb of a lean-mass SNP with r² > 0.001 was replaced by that lean-mass SNP, which has little or
+no effect on 2hGlu (only 2 of the 551 lean-mass instruments found in the 2hGlu GWAS reach
+p < 5×10⁻⁸ for 2hGlu). The mediator's conditional F fell to **1.7–2.0** (gate: > 10), so
+M → Y | X was unidentified and the indirect effect not estimable in any arm.
+
+Giving the mediator priority keeps all of its instruments and drops only the lean-mass SNPs that
+conflict with them. Lean mass loses a handful of its ~700 instruments; the mediator keeps its whole
+set. Nothing else changes: same thresholds, LD panel, r²/kb and harmonisation. The SNPs dropped
+either way are in the instrument log (`mvmr_reclump`), and the table below shows the instrument
+counts under both rules. This does not by itself guarantee the gate is met: conditional F is computed
+over all ~580 MVMR SNPs, and 14 informative ones are diluted by the rest. The point is not to
+throw away the mediator's information before the model sees it.
 
 
 ::: {.cell}
@@ -373,8 +407,12 @@ pull_triad <- function(triad_id, exposure_id, mediator_id, rp) {
   }
   x_inst <- need(pull_instruments(x, par, CACHE_DIR), paste("instruments for", x))
   m_inst <- need(pull_instruments(m, par, CACHE_DIR), paste("instruments for", m))
-  mv_exp <- need(pull_mv_exposures(x, m, par, CACHE_DIR), "mv_extract_exposures (re-clump X u M)")
-  list(x_id = x, m_id = m, x_inst = x_inst, m_inst = m_inst, mv_exp = mv_exp,
+  # Both rules are pulled so the table can show what the choice changed; estimation uses
+  # MV_CLUMP_PRIORITY. The pooled set is the original spec's (cached from the first run).
+  mv_pooled <- need(pull_mv_exposures(x, m, par, CACHE_DIR, "pooled"), "MVMR re-clump (pooled)")
+  mv_exp <- if (MV_CLUMP_PRIORITY == "pooled") mv_pooled else
+    need(pull_mv_exposures(x, m, par, CACHE_DIR, MV_CLUMP_PRIORITY), "MVMR re-clump (mediator priority)")
+  list(x_id = x, m_id = m, x_inst = x_inst, m_inst = m_inst, mv_exp = mv_exp, mv_pooled = mv_pooled,
        x_in_m = pull_snps(x_inst$SNP, m, par, CACHE_DIR),
        m_in_x = pull_snps(m_inst$SNP, x, par, CACHE_DIR))
 }
@@ -391,32 +429,45 @@ pulls |>
             n_M = map_int(pulls, \(p) nrow(p$m_inst)),
             union_before_reclump = map_int(pulls, \(p) length(union(p$x_inst$SNP, p$m_inst$SNP))),
             mvmr_after_reclump = map_int(pulls, \(p) n_distinct(p$mv_exp$SNP)),
+            M_kept_pooled = map_int(pulls, \(p) sum(unique(p$mv_pooled$SNP) %in% p$m_inst$SNP)),
+            M_kept_used = map_int(pulls, \(p) sum(unique(p$mv_exp$SNP) %in% p$m_inst$SNP)),
+            X_kept_used = map_int(pulls, \(p) sum(unique(p$mv_exp$SNP) %in% p$x_inst$SNP)),
             X_in_M_gwas = map_int(pulls, \(p) n_distinct(p$x_in_m$SNP)),
             mean_F_X = map_dbl(pulls, \(p) mean((p$x_inst$beta.exposure / p$x_inst$se.exposure)^2)),
             mean_F_M = map_dbl(pulls, \(p) mean((p$m_inst$beta.exposure / p$m_inst$se.exposure)^2))) |>
   mutate(across(where(is.double), \(x) round(x, 1))) |>
-  knitr::kable(caption = "Instrument counts per triad.")
+  knitr::kable(caption = paste0("Instrument counts per triad. M_kept_pooled / M_kept_used: mediator ",
+                                "instruments surviving the MVMR re-clump under the original pooled rule / ",
+                                "under the rule used (MV_CLUMP_PRIORITY = \"", MV_CLUMP_PRIORITY, "\")."))
 ```
 
 ::: {.cell-output-display}
 
 
-Table: Instrument counts per triad.
+Table: Instrument counts per triad. M_kept_pooled / M_kept_used: mediator instruments surviving the MVMR re-clump under the original pooled rule / under the rule used (MV_CLUMP_PRIORITY = "mediator").
 
-|triad_id       | n_X| n_M| union_before_reclump| mvmr_after_reclump| X_in_M_gwas| mean_F_X| mean_F_M|
-|:--------------|---:|---:|--------------------:|------------------:|-----------:|--------:|--------:|
-|leanmass_2hglu | 687|  14|                  700|                579|         645|     97.0|     56.6|
-|ffm_2hglu      | 553|  14|                  566|                502|         551|     84.5|     56.6|
+|triad_id       | n_X| n_M| union_before_reclump| mvmr_after_reclump| M_kept_pooled| M_kept_used| X_kept_used| X_in_M_gwas| mean_F_X| mean_F_M|
+|:--------------|---:|---:|--------------------:|------------------:|-------------:|-----------:|-----------:|-----------:|--------:|--------:|
+|leanmass_2hglu | 687|  14|                  700|                567|             4|          14|         554|         645|     97.0|     56.6|
+|ffm_2hglu      | 553|  14|                  566|                496|             7|          14|         483|         551|     84.5|     56.6|
 
 
 :::
 
 ```{.r .cell-code}
-# Log the SNPs lost at re-clumping (union -> MVMR set).
-instrument_log <- bind_rows(instrument_log, imap(pulls_by_triad, \(p, t)
+# Log the SNPs lost at re-clumping (union -> MVMR set), and the deviation from the spec's rule.
+instrument_log <- bind_rows(instrument_log, imap(pulls_by_triad, \(p, t) bind_rows(
   log_row(t, NA, "mvmr_reclump", "dropped",
-          "X or M instruments removed by re-clumping the union (or missing in the other trait)",
-          setdiff(union(p$x_inst$SNP, p$m_inst$SNP), p$mv_exp$SNP))) |> bind_rows())
+          paste0("X or M instruments removed by re-clumping the union (rule: ", MV_CLUMP_PRIORITY,
+                 ") or missing in the other trait"),
+          setdiff(union(p$x_inst$SNP, p$m_inst$SNP), p$mv_exp$SNP)),
+  if (MV_CLUMP_PRIORITY != "pooled")
+    log_row(t, NA, "mvmr_reclump", "deviation",
+            paste0("MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p ",
+                   "wins). Pooled rule would have kept ", sum(unique(p$mv_pooled$SNP) %in% p$m_inst$SNP),
+                   " of ", nrow(p$m_inst), " mediator instruments; this rule keeps ",
+                   sum(unique(p$mv_exp$SNP) %in% p$m_inst$SNP), ". See section 'Why the mediator's ",
+                   "instruments get priority'.")))) |> bind_rows())
 ```
 :::
 
@@ -656,12 +707,12 @@ results |>
 
 Table: Primary analysis (per-outcome adjustment from the config). Point estimate with 95% Monte Carlo percentile interval. % mediated is shown only when every gate passes.
 
-|triad_id       |outcome                                |adjustment  |status |total                      |X→M                        |M→Y&#124;X               |direct                     |indirect                  |indirect SE (MC / delta) |% mediated | FDR indirect|gates               |collider_risk                                                           |
-|:--------------|:--------------------------------------|:-----------|:------|:--------------------------|:--------------------------|:------------------------|:--------------------------|:-------------------------|:------------------------|:----------|------------:|:-------------------|:-----------------------------------------------------------------------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1927 [-0.2704, -0.1142] |-0.3300 [-0.4025, -0.2562] |0.0468 [-0.0267, 0.1216] |-0.1512 [-0.2326, -0.0677] |-0.0155 [-0.0414, 0.0088] |0.0128 / 0.0128          |—          |         0.22|conditional F <= 10 |COLLIDER RISK: M adjusted for BMI                                       |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.2604 [-0.3958, -0.1262] |-0.3300 [-0.4030, -0.2564] |0.0182 [-0.1141, 0.1485] |-0.2026 [-0.3468, -0.0625] |-0.0060 [-0.0505, 0.0366] |0.0222 / 0.0217          |—          |         0.98|conditional F <= 10 |COLLIDER RISK: M adjusted for BMI                                       |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1045 [-0.1484, -0.0601] |-0.1692 [-0.2143, -0.1243] |0.0577 [-0.0157, 0.1285] |-0.0926 [-0.1395, -0.0460] |-0.0098 [-0.0231, 0.0025] |0.0065 / 0.0062          |—          |         0.22|conditional F <= 10 |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.1294 [-0.2077, -0.0480] |-0.1692 [-0.2143, -0.1240] |0.0002 [-0.1246, 0.1243] |-0.1257 [-0.2090, -0.0409] |-0.0000 [-0.0214, 0.0217] |0.0110 / 0.0109          |—          |         0.98|conditional F <= 10 |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|triad_id       |outcome                                |adjustment  |status |total                      |X→M                        |M→Y&#124;X                |direct                     |indirect                   |indirect SE (MC / delta) |% mediated | FDR indirect|gates                                                                    |collider_risk                                                           |
+|:--------------|:--------------------------------------|:-----------|:------|:--------------------------|:--------------------------|:-------------------------|:--------------------------|:--------------------------|:------------------------|:----------|------------:|:------------------------------------------------------------------------|:-----------------------------------------------------------------------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1927 [-0.2698, -0.1131] |-0.3300 [-0.4028, -0.2591] |0.0650 [-0.0040, 0.1345]  |-0.1440 [-0.2292, -0.0582] |-0.0215 [-0.0465, 0.0013]  |0.0122 / 0.0118          |—          |        0.064|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.2604 [-0.3999, -0.1217] |-0.3300 [-0.4014, -0.2578] |0.0121 [-0.1086, 0.1301]  |-0.2000 [-0.3456, -0.0529] |-0.0040 [-0.0438, 0.0360]  |0.0204 / 0.0204          |—          |        0.850|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1045 [-0.1477, -0.0596] |-0.1692 [-0.2151, -0.1245] |0.0731 [0.0145, 0.1336]   |-0.0922 [-0.1383, -0.0445] |-0.0124 [-0.0244, -0.0024] |0.0056 / 0.0055          |—          |        0.035|conditional F <= 10                                                      |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.1294 [-0.2104, -0.0516] |-0.1692 [-0.2130, -0.1243] |-0.0130 [-0.1278, 0.0992] |-0.1270 [-0.2141, -0.0450] |0.0022 [-0.0166, 0.0219]   |0.0098 / 0.0098          |—          |        0.850|conditional F <= 10; indirect/total discordant; proportion outside [0,1] |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
 
 
 :::
@@ -703,14 +754,14 @@ results |>
 
 Table: Gate outcomes for every arm that ran.
 
-|triad_id       |outcome                                |adjustment  |primary | cond_F_x| cond_F_m|gate_condF |gate_total_ci |gate_sign_concordant |flag_direct_opposite |flag_prop_outside_01 |equivalence  |hypothesis_consistent |gate_summary        |
-|:--------------|:--------------------------------------|:-----------|:-------|--------:|--------:|:----------|:-------------|:--------------------|:--------------------|:--------------------|:------------|:---------------------|:-------------------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     19.3|      2.0|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     19.3|      2.0|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     25.7|      2.0|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     22.2|      1.7|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     22.2|      1.7|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     32.2|      1.8|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+|triad_id       |outcome                                |adjustment  |primary | cond_F_x| cond_F_m|gate_condF |gate_total_ci |gate_sign_concordant |flag_direct_opposite |flag_prop_outside_01 |equivalence       |hypothesis_consistent |gate_summary                                                             |
+|:--------------|:--------------------------------------|:-----------|:-------|--------:|--------:|:----------|:-------------|:--------------------|:--------------------|:--------------------|:-----------------|:---------------------|:------------------------------------------------------------------------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     20.7|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     20.7|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     26.1|      2.4|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     29.3|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     29.3|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |indirect non-zero |TRUE                  |conditional F <= 10                                                      |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     39.1|      2.4|FALSE      |TRUE          |FALSE                |FALSE                |TRUE                 |inconclusive      |FALSE                 |conditional F <= 10; indirect/total discordant; proportion outside [0,1] |
 
 
 :::
@@ -745,12 +796,12 @@ Table: Decomposition consistency.
 
 |triad_id       |outcome                                |adjustment  |   total| direct + indirect| difference method (total − direct)| product method (indirect)| gap / SE(total)| r(total, direct)|
 |:--------------|:--------------------------------------|:-----------|-------:|-----------------:|----------------------------------:|-------------------------:|---------------:|----------------:|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.2470|           -0.2220|                           -0.03800|                 -0.012500|            0.65|             0.92|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1930|           -0.1670|                           -0.04150|                 -0.015500|            0.65|             0.93|
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.2600|           -0.2090|                           -0.05770|                 -0.006020|            0.75|             0.93|
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.0988|           -0.0978|                           -0.00887|                 -0.007790|            0.05|             0.95|
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1040|           -0.1020|                           -0.01190|                 -0.009770|            0.09|             0.95|
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.1290|           -0.1260|                           -0.00365|                 -0.000033|            0.09|             0.96|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.2470|            -0.223|                           -0.04110|                  -0.01720|            0.61|             0.92|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1930|            -0.165|                           -0.04870|                  -0.02150|            0.68|             0.91|
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.2600|            -0.204|                           -0.06040|                  -0.00401|            0.82|             0.93|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.0988|            -0.100|                           -0.00838|                  -0.00980|           -0.06|             0.93|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1040|            -0.105|                           -0.01220|                  -0.01240|           -0.01|             0.93|
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.1290|            -0.125|                           -0.00244|                   0.00219|            0.11|             0.94|
 
 
 :::
@@ -784,12 +835,12 @@ Table: Conditional F (gencov =  0 ) and Sanderson-Windmeijer Q, per arm. SNP cou
 
 |triad_id       |outcome                                |adjustment  | n_snp_total| n_snp_xm| n_snp_mvmr| n_mvmr_x_inst| n_mvmr_m_inst| cond_F_x| cond_F_m| mvmr_Q| mvmr_Q_p|method_total |method_xm |method_mvmr |
 |:--------------|:--------------------------------------|:-----------|-----------:|--------:|----------:|-------------:|-------------:|--------:|--------:|------:|--------:|:------------|:---------|:-----------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |         506|      532|        472|           467|             6|     19.3|      2.0|  694.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         506|      532|        472|           467|             6|     19.3|      2.0|  683.1|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |         447|      532|        416|           412|             5|     25.7|      2.0|  526.0|  1.3e-04|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |         571|      613|        533|           530|             4|     22.2|      1.7|  796.1|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         571|      613|        533|           530|             4|     22.2|      1.7|  760.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |         500|      613|        473|           470|             4|     32.2|      1.8|  635.8|  5.0e-07|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |         506|      532|        467|           456|            12|     20.7|      2.6|  693.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         506|      532|        467|           456|            12|     20.7|      2.6|  682.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |         447|      532|        410|           402|             9|     26.1|      2.4|  518.9|  1.4e-04|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |         571|      613|        524|           513|            12|     29.3|      2.6|  776.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         571|      613|        524|           513|            12|     29.3|      2.6|  744.0|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |         500|      613|        463|           455|             9|     39.1|      2.4|  628.5|  3.0e-07|ivw_mre      |ivw_mre   |mv_ivw_mre  |
 
 
 :::
@@ -824,8 +875,8 @@ Table: X → M: heterogeneity, Egger intercept and MR-PRESSO.
 
 |triad_id       | xm_n_snp| xm_mean_F| xm_ivw_mre_b| xm_ivw_mre_se|  xm_Q_p| xm_egger_intercept| xm_egger_int_p| xm_presso_global_p| xm_presso_n_outlier| xm_presso_b|
 |:--------------|--------:|---------:|------------:|-------------:|-------:|------------------:|--------------:|------------------:|-------------------:|-----------:|
-|leanmass_2hglu |      613|      96.8|       -0.169|        0.0228| 0.0e+00|           8.86e-04|          0.459|              0.001|                   7|      -0.159|
-|ffm_2hglu      |      532|      85.0|       -0.330|        0.0374| 7.8e-06|           7.94e-05|          0.948|              0.001|                   5|      -0.314|
+|leanmass_2hglu |      613|      96.8|       -0.169|        0.0228| 0.0e+00|           8.86e-04|          0.459|              0.001|                   5|      -0.165|
+|ffm_2hglu      |      532|      85.0|       -0.330|        0.0374| 7.8e-06|           7.94e-05|          0.948|              0.001|                   3|      -0.314|
 
 
 :::
@@ -949,13 +1000,13 @@ Table: All four cells of the grid per triad. NOT RUN cells carry their reason.
 
 |triad_id       |outcome                                |adjustment  |status                                                                            | total_b| direct_b| indirect_b|proportion |
 |:--------------|:--------------------------------------|:-----------|:---------------------------------------------------------------------------------|-------:|--------:|----------:|:----------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.2470|  -0.2090|  -0.012500|—          |
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1930|  -0.1510|  -0.015500|—          |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.2600|  -0.2030|  -0.006020|—          |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.2470|  -0.2060|   -0.01720|—          |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1930|  -0.1440|   -0.02150|—          |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.2600|  -0.2000|   -0.00401|—          |
 |ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.0988|  -0.0900|  -0.007790|—          |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1040|  -0.0926|  -0.009770|—          |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.1290|  -0.1260|  -0.000033|—          |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.0988|  -0.0905|   -0.00980|—          |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1040|  -0.0922|   -0.01240|—          |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.1290|  -0.1270|    0.00219|—          |
 |leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
 
 
@@ -984,8 +1035,8 @@ Table: Shift from SlopeHunter adjustment, per estimand.
 
 |triad_id       |outcome                                | Δ total / SE| Δ direct / SE| Δ indirect / SE|
 |:--------------|:--------------------------------------|------------:|-------------:|---------------:|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |         1.40|          1.40|           -0.24|
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |        -0.25|         -0.11|           -0.32|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |         1.40|          1.48|           -0.38|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |        -0.25|         -0.07|           -0.48|
 
 
 :::
@@ -1079,51 +1130,53 @@ instrument_log |>
 
 Table: Instrument deviations and dropped SNPs (SNP lists are in the CSV).
 
-|triad_id       |outcome_id         |stage             |type                |   n|detail                                                                                                                                           |
-|:--------------|:------------------|:-----------------|:-------------------|---:|:------------------------------------------------------------------------------------------------------------------------------------------------|
-|leanmass_2hglu |NA                 |mvmr_reclump      |dropped             | 121|X or M instruments removed by re-clumping the union (or missing in the other trait)                                                              |
-|ffm_2hglu      |NA                 |mvmr_reclump      |dropped             |  64|X or M instruments removed by re-clumping the union (or missing in the other trait)                                                              |
-|NA             |ebi-a-GCST90027158 |outcome_table     |missing_in_outcome  |  63|instrument SNPs with no outcome association (after proxy search)                                                                                 |
-|NA             |ebi-a-GCST90027158 |outcome_table     |proxy_used          |  48|outcome looked up via LD proxy                                                                                                                   |
-|NA             |ebi-a-GCST90027158 |outcome_table     |missing_in_lifespan |  94|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm |
-|NA             |ebi-a-GCST90027158 |outcome_table     |proxy_used          |  56|lifespan looked up via LD proxy                                                                                                                  |
-|NA             |ieu-b-2            |outcome_table     |missing_in_outcome  |  83|instrument SNPs with no outcome association (after proxy search)                                                                                 |
-|NA             |ieu-b-2            |outcome_table     |proxy_used          | 107|outcome looked up via LD proxy                                                                                                                   |
-|NA             |ieu-b-2            |outcome_table     |missing_in_lifespan | 314|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm |
-|NA             |ieu-b-2            |outcome_table     |proxy_used          |  55|lifespan looked up via LD proxy                                                                                                                  |
-|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
-|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
-|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                          |
-|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                  |
-|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
-|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
-|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
-|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  26|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
-|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                          |
-|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                  |
-|ffm_2hglu      |ieu-b-2            |harmonise_total   |dropped             |  85|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
-|ffm_2hglu      |ieu-b-2            |harmonise_mvmr    |dropped             |  65|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
-|ffm_2hglu      |ieu-b-2            |slopehunter_total |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|ffm_2hglu      |ieu-b-2            |slopehunter_mvmr  |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                          |
-|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                  |
-|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
-|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  16|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
-|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  31|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                          |
-|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
-|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  16|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
-|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
-|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  31|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
-|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                          |
-|leanmass_2hglu |ieu-b-2            |harmonise_total   |dropped             | 159|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
-|leanmass_2hglu |ieu-b-2            |harmonise_mvmr    |dropped             |  78|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
-|leanmass_2hglu |ieu-b-2            |slopehunter_total |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|leanmass_2hglu |ieu-b-2            |slopehunter_mvmr  |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
-|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                          |
+|triad_id       |outcome_id         |stage             |type                |   n|detail                                                                                                                                                                                                                        |
+|:--------------|:------------------|:-----------------|:-------------------|---:|:-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+|leanmass_2hglu |NA                 |mvmr_reclump      |dropped             | 133|X or M instruments removed by re-clumping the union (rule: mediator) or missing in the other trait                                                                                                                            |
+|leanmass_2hglu |NA                 |mvmr_reclump      |deviation           |   0|MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p wins). Pooled rule would have kept 4 of 14 mediator instruments; this rule keeps 14. See section 'Why the mediator's instruments get priority'. |
+|ffm_2hglu      |NA                 |mvmr_reclump      |dropped             |  70|X or M instruments removed by re-clumping the union (rule: mediator) or missing in the other trait                                                                                                                            |
+|ffm_2hglu      |NA                 |mvmr_reclump      |deviation           |   0|MVMR re-clump keeps mediator instruments in X-M LD conflicts (spec: smaller p wins). Pooled rule would have kept 7 of 14 mediator instruments; this rule keeps 14. See section 'Why the mediator's instruments get priority'. |
+|NA             |ebi-a-GCST90027158 |outcome_table     |missing_in_outcome  |  63|instrument SNPs with no outcome association (after proxy search)                                                                                                                                                              |
+|NA             |ebi-a-GCST90027158 |outcome_table     |proxy_used          |  48|outcome looked up via LD proxy                                                                                                                                                                                                |
+|NA             |ebi-a-GCST90027158 |outcome_table     |missing_in_lifespan |  94|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm                                                                              |
+|NA             |ebi-a-GCST90027158 |outcome_table     |proxy_used          |  56|lifespan looked up via LD proxy                                                                                                                                                                                               |
+|NA             |ieu-b-2            |outcome_table     |missing_in_outcome  |  83|instrument SNPs with no outcome association (after proxy search)                                                                                                                                                              |
+|NA             |ieu-b-2            |outcome_table     |proxy_used          | 107|outcome looked up via LD proxy                                                                                                                                                                                                |
+|NA             |ieu-b-2            |outcome_table     |missing_in_lifespan | 314|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm                                                                              |
+|NA             |ieu-b-2            |outcome_table     |proxy_used          |  55|lifespan looked up via LD proxy                                                                                                                                                                                               |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  25|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                                                                                               |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                                                                                                 |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  25|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                                                                                                 |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                                                                                               |
+|ffm_2hglu      |ieu-b-2            |harmonise_total   |dropped             |  85|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|ffm_2hglu      |ieu-b-2            |harmonise_mvmr    |dropped             |  65|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|ffm_2hglu      |ieu-b-2            |slopehunter_total |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|ffm_2hglu      |ieu-b-2            |slopehunter_mvmr  |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                                                                                               |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  15|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  29|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  15|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                                                                                                 |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  29|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                                                                                                 |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|leanmass_2hglu |ieu-b-2            |harmonise_total   |dropped             | 159|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|leanmass_2hglu |ieu-b-2            |harmonise_mvmr    |dropped             |  78|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|leanmass_2hglu |ieu-b-2            |slopehunter_total |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|leanmass_2hglu |ieu-b-2            |slopehunter_mvmr  |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
 
 
 :::

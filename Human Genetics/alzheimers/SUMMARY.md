@@ -141,6 +141,15 @@ b_SH is not identified and is never applied.
 | M → Y (2hGlu → AD) | **Suggestive**: significant with strong instruments under the main method; Kunkle underpowered |
 | X → M (lean mass → 2hGlu) | **Not interpretable yet**: strong and negative, but in the direction the BMI-adjustment artefact predicts; no effect on unadjusted fasting glucose |
 
+**Mediation run (2026-10-08, `mr_mediation.qmd`)**: lean mass and fat-free mass → 2hGlu → AD
+(Bellenguez raw and SlopeHunter, Kunkle raw). Totals reproduce the univariable results (e.g. lean
+mass → Bellenguez −0.099 log-OR [−0.144, −0.056]). But **every arm fails the pre-specified
+conditional-F gate for the mediator** (F ≈ 1.7–2.0 against > 10), so M → Y | X is unidentified, the
+indirect effect is **not estimable**, and no proportion is reported (equivalence: inconclusive).
+Reasons: 2hGlu has only 14 instruments (N = 63k), and the pooled re-clumping kept just 4 of them,
+because the far stronger lean-mass p-values win every LD conflict. Mediator-priority clumping and
+larger mediator instrument sets (lower threshold, T2D-derived) are the next step.
+
 Mediation through 2 h glucose is neither supported nor ruled out. The decisive missing piece is a
 BMI-**unadjusted** 2hGlu GWAS. With it, BMI → 2hGlu should turn positive (a built-in check the
 adjustment was removed), and lean mass → 2hGlu either holds or disappears.

@@ -1,0 +1,1131 @@
+---
+title: "MR mediation: exposure → mediator → AD"
+subtitle: "Direct and indirect effects via two-step MR and MVMR, with survival-collider adjustment carried through every leg"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/mr_mediation-"   # own prefix: figures/ is shared, and chunk labels (e.g. forest) collide with Step 2
+    dev: ["png", "pdf"]
+    fig.keep: "all"
+execute:
+  echo: true
+  warning: false
+  message: false
+  # No knitr cache: knitr keys caches on chunk code only, so config edits are silently replayed
+  # from stale caches (see the calcium arm's commit 034c09a). Every OpenGWAS pull is instead
+  # cached to data/cache/mediation/ by cache_rds(), keyed on its full inputs.
+  cache: false
+---
+
+## Purpose
+
+Steps 1–2 estimated each exposure's **total** effect on AD and corrected it for the survival
+collider. This step asks how much of a total effect runs **through a named mediator**. The
+motivating triad is
+
+$$\text{lean mass} \;\to\; \text{2-h glucose} \;\to\; \text{AD},$$
+
+with the hypothesis that part of lean mass's protective effect on AD comes from lower
+postprandial glucose. The code is written for any number of triads, including exposure →
+tissue expression → AD (see [eQTL mediators](#eqtl-mediators)).
+
+**Primary estimands:** the **indirect** effect (product of coefficients, $\beta_{X\to M}\times\beta_{M\to Y\mid X}$)
+and the **direct** effect ($\beta_{X\to Y\mid M}$ from MVMR), each with a Monte Carlo CI.
+Percent mediated is secondary and is reported only for triads that pass the
+[pre-specified gates](#gates). Methods follow Carter et al. 2021 (*Eur J Epidemiol*,
+PMID 33961203); conditional F and Q follow Sanderson, Spiller & Bowden 2021 (*Stat Med*
+40:5434–52, doi:10.1002/sim.9133, PMID 34338327).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(ggdag)
+library(ggplot2)
+
+dagify(M ~ X, Y ~ X + M, S ~ X + Y,
+       labels = c(X = "Lean mass (X)", M = "2-h glucose (M)", Y = "AD (Y)",
+                  S = "Survival (collider)"),
+       coords = list(x = c(X = 0, M = 2, Y = 4, S = 2), y = c(X = 0, M = 1, Y = 0, S = -1))) |>
+  ggdag(text = FALSE, use_labels = "label", node_size = 14) +
+  theme_dag(base_size = 11) +
+  labs(title = "Mediation triad with the survival collider from Steps 1–2",
+       subtitle = "direct = X → Y | M;  indirect = (X → M) × (M → Y | X)")
+```
+
+::: {.cell-output-display}
+![](figures/mr_mediation-dag-1.png){width=720}
+:::
+:::
+
+
+## Setup
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(TwoSampleMR)
+library(ieugwasr)
+library(MVMR)            # conditional F and Q (Sanderson-Windmeijer)
+library(MRPRESSO)
+library(mr.raps)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(readr)
+library(ggplot2)
+# GRAPPLE (multivariable MR-RAPS) is needed only if a triad's method_MVMR is "grapple":
+# remotes::install_github("jingshuw/GRAPPLE"). Without it that leg falls back to MV-IVW and the
+# method_mvmr column says so.
+
+source("R/mr_mediation_helpers.R")
+
+# A token *string* is not enough: Step 2's naive pull silently returned nothing when the token
+# had expired. user() errors on an invalid token, so this fails at the top instead.
+stopifnot(nchar(ieugwasr::get_opengwas_jwt()) > 0)
+invisible(ieugwasr::user())
+```
+:::
+
+
+## Configuration — EDIT THIS BLOCK {#config}
+
+### Datasets
+
+Every OpenGWAS ID here comes from the existing pipeline or the spec; none is new. The
+covariate columns record **what the source paper says** about the adjustments in each GWAS,
+because an exposure or mediator GWAS adjusted for a heritable covariate opens a collider path
+in MR (and in MVMR the mediator's adjustment matters as much as the exposure's).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+datasets <- tibble::tribble(
+  ~id,                  ~label,                                   ~role,       ~adjusted_for,            ~adjustment_source,
+  "ebi-a-GCST90000025", "Appendicular lean mass (Pei 2020, UKB)", "exposure",  "appendicular fat mass",  "Pei 2020 Commun Biol (PMID 33097823) Methods: covariates included AFM; height deliberately excluded",
+  "ukb-b-13354",        "Whole-body fat-free mass (UKB, MRC-IEU)", "exposure", NA,                       "MRC-IEU UKB pipeline; not adjusted for adiposity",
+  "ebi-a-GCST90002227", "2-h glucose (MAGIC, Chen 2021, EUR)",    "mediator",  "BMI",                    "Chen 2021 Nat Genet (PMID 34059833): 'FG, 2hGlu and FI analyses were adjusted for BMI'",
+  "ebi-a-GCST90027158", "AD: Bellenguez 2022 (proxy + clinical)", "outcome",   NA,                       NA,
+  "ieu-b-2",            "AD: Kunkle 2019 IGAP (clinical only)",   "outcome",   NA,                       NA,
+  "ebi-a-GCST006697",   "Parental lifespan (Pilling, Martingale)","selection", NA,                       NA
+)
+LIFESPAN_ID <- "ebi-a-GCST006697"   # selection axis; MUST match the axis b_SH was fit on (Step 2)
+```
+:::
+
+
+::: {.callout-warning}
+**The motivating triad's exposure and mediator GWAS both fail the spec's covariate
+requirements.** The spec asks for lean mass with no fat-mass/BMI/height adjustment and a
+BMI-*unadjusted* 2hGlu. The IDs used by the existing pipeline are:
+
+- `ebi-a-GCST90000025`: **fat-mass-adjusted** appendicular lean mass (Pei 2020).
+- `ebi-a-GCST90002227`: **BMI-adjusted** 2hGlu. Chen 2021 adjusted FG, FI and 2hGlu for BMI,
+  and the GWAS Catalog lists no unadjusted European 2hGlu from that paper (`GCST90002225`–`29`
+  are the per-ancestry and trans-ancestry versions of the same adjusted analysis).
+
+Both adjustments condition on adiposity, which lean mass and glucose each affect. So the
+X → M leg, and the M | X coefficient, can carry collider bias in either direction. Pei 2020
+reports that its adjusted ALM has its strongest negative genetic correlation with
+*BMI-adjusted* 2hGlu, which is the exact pair used here. The notebook runs as specified, but
+every lean-mass triad is labelled `COLLIDER RISK` until unadjusted replacements are supplied.
+
+A second data note: the 2hGlu file's `beta`/`standard_error` are from the **raw-trait**
+(mmol/L) model, but its `p_value` is from the **inverse-normalised** model (Catalog
+`README.txt`). Instruments are therefore selected on a p-value that does not come from the
+reported beta. Both legs that use M are still on the same mmol/L scale, so the indirect effect's
+units are internally consistent. The [p-value cross-check](#data-checks) quantifies the mismatch.
+:::
+
+### Triads
+
+One row per **triad × outcome**. `method_XY_total` is copied from Step 2's validated
+`naive_model`. `method_XM` was **not** covered by the prior assumption checks (lean mass → 2hGlu
+was never run as a univariable association), so it is provisional: the
+[X → M checks](#xm-checks) below exist to confirm or replace it. `method_MVMR` is the
+pre-specified multivariable analog of the leg methods:
+`ivw_mre → mv_ivw_mre`, `mr_presso → mv_presso`, `mr_raps → grapple`.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+triads <- tibble::tribble(
+  ~triad_id,      ~exposure_id,         ~mediator_id,         ~outcome_id,          ~method_XM, ~method_XY_total, ~method_MVMR,  ~outcome_adjustment, ~mediator_type, ~inst_override, ~method_note,
+  "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "ebi-a-GCST90027158", "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "slopehunter",       "trait",        list(),         "XY: Step 2 naive_model (IVW-MRE). XM: PROVISIONAL, no prior check.",
+  "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: Step 2 naive_model (IVW-MRE). XM: PROVISIONAL, no prior check.",
+  # Fat-free mass (2026-10-08): not adiposity-adjusted, so it removes the exposure-side collider
+  # (the mediator-side BMI adjustment of 2hGlu remains). Not in Step 2; IVW-MRE by analogy with
+  # lean mass (pipeline: heterogeneous, Q p ~ 1e-13 / 1e-4, no directional pleiotropy flagged).
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ebi-a-GCST90027158", "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "slopehunter",       "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL.",
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."
+) |>
+  mutate(
+    # Pre-specified hypothesis signs (lean mass lowers glucose, glucose raises AD, lean mass
+    # lowers AD). Reported against the estimates; they do not enter any gate.
+    hyp_sign_xm = -1, hyp_sign_my = +1, hyp_sign_total = -1,
+    # Equivalence bound for the indirect effect (log-OR per unit X). PRE-SPECIFY BEFORE RUNNING.
+    # = 10% of |naive X -> AD (IVW-MRE)|, per triad and outcome. Fixed numbers, not read from a
+    # CSV, so a re-run cannot silently move a pre-specified bound.
+    #   lean mass: Step 2 exposure_ad_naive.csv (Bellenguez -0.1009, Kunkle -0.1299)
+    #   fat-free mass: not in Step 2; targets pipeline IVW-MRE, results/pipeline/results.csv at
+    #   42568d8 (Bellenguez -0.2497, Kunkle -0.2356). Fixed 2026-10-08, before this triad was run.
+    equiv_bound_indirect = case_when(
+      triad_id == "leanmass_2hglu" & outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.1009,   # 0.0101
+      triad_id == "leanmass_2hglu" & outcome_id == "ieu-b-2"            ~ 0.10 * 0.1299,   # 0.0130
+      triad_id == "ffm_2hglu"      & outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.2497,   # 0.0250
+      triad_id == "ffm_2hglu"      & outcome_id == "ieu-b-2"            ~ 0.10 * 0.2356,   # 0.0236
+      TRUE                                                              ~ NA_real_)
+  )
+
+# Survival-bias adjustment per outcome follows Step 2: Bellenguez's b_SH is applied; Kunkle's
+# fit is not identified (raw r = -0.0008), so Kunkle is "none" in the primary analysis.
+```
+:::
+
+
+### Selection slope, Monte Carlo and gates
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# b_SH per AD GWAS, exactly as Step 2 consumes it (same files, same `trusted` gate).
+# `boot_rds` may point to saved SlopeHunter bootstrap replicates (fit$Bts.est). The fits CSV
+# stores only b_SH and its bootstrap SE, so until those are saved the Monte Carlo draws b_SH
+# from N(b_SH, se_SH^2) and every result row records that in `slope_source`.
+bsh_sources <- tibble::tribble(
+  ~ad_id,               ~fits_csv,                                          ~fit_set,              ~trusted, ~reason,                                                  ~boot_rds,
+  "ebi-a-GCST90027158", "smoking/results/indexevent_slopehunter_fits.csv",  "excl_APOE (PRIMARY)", TRUE,     "validated in the smoking pipeline",                      NA_character_,
+  "ieu-b-2",            "R/fits/kunkle_lifespan_slopehunter_fits.csv",      "excl_APOE (PRIMARY)", FALSE,    "not identified: raw r = -0.0008, sign agreement 0.499",  NA_character_
+)
+
+SETTINGS <- list(
+  n_draws             = 5000,   # Monte Carlo draws per arm
+  n_grid              = 21,     # b_SH grid points at which the legs are refit
+  grid_sd             = 4,      # grid spans b_SH +/- 4 SE
+  n_boot_cor          = 300,    # SNP-level bootstrap reps for the leg correlation matrix
+  seed                = 20261001,
+  cond_f_min          = 10,     # gate: conditional F for X and for M
+  k_min_x_in_mediator = 10,     # eQTL mediators: skip if fewer X instruments are present
+  common_snp_set      = TRUE,   # raw arm uses the same SNPs as the adjusted arm (see below)
+  presso_nboot        = 1000,
+  grapple_loss        = "huber",# matches TwoSampleMR's mr_raps default for the univariable legs
+  gencov              = 0,      # X/M sample overlap for conditional F (Pei UKB vs MAGIC: none)
+  sampler             = sample_legs_mvn   # Bayesian hook; see R/mr_mediation_helpers.R
+)
+
+# The 2 x 2 sensitivity grid: every triad x outcome under both adjustment states.
+ADJUSTMENTS <- c("slopehunter", "none")
+
+# Overrides the pre-specification check below. Leave FALSE: the equivalence bound exists to be
+# chosen before the indirect effect is seen.
+ALLOW_UNSET_EQUIV_BOUND <- FALSE
+
+CACHE_DIR <- "data/cache/mediation"   # gitignored with the rest of data/cache
+```
+:::
+
+
+`common_snp_set = TRUE` means the **raw** arm also drops SNPs that have no lifespan
+association. Raw and SlopeHunter-adjusted estimates then share an identical SNP set, so the
+difference between them reflects the adjustment alone and not a change in instruments. With
+`FALSE`, the raw arm reproduces the prior univariable instrument set exactly.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Fail before any API call if the config is internally inconsistent.
+stopifnot(
+  all(triads$method_XM        %in% UV_METHODS),
+  all(triads$method_XY_total  %in% UV_METHODS),
+  all(triads$method_MVMR      %in% MV_METHODS),
+  all(triads$outcome_adjustment %in% ADJUSTMENTS),
+  all(triads$mediator_type    %in% c("trait", "eqtl")),
+  all(c(triads$exposure_id, triads$mediator_id, triads$outcome_id) %in% datasets$id),
+  !anyDuplicated(triads[, c("triad_id", "outcome_id")])
+)
+# Rows sharing a triad_id must share X, M and instrument parameters (instruments are pulled once
+# per triad, then reused for every outcome).
+triad_keys <- triads |>
+  group_by(triad_id) |>
+  summarise(n_xm = n_distinct(paste(exposure_id, mediator_id)),
+            n_par = n_distinct(map_chr(inst_override, \(o) paste(deparse(o), collapse = ""))))
+if (any(triad_keys$n_xm > 1 | triad_keys$n_par > 1))
+  stop("a triad_id maps to more than one exposure/mediator pair or instrument override")
+
+if (any(is.na(triads$equiv_bound_indirect)) && !ALLOW_UNSET_EQUIV_BOUND)
+  stop("equiv_bound_indirect is not set for: ",
+       paste(unique(triads$triad_id[is.na(triads$equiv_bound_indirect)]), collapse = ", "),
+       ". Pre-specify it in config-triads before running (or set ALLOW_UNSET_EQUIV_BOUND <- TRUE ",
+       "to run without an equivalence test, which is then reported as 'bound not set').")
+```
+:::
+
+
+## Dataset checks {#data-checks}
+
+Confirms each ID resolves to the trait we think it does, and that the mediator is
+European-only. Covariate adjustment is not exposed by the API, so it is taken from the
+`datasets` table above (with its source) and turned into a per-triad flag.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+info <- ieugwasr::gwasinfo(datasets$id)
+info |>
+  select(any_of(c("id", "trait", "author", "year", "pmid", "population", "sample_size",
+                  "ncase", "ncontrol", "unit"))) |>
+  knitr::kable(caption = "OpenGWAS metadata for every dataset in the config.")
+```
+
+::: {.cell-output-display}
+
+
+Table: OpenGWAS metadata for every dataset in the config.
+
+|id                 |trait                                                                     |author       | year|     pmid|population | sample_size| ncase| ncontrol|unit |
+|:------------------|:-------------------------------------------------------------------------|:------------|----:|--------:|:----------|-----------:|-----:|--------:|:----|
+|ebi-a-GCST90000025 |Appendicular lean mass                                                    |Pei YF       | 2020| 33097823|European   |      450243|    NA|       NA|NA   |
+|ukb-b-13354        |Whole body fat-free mass                                                  |Ben Elsworth | 2018|       NA|European   |      454850|    NA|       NA|SD   |
+|ebi-a-GCST90002227 |Two-hour glucose                                                          |Chen J       | 2021| 34059833|European   |       63396|    NA|       NA|NA   |
+|ebi-a-GCST90027158 |Alzheimer's disease                                                       |Bellenguez C | 2022| 35379992|European   |      487511| 39106|    46828|NA   |
+|ieu-b-2            |Alzheimer's disease                                                       |Kunkle BW    | 2019| 30820047|European   |       63926| 21982|    41944|NA   |
+|ebi-a-GCST006697   |Parental longevity (combined parental attained age, Martingale residuals) |Pilling LC   | 2017| 29227965|European   |      389166|    NA|       NA|NA   |
+
+
+:::
+
+```{.r .cell-code}
+med_pop <- info |> filter(id %in% triads$mediator_id) |> pull(population)
+if (any(!grepl("European", med_pop)))
+  warning("a mediator GWAS is not European-only: ", paste(med_pop, collapse = ", "))
+
+covariate_flags <- triads |>
+  distinct(triad_id, exposure_id, mediator_id) |>
+  left_join(datasets |> select(exposure_id = id, x_adj = adjusted_for), by = "exposure_id") |>
+  left_join(datasets |> select(mediator_id = id, m_adj = adjusted_for), by = "mediator_id") |>
+  mutate(collider_risk = case_when(
+    !is.na(x_adj) & !is.na(m_adj) ~ paste0("COLLIDER RISK: X adjusted for ", x_adj,
+                                           "; M adjusted for ", m_adj),
+    !is.na(x_adj) ~ paste0("COLLIDER RISK: X adjusted for ", x_adj),
+    !is.na(m_adj) ~ paste0("COLLIDER RISK: M adjusted for ", m_adj),
+    TRUE ~ "none recorded"))
+covariate_flags |> knitr::kable(caption = "Covariate adjustment in the exposure and mediator GWAS.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Covariate adjustment in the exposure and mediator GWAS.
+
+|triad_id       |exposure_id        |mediator_id        |x_adj                 |m_adj |collider_risk                                                           |
+|:--------------|:------------------|:------------------|:---------------------|:-----|:-----------------------------------------------------------------------|
+|leanmass_2hglu |ebi-a-GCST90000025 |ebi-a-GCST90002227 |appendicular fat mass |BMI   |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|ffm_2hglu      |ukb-b-13354        |ebi-a-GCST90002227 |NA                    |BMI   |COLLIDER RISK: M adjusted for BMI                                       |
+
+
+:::
+:::
+
+
+## Instruments
+
+Selection reuses the prior univariable pipeline exactly: p < 5×10⁻⁸, clumping at
+r² < 0.001 within 10 Mb on the OpenGWAS 1000G-EUR LD server, harmonisation `action = 2`
+(palindromes inferred from allele frequency, ambiguous ones dropped), LD proxies at r² ≥ 0.8
+(TwoSampleMR defaults), and **no** F-statistic filter. The relaxed drug-target criteria
+(`smoking/config.yml: cis_drugtarget`) are not used. Any per-triad change goes through
+`inst_override` and is written to the deviation log.
+
+The MVMR instrument set is the union of X and M instruments, re-clumped with the same parameters
+and extracted for both traits (`TwoSampleMR::mv_extract_exposures`).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+par_tbl <- triads |>
+  distinct(triad_id, exposure_id, mediator_id, .keep_all = TRUE) |>
+  mutate(rp = map2(inst_override, triad_id, resolve_instrument_params))
+
+pull_triad <- function(triad_id, exposure_id, mediator_id, rp) {
+  x <- exposure_id; m <- mediator_id; par <- rp$par
+  # Fail on the first pull that returns nothing, naming the call and the server's reason.
+  need <- function(val, what) {
+    if (is.null(val)) stop("OpenGWAS pull failed for ", triad_id, ": ", what, " -> ",
+                           og_last_error(), ". A 5xx code is a server outage (retry later); ",
+                           "401/403 is the token (check ieugwasr::user()).", call. = FALSE)
+    val
+  }
+  x_inst <- need(pull_instruments(x, par, CACHE_DIR), paste("instruments for", x))
+  m_inst <- need(pull_instruments(m, par, CACHE_DIR), paste("instruments for", m))
+  mv_exp <- need(pull_mv_exposures(x, m, par, CACHE_DIR), "mv_extract_exposures (re-clump X u M)")
+  list(x_id = x, m_id = m, x_inst = x_inst, m_inst = m_inst, mv_exp = mv_exp,
+       x_in_m = pull_snps(x_inst$SNP, m, par, CACHE_DIR),
+       m_in_x = pull_snps(m_inst$SNP, x, par, CACHE_DIR))
+}
+pulls <- par_tbl |>
+  mutate(pulls = pmap(list(triad_id, exposure_id, mediator_id, rp), pull_triad))
+pulls_by_triad <- setNames(pulls$pulls, pulls$triad_id)
+par_by_triad   <- setNames(map(pulls$rp, "par"), pulls$triad_id)
+
+instrument_log <- list_rbind(map(pulls$rp, "log"))
+
+pulls |>
+  transmute(triad_id,
+            n_X = map_int(pulls, \(p) nrow(p$x_inst)),
+            n_M = map_int(pulls, \(p) nrow(p$m_inst)),
+            union_before_reclump = map_int(pulls, \(p) length(union(p$x_inst$SNP, p$m_inst$SNP))),
+            mvmr_after_reclump = map_int(pulls, \(p) n_distinct(p$mv_exp$SNP)),
+            X_in_M_gwas = map_int(pulls, \(p) n_distinct(p$x_in_m$SNP)),
+            mean_F_X = map_dbl(pulls, \(p) mean((p$x_inst$beta.exposure / p$x_inst$se.exposure)^2)),
+            mean_F_M = map_dbl(pulls, \(p) mean((p$m_inst$beta.exposure / p$m_inst$se.exposure)^2))) |>
+  mutate(across(where(is.double), \(x) round(x, 1))) |>
+  knitr::kable(caption = "Instrument counts per triad.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Instrument counts per triad.
+
+|triad_id       | n_X| n_M| union_before_reclump| mvmr_after_reclump| X_in_M_gwas| mean_F_X| mean_F_M|
+|:--------------|---:|---:|--------------------:|------------------:|-----------:|--------:|--------:|
+|leanmass_2hglu | 687|  14|                  700|                579|         645|     97.0|     56.6|
+|ffm_2hglu      | 553|  14|                  566|                502|         551|     84.5|     56.6|
+
+
+:::
+
+```{.r .cell-code}
+# Log the SNPs lost at re-clumping (union -> MVMR set).
+instrument_log <- bind_rows(instrument_log, imap(pulls_by_triad, \(p, t)
+  log_row(t, NA, "mvmr_reclump", "dropped",
+          "X or M instruments removed by re-clumping the union (or missing in the other trait)",
+          setdiff(union(p$x_inst$SNP, p$m_inst$SNP), p$mv_exp$SNP))) |> bind_rows())
+```
+:::
+
+
+The 2hGlu file reports a raw-scale beta with an inverse-normal-model p-value. This shows how far
+the reported p-values diverge from the ones implied by beta/se among the selected instruments
+(the same class of mislabelling `read_gwas()` in the calcium arm checks for).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+imap(pulls_by_triad, \(p, t) bind_rows(
+  p$x_inst |> mutate(trait = "X"), p$m_inst |> mutate(trait = "M")) |>
+  mutate(log10p_reported = -log10(pval.exposure),
+         log10p_from_beta = -(pnorm(-abs(beta.exposure / se.exposure), log.p = TRUE) + log(2)) / log(10)) |>
+  group_by(triad_id = t, trait) |>
+  summarise(n = n(), cor = cor(log10p_reported, log10p_from_beta),
+            median_ratio = median(log10p_from_beta / log10p_reported),
+            n_fail_5e8_on_beta = sum(log10p_from_beta < -log10(5e-8)), .groups = "drop")) |>
+  bind_rows() |>
+  mutate(across(where(is.double), \(x) signif(x, 3))) |>
+  knitr::kable(caption = "Reported vs beta/se-implied -log10 p among selected instruments.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Reported vs beta/se-implied -log10 p among selected instruments.
+
+|triad_id       |trait |   n|   cor| median_ratio| n_fail_5e8_on_beta|
+|:--------------|:-----|---:|-----:|------------:|------------------:|
+|leanmass_2hglu |M     |  14| 0.994|        0.919|                  2|
+|leanmass_2hglu |X     | 687| 0.984|        1.010|                  5|
+|ffm_2hglu      |M     |  14| 0.994|        0.919|                  2|
+|ffm_2hglu      |X     | 553| 1.000|        1.000|                  0|
+
+
+:::
+:::
+
+
+## Outcome tables (built once per outcome)
+
+For each AD outcome, the outcome effects and the parental-lifespan effects are extracted
+**once** for the union of every triad's instruments, with lifespan aligned to the outcome's
+effect allele. Every triad then reads from that one table, which makes the
+"never mix adjusted and unadjusted data within a triad" rule hold by construction.
+
+::: {.callout-note}
+**Sign convention (from Step 2):** the lifespan axis `GCST006697` is a Martingale residual that
+increases with **mortality**. `b_SH` was fit on the same axis, so the SNP-level adjustment
+$\beta^{adj}_Y = \beta_Y - b_{SH}\,\beta_{life}$ is internally consistent. Do not negate either
+term.
+:::
+
+
+::: {.cell}
+
+```{.r .cell-code}
+all_snps <- pulls_by_triad |>
+  map(\(p) c(p$x_inst$SNP, p$m_inst$SNP, p$mv_exp$SNP)) |> unlist() |> unique()
+
+# Outcome tables use the default proxy settings. A triad that overrides proxy parameters would
+# not be matched by these tables, so refuse that combination rather than mix rules.
+proxy_keys <- grep("^proxy", names(INSTRUMENT_DEFAULTS), value = TRUE)
+if (any(map_lgl(par_by_triad, \(p) !identical(p[proxy_keys], INSTRUMENT_DEFAULTS[proxy_keys]))))
+  stop("proxy settings cannot be overridden per triad; outcome tables are shared")
+
+outcome_tables <- unique(triads$outcome_id) |>
+  set_names() |>
+  map(\(o) build_outcome_table(o, all_snps, LIFESPAN_ID, INSTRUMENT_DEFAULTS, CACHE_DIR))
+instrument_log <- bind_rows(instrument_log, list_rbind(unname(map(outcome_tables, "log"))))
+
+imap(outcome_tables, \(ot, o) tibble(
+  outcome_id = o, union_snps = length(all_snps), with_outcome = nrow(ot$table),
+  with_lifespan = sum(!is.na(ot$table$beta_life)))) |>
+  bind_rows() |>
+  knitr::kable(caption = "Outcome-table coverage. SNPs without lifespan are dropped from adjusted arms (and from raw arms when common_snp_set = TRUE).")
+```
+
+::: {.cell-output-display}
+
+
+Table: Outcome-table coverage. SNPs without lifespan are dropped from adjusted arms (and from raw arms when common_snp_set = TRUE).
+
+|outcome_id         | union_snps| with_outcome| with_lifespan|
+|:------------------|----------:|------------:|-------------:|
+|ebi-a-GCST90027158 |       1186|         1125|          1031|
+|ieu-b-2            |       1186|         1217|           903|
+
+
+:::
+:::
+
+
+## Selection slope b_SH
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Same logic as Step 2's load_bsh(): the fitted value is always shown, but it is applied only
+# when trusted.
+load_bsh <- function(ad_id) {
+  src <- bsh_sources |> filter(ad_id == !!ad_id)
+  na_row <- tibble(ad_id = ad_id, b_SH = NA_real_, se_SH = NA_real_, trusted = FALSE,
+                   reason = "no fits CSV", boot = list(NULL))
+  if (nrow(src) == 0 || !file.exists(src$fits_csv[1])) return(na_row)
+  fit <- read_csv(src$fits_csv[1], show_col_types = FALSE) |> filter(set == src$fit_set[1]) |> slice(1)
+  if (nrow(fit) == 0) return(na_row)
+  boot <- if (!is.na(src$boot_rds[1]) && file.exists(src$boot_rds[1])) readRDS(src$boot_rds[1]) else NULL
+  tibble(ad_id = ad_id, b_SH = fit$b_SH, se_SH = fit$se_SH, trusted = src$trusted[1],
+         reason = src$reason[1], boot = list(boot))
+}
+bsh <- map(unique(triads$outcome_id), load_bsh) |> list_rbind()
+
+bsh |>
+  transmute(outcome = ad_id, b_SH = signif(b_SH, 3), se_SH = signif(se_SH, 3),
+            applied = if_else(trusted, "yes", "NO"), reason,
+            draws = if_else(map_lgl(boot, is.null), "normal approx.", "bootstrap replicates")) |>
+  knitr::kable(caption = "Selection slope per AD outcome (from Step 2).")
+```
+
+::: {.cell-output-display}
+
+
+Table: Selection slope per AD outcome (from Step 2).
+
+|outcome            |   b_SH|  se_SH|applied |reason                                                |draws          |
+|:------------------|------:|------:|:-------|:-----------------------------------------------------|:--------------|
+|ebi-a-GCST90027158 | -0.944| 0.0701|yes     |validated in the smoking pipeline                     |normal approx. |
+|ieu-b-2            |  1.100| 0.1120|NO      |not identified: raw r = -0.0008, sign agreement 0.499 |normal approx. |
+
+
+:::
+:::
+
+
+::: {.callout-important}
+**Carried from Step 2 (caveat 0): the Bellenguez b_SH = −0.944 has not been checked against its
+permutation null.** SlopeHunter returns about −0.73 on Kunkle data whose selection signal was
+destroyed by permutation. Until `bsh_null_permutation()` is run on the Bellenguez merge, every
+SlopeHunter-adjusted row here is **provisional**. The raw arm in the 2×2 grid is the hedge.
+:::
+
+## Estimation
+
+Per arm (triad × outcome × adjustment):
+
+1. **Total:** univariable X → Y on X's own instruments, using `method_XY_total`.
+2. **X → M:** univariable on X's own instruments in the mediator GWAS, using `method_XM`.
+3. **MVMR:** X and M jointly on Y, using the re-clumped union and `method_MVMR`. This gives
+   **direct** = β(X → Y | M) and **β(M → Y | X)** with their joint covariance.
+4. **Indirect** = β(X → M) × β(M → Y | X). Both glucose coefficients come from the same 2hGlu
+   GWAS, so the mediator's units cancel and the indirect effect is in log-OR per unit X.
+5. **Consistency:** (direct + indirect) − total, in units of the total's SE.
+
+**Uncertainty (Monte Carlo).** The four legs are drawn jointly from a multivariate normal. The
+MVMR block uses the method's own covariance. Correlations between the other legs come from a
+SNP-level parametric bootstrap, because total, X → M and MVMR share SNPs and GWAS, and total and
+direct share the outcome. For adjusted arms, b_SH is also redrawn. The legs are refit on a grid
+of b_SH values (re-adjusting the outcome at every grid point), and each draw interpolates the
+estimates and covariance at its own b_SH. This carries the shared-slope correlation between
+adjusted SNP effects, which naive IVW SEs omit. MR-PRESSO outlier sets are found once at the
+point estimate and held fixed across the grid. Delta-method SEs for the indirect effect are
+reported alongside as a quick check.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+arms <- triads |>
+  select(-inst_override) |>
+  crossing(adjustment = ADJUSTMENTS) |>
+  mutate(primary = adjustment == outcome_adjustment)
+
+arm_out <- pmap(arms, function(...) {
+  tr <- tibble(...)
+  run_triad_arm(tr, pulls_by_triad[[tr$triad_id]], outcome_tables[[tr$outcome_id]]$table,
+                tr$adjustment, bsh |> filter(ad_id == tr$outcome_id),
+                par_by_triad[[tr$triad_id]], SETTINGS)
+})
+
+draws <- bind_rows(map(arm_out, "draws"))
+instrument_log <- bind_rows(instrument_log, list_rbind(map(arm_out, "log")))
+
+results <- bind_rows(map(arm_out, "result")) |>
+  left_join(arms |> select(triad_id, outcome_id, adjustment, primary, method_note,
+                           starts_with("hyp_sign")),
+            by = c("triad_id", "outcome_id", "adjustment")) |>
+  left_join(covariate_flags |> select(triad_id, collider_risk), by = "triad_id") |>
+  left_join(datasets |> select(outcome_id = id, outcome = label), by = "outcome_id") |>
+  # FDR across triads x outcomes, within each adjustment arm (so sensitivity arms do not dilute
+  # the primary one). Monte Carlo p-values, which include b_SH uncertainty.
+  group_by(adjustment) |>
+  mutate(across(any_of(c("total_mc_p", "direct_mc_p", "indirect_mc_p")),
+                \(p) p.adjust(if_else(status == "run", p, NA_real_), "BH"),
+                .names = "{.col}_fdr")) |>
+  ungroup() |>
+  mutate(hypothesis_consistent = sign(xm_b) == hyp_sign_xm & sign(my_b) == hyp_sign_my &
+           sign(total_b) == hyp_sign_total)
+```
+:::
+
+
+## Results
+
+
+::: {.cell}
+
+```{.r .cell-code}
+fmt_ci <- \(b, lo, hi) ifelse(is.na(b), NA, sprintf("%.4f [%.4f, %.4f]", b, lo, hi))
+
+results |>
+  filter(primary) |>
+  transmute(triad_id, outcome, adjustment, status,
+            total    = fmt_ci(total_b, total_mc_lo, total_mc_hi),
+            `X→M`    = fmt_ci(xm_b, xm_mc_lo, xm_mc_hi),
+            `M→Y|X`  = fmt_ci(my_b, my_mc_lo, my_mc_hi),
+            direct   = fmt_ci(direct_b, direct_mc_lo, direct_mc_hi),
+            indirect = fmt_ci(indirect_b, indirect_mc_lo, indirect_mc_hi),
+            `indirect SE (MC / delta)` = sprintf("%.4f / %.4f",
+              (indirect_mc_hi - indirect_mc_lo) / (2 * 1.96), indirect_se_delta),
+            `% mediated` = ifelse(is.na(proportion_b), "—",
+              sprintf("%.0f%% [%.0f, %.0f]", 100 * proportion_b, 100 * proportion_mc_lo,
+                      100 * proportion_mc_hi)),
+            `FDR indirect` = signif(indirect_mc_p_fdr, 2),
+            gates = gate_summary, collider_risk) |>
+  knitr::kable(caption = paste(
+    "Primary analysis (per-outcome adjustment from the config). Point estimate with 95% Monte",
+    "Carlo percentile interval. % mediated is shown only when every gate passes."))
+```
+
+::: {.cell-output-display}
+
+
+Table: Primary analysis (per-outcome adjustment from the config). Point estimate with 95% Monte Carlo percentile interval. % mediated is shown only when every gate passes.
+
+|triad_id       |outcome                                |adjustment  |status |total                      |X→M                        |M→Y&#124;X               |direct                     |indirect                  |indirect SE (MC / delta) |% mediated | FDR indirect|gates               |collider_risk                                                           |
+|:--------------|:--------------------------------------|:-----------|:------|:--------------------------|:--------------------------|:------------------------|:--------------------------|:-------------------------|:------------------------|:----------|------------:|:-------------------|:-----------------------------------------------------------------------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1927 [-0.2704, -0.1142] |-0.3300 [-0.4025, -0.2562] |0.0468 [-0.0267, 0.1216] |-0.1512 [-0.2326, -0.0677] |-0.0155 [-0.0414, 0.0088] |0.0128 / 0.0128          |—          |         0.22|conditional F <= 10 |COLLIDER RISK: M adjusted for BMI                                       |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.2604 [-0.3958, -0.1262] |-0.3300 [-0.4030, -0.2564] |0.0182 [-0.1141, 0.1485] |-0.2026 [-0.3468, -0.0625] |-0.0060 [-0.0505, 0.0366] |0.0222 / 0.0217          |—          |         0.98|conditional F <= 10 |COLLIDER RISK: M adjusted for BMI                                       |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1045 [-0.1484, -0.0601] |-0.1692 [-0.2143, -0.1243] |0.0577 [-0.0157, 0.1285] |-0.0926 [-0.1395, -0.0460] |-0.0098 [-0.0231, 0.0025] |0.0065 / 0.0062          |—          |         0.22|conditional F <= 10 |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.1294 [-0.2077, -0.0480] |-0.1692 [-0.2143, -0.1240] |0.0002 [-0.1246, 0.1243] |-0.1257 [-0.2090, -0.0409] |-0.0000 [-0.0214, 0.0217] |0.0110 / 0.0109          |—          |         0.98|conditional F <= 10 |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+
+
+:::
+:::
+
+
+::: {.callout-warning}
+Rows marked **COLLIDER RISK** use exposure or mediator GWAS adjusted for an adiposity covariate (see [Dataset checks](#data-checks)). Treat their X → M and M → Y | X legs, and therefore the indirect effect, as potentially biased in an unknown direction.
+:::
+
+### Gates {#gates}
+
+Pre-specified. A triad that fails a gate is still reported; it gets no percent mediated.
+
+| Gate | Rule |
+|---|---|
+| Conditional F | > 10 for both X and M (Sanderson-Windmeijer, two-sample, recomputed on the final SNP set of each arm) |
+| Total effect | 95% MC interval excludes 0 |
+| Sign concordance | sign(indirect) = sign(total) |
+| Direct opposite sign | flagged: direct and indirect are reported separately, no percent |
+| Proportion outside [0, 1] | flagged: no percent |
+| Equivalence | indirect's 90% MC interval inside ±`equiv_bound_indirect` (TOST, α = 0.05) |
+
+
+::: {.cell}
+
+```{.r .cell-code}
+results |>
+  filter(status == "run") |>
+  transmute(triad_id, outcome, adjustment, primary,
+            cond_F_x = round(cond_F_x, 1), cond_F_m = round(cond_F_m, 1),
+            gate_condF, gate_total_ci, gate_sign_concordant, flag_direct_opposite,
+            flag_prop_outside_01, equivalence, hypothesis_consistent, gate_summary) |>
+  knitr::kable(caption = "Gate outcomes for every arm that ran.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Gate outcomes for every arm that ran.
+
+|triad_id       |outcome                                |adjustment  |primary | cond_F_x| cond_F_m|gate_condF |gate_total_ci |gate_sign_concordant |flag_direct_opposite |flag_prop_outside_01 |equivalence  |hypothesis_consistent |gate_summary        |
+|:--------------|:--------------------------------------|:-----------|:-------|--------:|--------:|:----------|:-------------|:--------------------|:--------------------|:--------------------|:------------|:---------------------|:-------------------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     19.3|      2.0|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     19.3|      2.0|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     25.7|      2.0|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     22.2|      1.7|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     22.2|      1.7|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     32.2|      1.8|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive |TRUE                  |conditional F <= 10 |
+
+
+:::
+:::
+
+
+### Consistency: does direct + indirect reproduce total?
+
+Total is fit on X's instruments; direct and M | X are fit on the re-clumped union, possibly with
+different methods. Small gaps are expected. A gap of several total-SEs means the two-step and
+MVMR decompositions disagree and the proportion should not be trusted even if the gates pass.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+results |>
+  filter(status == "run") |>
+  transmute(triad_id, outcome, adjustment,
+            total = signif(total_b, 3), `direct + indirect` = signif(direct_b + indirect_b, 3),
+            `difference method (total − direct)` = signif(difference_b, 3),
+            `product method (indirect)` = signif(indirect_b, 3),
+            `gap / SE(total)` = round(consistency_gap_in_total_se, 2),
+            `r(total, direct)` = round(r_total_direct, 2)) |>
+  knitr::kable(caption = "Decomposition consistency.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Decomposition consistency.
+
+|triad_id       |outcome                                |adjustment  |   total| direct + indirect| difference method (total − direct)| product method (indirect)| gap / SE(total)| r(total, direct)|
+|:--------------|:--------------------------------------|:-----------|-------:|-----------------:|----------------------------------:|-------------------------:|---------------:|----------------:|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.2470|           -0.2220|                           -0.03800|                 -0.012500|            0.65|             0.92|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1930|           -0.1670|                           -0.04150|                 -0.015500|            0.65|             0.93|
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.2600|           -0.2090|                           -0.05770|                 -0.006020|            0.75|             0.93|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.0988|           -0.0978|                           -0.00887|                 -0.007790|            0.05|             0.95|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1040|           -0.1020|                           -0.01190|                 -0.009770|            0.09|             0.95|
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.1290|           -0.1260|                           -0.00365|                 -0.000033|            0.09|             0.96|
+
+
+:::
+:::
+
+
+## Diagnostics
+
+### Conditional F and MVMR heterogeneity
+
+
+::: {.cell}
+
+```{.r .cell-code}
+results |>
+  filter(status == "run") |>
+  transmute(triad_id, outcome, adjustment, n_snp_total, n_snp_xm, n_snp_mvmr,
+            n_mvmr_x_inst, n_mvmr_m_inst, cond_F_x = round(cond_F_x, 1),
+            cond_F_m = round(cond_F_m, 1), mvmr_Q = round(mvmr_Q, 1),
+            mvmr_Q_p = signif(mvmr_Q_p, 2), method_total, method_xm, method_mvmr) |>
+  knitr::kable(caption = paste(
+    "Conditional F (gencov = ", SETTINGS$gencov, ") and Sanderson-Windmeijer Q, per arm.",
+    "SNP counts are after SlopeHunter SNP loss. A significant Q indicates pleiotropy or",
+    "heterogeneity beyond what X and M explain."))
+```
+
+::: {.cell-output-display}
+
+
+Table: Conditional F (gencov =  0 ) and Sanderson-Windmeijer Q, per arm. SNP counts are after SlopeHunter SNP loss. A significant Q indicates pleiotropy or heterogeneity beyond what X and M explain.
+
+|triad_id       |outcome                                |adjustment  | n_snp_total| n_snp_xm| n_snp_mvmr| n_mvmr_x_inst| n_mvmr_m_inst| cond_F_x| cond_F_m| mvmr_Q| mvmr_Q_p|method_total |method_xm |method_mvmr |
+|:--------------|:--------------------------------------|:-----------|-----------:|--------:|----------:|-------------:|-------------:|--------:|--------:|------:|--------:|:------------|:---------|:-----------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |         506|      532|        472|           467|             6|     19.3|      2.0|  694.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         506|      532|        472|           467|             6|     19.3|      2.0|  683.1|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |         447|      532|        416|           412|             5|     25.7|      2.0|  526.0|  1.3e-04|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |         571|      613|        533|           530|             4|     22.2|      1.7|  796.1|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         571|      613|        533|           530|             4|     22.2|      1.7|  760.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |         500|      613|        473|           470|             4|     32.2|      1.8|  635.8|  5.0e-07|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+
+
+:::
+:::
+
+
+### X → M assumption checks {#xm-checks}
+
+The X → M leg is new, so the SOP checks that set `method_XM` were not done for it. If Q is
+significant with no directional pleiotropy, IVW-MRE stands. If MR-PRESSO flags outliers, switch
+to `mr_presso`. If F is weak, switch to `mr_raps`. The MVMR method must then follow the mapping.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+diag <- imap(pulls_by_triad, \(p, t)
+  triad_diagnostics(triads |> filter(triad_id == t) |> slice(1), p, par_by_triad[[t]],
+                    SETTINGS$presso_nboot))
+
+map(diag, "checks") |> bind_rows() |>
+  select(triad_id, xm_n_snp, xm_mean_F, xm_ivw_mre_b, xm_ivw_mre_se, xm_Q_p,
+         xm_egger_intercept, xm_egger_int_p, xm_presso_global_p, xm_presso_n_outlier, xm_presso_b) |>
+  mutate(across(where(is.double), \(x) signif(x, 3))) |>
+  knitr::kable(caption = "X → M: heterogeneity, Egger intercept and MR-PRESSO.")
+```
+
+::: {.cell-output-display}
+
+
+Table: X → M: heterogeneity, Egger intercept and MR-PRESSO.
+
+|triad_id       | xm_n_snp| xm_mean_F| xm_ivw_mre_b| xm_ivw_mre_se|  xm_Q_p| xm_egger_intercept| xm_egger_int_p| xm_presso_global_p| xm_presso_n_outlier| xm_presso_b|
+|:--------------|--------:|---------:|------------:|-------------:|-------:|------------------:|--------------:|------------------:|-------------------:|-----------:|
+|leanmass_2hglu |      613|      96.8|       -0.169|        0.0228| 0.0e+00|           8.86e-04|          0.459|              0.001|                   7|      -0.159|
+|ffm_2hglu      |      532|      85.0|       -0.330|        0.0374| 7.8e-06|           7.94e-05|          0.948|              0.001|                   5|      -0.314|
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+map(diag, "xm_dat") |>
+  imap(\(d, t) mutate(d, triad_id = t)) |>
+  bind_rows() |>
+  ggplot(aes(beta.exposure, beta.outcome)) +
+  geom_hline(yintercept = 0, colour = "grey70") + geom_vline(xintercept = 0, colour = "grey70") +
+  geom_errorbar(aes(ymin = beta.outcome - 1.96 * se.outcome,
+                    ymax = beta.outcome + 1.96 * se.outcome), colour = "grey60", width = 0) +
+  geom_point(colour = "#00274c", alpha = 0.7) +
+  geom_smooth(method = "lm", formula = y ~ 0 + x, mapping = aes(weight = 1 / se.outcome^2),
+              colour = "#ffcb05", se = FALSE) +
+  facet_wrap(~triad_id, scales = "free") +
+  labs(x = "SNP effect on X", y = "SNP effect on M", title = "X → M scatter (IVW slope)") +
+  theme_minimal(base_size = 12)
+```
+
+::: {.cell-output-display}
+![](figures/mr_mediation-diag-xm-plot-1.png){width=672}
+:::
+:::
+
+
+### Direction: Steiger and reverse M → X
+
+Glucose or insulin could plausibly affect lean mass. Steiger flags X instruments that explain
+more variance in M than in X. The reverse MR uses M's instruments on X.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+map(diag, "checks") |> bind_rows() |>
+  transmute(triad_id, steiger_n, steiger_n_wrong,
+            `X→M (all)` = sprintf("%.4f (%.4f)", xm_ivw_mre_b, xm_ivw_mre_se),
+            `X→M (Steiger-filtered)` = sprintf("%.4f (%.4f)", xm_b_steiger, xm_se_steiger),
+            `reverse M→X` = sprintf("%.4f (%.4f)", reverse_mx_b, reverse_mx_se),
+            reverse_p = signif(reverse_mx_p, 2), reverse_n_snp = reverse_mx_n_snp) |>
+  knitr::kable(caption = "Steiger filtering on X → M, and the reverse-direction estimate.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Steiger filtering on X → M, and the reverse-direction estimate.
+
+|triad_id       | steiger_n| steiger_n_wrong|X→M (all)        |X→M (Steiger-filtered) |reverse M→X      | reverse_p| reverse_n_snp|
+|:--------------|---------:|---------------:|:----------------|:----------------------|:----------------|---------:|-------------:|
+|leanmass_2hglu |       613|               0|-0.1692 (0.0228) |-0.1692 (0.0228)       |-0.0472 (0.0540) |    0.3800|            14|
+|ffm_2hglu      |       532|               0|-0.3300 (0.0374) |-0.3300 (0.0374)       |-0.0675 (0.0254) |    0.0079|            14|
+
+
+:::
+:::
+
+
+### Instrument cross-lookup
+
+How many X instruments are associated with M, and vice versa. Many shared associations at
+genome-wide significance mean the two instrument sets carry common pleiotropy, which MVMR has to
+separate. Compare `n_nominal` against the ~5% expected under no sharing.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+map(diag, "cross") |> bind_rows() |>
+  knitr::kable(caption = "Cross-lookup of instrument sets.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Cross-lookup of instrument sets.
+
+|triad_id       |direction               | n_looked_up| n_gw_sig| n_suggestive| n_nominal| expected_nominal|
+|:--------------|:-----------------------|-----------:|--------:|------------:|---------:|----------------:|
+|leanmass_2hglu |X instruments in M GWAS |         613|        2|            2|        57|             30.7|
+|leanmass_2hglu |M instruments in X GWAS |          14|        4|            4|         7|              0.7|
+|ffm_2hglu      |X instruments in M GWAS |         532|        1|            1|        55|             26.6|
+|ffm_2hglu      |M instruments in X GWAS |          14|        3|            4|         9|              0.7|
+
+
+:::
+:::
+
+
+## Sensitivity: outcome × adjustment (2×2)
+
+Expectation, if lean-mass instruments carry real lifespan effects (Step 1: strong edge on two of
+the four lifespan phenotypes): SlopeHunter should shift **total** and **direct** more than
+**indirect**, because the selection path runs X → S and not through glucose. Shifts are in units
+of the raw arm's SE. The proxy-inclusive Bellenguez betas are not on the clinical log-OR scale,
+so compare outcomes on **proportions and signs**, not absolute effects.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+results |>
+  select(triad_id, outcome, adjustment, status, total_b, direct_b, indirect_b,
+         total_se, direct_se, indirect_se_delta, proportion_b) |>
+  mutate(across(c(total_b, direct_b, indirect_b), \(x) signif(x, 3)),
+         proportion = ifelse(is.na(proportion_b), "—", sprintf("%.0f%%", 100 * proportion_b))) |>
+  select(-ends_with("_se"), -indirect_se_delta, -proportion_b) |>
+  knitr::kable(caption = "All four cells of the grid per triad. NOT RUN cells carry their reason.")
+```
+
+::: {.cell-output-display}
+
+
+Table: All four cells of the grid per triad. NOT RUN cells carry their reason.
+
+|triad_id       |outcome                                |adjustment  |status                                                                            | total_b| direct_b| indirect_b|proportion |
+|:--------------|:--------------------------------------|:-----------|:---------------------------------------------------------------------------------|-------:|--------:|----------:|:----------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.2470|  -0.2090|  -0.012500|—          |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1930|  -0.1510|  -0.015500|—          |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.2600|  -0.2030|  -0.006020|—          |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.0988|  -0.0900|  -0.007790|—          |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1040|  -0.0926|  -0.009770|—          |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.1290|  -0.1260|  -0.000033|—          |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
+
+
+:::
+
+```{.r .cell-code}
+results |>
+  filter(status == "run") |>
+  select(triad_id, outcome, adjustment, total_b, direct_b, indirect_b,
+         total_se, direct_se, indirect_se_delta) |>
+  pivot_wider(names_from = adjustment,
+              values_from = c(total_b, direct_b, indirect_b, total_se, direct_se, indirect_se_delta)) |>
+  filter(!is.na(total_b_slopehunter), !is.na(total_b_none)) |>
+  transmute(triad_id, outcome,
+            `Δ total / SE`    = round((total_b_slopehunter - total_b_none) / total_se_none, 2),
+            `Δ direct / SE`   = round((direct_b_slopehunter - direct_b_none) / direct_se_none, 2),
+            `Δ indirect / SE` = round((indirect_b_slopehunter - indirect_b_none) /
+                                        indirect_se_delta_none, 2)) |>
+  knitr::kable(caption = "Shift from SlopeHunter adjustment, per estimand.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Shift from SlopeHunter adjustment, per estimand.
+
+|triad_id       |outcome                                | Δ total / SE| Δ direct / SE| Δ indirect / SE|
+|:--------------|:--------------------------------------|------------:|-------------:|---------------:|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |         1.40|          1.40|           -0.24|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |        -0.25|         -0.11|           -0.32|
+
+
+:::
+:::
+
+
+## Forest plot
+
+
+::: {.cell}
+
+```{.r .cell-code}
+plot_df <- results |>
+  filter(status == "run") |>
+  select(triad_id, outcome, adjustment, primary,
+         direct_b, direct_mc_lo, direct_mc_hi, indirect_b, indirect_mc_lo, indirect_mc_hi,
+         total_b, total_mc_lo, total_mc_hi) |>
+  pivot_longer(-c(triad_id, outcome, adjustment, primary),
+               names_to = c("estimand", ".value"), names_pattern = "(direct|indirect|total)_(.*)") |>
+  mutate(estimand = factor(estimand, c("total", "direct", "indirect")),
+         arm = paste0(outcome, "\n", adjustment, if_else(primary, " (primary)", "")))
+
+if (nrow(plot_df) == 0) {
+  message("No arms ran; nothing to plot.")
+} else {
+  ggplot(plot_df, aes(b, arm, colour = estimand)) +
+    geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
+    geom_pointrange(aes(xmin = mc_lo, xmax = mc_hi), position = position_dodge(width = 0.6)) +
+    scale_colour_manual(values = c(total = "grey40", direct = "#00274c", indirect = "#ffcb05")) +
+    facet_wrap(~triad_id, scales = "free_x") +
+    labs(x = "effect on AD (log-OR per unit exposure), 95% Monte Carlo interval", y = NULL,
+         colour = NULL, title = "Total, direct and indirect effects by triad and outcome arm") +
+    theme_minimal(base_size = 12)
+}
+```
+
+::: {.cell-output-display}
+![](figures/mr_mediation-forest-1.png){width=816}
+:::
+:::
+
+
+## eQTL mediators {#eqtl-mediators}
+
+For exposure → expression → AD triads, the X → M leg needs **trans** effects of X's instruments
+on expression. Most expression resources in OpenGWAS (eQTLGen, GTEx-derived sets) are
+**cis-only**, so most X instruments will be absent from the mediator dataset. Rows with
+`mediator_type = "eqtl"` are therefore skipped (with the count in `status`) when fewer than
+`k_min_x_in_mediator` X instruments are present. Cis-only mediators with 1–3 SNPs will also
+generally fail the conditional-F gate. Those genes are better handled as a separate
+drug-target analysis (expression → AD plus colocalization, as in `smoking/06_cis_drugtarget.qmd`)
+than as formal mediation.
+
+## Assumptions
+
+- **No X × M interaction** (accepted, not tested). Product-of-coefficients and MVMR both assume it.
+- **Standard IV assumptions per leg.** These were checked for X → Y in the prior univariable
+  analyses. X → M is checked [above](#xm-checks) for the first time.
+- **Rare-outcome approximation.** The product of a linear X → M slope and a log-OR M → Y | X
+  slope is read as a log-OR. This holds approximately because AD is rare.
+- **Outcome scale.** Bellenguez includes proxy cases, so its betas are not clinical log-ORs.
+  Compare across outcomes on proportions and direction.
+- **Sample overlap.** Lean mass (UKB) and 2hGlu (MAGIC cohorts, no UKB) do not overlap, so
+  conditional F uses `gencov = 0`. Lean mass, lifespan and Bellenguez all draw on UKB.
+  Step 2's robust-MR work found overlap immaterial for a comparable configuration, but it is not
+  modelled here.
+- **Covariate-adjusted GWAS.** See the warning under [Configuration](#config).
+- **b_SH draws.** These use a normal approximation to SlopeHunter's bootstrap distribution
+  until the replicates are saved (`boot_rds`).
+
+## Save
+
+
+::: {.cell}
+
+```{.r .cell-code}
+write_csv(results |> select(-any_of("boot")), "mr_mediation_results.csv")
+write_csv(instrument_log |> arrange(triad_id, outcome_id, stage), "mr_mediation_instrument_log.csv")
+write_csv(map(diag, "checks") |> bind_rows(), "mr_mediation_diagnostics.csv")
+# Draws are the input for any Bayesian or alternative summary; kept out of git with data/cache.
+dir.create(CACHE_DIR, showWarnings = FALSE, recursive = TRUE)
+saveRDS(draws, file.path(CACHE_DIR, "mr_mediation_draws.rds"))
+
+instrument_log |>
+  select(triad_id, outcome_id, stage, type, n, detail) |>
+  knitr::kable(caption = "Instrument deviations and dropped SNPs (SNP lists are in the CSV).")
+```
+
+::: {.cell-output-display}
+
+
+Table: Instrument deviations and dropped SNPs (SNP lists are in the CSV).
+
+|triad_id       |outcome_id         |stage             |type                |   n|detail                                                                                                                                           |
+|:--------------|:------------------|:-----------------|:-------------------|---:|:------------------------------------------------------------------------------------------------------------------------------------------------|
+|leanmass_2hglu |NA                 |mvmr_reclump      |dropped             | 121|X or M instruments removed by re-clumping the union (or missing in the other trait)                                                              |
+|ffm_2hglu      |NA                 |mvmr_reclump      |dropped             |  64|X or M instruments removed by re-clumping the union (or missing in the other trait)                                                              |
+|NA             |ebi-a-GCST90027158 |outcome_table     |missing_in_outcome  |  63|instrument SNPs with no outcome association (after proxy search)                                                                                 |
+|NA             |ebi-a-GCST90027158 |outcome_table     |proxy_used          |  48|outcome looked up via LD proxy                                                                                                                   |
+|NA             |ebi-a-GCST90027158 |outcome_table     |missing_in_lifespan |  94|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm |
+|NA             |ebi-a-GCST90027158 |outcome_table     |proxy_used          |  56|lifespan looked up via LD proxy                                                                                                                  |
+|NA             |ieu-b-2            |outcome_table     |missing_in_outcome  |  83|instrument SNPs with no outcome association (after proxy search)                                                                                 |
+|NA             |ieu-b-2            |outcome_table     |proxy_used          | 107|outcome looked up via LD proxy                                                                                                                   |
+|NA             |ieu-b-2            |outcome_table     |missing_in_lifespan | 314|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm |
+|NA             |ieu-b-2            |outcome_table     |proxy_used          |  55|lifespan looked up via LD proxy                                                                                                                  |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                          |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                  |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
+|ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
+|ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  26|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                          |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                  |
+|ffm_2hglu      |ieu-b-2            |harmonise_total   |dropped             |  85|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
+|ffm_2hglu      |ieu-b-2            |harmonise_mvmr    |dropped             |  65|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
+|ffm_2hglu      |ieu-b-2            |slopehunter_total |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|ffm_2hglu      |ieu-b-2            |slopehunter_mvmr  |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                          |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                  |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  16|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  31|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                          |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
+|leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  16|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
+|leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_mvmr  |dropped             |  31|no lifespan effect; dropped from the SlopeHunter-adjusted arm                                                                                    |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                          |
+|leanmass_2hglu |ieu-b-2            |harmonise_total   |dropped             | 159|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                     |
+|leanmass_2hglu |ieu-b-2            |harmonise_mvmr    |dropped             |  78|re-clumped X u M SNPs lost aligning to the outcome                                                                                               |
+|leanmass_2hglu |ieu-b-2            |slopehunter_total |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|leanmass_2hglu |ieu-b-2            |slopehunter_mvmr  |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                         |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                          |
+
+
+:::
+:::
+

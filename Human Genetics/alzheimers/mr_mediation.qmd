@@ -13,7 +13,7 @@ format:
   pdf: default
 knitr:
   opts_chunk:
-    fig.path: "figures/"
+    fig.path: "figures/mr_mediation-"   # own prefix: figures/ is shared, and chunk labels (e.g. forest) collide with Step 2
     dev: ["png", "pdf"]
     fig.keep: "all"
 execute:
@@ -97,6 +97,7 @@ in MR (and in MVMR the mediator's adjustment matters as much as the exposure's).
 datasets <- tibble::tribble(
   ~id,                  ~label,                                   ~role,       ~adjusted_for,            ~adjustment_source,
   "ebi-a-GCST90000025", "Appendicular lean mass (Pei 2020, UKB)", "exposure",  "appendicular fat mass",  "Pei 2020 Commun Biol (PMID 33097823) Methods: covariates included AFM; height deliberately excluded",
+  "ukb-b-13354",        "Whole-body fat-free mass (UKB, MRC-IEU)", "exposure", NA,                       "MRC-IEU UKB pipeline; not adjusted for adiposity",
   "ebi-a-GCST90002227", "2-h glucose (MAGIC, Chen 2021, EUR)",    "mediator",  "BMI",                    "Chen 2021 Nat Genet (PMID 34059833): 'FG, 2hGlu and FI analyses were adjusted for BMI'",
   "ebi-a-GCST90027158", "AD: Bellenguez 2022 (proxy + clinical)", "outcome",   NA,                       NA,
   "ieu-b-2",            "AD: Kunkle 2019 IGAP (clinical only)",   "outcome",   NA,                       NA,
@@ -141,20 +142,29 @@ pre-specified multivariable analog of the leg methods:
 triads <- tibble::tribble(
   ~triad_id,      ~exposure_id,         ~mediator_id,         ~outcome_id,          ~method_XM, ~method_XY_total, ~method_MVMR,  ~outcome_adjustment, ~mediator_type, ~inst_override, ~method_note,
   "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "ebi-a-GCST90027158", "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "slopehunter",       "trait",        list(),         "XY: Step 2 naive_model (IVW-MRE). XM: PROVISIONAL, no prior check.",
-  "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: Step 2 naive_model (IVW-MRE). XM: PROVISIONAL, no prior check."
+  "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: Step 2 naive_model (IVW-MRE). XM: PROVISIONAL, no prior check.",
+  # Fat-free mass (2026-10-08): not adiposity-adjusted, so it removes the exposure-side collider
+  # (the mediator-side BMI adjustment of 2hGlu remains). Not in Step 2; IVW-MRE by analogy with
+  # lean mass (pipeline: heterogeneous, Q p ~ 1e-13 / 1e-4, no directional pleiotropy flagged).
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ebi-a-GCST90027158", "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "slopehunter",       "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL.",
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."
 ) |>
   mutate(
     # Pre-specified hypothesis signs (lean mass lowers glucose, glucose raises AD, lean mass
     # lowers AD). Reported against the estimates; they do not enter any gate.
     hyp_sign_xm = -1, hyp_sign_my = +1, hyp_sign_total = -1,
     # Equivalence bound for the indirect effect (log-OR per unit X). PRE-SPECIFY BEFORE RUNNING.
-    # = 10% of |Step 2 naive lean mass -> AD (IVW-MRE)|, per outcome, from exposure_ad_naive.csv
-    # (Bellenguez -0.1009, Kunkle -0.1299). Fixed numbers, not read from the CSV, so a re-run of
-    # Step 2 cannot silently move a pre-specified bound.
+    # = 10% of |naive X -> AD (IVW-MRE)|, per triad and outcome. Fixed numbers, not read from a
+    # CSV, so a re-run cannot silently move a pre-specified bound.
+    #   lean mass: Step 2 exposure_ad_naive.csv (Bellenguez -0.1009, Kunkle -0.1299)
+    #   fat-free mass: not in Step 2; targets pipeline IVW-MRE, results/pipeline/results.csv at
+    #   42568d8 (Bellenguez -0.2497, Kunkle -0.2356). Fixed 2026-10-08, before this triad was run.
     equiv_bound_indirect = case_when(
-      outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.1009,   # 0.0101
-      outcome_id == "ieu-b-2"            ~ 0.10 * 0.1299,   # 0.0130
-      TRUE                               ~ NA_real_)
+      triad_id == "leanmass_2hglu" & outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.1009,   # 0.0101
+      triad_id == "leanmass_2hglu" & outcome_id == "ieu-b-2"            ~ 0.10 * 0.1299,   # 0.0130
+      triad_id == "ffm_2hglu"      & outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.2497,   # 0.0250
+      triad_id == "ffm_2hglu"      & outcome_id == "ieu-b-2"            ~ 0.10 * 0.2356,   # 0.0236
+      TRUE                                                              ~ NA_real_)
   )
 
 # Survival-bias adjustment per outcome follows Step 2: Bellenguez's b_SH is applied; Kunkle's

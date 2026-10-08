@@ -2,3 +2,7 @@
 _targets/
 # rendered report embeds every figure (~20 MB); regenerate from results/pipeline/ by rendering robust_mr_report.qmd
 robust_mr_report.html
+# CAUSE grid posteriors (~135 MB, over GitHub's 100 MB limit); regenerate with targets, keep a copy on Great Lakes
+results/pipeline/cause_posteriors.rds
+# superseded by instrument_attrition.csv.gz
+results/pipeline/instrument_attrition.csv

@@ -71,7 +71,7 @@ biallelic SNV, valid beta/SE/p, MAF ≥ 0.01, one row per rsID.
 | `instruments_classical.csv` | every association's classical instrument set (for custom scatter/LOO/funnel plots) |
 | `mrapss_background.csv` | MR-APSS background per association: C12 (sample overlap), rg (genetic correlation) |
 | `latent_confounding.csv` | one row per pair × method (CAUSE, MR-APSS): causal estimate, latent term with interval, fraction shared, CAUSE q / ΔELPD, MR-APSS sample-structure slope, flags |
-| `cause_posteriors.rds` | CAUSE grid posteriors (causal and sharing) per pair, so latent terms can be recomputed without re-running CAUSE |
+| `cause_posteriors.rds` | CAUSE grid posteriors (causal and sharing) per pair, so latent terms can be recomputed without re-running CAUSE. **~135 MB: gitignored** (over GitHub's 100 MB limit); keep the Great Lakes copy |
 | `figures/<assoc_id>/` | `scatter_classical.png`, `funnel.png` (Wald ratios, IVW line, pseudo-95% cone), `leave_one_out.png` + `.csv`, `scatter_mrapss.png` |
 
 **Report:** [`../robust_mr_report.qmd`](../robust_mr_report.qmd) reads only these files: datasets, a

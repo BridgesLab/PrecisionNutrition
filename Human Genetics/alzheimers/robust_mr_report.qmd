@@ -107,17 +107,18 @@ res |>
          block %in% c("exposure_to_mediator", "adiposity_to_glycemic", "to_ad")) |>
   mutate(label = paste0(nice(exposure), " → ", nice(outcome),
                         ifelse(arm == "slopehunter", " [SH]", "")),
-         panel = ifelse(method %in% c("MR-APSS", "MR-APSS (p<5e-8)", "CAUSE"),
+         # MR-APSS, CAUSE and MRAID are all per SD; the rest are per unit of each GWAS's beta.
+         panel = ifelse(method %in% c("MR-APSS", "MR-APSS (p<5e-8)", "CAUSE", "MRAID"),
                         "Main / sensitivity (SD per SD)", "Category 2 + IVW (per unit)"),
          method = factor(method, main_methods)) |>
   ggplot(aes(b, label, colour = method)) +
   geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
   geom_pointrange(aes(xmin = ci_lo, xmax = ci_hi), position = position_dodge(width = 0.7), size = 0.25) +
   facet_wrap(~ panel, scales = "free_x") +
-  scale_colour_manual(values = c("MR-APSS" = "#ffcb05", "MR-APSS (p<5e-8)" = "#989c97",
-                                 CAUSE = "#d86018", MRBEE = "#702082",
-                                 "MR-RAPS" = "#75988d", "IVW-MRE" = "#00274c")) +
-  labs(x = "Estimate (95% CI)", y = NULL, colour = NULL) +
+  # One colour per method in main_methods, so nothing falls back to ggplot's unlabelled grey.
+  scale_colour_manual(values = c("MR-APSS" = "#ffcb05", "MR-APSS (p<5e-8)" = "#a5a508",
+                                 CAUSE = "#d86018", MRAID = "#9a3324", MRBEE = "#702082",
+                                 "MR-RAPS" = "#75988d", "IVW-MRE" = "#00274c"), drop = TRUE) +  labs(x = "Estimate (95% CI)", y = NULL, colour = NULL) +
   theme_minimal(base_size = 11) + theme(legend.position = "bottom")
 ```
 

@@ -6,6 +6,7 @@ fg_dupuis,ieu-b-4761,Fasting glucose (Dupuis 2010) [primary FG],opengwas_vcf,NA,
 fg_manning,ebi-a-GCST005186,Fasting glucose (Manning 2012) [original analysis],opengwas_vcf,NA,58074,continuous,MAGIC,unclear: Manning 2012 fit models with and without BMI,FALSE
 t2d_xue,ebi-a-GCST006867,Type 2 diabetes (Xue 2018),opengwas_vcf,NA,655666,binary,DIAGRAM+GERA+UKB,NA,FALSE
 bmi_ukb,ukb-b-2303,"BMI (UKB, MRC-IEU)",opengwas_vcf,NA,454884,continuous,UKB,NA,FALSE
+fatmass_ukb,ukb-b-19393,"Whole-body fat mass (UKB, MRC-IEU)",opengwas_vcf,NA,454137,continuous,UKB,NA,FALSE
 ad_bellenguez,ebi-a-GCST90027158,AD: Bellenguez 2022 (proxy + clinical),opengwas_vcf,NA,487511,binary,EADB+UKB,NA,FALSE
 ad_kunkle,ieu-b-2,AD: Kunkle 2019 IGAP (clinical only),local_tsv,data/cache/sumstats/AD_kunkle_harmonised.tsv.gz,63926,binary,IGAP,NA,FALSE
 lifespan,ebi-a-GCST006697,Parental lifespan (Martingale residual; + = shorter life),local_tsv,data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz,389166,continuous,UKB,NA,FALSE

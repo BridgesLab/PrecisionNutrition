@@ -65,6 +65,28 @@ datasets:
     type: continuous
     cohorts: [MAGIC]
     adjusted_for: "unclear: Manning 2012 fit models with and without BMI"
+  fg_chen:
+    id: ebi-a-GCST90002232
+    label: "Fasting glucose (Chen 2021, EUR)"
+    source: opengwas_vcf
+    sample_size: 200622
+    type: continuous
+    cohorts: [MAGIC]
+    adjusted_for: "BMI (Chen 2021 Methods)"   # same adjustment as glu2h_chen: the pair for the FG/2hGlu contrast
+    p_from_beta: false                        # TO CHECK once downloaded: raw-mmol/L beta with INT p, as for glu2h_chen?
+  t2d_suzuki_eur:
+    id: T2DGGI-EUR                            # not on OpenGWAS / GWAS Catalog; DIAGRAM download (click-through terms)
+    label: "Type 2 diabetes (Suzuki 2024, T2DGGI EUR)"
+    source: chrpos_tsv                        # hg19 chr:pos, no rsID; named from the LD panel (assignments.R)
+    file: data/cache/sumstats/Suzuki.Nature2024.T2DGGI.EUR.sumstats.zip
+    # EUR_Metal_LDSC-CORR_Neff.v2.txt (dated 2023-12-06). The zip passes its CRC test but its MD5
+    # (46f13bf0...) is not the one on the DIAGRAM page (bc7402c2...), which probably predates v2.
+    columns: {chr: Chromsome, pos: Position, ea: EffectAllele, oa: NonEffectAllele, eaf: EAF, beta: Beta,
+              se: SE, p: Pval, neff: Neff}   # not `n:` (YAML reads a bare n as FALSE)
+    sample_size: null                         # per-SNP effective N is in the file
+    type: binary
+    cohorts: [DIAGRAM, UKB, MVP, FinnGen]     # TO CONFIRM against Suzuki 2024 Supplementary Table 1
+    adjusted_for: null
   t2d_xue:
     id: ebi-a-GCST006867
     label: "Type 2 diabetes (Xue 2018)"
@@ -133,6 +155,54 @@ associations:
     exposures: [leanmass_pei, ffm_ukb, glu2h_chen, fg_dupuis, fg_manning, t2d_xue, bmi_ukb, fatmass_ukb]
     outcomes: [lifespan]
     classical_only: true
+
+# ---- fasting vs 2 h glucose contrast (2026-10-12) -----------------------------------------------
+# Instruments selected on T2D, effects on FG and 2hGlu from the glycemic GWAS (pipeline/R/contrast.R).
+# Step 0 and the assignment files are OUTCOME-BLIND and must be committed before any AD step runs.
+contrast:
+  cond_f_min: 10                            # decision rule, fixed 2026-10-12: conditional F(2hGlu) >= 10 -> MVMR
+                                            # primary; otherwise contrast regression primary
+  instruments: {p: 5.0e-8, r2: 0.001, kb: 10000}
+  sd_mmol: {fg: 0.65, glu2h: 1.85}          # midpoints of the plan's ranges; TO CONFIRM from the MAGIC cohorts
+  # restrict_to_index: candidates limited to Suzuki's index variants, so every instrument has a cluster.
+  sets:
+    primary:        {selection: t2d_suzuki_eur, fg: fg_chen,   glu2h: glu2h_chen, restrict_to_index: true}
+    all_t2d:        {selection: t2d_suzuki_eur, fg: fg_chen,   glu2h: glu2h_chen}   # genome-wide clump, clusters partly missing
+    fg_unadjusted:  {selection: t2d_suzuki_eur, fg: fg_dupuis, glu2h: glu2h_chen, restrict_to_index: true}
+    xue:            {selection: t2d_xue,        fg: fg_chen,   glu2h: glu2h_chen}
+    xue_dupuis:     {selection: t2d_xue,        fg: fg_dupuis, glu2h: glu2h_chen}   # everything already cached
+  clusters:
+    file: data/cache/suzuki2024/suzuki2024_supplementary_tables.xlsx
+    sheet: "ST6"                            # Supp. Table 6: Locus, Chromosome, Index SNV, Position (b37), Cluster assignment
+    skip: 2                                 # title + blank row above the header
+  drug_targets:
+    disease_id: MONDO_0005148               # type 2 diabetes mellitus (Open Targets)
+    stages: [PHASE_2, PHASE_2_3, PHASE_3, PREAPPROVAL, APPROVAL]   # phase 2 or later for T2D (widened 2026-10-12)
+    window_kb: 250                          # variant within this distance of the target gene body
+    # Drug-target (cis) instruments: T2D-associated variants near each target gene at a relaxed threshold,
+    # the usual design for lipid drug-target MR. window/p/r2 are defaults to confirm before the freeze.
+    cis: {window_kb: 100, p: 1.0e-4, r2: 0.1, clump_kb: 250}
+    cis_sets:
+      primary:    {selection: t2d_suzuki_eur, fg: fg_chen,   glu2h: glu2h_chen}
+      xue_dupuis: {selection: t2d_xue,        fg: fg_dupuis, glu2h: glu2h_chen}   # everything already cached
+    # mechanism regex -> class, first match wins. Only glucose-lowering mechanisms are classed. Phase 2/3
+    # trials in people with T2D also cover antihypertensives, lipid drugs, weight-loss, anti-inflammatory
+    # and neuropathy drugs; those mechanisms (and metformin's 50-subunit complex I) get class NA and are
+    # not instrumented. The list of unclassed mechanisms is in assignments/opentargets_t2d_drug_targets.csv.
+    classes:
+      katp_secretagogue: "sulfonylurea|Kir6|subfamily J, member 11"
+      incretin: "glucagon-like peptide 1|gastric inhibitory polypeptide|dipeptidyl peptidase"
+      gpcr_secretagogue: "free fatty acid receptor 1|glucose-dependent insulinotropic receptor"
+      glucokinase: "hexokinase type IV"
+      glucagon_receptor: "glucagon receptor"
+      amylin: "amylin receptor"
+      pparg_sensitizer: "proliferator-activated receptor gamma|proliferator-activated receptor agonist"
+      hsd11b1: "11-beta-hydroxysteroid dehydrogenase 1"
+      fgf21_klb: "KLB"
+      insulin_receptor: "insulin receptor"
+      sglt: "sodium/glucose cotransporter"
+      alpha_glucosidase: "glucosidase|glucoamylase|alpha-amylase"
+      biguanide_gpd2: "glycerol-3-phosphate dehydrogenase"
 
 # ---- survival-collider adjustment -------------------------------------------------------------
 # Every association into an outcome listed here gets a second, SlopeHunter-adjusted arm, but only

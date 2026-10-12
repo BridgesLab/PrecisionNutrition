@@ -10,6 +10,7 @@
 # What is where:
 #   pipeline/config.yml   datasets, associations, thresholds, Great Lakes resources
 #   pipeline/R/*.R        read/QC, instruments, classical suite, MRAID, CAUSE, SlopeHunter, tables
+#   pipeline/R/contrast.R, assignments.R   fasting vs 2 h glucose: Step 0 gate and frozen groupings
 #   R/fit_selection_slope.R                       SlopeHunter engine (Step 2)
 #   ../calcium-cholesterol/R/robust_mr_helpers.R  CAUSE posterior summaries (calcium arm)
 
@@ -36,6 +37,10 @@ FIG_DIR   <- file.path(cfg$paths$results_dir, "figures")
 HM3_PATH  <- cfg$paths$hapmap3
 PLINK2    <- cfg$paths$plink2     # resolved inside commands, so the machine-specific path is not a dependency
 SEED      <- cfg$seed
+CFG_CON   <- cfg$contrast[c("cond_f_min", "instruments", "sd_mmol")]
+CFG_CLUST <- cfg$contrast$clusters
+CFG_DRUG  <- cfg$contrast$drug_targets
+CON_DIR   <- file.path(cfg$paths$results_dir, "contrast")
 CFG_APSS  <- cfg$mrapss
 CFG_APSS_GW <- utils::modifyList(cfg$mrapss, cfg$mrapss_sensitivity)   # p < 5e-8 sensitivity
 LDSC_DIR  <- cfg$paths$ldscores
@@ -70,7 +75,16 @@ tar_option_set(
 # ---- static branching tables ------------------------------------------------------------------
 sym_vec <- function(x) rlang::syms(x)
 
-ds_values <- ds |> dplyr::select(key, id, source, file, n, p_from_beta)
+ds_values <- ds |> dplyr::filter(source != "chrpos_tsv") |> dplyr::select(key, id, source, file, n, p_from_beta)
+ds_chrpos <- ds |> dplyr::filter(source == "chrpos_tsv") |> dplyr::select(key, file, n) |>
+  dplyr::mutate(columns = purrr::map(key, \(k) cfg$datasets[[k]]$columns))
+
+# Fasting vs 2 h glucose instrument sets (config `contrast: sets`). `restrict` is an expression so
+# that only the sets that ask for it depend on the Suzuki cluster table.
+con_values <- purrr::imap_dfr(cfg$contrast$sets, \(s, nm) tibble::tibble(
+  set = nm, g_sel = sym_vec(paste0("gwas_", s$selection)), g_fg = sym_vec(paste0("gwas_", s$fg)),
+  g_2h = sym_vec(paste0("gwas_", s$glu2h)),
+  restrict = list(if (isTRUE(s$restrict_to_index)) quote(suzuki_clusters$SNP) else quote(NULL))))
 
 trusted_out <- names(purrr::keep(CFG_SH$fits, \(f) isTRUE(f$trusted)))
 sh_values <- tibble::tibble(out = trusted_out, g = sym_vec(paste0("gwas_", trusted_out)))
@@ -92,6 +106,12 @@ v_apss      <- assoc[assoc$primary_method == "MR-APSS", cols]
 v_cause     <- assoc[assoc$sensitivity_method == "CAUSE", cols]
 v_mraid     <- if (RUN_MRAID) assoc[mraid_eligible(assoc), c(cols, "inst_m")] else assoc[0, c(cols, "inst_m")]
 
+pluck_all <- function(x, field) dplyr::bind_rows(purrr::map(purrr::compact(x), field))
+
+cis_values <- purrr::imap_dfr(CFG_DRUG$cis_sets, \(s, nm) tibble::tibble(
+  set = nm, g_sel = sym_vec(paste0("gwas_", s$selection)), g_fg = sym_vec(paste0("gwas_", s$fg)),
+  g_2h = sym_vec(paste0("gwas_", s$glu2h))))
+
 # ---- targets ----------------------------------------------------------------------------------
 t_reference <- list(
   tar_target(config_file, "pipeline/config.yml", format = "file"),
@@ -111,6 +131,55 @@ t_datasets <- tar_map(
   tar_target(gwas, load_gwas(gwas_file, list(key = key, source = source, n = n, p_from_beta = p_from_beta),
                              ld_bim$SNP, CFG_QC)),
   tar_target(gwas_qc, attr(gwas, "qc_log"))
+)
+
+# T2DGGI-style files (chr:pos, no rsID), named from the LD panel. Not fetched: the DIAGRAM download
+# needs its terms accepted by hand.
+t_datasets_chrpos <- tar_map(
+  values = ds_chrpos, names = "key", unlist = FALSE,
+  tar_target(gwas_file, file, format = "file"),
+  tar_target(gwas, load_gwas_chrpos(gwas_file, list(key = key, n = n, columns = columns), ld_bim, CFG_QC)),
+  tar_target(gwas_qc, attr(gwas, "qc_log"))
+)
+
+# Fasting vs 2 h glucose, Step 0 (OUTCOME-BLIND: no AD target is an input to anything in this block).
+# Order is enforced by assert_frozen(): later steps must call it before reading an outcome.
+m_contrast <- tar_map(values = con_values, names = "set", unlist = FALSE,
+  tar_target(contrast_step0, run_contrast_step0(g_sel, g_fg, g_2h, set, CFG_CON, LD_BFILE,
+                                            resolve_plink2(PLINK2), restrict = restrict)))
+# Drug-target (cis) instrument sets: relaxed-threshold T2D variants near each target gene.
+m_cis <- tar_map(values = cis_values, names = "set", unlist = FALSE,
+  tar_target(cis_step0, run_cis_step0(g_sel, g_fg, g_2h, set, drug_targets, drug_target_coords,
+                                      CFG_DRUG$cis, LD_BFILE, resolve_plink2(PLINK2))))
+t_contrast <- list(
+  tar_combine(cis_step0_all, m_cis[["cis_step0"]], command = list(!!!.x)),
+  tar_target(csv_cis_summary, write_csv_target(pluck_all(cis_step0_all, "summary"),
+                                               file.path(CON_DIR, "step0_cis_summary.csv")), format = "file"),
+  tar_target(csv_cis_instruments, write_csv_target(pluck_all(cis_step0_all, "instruments"),
+                                                   file.path(CON_DIR, "step0_cis_instruments.csv")), format = "file"),
+  tar_target(suzuki_file, CFG_CLUST$file, format = "file"),
+  tar_target(suzuki_clusters, read_suzuki_clusters(suzuki_file, CFG_CLUST$sheet, ld_bim, CFG_CLUST$skip %||% 0)),
+  # Open Targets snapshot: built once, then never refreshed on its own (the frozen CSV is the record).
+  tar_target(drug_targets_raw, fetch_drug_targets(CFG_DRUG$disease_id), cue = tar_cue(mode = "never")),
+  tar_target(drug_targets, classify_drug_targets(drug_targets_raw, CFG_DRUG)),
+  tar_target(drug_target_coords, gene_coords_b37(drug_targets$gene[!is.na(drug_targets$drug_class)])),
+  tar_combine(contrast_step0_all, m_contrast[["contrast_step0"]], command = list(!!!.x)),
+  tar_target(csv_contrast_strength, write_csv_target(pluck_all(contrast_step0_all, "strength"),
+                                                     file.path(CON_DIR, "step0_strength.csv")), format = "file"),
+  tar_target(csv_contrast_overlap, write_csv_target(pluck_all(contrast_step0_all, "overlap"),
+                                                    file.path(CON_DIR, "step0_overlap.csv")), format = "file"),
+  tar_target(csv_contrast_instruments, write_csv_target(pluck_all(contrast_step0_all, "instruments"),
+                                                        file.path(CON_DIR, "step0_instruments.csv")), format = "file"),
+  tar_target(csv_contrast_attrition, write_csv_target(pluck_all(contrast_step0_all, "attrition"),
+                                                      file.path(CON_DIR, "step0_attrition.csv")), format = "file"),
+  # Frozen groupings of the PRIMARY set's instruments. Commit assignments/ before any AD step.
+  tar_target(assignments, build_assignments(contrast_step0_primary$instruments, suzuki_clusters,
+               assign_drug_targets(contrast_step0_primary$instruments, drug_targets, drug_target_coords,
+                                   CFG_DRUG$window_kb))),
+  tar_target(frozen_files, c(write_frozen(drug_targets, "opentargets_t2d_drug_targets"),
+                             write_frozen(assignments, "instrument_assignments"),
+                             write_frozen(cis_step0_primary$instruments, "drug_target_cis_instruments")),
+             format = "file", deployment = "main")
 )
 
 # SlopeHunter: Step 2's fits, the genome-wide adjusted outcome, and Bellenguez's open checks.
@@ -169,7 +238,6 @@ m_cause <- tar_map(values = v_cause, names = "assoc_id", unlist = FALSE,
              # Locally CAUSE cannot run (loo >= 2.10); record the error and keep going.
              error = if (profile == "greatlakes") "stop" else "null"))
 
-pluck_all <- function(x, field) dplyr::bind_rows(purrr::map(purrr::compact(x), field))
 
 t_tables <- list(
   tar_combine(classical_all, m_classical[["classical"]], command = list(!!!.x)),
@@ -257,6 +325,6 @@ t_notebooks <- list(
              format = "file", error = "continue", deployment = "main")
 )
 
-list(t_reference, t_datasets, t_selection, t_instruments, m_classical, m_apss,
+list(t_reference, t_datasets, t_datasets_chrpos, t_contrast, m_contrast, m_cis, t_selection, t_instruments, m_classical, m_apss,
      if (RUN_MRAID) m_mraid, m_cause, t_tables,
      t_notebooks)

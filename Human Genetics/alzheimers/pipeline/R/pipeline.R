@@ -6,7 +6,7 @@ suppressPackageStartupMessages({ library(dplyr); library(tidyr); library(purrr) 
 dataset_table <- function(cfg) {
   imap(cfg$datasets, \(d, key) tibble(
     key = key, id = d$id, label = d$label, source = d$source, file = d$file %||% NA_character_,
-    n = d$sample_size, type = d$type, cohorts = list(d$cohorts),
+    n = d$sample_size %||% NA_integer_, type = d$type, cohorts = list(d$cohorts),
     adjusted_for = d$adjusted_for %||% NA_character_, p_from_beta = isTRUE(d$p_from_beta))) |>
     bind_rows()
 }

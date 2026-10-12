@@ -83,6 +83,38 @@ rendered on its own.
 traits). MRAID and CAUSE are per SD of exposure on per SD of outcome. Compare across method
 families on sign and significance, not magnitude.
 
+## Fasting vs 2 h glucose contrast (added 2026-10-12)
+
+Question: does 2 h glucose raise AD risk at a given fasting glucose, or is the univariable
+difference a power/sensitivity artefact? Instruments are selected on T2D; their effects on fasting
+and 2 h glucose come from MAGIC (Chen 2021, both BMI-adjusted). Settings are in `config.yml` under
+`contrast:`; code is `R/contrast.R` and `R/assignments.R`.
+
+**Step 0 is outcome-blind** (no AD target is upstream of it; check with `tar_network()`):
+
+| Target | What |
+|---|---|
+| `contrast_step0_<set>` | T2D-selected instruments, harmonised to the T2D risk allele, error correlations between the three GWAS, Sanderson-Windmeijer conditional F and the primary-analysis decision |
+| `suzuki_clusters` | Suzuki 2024 index variants and their hard cluster (from the paper's supplementary workbook) |
+| `drug_targets` | targets of drugs in phase 2+ or approved for T2D (Open Targets snapshot), classed by `contrast: drug_targets: classes` |
+| `assignments`, `frozen_files` | cluster + drug-target group per primary-set instrument, written to `assignments/` with `MANIFEST.csv` |
+
+Outputs: `results/pipeline/contrast/step0_{strength,overlap,instruments,attrition}.csv`.
+
+**Decision rule (fixed before any AD data):** conditional F for 2 h glucose ≥ 10 → MVMR is primary;
+otherwise the contrast regression is primary and MVMR is reported as underpowered.
+
+**Order:** run Step 0, commit `assignments/` and `results/pipeline/contrast/`, and only then add the
+outcome steps, which must call `assert_frozen()` first (it fails if `assignments/` differs from its
+manifest or has uncommitted changes).
+
+**Data to place by hand** (not fetched by the pipeline):
+
+- `data/cache/sumstats/Suzuki.Nature2024.T2DGGI.EUR.sumstats.zip` from the DIAGRAM downloads page
+  (click-through terms: no de-identification, no reposting; `data/cache/` is gitignored).
+- `data/cache/suzuki2024/suzuki2024_supplementary_tables.xlsx`, the paper's Supplementary Tables;
+  set `contrast: clusters: sheet` to the sheet listing index variant and cluster.
+
 ## Running
 
 ```r

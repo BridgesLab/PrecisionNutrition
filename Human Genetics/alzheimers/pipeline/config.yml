@@ -163,6 +163,14 @@ contrast:
   cond_f_min: 10                            # decision rule, fixed 2026-10-12: conditional F(2hGlu) >= 10 -> MVMR
                                             # primary; otherwise contrast regression primary
   instruments: {p: 5.0e-8, r2: 0.001, kb: 10000}
+  # Outcome steps (run only after the freeze; contrast_outcome.R). Primary = SlopeHunter-adjusted
+  # Bellenguez; raw Bellenguez and clinical-only Kunkle are sensitivity. Instruments within 500 kb of
+  # APOE (hg19 chr19:45.41 Mb) are dropped; GIPR (46.2 Mb) is kept and flagged in the cis output.
+  outcomes:
+    - {outcome: ad_bellenguez, arm: slopehunter, role: primary}
+    - {outcome: ad_bellenguez, arm: raw,         role: sensitivity}
+    - {outcome: ad_kunkle,     arm: raw,         role: sensitivity}
+  apoe: {chr: "19", start: 44900000, end: 45920000}
   sd_mmol: {fg: 0.65, glu2h: 1.85}          # midpoints of the plan's ranges; TO CONFIRM from the MAGIC cohorts
   # restrict_to_index: candidates limited to Suzuki's index variants, so every instrument has a cluster.
   sets:

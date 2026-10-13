@@ -573,3 +573,391 @@ conc |>
 :::
 :::
 
+
+## 6. Is 2 h glucose different from fasting glucose?
+
+Sections 6–8 read `results/pipeline/contrast/` (the fasting vs 2 h glucose extension; see
+`pipeline/README.md`). Instruments are T2D-associated variants; each variant's effects on fasting
+and 2 h glucose (Chen 2021, both BMI-adjusted) enter one multivariable model, so each estimate is
+adjusted for the other. The outcome is SlopeHunter-corrected Bellenguez AD.
+
+**Which instrument set.** The figure shows the **Xue 2018** T2D instruments (109 variants), a
+pre-declared sensitivity set. The pre-specified primary set (Suzuki 2024, 273 variants) points the
+same way but is not significant; both are in the table. The larger set adds many variants with
+almost no effect on 2 h glucose.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+con_dir <- file.path(res_dir, "contrast")
+con     <- read_csv(file.path(con_dir, "results.csv"), show_col_types = FALSE)
+con_cl  <- read_csv(file.path(con_dir, "cluster_results.csv"), show_col_types = FALSE)
+con_dt  <- read_csv(file.path(con_dir, "drug_target_results.csv"), show_col_types = FALSE)
+
+# ---- settings for sections 6-8: edit here ---------------------------------------------------
+con_set     <- "xue"            # instrument set plotted in section 6 ("primary" = Suzuki 2024)
+con_arm     <- "slopehunter"    # outcome arm for all three sections
+con_scale   <- "per mmol/L"
+con_methods <- c("IVW-MRE" = "IVW (standard)", "MRBEE" = "MRBEE (weak instruments, overlap)")
+con_cols    <- setNames(c("#00274c", "#ffcb05"), con_methods)
+mv_terms    <- c(fg = "Fasting glucose\n(adjusted for 2 h glucose)",
+                 glu2h = "2 h glucose\n(adjusted for fasting glucose)",
+                 `glu2h - fg` = "Difference\n(2 h minus fasting)")
+# ---------------------------------------------------------------------------------------------
+
+mv <- con |>
+  filter(outcome == ad_outcome, arm == con_arm, step == "1 MVMR", scale == con_scale,
+         estimator %in% names(con_methods)) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         method_label = factor(con_methods[estimator], levels = con_methods),
+         term_label = factor(mv_terms[term], levels = rev(mv_terms)))
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+mv |>
+  filter(set == con_set) |>
+  ggplot(aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = term_label, colour = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), linewidth = 0.9, size = 0.7) +
+  scale_x_log10(breaks = c(0.7, 0.8, 1, 1.25, 1.5, 1.75)) +
+  scale_colour_manual(values = con_cols) +
+  labs(x = "Odds ratio for AD per mmol/L higher glucose (95% CI)\nDifference row: ratio of the two odds ratios",
+       y = NULL, colour = NULL) +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-mvmr-1.png){width=3000}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+mv |>
+  filter(set %in% c("xue", "primary")) |>
+  arrange(desc(set), method_label, desc(term_label)) |>
+  transmute(`Instruments` = c(xue = "Xue 2018 (plotted)", primary = "Suzuki 2024 (pre-specified primary)")[set],
+            Method = estimator, Term = gsub("\n", " ", term_label),
+            `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi)),
+            p = signif(p, 2), SNPs = n_snp) |>
+  kable()
+```
+
+::: {.cell-output-display}
+
+
+|Instruments                         |Method  |Term                                       |OR (95% CI)       |      p| SNPs|
+|:-----------------------------------|:-------|:------------------------------------------|:-----------------|------:|----:|
+|Xue 2018 (plotted)                  |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.90 (0.71, 1.13) | 0.3500|  109|
+|Xue 2018 (plotted)                  |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.19 (1.05, 1.35) | 0.0073|  109|
+|Xue 2018 (plotted)                  |IVW-MRE |Difference (2 h minus fasting)             |1.32 (0.97, 1.81) | 0.0780|  109|
+|Xue 2018 (plotted)                  |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.88 (0.76, 1.03) | 0.1100|  109|
+|Xue 2018 (plotted)                  |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.24 (1.09, 1.41) | 0.0011|  109|
+|Xue 2018 (plotted)                  |MRBEE   |Difference (2 h minus fasting)             |1.40 (1.11, 1.77) | 0.0046|  109|
+|Suzuki 2024 (pre-specified primary) |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |1.03 (0.87, 1.23) | 0.7000|  273|
+|Suzuki 2024 (pre-specified primary) |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.05 (0.97, 1.13) | 0.2400|  273|
+|Suzuki 2024 (pre-specified primary) |IVW-MRE |Difference (2 h minus fasting)             |1.01 (0.81, 1.26) | 0.9000|  273|
+|Suzuki 2024 (pre-specified primary) |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |1.02 (0.84, 1.23) | 0.8600|  273|
+|Suzuki 2024 (pre-specified primary) |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.09 (0.97, 1.21) | 0.1500|  273|
+|Suzuki 2024 (pre-specified primary) |MRBEE   |Difference (2 h minus fasting)             |1.07 (0.81, 1.40) | 0.6400|  273|
+
+
+:::
+:::
+
+
+## 7. T2D liability → AD by mechanistic cluster
+
+The Suzuki 2024 instruments split by the paper's mechanistic clusters (assigned before any AD data
+were used). Each row is the effect on AD of T2D liability carried by that cluster's variants. No
+cluster is individually significant and the clusters do not differ significantly from each other;
+the beta-cell clusters have the largest estimates. IVW only, so these are attenuated toward the
+null. The liver/lipid cluster (2 variants) is in the table but not the plot.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+beta_levels <- c("All beta cell", "Beta cell -PI", "Beta cell +PI")
+cl <- con_cl |>
+  filter(set == "primary", outcome == ad_outcome, arm == con_arm,
+         model == "T2D effect x cluster" | (model == "T2D effect x beta-cell" & grepl("^Beta", group))) |>
+  mutate(group = if_else(model == "T2D effect x beta-cell", "All beta cell", group),
+         ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         kind = if_else(group %in% beta_levels, "Beta-cell clusters", "Other clusters")) |>
+  arrange(kind != "Beta-cell clusters", match(group, beta_levels), desc(b)) |>
+  mutate(label = sprintf("%s (%d)", group, n_snp), label = factor(label, levels = rev(label)))
+cl_het <- con_cl |>
+  filter(set == "primary", outcome == ad_outcome, arm == con_arm, model == "T2D effect x cluster") |>
+  distinct(het_Q, het_df, het_p)
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+cl |>
+  filter(group != "other (small)") |>
+  ggplot(aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = label, colour = kind)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(linewidth = 0.9, size = 0.7) +
+  facet_grid(kind ~ ., scales = "free_y", space = "free_y") +
+  scale_x_log10() +
+  scale_colour_manual(values = c("Beta-cell clusters" = "#9a3324", "Other clusters" = "#00274c"), guide = "none") +
+  labs(x = "Odds ratio for AD per unit higher log-odds of T2D (95% CI)", y = NULL,
+       caption = sprintf("Variants per cluster in brackets. Heterogeneity across the 8 clusters: Q = %.1f, df = %d, p = %.2f",
+                         cl_het$het_Q, cl_het$het_df, cl_het$het_p)) +
+  theme_talk + theme(strip.text.y = element_blank())
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-clusters-1.png){width=2700}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+cl |>
+  transmute(Cluster = group, SNPs = n_snp,
+            `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi)), p = signif(p, 2)) |>
+  kable()
+```
+
+::: {.cell-output-display}
+
+
+|Cluster            | SNPs|OR (95% CI)       |     p|
+|:------------------|----:|:-----------------|-----:|
+|All beta cell      |   55|1.05 (1.00, 1.10) | 0.065|
+|Beta cell -PI      |   26|1.09 (0.99, 1.20) | 0.095|
+|Beta cell +PI      |   29|1.03 (0.98, 1.09) | 0.240|
+|Lipodystrophy      |   19|1.07 (0.94, 1.23) | 0.290|
+|Residual glycaemic |   49|1.02 (0.93, 1.13) | 0.620|
+|Body fat           |   40|1.00 (0.89, 1.13) | 0.940|
+|Metabolic syndrome |   44|0.98 (0.91, 1.06) | 0.680|
+|Obesity            |   64|0.96 (0.87, 1.04) | 0.320|
+|other (small)      |    2|0.88 (0.58, 1.34) | 0.550|
+
+
+:::
+:::
+
+
+### Cluster effects on glucose beside the effect on AD
+
+The same variants, showing how T2D liability carried by each cluster moves fasting and 2 h glucose
+(right) next to its effect on AD (left). The glucose slopes are computed here from the per-variant
+table (`instrument_outcome_data.csv`) with the estimator used for AD: inverse-variance weighted
+regression through the origin on the variant's T2D effect, random-effects standard error.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+con_snps <- read_csv(file.path(con_dir, "instrument_outcome_data.csv"), show_col_types = FALSE) |>
+  filter(set == "primary", outcome == ad_outcome, arm == con_arm)
+
+# IVW slope of a trait on the T2D effect, with the residual scale floored at 1 (as pipeline wls_mre()).
+ivw_slope <- function(y, se, x) {
+  f <- summary(lm(y ~ 0 + x, weights = 1 / se^2))
+  tibble(b = f$coefficients[1, 1], se = f$coefficients[1, 2] / f$sigma * max(1, f$sigma))
+}
+cl_glu <- bind_rows(con_snps, con_snps |> filter(grepl("^Beta cell", cluster)) |> mutate(cluster = "All beta cell")) |>
+  group_by(group = cluster) |>
+  reframe(bind_rows(`Fasting glucose` = ivw_slope(beta_fg, se_fg, beta_t2d),
+                    `2 h glucose` = ivw_slope(beta_2h, se_2h, beta_t2d), .id = "series")) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se, panel = "Glucose")
+
+cl_both <- cl |>
+  transmute(group, series = "AD", b = exp(b), ci_lo = exp(ci_lo), ci_hi = exp(ci_hi), panel = "AD risk") |>
+  bind_rows(cl_glu |> select(group, series, b, ci_lo, ci_hi, panel)) |>
+  inner_join(cl |> select(group, label, kind), by = "group") |>
+  filter(group != "other (small)") |>
+  mutate(panel = factor(panel, levels = c("AD risk", "Glucose")))
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+ggplot(cl_both, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = series)) +
+  geom_vline(data = data.frame(panel = factor(c("AD risk", "Glucose"), levels = c("AD risk", "Glucose")), x = c(1, 0)),
+             aes(xintercept = x), linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), linewidth = 0.9, size = 0.6) +
+  facet_grid(kind ~ panel, scales = "free", space = "free_y",
+             labeller = labeller(panel = c(`AD risk` = "Odds ratio for AD (95% CI)",
+                                           Glucose = "Glucose, mmol/L (95% CI)"))) +
+  scale_colour_manual(values = c(AD = "#00274c", `Fasting glucose` = "grey55", `2 h glucose` = "#9a3324"),
+                      breaks = c("Fasting glucose", "2 h glucose")) +
+  labs(x = "Per unit higher log-odds of T2D carried by the cluster", y = NULL, colour = NULL,
+       caption = "Variants per cluster in brackets.") +
+  theme_talk + theme(strip.text.y = element_blank())
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-clusters-glucose-1.png){width=3600}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+cl_glu |>
+  mutate(est = sprintf("%.2f (%.2f, %.2f)", b, ci_lo, ci_hi)) |>
+  select(Cluster = group, series, est) |>
+  pivot_wider(names_from = series, values_from = est) |>
+  inner_join(cl |> transmute(Cluster = group, SNPs = n_snp,
+                             `AD OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi))),
+             by = "Cluster") |>
+  arrange(match(Cluster, cl$group)) |>
+  select(Cluster, SNPs, `AD OR (95% CI)`, `Fasting glucose`, `2 h glucose`) |>
+  kable(caption = "Glucose columns: mmol/L per unit higher log-odds of T2D (95% CI).")
+```
+
+::: {.cell-output-display}
+
+
+Table: Glucose columns: mmol/L per unit higher log-odds of T2D (95% CI).
+
+|Cluster            | SNPs|AD OR (95% CI)    |Fasting glucose   |2 h glucose        |
+|:------------------|----:|:-----------------|:-----------------|:------------------|
+|All beta cell      |   55|1.05 (1.00, 1.10) |0.18 (0.13, 0.24) |0.36 (0.28, 0.45)  |
+|Beta cell -PI      |   26|1.09 (0.99, 1.20) |0.10 (0.06, 0.15) |0.42 (0.33, 0.52)  |
+|Beta cell +PI      |   29|1.03 (0.98, 1.09) |0.21 (0.13, 0.29) |0.35 (0.22, 0.47)  |
+|Lipodystrophy      |   19|1.07 (0.94, 1.23) |0.11 (0.07, 0.15) |0.36 (0.15, 0.57)  |
+|Residual glycaemic |   49|1.02 (0.93, 1.13) |0.13 (0.10, 0.17) |0.10 (-0.02, 0.22) |
+|Body fat           |   40|1.00 (0.89, 1.13) |0.13 (0.08, 0.19) |0.21 (0.08, 0.34)  |
+|Metabolic syndrome |   44|0.98 (0.91, 1.06) |0.11 (0.09, 0.14) |0.32 (0.24, 0.41)  |
+|Obesity            |   64|0.96 (0.87, 1.04) |0.03 (0.01, 0.05) |0.05 (-0.03, 0.14) |
+
+
+:::
+:::
+
+
+## 8. Drug targets
+
+Variants in or near the gene for each glucose-lowering drug target (T2D-associated at
+p < 1×10⁻⁴, gene ± 100 kb; targets of drugs at phase 2 or later for T2D, Open Targets). Left: effect
+on AD of T2D liability acting through that target. Right: how the same variants move fasting and
+2 h glucose, so each target's fasting vs post-load profile sits beside its AD estimate. KATP
+channels and amylin receptors act on 2 h glucose only and show the clearest AD signals;
+glucokinase moves 2 h glucose most and shows none. Classes with fewer than 3 variants are in the
+table only.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+class_labels <- c(katp_secretagogue = "KATP channel (sulfonylureas)", amylin = "Amylin receptor",
+                  pparg_sensitizer = "PPAR (glitazones)", glucokinase = "Glucokinase",
+                  insulin_receptor = "Insulin receptor", incretin = "Incretin (GLP1R, GIPR, DPP4)",
+                  fgf21_klb = "FGF21 / KLB", sglt = "SGLT", glucagon_receptor = "Glucagon receptor")
+dt <- con_dt |>
+  filter(set == "primary", level == "class") |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         class = coalesce(class_labels[target], target))
+dt_ad <- dt |> filter(outcome == ad_outcome, arm == con_arm, trait == "AD (log-OR)")
+dt_order <- dt_ad |> arrange(b) |> mutate(label = sprintf("%s (%d)", class, n_snp))
+dt_plot <- dt |>
+  filter(outcome == ad_outcome, arm == con_arm, n_snp >= 3) |>
+  inner_join(dt_order |> select(target, label), by = "target") |>
+  mutate(label = factor(label, levels = dt_order$label),
+         panel = factor(if_else(trait == "AD (log-OR)", "AD risk", "Glucose"), levels = c("AD risk", "Glucose")),
+         series = case_when(trait == "AD (log-OR)" ~ "AD", grepl("^fasting", trait) ~ "Fasting glucose",
+                            TRUE ~ "2 h glucose"),
+         # AD as an odds ratio; glucose stays in mmol/L per unit log-odds of T2D
+         across(c(b, ci_lo, ci_hi), \(v) if_else(panel == "AD risk", exp(v), v)))
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+ggplot(dt_plot, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = series)) +
+  geom_vline(data = data.frame(panel = factor(c("AD risk", "Glucose"), levels = c("AD risk", "Glucose")), x = c(1, 0)),
+             aes(xintercept = x), linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), linewidth = 0.9, size = 0.6) +
+  facet_wrap(~ panel, scales = "free_x",
+             labeller = as_labeller(c(`AD risk` = "Odds ratio for AD (95% CI)",
+                                      Glucose = "Glucose, mmol/L (95% CI)"))) +
+  scale_colour_manual(values = c(AD = "#00274c", `Fasting glucose` = "grey55", `2 h glucose` = "#9a3324"),
+                      breaks = c("Fasting glucose", "2 h glucose")) +
+  labs(x = "Per unit higher log-odds of T2D acting through the target", y = NULL, colour = NULL,
+       caption = "Variants per class in brackets. Incretin class includes GIPR, within 2 Mb of APOE.") +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-drug-targets-1.png){width=3600}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+dt |>
+  filter(trait == "AD (log-OR)") |>
+  mutate(Outcome = paste(c(ad_bellenguez = "Bellenguez", ad_kunkle = "Kunkle")[outcome], arm_labels[arm], sep = ", ")) |>
+  transmute(Class = class, Outcome, SNPs = n_snp,
+            `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi)), p = signif(p, 2)) |>
+  arrange(Class, Outcome) |>
+  kable()
+```
+
+::: {.cell-output-display}
+
+
+|Class                        |Outcome                           | SNPs|OR (95% CI)       |      p|
+|:----------------------------|:---------------------------------|----:|:-----------------|------:|
+|Amylin receptor              |Bellenguez, SlopeHunter-corrected |    3|1.77 (1.19, 2.62) | 0.0049|
+|Amylin receptor              |Bellenguez, Uncorrected           |    3|1.51 (1.03, 2.22) | 0.0340|
+|Amylin receptor              |Kunkle, Uncorrected               |    3|1.47 (0.74, 2.93) | 0.2700|
+|FGF21 / KLB                  |Bellenguez, SlopeHunter-corrected |    3|0.96 (0.51, 1.81) | 0.9100|
+|FGF21 / KLB                  |Bellenguez, Uncorrected           |    4|0.93 (0.59, 1.47) | 0.7600|
+|FGF21 / KLB                  |Kunkle, Uncorrected               |    4|1.32 (0.57, 3.04) | 0.5100|
+|Glucokinase                  |Bellenguez, SlopeHunter-corrected |   11|1.11 (0.94, 1.31) | 0.2100|
+|Glucokinase                  |Bellenguez, Uncorrected           |   11|1.05 (0.89, 1.23) | 0.5600|
+|Glucokinase                  |Kunkle, Uncorrected               |    9|0.91 (0.67, 1.22) | 0.5100|
+|Incretin (GLP1R, GIPR, DPP4) |Bellenguez, SlopeHunter-corrected |   17|0.97 (0.79, 1.19) | 0.7600|
+|Incretin (GLP1R, GIPR, DPP4) |Bellenguez, Uncorrected           |   17|0.99 (0.81, 1.20) | 0.8800|
+|Incretin (GLP1R, GIPR, DPP4) |Kunkle, Uncorrected               |   15|0.65 (0.45, 0.93) | 0.0190|
+|Insulin receptor             |Bellenguez, SlopeHunter-corrected |    7|1.26 (0.95, 1.66) | 0.1000|
+|Insulin receptor             |Bellenguez, Uncorrected           |    7|1.19 (0.91, 1.56) | 0.2100|
+|Insulin receptor             |Kunkle, Uncorrected               |    6|2.11 (1.30, 3.42) | 0.0027|
+|KATP channel (sulfonylureas) |Bellenguez, SlopeHunter-corrected |    7|1.27 (1.09, 1.48) | 0.0019|
+|KATP channel (sulfonylureas) |Bellenguez, Uncorrected           |    7|1.25 (1.08, 1.44) | 0.0030|
+|KATP channel (sulfonylureas) |Kunkle, Uncorrected               |    5|1.01 (0.72, 1.40) | 0.9800|
+|PPAR (glitazones)            |Bellenguez, SlopeHunter-corrected |   15|1.12 (0.98, 1.28) | 0.0860|
+|PPAR (glitazones)            |Bellenguez, Uncorrected           |   16|1.07 (0.95, 1.22) | 0.2600|
+|PPAR (glitazones)            |Kunkle, Uncorrected               |   14|1.20 (0.96, 1.51) | 0.1100|
+|SGLT                         |Bellenguez, SlopeHunter-corrected |    2|1.13 (0.54, 2.35) | 0.7500|
+|SGLT                         |Bellenguez, Uncorrected           |    2|1.13 (0.55, 2.31) | 0.7400|
+|SGLT                         |Kunkle, Uncorrected               |    2|1.43 (0.41, 5.02) | 0.5800|
+
+
+:::
+:::
+

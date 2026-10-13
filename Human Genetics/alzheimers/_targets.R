@@ -38,6 +38,7 @@ HM3_PATH  <- cfg$paths$hapmap3
 PLINK2    <- cfg$paths$plink2     # resolved inside commands, so the machine-specific path is not a dependency
 SEED      <- cfg$seed
 CFG_CON   <- cfg$contrast[c("cond_f_min", "instruments", "sd_mmol")]
+CFG_CONY  <- cfg$contrast[c("sd_mmol", "apoe")]
 CFG_CLUST <- cfg$contrast$clusters
 CFG_DRUG  <- cfg$contrast$drug_targets
 CON_DIR   <- file.path(cfg$paths$results_dir, "contrast")
@@ -112,6 +113,16 @@ cis_values <- purrr::imap_dfr(CFG_DRUG$cis_sets, \(s, nm) tibble::tibble(
   set = nm, g_sel = sym_vec(paste0("gwas_", s$selection)), g_fg = sym_vec(paste0("gwas_", s$fg)),
   g_2h = sym_vec(paste0("gwas_", s$glu2h))))
 
+# Outcome steps: every instrument set (and cis set) x every configured outcome arm.
+con_out <- purrr::map_dfr(cfg$contrast$outcomes, tibble::as_tibble) |>
+  dplyr::mutate(g_out = sym_vec(ifelse(arm == "slopehunter", paste0("gwas_sh_", outcome), paste0("gwas_", outcome))))
+cony_values <- tidyr::crossing(con_values |> dplyr::mutate(i = dplyr::row_number()) |> dplyr::select(set, i), con_out) |>
+  dplyr::mutate(g_fg = con_values$g_fg[i], g_2h = con_values$g_2h[i], g_sel = con_values$g_sel[i],
+                step0 = sym_vec(paste0("contrast_step0_", set)), id = paste(set, outcome, arm, sep = "__")) |>
+  dplyr::select(-i)
+cisy_values <- tidyr::crossing(tibble::tibble(set = cis_values$set), con_out) |>
+  dplyr::mutate(step0 = sym_vec(paste0("cis_step0_", set)), id = paste(set, outcome, arm, sep = "__"))
+
 # ---- targets ----------------------------------------------------------------------------------
 t_reference <- list(
   tar_target(config_file, "pipeline/config.yml", format = "file"),
@@ -151,7 +162,28 @@ m_contrast <- tar_map(values = con_values, names = "set", unlist = FALSE,
 m_cis <- tar_map(values = cis_values, names = "set", unlist = FALSE,
   tar_target(cis_step0, run_cis_step0(g_sel, g_fg, g_2h, set, drug_targets, drug_target_coords,
                                       CFG_DRUG$cis, LD_BFILE, resolve_plink2(PLINK2))))
+# Steps 1-3 and the drug-target layer (UNBLINDED; each calls assert_frozen() first). `frozen_files` is
+# an input so the freeze is always built before these.
+m_cony <- tar_map(values = cony_values, names = "id", unlist = FALSE,
+  tar_target(contrast_y, { frozen_files
+    run_contrast_outcome(step0$instruments, g_fg, g_2h, g_sel, g_out, set, outcome, arm, CFG_CONY) },
+    deployment = "main"))
+m_cisy <- tar_map(values = cisy_values, names = "id", unlist = FALSE,
+  tar_target(cis_y, { frozen_files
+    run_cis_outcome(step0$instruments, g_out, set, outcome, arm, CFG_CONY, ld_bim, LD_BFILE, resolve_plink2(PLINK2)) },
+    deployment = "main"))
 t_contrast <- list(
+  tar_combine(contrast_y_all, m_cony[["contrast_y"]], command = list(!!!.x)),
+  tar_combine(cis_y_all, m_cisy[["cis_y"]], command = dplyr::bind_rows(!!!.x)),
+  tar_target(csv_contrast_results, write_csv_target(pluck_all(contrast_y_all, "rows"),
+                                                    file.path(CON_DIR, "results.csv")), format = "file"),
+  tar_target(csv_contrast_groups, write_csv_target(pluck_all(contrast_y_all, "groups"),
+                                                   file.path(CON_DIR, "cluster_results.csv")), format = "file"),
+  tar_target(csv_contrast_errcor, write_csv_target(pluck_all(contrast_y_all, "error_cor"),
+                                                   file.path(CON_DIR, "error_correlations.csv")), format = "file"),
+  tar_target(csv_contrast_data, write_csv_target(pluck_all(contrast_y_all, "data"),
+                                                 file.path(CON_DIR, "instrument_outcome_data.csv")), format = "file"),
+  tar_target(csv_cis_results, write_csv_target(cis_y_all, file.path(CON_DIR, "drug_target_results.csv")), format = "file"),
   tar_combine(cis_step0_all, m_cis[["cis_step0"]], command = list(!!!.x)),
   tar_target(csv_cis_summary, write_csv_target(pluck_all(cis_step0_all, "summary"),
                                                file.path(CON_DIR, "step0_cis_summary.csv")), format = "file"),
@@ -325,6 +357,6 @@ t_notebooks <- list(
              format = "file", error = "continue", deployment = "main")
 )
 
-list(t_reference, t_datasets, t_datasets_chrpos, t_contrast, m_contrast, m_cis, t_selection, t_instruments, m_classical, m_apss,
+list(t_reference, t_datasets, t_datasets_chrpos, t_contrast, m_contrast, m_cis, m_cony, m_cisy, t_selection, t_instruments, m_classical, m_apss,
      if (RUN_MRAID) m_mraid, m_cause, t_tables,
      t_notebooks)

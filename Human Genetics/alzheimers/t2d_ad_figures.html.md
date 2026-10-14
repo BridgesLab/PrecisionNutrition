@@ -586,6 +586,83 @@ pre-declared sensitivity set. The pre-specified primary set (Suzuki 2024, 273 va
 same way but is not significant; both are in the table. The larger set adds many variants with
 almost no effect on 2 h glucose.
 
+### How the model works
+
+**Instruments.** Variants associated with type 2 diabetes at $p < 5\times10^{-8}$, clumped to
+independence ($r^2 < 0.001$ within 10 Mb), with variants within 500 kb of *APOE* removed. For each
+variant $j = 1,\dots,J$ we take three numbers from three different studies, all aligned to the
+T2D risk-raising allele:
+
+- $\hat\beta_{Fj}$: effect on fasting glucose (mmol/L, Chen 2021)
+- $\hat\beta_{2j}$: effect on 2 h glucose (mmol/L, Chen 2021)
+- $\hat\beta_{Yj}$: effect on AD (log-odds, Bellenguez 2022 after SlopeHunter correction)
+
+Selecting on T2D rather than on either glucose trait means the variants were not chosen for being
+strong on fasting or on 2 h glucose specifically, and the T2D GWAS is a different study from the
+glucose GWAS, so selection does not inflate the glucose effects.
+
+**Model (multivariable MR).** Each variant's effect on AD is modelled as the sum of what it does
+through fasting glucose and what it does through 2 h glucose:
+
+$$
+\hat\beta_{Yj} \;=\; \theta_F\,\hat\beta_{Fj} \;+\; \theta_2\,\hat\beta_{2j} \;+\; \varepsilon_j,
+\qquad \varepsilon_j \sim N\!\left(0,\ \phi\,\sigma_{Yj}^2\right)
+$$
+
+with no intercept and $\sigma_{Yj}$ the standard error of $\hat\beta_{Yj}$. $\theta_2$ is the effect
+on AD of 1 mmol/L higher 2 h glucose **at fixed fasting glucose**, and $\theta_F$ the reverse; the
+plot shows $e^{\theta}$ as odds ratios. This is identified only because the variants differ in their
+*mix* of fasting and 2 h effects (see the validation figure below): if every variant moved the two
+in the same proportion, $\theta_F$ and $\theta_2$ could not be told apart.
+
+**Is 2 h different from fasting?** The headline test is the difference, with its standard error
+from the full covariance of the two estimates (they are strongly negatively correlated, so comparing
+their two confidence intervals would be wrong):
+
+$$
+\Delta = \theta_2 - \theta_F, \qquad
+\operatorname{SE}(\hat\Delta) = \sqrt{\operatorname{Var}(\hat\theta_2) + \operatorname{Var}(\hat\theta_F) - 2\operatorname{Cov}(\hat\theta_2, \hat\theta_F)}
+$$
+
+In the plot, $e^{\Delta}$ is the ratio of the two odds ratios.
+
+**Two estimators.**
+
+- *IVW (multiplicative random effects).* Weighted least squares of $\hat\beta_{Yj}$ on
+  $(\hat\beta_{Fj}, \hat\beta_{2j})$ with weights $1/\sigma_{Yj}^2$; standard errors scaled by
+  $\sqrt{\phi}$, the residual standard error, floored at 1. It treats the glucose effects as known
+  exactly, so noise in them (weak instruments) biases the estimates; in the multivariable setting the
+  bias can go in either direction.
+- *MRBEE (bias-corrected estimating equations).* Subtracts the expected contribution of that noise.
+  With $\mathbf{x}_j = (\hat\beta_{Fj}, \hat\beta_{2j})^\top$, weights $w_j = 1/\sigma_{Yj}^2$ and
+  $\boldsymbol\Sigma_j$ the covariance of the estimation errors in $\mathbf{x}_j$ (built from their
+  standard errors and the fasting/2 h error correlation, $\rho = 0.11$, which comes from the shared
+  MAGIC cohorts),
+
+$$
+\hat{\boldsymbol\theta}_{\text{MRBEE}} \;=\; \Big(\textstyle\sum_j w_j\big(\mathbf{x}_j\mathbf{x}_j^\top - \boldsymbol\Sigma_j\big)\Big)^{-1}
+\textstyle\sum_j w_j\big(\mathbf{x}_j\,\hat\beta_{Yj} - \boldsymbol\sigma_{xY,j}\big)
+$$
+
+  where $\boldsymbol\sigma_{xY,j}$ is the error covariance between the glucose and AD estimates
+  (near zero here: about 0.003). It also removes variants flagged as pleiotropic outliers.
+
+**Instrument strength (conditional F).** The usual F asks whether the variants predict an exposure;
+the multivariable question is whether they predict it **beyond what the other exposure explains**.
+The Sanderson–Windmeijer conditional F for 2 h glucose regresses the 2 h effects on the fasting
+effects and asks how much variation is left over, relative to its noise:
+
+$$
+F_{2\mid F} \;=\; \frac{1}{J-1}\sum_j
+\frac{\big(\hat\beta_{2j} - \hat\delta\,\hat\beta_{Fj}\big)^2}
+{\sigma_{2j}^2 + \hat\delta^2\sigma_{Fj}^2 - 2\hat\delta\,\rho\,\sigma_{2j}\sigma_{Fj}}
+$$
+
+where $\hat\delta$ is the fitted slope of $\hat\beta_{2j}$ on $\hat\beta_{Fj}$. Values above 10 are
+the conventional comfort zone. For the Xue set $F_{F\mid 2} = 14.2$ and $F_{2\mid F} = 5.6$; for the
+Suzuki set 11.1 and 4.1. Fasting glucose is well separated from 2 h glucose, but 2 h glucose is
+only weakly separated from fasting, which is why MRBEE is the estimator to trust.
+
 
 ::: {.cell}
 
@@ -673,6 +750,88 @@ mv |>
 
 :::
 :::
+
+
+### Validation: are the two exposures separable, and what does "adjusted" look like?
+
+Two checks on the plotted (Xue) instrument set.
+
+**Left: the instruments vary their mix.** Each point is a variant's effect on fasting glucose
+against its effect on 2 h glucose. If all points lay on one line through the origin, the model could
+not separate the two traits. They are correlated ($r$ shown) but spread widely, including variants
+that move 2 h glucose with little effect on fasting glucose; that spread is what the conditional F
+measures.
+
+**Right: the added-variable plot for 2 h glucose.** Both the AD effects and the 2 h effects are
+regressed on the fasting effects (same weights as the model), and the residuals are plotted against
+each other. By the Frisch–Waugh–Lovell theorem the slope through these residuals is exactly the IVW
+estimate of $\theta_2$, so this panel is what "2 h glucose adjusted for fasting glucose" means:
+what is left of each variant's 2 h effect once its fasting effect is accounted for, against what is
+left of its AD effect. Point size is the weight ($1/\sigma_{Yj}^2$). The line is the IVW slope;
+MRBEE corrects that slope for noise in the glucose effects, so it is somewhat steeper.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+val <- read_csv(file.path(con_dir, "instrument_outcome_data.csv"), show_col_types = FALSE) |>
+  filter(set == con_set, outcome == ad_outcome, arm == con_arm) |>
+  mutate(w = 1 / se_y^2)
+val_strength <- read_csv(file.path(con_dir, "step0_strength.csv"), show_col_types = FALSE) |>
+  filter(set == con_set)
+
+# Frisch-Waugh-Lovell: residualise AD and 2 h effects on the fasting effects (weighted, no intercept);
+# the slope of one set of residuals on the other is the multivariable IVW coefficient for 2 h glucose.
+val <- val |>
+  mutate(resid_y  = resid(lm(beta_y ~ 0 + beta_fg, weights = w)),
+         resid_2h = resid(lm(beta_2h ~ 0 + beta_fg, weights = w)))
+fwl_slope <- coef(lm(resid_y ~ 0 + resid_2h, data = val, weights = w))[[1]]
+mv_slope  <- coef(lm(beta_y ~ 0 + beta_fg + beta_2h, data = val, weights = w))[["beta_2h"]]
+stopifnot(abs(fwl_slope - mv_slope) < 1e-10)   # the added-variable slope IS the MVMR estimate
+mrbee_2h <- mv |> filter(set == con_set, estimator == "MRBEE", term == "glu2h") |> pull(b)
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+p_mix <- ggplot(val, aes(beta_fg, beta_2h)) +
+  geom_hline(yintercept = 0, colour = "grey70") + geom_vline(xintercept = 0, colour = "grey70") +
+  geom_errorbar(aes(ymin = beta_2h - 1.96 * se_2h, ymax = beta_2h + 1.96 * se_2h), colour = "grey80", width = 0) +
+  geom_errorbar(aes(xmin = beta_fg - 1.96 * se_fg, xmax = beta_fg + 1.96 * se_fg), colour = "grey80",
+                width = 0, orientation = "y") +
+  geom_point(colour = "#00274c", size = 1.8) +
+  annotate("text", x = Inf, y = -Inf, hjust = 1.02, vjust = -0.3, size = 4.2, lineheight = 0.95,
+           label = sprintf("r = %.2f\nConditional F, 2 h | fasting = %.1f\nConditional F, fasting | 2 h = %.1f",
+                           cor(val$beta_fg, val$beta_2h), val_strength$cond_F_2h, val_strength$cond_F_fg)) +
+  labs(x = "Effect on fasting glucose (mmol/L)", y = "Effect on 2 h glucose (mmol/L)",
+       title = "Instruments vary their fasting / 2 h mix") +
+  theme_talk + theme(panel.grid.major.y = element_line(), plot.title = element_text(size = 15))
+
+p_avp <- ggplot(val, aes(resid_2h, resid_y)) +
+  geom_hline(yintercept = 0, colour = "grey70") + geom_vline(xintercept = 0, colour = "grey70") +
+  geom_point(aes(size = w), colour = "#00274c", alpha = 0.7, show.legend = FALSE) +
+  geom_abline(aes(slope = fwl_slope, intercept = 0, colour = "IVW"), linewidth = 1.1) +
+  geom_abline(aes(slope = mrbee_2h, intercept = 0, colour = "MRBEE"), linewidth = 1.1, linetype = "dashed") +
+  scale_size_area(max_size = 4) +
+  scale_colour_manual(values = c(IVW = "#00274c", MRBEE = "#ffcb05"),
+                      labels = c(IVW = sprintf("IVW slope = %.3f", fwl_slope),
+                                 MRBEE = sprintf("MRBEE = %.3f", mrbee_2h))) +
+  labs(x = "2 h glucose effect beyond fasting (mmol/L)",
+       y = "AD effect beyond fasting (log-OR)", colour = NULL,
+       title = "2 h glucose adjusted for fasting glucose") +
+  theme_talk + theme(panel.grid.major.y = element_line(), plot.title = element_text(size = 15))
+
+patchwork::wrap_plots(p_mix, p_avp, nrow = 1)
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-validation-1.png){width=3600}
+:::
+:::
+
 
 
 ## 7. T2D liability → AD by mechanistic cluster

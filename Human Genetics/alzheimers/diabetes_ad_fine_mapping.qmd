@@ -1,0 +1,507 @@
+---
+title: "KCNJ11/ABCC8: do T2D and AD share a causal variant?"
+subtitle: "Fine-mapping and colocalisation at the sulfonylurea-target locus"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: true
+    code-summary: "Show the code"
+    embed-resources: true
+knitr:
+  opts_chunk:
+    fig.path: "figures/finemap-"
+    dev: ["png", "pdf"]
+    dpi: 300
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## Why this analysis
+
+The drug-target layer of the fasting vs 2 h glucose analysis found that T2D liability acting
+through the KATP channel (KCNJ11/ABCC8, the sulfonylurea target) was associated with higher AD risk
+(OR 1.27 per log-odds of T2D, SlopeHunter-corrected Bellenguez). At the variant level the estimate
+rests on two of seven instruments: **rs5215** in KCNJ11 (a proxy for the E23K coding variant,
+rs5219) and the low-frequency **rs113264182** (nearest gene NCR3LG1). The amylin result fell apart
+in the same view, being driven by one variant with its own AD association.
+
+A drug-target effect predicts that the variant raising T2D risk through the channel is the **same**
+variant that raises AD risk. A nearby but distinct AD signal predicts two different causal
+variants. This notebook tests that at the locus:
+
+1. **The instruments variant by variant** for the KATP channel and, for comparison, the amylin
+   receptor.
+2. **Regional association** for T2D and AD, coloured by LD with rs5215.
+3. **LD among the lead variants**, including rs5219 (E23K).
+4. **Colocalisation** (`coloc.abf`, one causal variant per trait) between T2D and each AD dataset,
+   with a prior sensitivity analysis, and **SuSiE-based colocalisation** allowing more than one
+   causal variant.
+5. **Heterogeneity** among the seven KATP instruments.
+6. **Kunkle at the variant level** for the leads.
+
+Data come from the targets pipeline store (`_targets/`): Suzuki 2024 T2D (European), Bellenguez
+2022 AD raw and SlopeHunter-corrected, Kunkle 2019 AD. All positions are GRCh37. LD is from the
+1000 Genomes European panel (503 people) the pipeline uses everywhere.
+
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(data.table)
+library(knitr)
+library(targets)
+
+# Pipeline helpers: ld_matrix(), resolve_plink2(), harmonise conventions.
+for (f in list.files("pipeline/R", full.names = TRUE)) source(f)
+cfg    <- yaml::read_yaml("pipeline/config.yml")
+plink2 <- resolve_plink2(cfg$paths$plink2)
+bfile  <- cfg$paths$ld_bfile
+bim    <- tar_read(ld_bim)
+
+# ---- settings: edit here -------------------------------------------------------------------
+region   <- list(chr = "11", start = 17.0e6, end = 17.8e6)   # KCNJ11 17.41 Mb, ABCC8 17.41-17.50 Mb
+leads    <- c("rs5215", "rs5219", "rs113264182")
+datasets <- c(t2d    = "gwas_t2d_suzuki_eur",
+              ad_sh  = "gwas_sh_ad_bellenguez",
+              ad_raw = "gwas_ad_bellenguez",
+              ad_kun = "gwas_ad_kunkle")
+labels   <- c(t2d = "T2D (Suzuki 2024)", ad_sh = "AD, Bellenguez (SlopeHunter)",
+              ad_raw = "AD, Bellenguez (raw)", ad_kun = "AD, Kunkle (clinical)")
+# Case/control counts (for coloc's case fraction); T2D uses the per-variant effective N with s = 0.5.
+cc <- list(ad_sh = c(n = 487511, s = 85934 / 487511), ad_raw = c(n = 487511, s = 85934 / 487511),
+           ad_kun = c(n = 63926, s = 21982 / 63926))
+# --------------------------------------------------------------------------------------------
+
+theme_fm <- theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank(), strip.text = element_text(face = "bold"))
+```
+
+## 1. The instruments, variant by variant
+
+Each point is one drug-target instrument: its effect on T2D (x) against its effect on AD (y), both on
+the T2D risk allele, with 95% intervals (SlopeHunter-corrected Bellenguez). Labels give the nearest
+protein-coding gene and the rsID; where the nearest gene is not the drug-target gene the variant was
+assigned to (within 100 kb), the target is shown in brackets. The line through the origin is the
+class estimate from the drug-target layer (`drug_target_results.csv`), which allows for the residual
+LD between variants, so it is not simply a fit to the points as drawn.
+
+The amylin receptor panel is the comparison case: its estimate rests on one variant (rs34779241,
+nearest gene PLEKHH3) with an AD association of its own, while the CALCR variant is flat. That is
+the pattern of a nearby variant acting on AD independently of the target, which is why the KATP
+locus gets the closer look below.
+
+```{r scatter-data}
+class_labels <- c(katp_secretagogue = "KATP channel (sulfonylureas)", amylin = "Amylin receptor")
+dt_snps <- read_csv("results/pipeline/contrast/drug_target_snps.csv", show_col_types = FALSE) |>
+  filter(set == "primary", outcome == "ad_bellenguez", arm == "slopehunter", drug_class %in% names(class_labels)) |>
+  mutate(class = class_labels[drug_class],
+         label = if_else(nearest_gene == drug_target_gene, sprintf("%s\n%s", nearest_gene, SNP),
+                         sprintf("%s [%s]\n%s", nearest_gene, drug_target_gene, SNP)))
+dt_lines <- read_csv("results/pipeline/contrast/drug_target_results.csv", show_col_types = FALSE) |>
+  filter(set == "primary", outcome == "ad_bellenguez", arm == "slopehunter", level == "class",
+         trait == "AD (log-OR)", target %in% names(class_labels)) |>
+  transmute(class = class_labels[target], slope = b,
+            txt = sprintf("OR %.2f (%.2f, %.2f)\nper log-odds T2D", exp(b), exp(b - 1.96 * se), exp(b + 1.96 * se)))
+```
+
+```{r scatter, fig.width=12, fig.height=5.5}
+ggplot(dt_snps, aes(beta_t2d, beta_y)) +
+  geom_hline(yintercept = 0, colour = "grey70") +
+  geom_errorbar(aes(ymin = beta_y - 1.96 * se_y, ymax = beta_y + 1.96 * se_y), colour = "grey75", width = 0) +
+  geom_errorbar(aes(xmin = beta_t2d - 1.96 * se_t2d, xmax = beta_t2d + 1.96 * se_t2d), colour = "grey75",
+                width = 0, orientation = "y") +
+  geom_abline(data = dt_lines, aes(slope = slope, intercept = 0), colour = "#9a3324", linewidth = 1) +
+  geom_point(colour = "#00274c", size = 2.5) +
+  ggrepel::geom_text_repel(aes(label = label), size = 3.6, lineheight = 0.9, min.segment.length = 0,
+                           box.padding = 0.5, seed = 1) +
+  geom_text(data = dt_lines, aes(x = -Inf, y = Inf, label = txt), hjust = -0.05, vjust = 1.2, size = 4,
+            colour = "#9a3324") +
+  facet_wrap(~ class, scales = "free") +
+  expand_limits(x = 0) +
+  labs(x = "Variant effect on T2D (log-odds)", y = "Variant effect on AD (log-odds)") +
+  theme_fm + theme(panel.grid.major.y = element_line())
+```
+
+```{r scatter-table}
+dt_snps |>
+  arrange(class, desc(abs(beta_y / se_y))) |>
+  transmute(Class = class, SNP, `Nearest gene` = nearest_gene, `Target gene` = drug_target_gene,
+            `T2D log-OR` = sprintf("%.3f", beta_t2d), `AD log-OR (SE)` = sprintf("%.3f (%.3f)", beta_y, se_y),
+            `AD p` = signif(2 * pnorm(-abs(beta_y / se_y)), 2),
+            `Fasting glucose` = sprintf("%.3f", beta_fg), `2 h glucose` = sprintf("%.3f", beta_2h)) |>
+  kable(caption = "Glucose columns: mmol/L per T2D risk allele.")
+```
+
+## 2. Regional association
+
+All four datasets are aligned to the LD panel's counted allele (so the signed LD below applies to
+them directly). Palindromic variants (A/T, C/G) are dropped, since the Kunkle file has no allele
+frequencies to resolve their strand.
+
+```{r region-data}
+in_region <- function(g) g[as.character(chr) == region$chr & pos >= region$start & pos <= region$end]
+align_to_bim <- function(g) {
+  m <- merge(g, bim[, .(SNP, a1, a2)], by = "SNP")
+  m <- m[(ea == a1 & oa == a2) | (ea == a2 & oa == a1)]
+  m[ea != a1, `:=`(beta = -beta, eaf = 1 - eaf)]
+  m[!paste0(a1, a2) %chin% c("AT", "TA", "CG", "GC")][, .(SNP, pos, beta, se, p, eaf, n)]
+}
+reg <- purrr::imap(datasets, \(tgt, k) align_to_bim(in_region(tar_read_raw(tgt))))
+common <- Reduce(intersect, purrr::map(reg, "SNP"))
+reg <- purrr::map(reg, \(d) d[SNP %chin% common][order(pos)])
+
+R <- ld_matrix(common, bim, bfile, plink2)          # signed r on the counted allele (a1)
+common <- rownames(R)
+reg <- purrr::map(reg, \(d) d[match(common, SNP)])
+r2_lead <- R[, "rs5215"]^2
+
+long <- purrr::imap_dfr(reg, \(d, k) tibble(dataset = labels[[k]], SNP = d$SNP, pos = d$pos, p = d$p)) |>
+  mutate(dataset = factor(dataset, levels = labels), r2 = r2_lead[SNP],
+         r2_bin = cut(r2, c(-Inf, 0.2, 0.4, 0.6, 0.8, Inf), labels = c("<0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", ">0.8")))
+genes <- tibble(gene = c("NCR3LG1", "KCNJ11", "ABCC8"), start = c(17373e3, 17406.8e3, 17414.4e3),
+                end = c(17398e3, 17410.9e3, 17498.4e3))   # GRCh37, approximate
+```
+
+`r length(common)` variants are present in all four datasets.
+
+```{r region-plot, fig.width=11, fig.height=10}
+ggplot(long, aes(pos / 1e6, -log10(p))) +
+  annotate("rect", xmin = genes$start / 1e6, xmax = genes$end / 1e6, ymin = -Inf, ymax = Inf,
+           alpha = 0.08, fill = "#00274c") +
+  geom_point(aes(colour = r2_bin), size = 1.3) +
+  geom_point(data = filter(long, SNP %in% leads), shape = 21, size = 3.5, colour = "black", stroke = 1) +
+  ggrepel::geom_text_repel(data = filter(long, SNP %in% leads), aes(label = SNP), size = 3.3, seed = 1) +
+  facet_wrap(~ dataset, ncol = 1, scales = "free_y") +
+  scale_colour_manual(values = c("<0.2" = "grey70", "0.2-0.4" = "#9fb4cc", "0.4-0.6" = "#4f7ba6",
+                                 "0.6-0.8" = "#ffcb05", ">0.8" = "#9a3324")) +
+  labs(x = "Chromosome 11 position (Mb, GRCh37); shaded: NCR3LG1, KCNJ11, ABCC8",
+       y = expression(-log[10](p)), colour = "r² with rs5215") +
+  theme_fm
+```
+
+```{r region-leads}
+top <- purrr::imap_dfr(reg, \(d, k) d[which.min(p)] |> as_tibble() |> mutate(dataset = labels[[k]])) |>
+  transmute(Dataset = dataset, `Top variant` = SNP, `Position` = pos, p = signif(p, 2),
+            `r² with rs5215` = round(r2_lead[`Top variant`], 2))
+kable(top, caption = "Strongest variant in the region, per dataset")
+```
+
+## 3. LD among the lead variants
+
+```{r lead-ld}
+ld_set <- intersect(unique(c(leads, top$`Top variant`)), common)
+round(R[ld_set, ld_set]^2, 3) |> kable(caption = "r² (1000 Genomes European)")
+```
+
+## 4. Colocalisation
+
+**Single causal variant (`coloc.abf`).** Five hypotheses: H0 no association, H1 T2D only, H2 AD
+only, H3 both but different causal variants, H4 both with a shared causal variant. A drug-target
+effect predicts H4; a nearby independent AD signal predicts H3. Default priors
+(p1 = p2 = 1×10⁻⁴, p12 = 1×10⁻⁵).
+
+```{r coloc-abf}
+as_coloc <- function(d, k) {
+  maf <- pmin(reg$t2d$eaf, 1 - reg$t2d$eaf)           # Kunkle has no frequencies; use T2D's
+  if (k == "t2d") list(snp = d$SNP, beta = d$beta, varbeta = d$se^2, type = "cc", N = d$n, s = 0.5, MAF = maf)
+  else list(snp = d$SNP, beta = d$beta, varbeta = d$se^2, type = "cc", N = cc[[k]][["n"]], s = cc[[k]][["s"]], MAF = maf)
+}
+abf <- purrr::map(c("ad_sh", "ad_raw", "ad_kun"), \(k)
+  suppressMessages(coloc::coloc.abf(as_coloc(reg$t2d, "t2d"), as_coloc(reg[[k]], k)))) |>
+  setNames(c("ad_sh", "ad_raw", "ad_kun"))
+
+purrr::imap_dfr(abf, \(r, k) as_tibble(as.list(r$summary)) |> mutate(Comparison = paste("T2D vs", labels[[k]]))) |>
+  transmute(Comparison, SNPs = nsnps, across(PP.H0.abf:PP.H4.abf, \(x) round(x, 3))) |>
+  rename_with(\(x) sub("PP\\.(H[0-4])\\.abf", "\\1", x)) |>
+  kable(caption = "Posterior probabilities")
+```
+
+```{r coloc-abf-snps}
+# If a shared variant is supported, which one? Posterior for each SNP being the shared causal variant (H4).
+purrr::imap_dfr(abf, \(r, k) r$results |> as_tibble() |> slice_max(SNP.PP.H4, n = 3) |>
+                  transmute(Comparison = labels[[k]], SNP = snp, `PP (shared causal | H4)` = round(SNP.PP.H4, 3))) |>
+  kable()
+```
+
+**Prior sensitivity.** How the conclusion depends on p12, the prior probability that a variant is
+causal for both traits. The usual guidance treats H4 as robust only if it stays high for p12 down to
+about 5×10⁻⁶.
+
+```{r coloc-sensitivity, fig.width=10, fig.height=4.5}
+# Only H4's prior involves p12, so changing p12 rescales PP(H4) by new/old p12 and renormalises.
+p12_grid <- 10^seq(-8, -4, by = 0.25)
+sens <- purrr::imap_dfr(abf, \(r, k) {
+  pp <- r$summary[paste0("PP.H", 0:4, ".abf")]
+  purrr::map_dfr(p12_grid, \(p12) {
+    w <- pp * c(1, 1, 1, 1, p12 / 1e-5); w <- w / sum(w)
+    tibble(p12 = p12, H3 = w[[4]], H4 = w[[5]])
+  }) |> mutate(dataset = labels[[k]])
+}) |> pivot_longer(c(H3, H4), names_to = "hypothesis", values_to = "pp")
+
+ggplot(sens, aes(p12, pp, colour = hypothesis)) +
+  geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey50") +
+  geom_line(linewidth = 1.1) +
+  facet_wrap(~ dataset) +
+  scale_x_log10() +
+  scale_colour_manual(values = c(H3 = "grey55", H4 = "#9a3324"),
+                      labels = c(H3 = "H3: distinct causal variants", H4 = "H4: shared causal variant")) +
+  labs(x = "p12 (prior that a variant is causal for both); dashed = default", y = "Posterior probability",
+       colour = NULL) +
+  theme_fm
+```
+
+**More than one causal variant (SuSiE).** `coloc.abf` assumes one causal variant per trait. SuSiE
+fine-maps each trait into 95% credible sets using the LD matrix, and colocalisation is then tested
+between credible sets, so it needs at least one credible set **in each trait**. It is run on the two
+AD datasets with ordinary GWAS statistics (raw Bellenguez and Kunkle). The SlopeHunter-corrected
+statistics are a weighted difference of two GWAS and do not satisfy SuSiE's summary-statistic model,
+so they are left out. The LD comes from 503 reference genomes, not the GWAS samples.
+
+```{r susie}
+ss_input <- function(d, k) { x <- c(as_coloc(d, k), list(LD = R)); x$N <- median(x$N); x }
+ss_ad <- purrr::map(c(ad_raw = "ad_raw", ad_kun = "ad_kun"), \(k)
+  tryCatch(coloc::runsusie(ss_input(reg[[k]], k), maxit = 1000), error = function(e) e))
+purrr::imap_dfr(ss_ad, \(f, k) {
+  if (inherits(f, "error")) return(tibble(Trait = labels[[k]], `Credible sets` = NA_integer_, note = conditionMessage(f)))
+  tibble(Trait = labels[[k]], `Credible sets` = length(f$sets$cs),
+         `Max PIP` = round(max(f$pip), 2), `Variant with max PIP` = names(f$pip)[which.max(f$pip)])
+}) |> kable(caption = "SuSiE fine-mapping of AD in the region")
+```
+
+With no AD credible set, there is no AD signal for SuSiE to colocalise with T2D, so the
+multi-variant analysis cannot add to `coloc.abf` here.
+
+## 5. Heterogeneity among the seven KATP instruments
+
+If the KATP channel drives AD through T2D liability, every instrument's AD effect should be
+proportional to its T2D effect. Cochran's Q, generalised for the residual LD between instruments
+(they were clumped at r² < 0.1):
+$Q = (\hat\beta_Y - \hat\theta\hat\beta_X)^\top \Omega^{-1} (\hat\beta_Y - \hat\theta\hat\beta_X)$ with
+$\Omega_{jk} = \sigma_{Yj}\sigma_{Yk} r_{jk}$.
+
+```{r heterogeneity}
+katp <- read_csv("results/pipeline/contrast/drug_target_snps.csv", show_col_types = FALSE) |>
+  filter(set == "primary", drug_class == "katp_secretagogue")
+het <- katp |> group_by(outcome, arm) |> group_modify(\(x, ...) {
+  Rk <- ld_matrix(x$SNP, bim, bfile, plink2); x <- x[match(rownames(Rk), x$SNP), ]
+  s <- if_else(x$ea == bim$a1[match(x$SNP, bim$SNP)], 1, -1); Rk <- Rk * outer(s, s)
+  Oi <- solve(outer(x$se_y, x$se_y) * Rk)
+  th <- drop(t(x$beta_t2d) %*% Oi %*% x$beta_y) / drop(t(x$beta_t2d) %*% Oi %*% x$beta_t2d)
+  e <- x$beta_y - th * x$beta_t2d; Q <- drop(t(e) %*% Oi %*% e)
+  tibble(SNPs = nrow(x), theta = th, Q = Q, df = nrow(x) - 1, p_het = pchisq(Q, nrow(x) - 1, lower.tail = FALSE))
+}) |> ungroup()
+het |> transmute(Outcome = paste(outcome, arm), SNPs, `θ (log-OR AD per log-odds T2D)` = round(theta, 3),
+                 Q = round(Q, 2), df, `p (heterogeneity)` = signif(p_het, 2)) |> kable()
+```
+
+## 6. Kunkle at the variant level
+
+```{r kunkle-leads}
+lead_tab <- katp |>
+  filter(SNP %in% c("rs5215", "rs113264182")) |>
+  transmute(SNP, nearest_gene, Outcome = paste(outcome, arm), b = beta_y, se = se_y,
+            p = 2 * pnorm(-abs(beta_y / se_y)), beta_t2d)
+lead_tab |>
+  transmute(SNP, `Nearest gene` = nearest_gene, Outcome,
+            `AD log-OR (95% CI)` = sprintf("%.3f (%.3f, %.3f)", b, b - 1.96 * se, b + 1.96 * se),
+            p = signif(p, 2), `Wald ratio (per log-odds T2D)` = round(b / beta_t2d, 2)) |>
+  arrange(SNP, Outcome) |>
+  kable()
+```
+
+## Reading the results: KCNJ11
+
+**There is no detectable AD signal at the locus to colocalise.** `coloc.abf` puts about 90% on H1
+(a T2D signal, no AD signal) in all three comparisons; H4 (shared causal variant) is 1–3% and H3
+(distinct variants) 4–7%. The strongest AD variants in the region (p ≈ 10⁻³) lie about 300 kb away
+at 17.7 Mb and are unlinked to rs5215 (r² ≤ 0.01). SuSiE finds no AD credible set. This is what a
+real but small effect looks like as much as a null: an AD association of p = 0.04 at rs5215 is far
+too weak for colocalisation, which needs a clear signal in both traits. So colocalisation neither
+confirms nor refutes a shared variant here; it is underpowered by design for an effect this size.
+
+**rs5215 behaves the same in every AD dataset.** Its AD log-OR is 0.017–0.018 in raw and
+SlopeHunter-corrected Bellenguez and 0.017 in Kunkle, giving the same Wald ratio (0.25–0.27 per
+log-odds of T2D) in all three. Kunkle's interval includes zero only because it is smaller. If the
+variant were colocalising, this conditional posterior is where it would show: given a shared variant
+(H4), rs5215 and its perfect proxy rs5219 (E23K, r² = 1.00) carry essentially all of the probability.
+
+**rs113264182 does not replicate.** It is independent of rs5215 (r² = 0.02), positive in
+Bellenguez (0.094, p = 0.007) but negative in Kunkle (−0.047). It drove the KATP class estimate up
+in Bellenguez and, missing or reversed, pulled it to zero in Kunkle. The null Kunkle class estimate
+is therefore about this variant, not about rs5215.
+
+**The seven instruments are consistent with one effect** (heterogeneity p = 0.39 in SlopeHunter
+Bellenguez, 0.50 raw, 0.28 Kunkle), so the five flat variants do not contradict the two positive
+ones at this precision.
+
+**Overall.** The best-supported reading is a small effect carried by the E23K haplotype
+(rs5215/rs5219), consistent in direction and size across all three AD datasets but individually
+only nominal. The KATP class estimate of OR 1.27 overstates it because of rs113264182, which looks
+like noise. Colocalisation cannot settle whether rs5215 is causal for AD at this effect size; a
+larger clinical AD dataset, or E23K carriers in a cohort with cognitive follow-up, would.
+
+## 7. A second post-load locus? The chr17q21 (MLX) signal
+
+The amylin-receptor estimate rested on one variant, rs34779241, labelled RAMP2 because RAMP2 was the
+only drug-target gene within 100 kb. It is in fact a proxy (r² = 0.89) for **rs676387**, Suzuki
+2024's index variant for the T2D locus named *MLX* (obesity cluster). In GTEx v8 it is an eQTL for
+TUBG2 (22 tissues), CNTNAP1 (strongest in pancreas) and several other genes, but not for RAMP2. Like
+the KCNJ11 variant, the T2D signal raises 2 h glucose with no fasting effect. The strongest AD
+association nearby, however, sits on a partly correlated haplotype (lead rs12450136, r² ≈ 0.3)
+with no 2 h glucose effect.
+
+So the question is whether one causal variant raises T2D risk, 2 h glucose and AD together (a
+second post-load locus), or whether AD is driven by a separate nearby variant that the T2D
+instrument picks up through LD (pleiotropy). Here the AD signal is strong enough (p ≈ 10⁻⁵) for
+colocalisation to have power. T2D vs 2 h glucose is included as a positive control: both should
+share the index variant.
+
+```{r mlx-data}
+region17 <- list(chr = "17", start = 40.4e6, end = 41.2e6)
+leads17  <- c("rs676387", "rs34779241", "rs12450136")
+datasets17 <- c(t2d = "gwas_t2d_suzuki_eur", glu2h = "gwas_glu2h_chen", fg = "gwas_fg_chen",
+                ad_sh = "gwas_sh_ad_bellenguez", ad_raw = "gwas_ad_bellenguez", ad_kun = "gwas_ad_kunkle")
+labels17 <- c(t2d = "T2D (Suzuki 2024)", glu2h = "2 h glucose (Chen 2021)", fg = "Fasting glucose (Chen 2021)",
+              ad_sh = labels[["ad_sh"]], ad_raw = labels[["ad_raw"]], ad_kun = labels[["ad_kun"]])
+quant_n <- c(glu2h = 63396, fg = 200622)
+
+in17 <- function(g) g[as.character(chr) == region17$chr & pos >= region17$start & pos <= region17$end]
+reg17 <- purrr::map(datasets17, \(tgt) align_to_bim(in17(tar_read_raw(tgt))))
+common17 <- Reduce(intersect, purrr::map(reg17, "SNP"))
+R17 <- ld_matrix(common17, bim, bfile, plink2)
+common17 <- rownames(R17)
+reg17 <- purrr::map(reg17, \(d) d[match(common17, SNP)])
+
+long17 <- purrr::imap_dfr(reg17, \(d, k) tibble(dataset = labels17[[k]], SNP = d$SNP, pos = d$pos, p = d$p)) |>
+  mutate(dataset = factor(dataset, levels = labels17), r2 = R17[SNP, "rs676387"]^2,
+         r2_bin = cut(r2, c(-Inf, 0.2, 0.4, 0.6, 0.8, Inf), labels = c("<0.2", "0.2-0.4", "0.4-0.6", "0.6-0.8", ">0.8")))
+genes17 <- tibble(gene = c("MLX", "TUBG2/PLEKHH3", "RAMP2"), start = c(40719086, 40811323, 40910465),
+                  end = c(40725257, 40829048, 40915059))
+```
+
+`r length(common17)` variants are present in all six datasets.
+
+```{r mlx-region, fig.width=11, fig.height=13}
+ggplot(long17, aes(pos / 1e6, -log10(p))) +
+  annotate("rect", xmin = genes17$start / 1e6, xmax = genes17$end / 1e6, ymin = -Inf, ymax = Inf,
+           alpha = 0.12, fill = "#00274c") +
+  geom_point(aes(colour = r2_bin), size = 1.3) +
+  geom_point(data = filter(long17, SNP %in% leads17), shape = 21, size = 3.5, colour = "black", stroke = 1) +
+  ggrepel::geom_text_repel(data = filter(long17, SNP %in% leads17), aes(label = SNP), size = 3.3, seed = 1) +
+  facet_wrap(~ dataset, ncol = 1, scales = "free_y") +
+  scale_colour_manual(values = c("<0.2" = "grey70", "0.2-0.4" = "#9fb4cc", "0.4-0.6" = "#4f7ba6",
+                                 "0.6-0.8" = "#ffcb05", ">0.8" = "#9a3324")) +
+  labs(x = "Chromosome 17 position (Mb, GRCh37); shaded: MLX, TUBG2/PLEKHH3, RAMP2",
+       y = expression(-log[10](p)), colour = "r² with rs676387") +
+  theme_fm
+```
+
+```{r mlx-leads}
+purrr::imap_dfr(reg17, \(d, k) d[which.min(p)] |> as_tibble() |> mutate(dataset = labels17[[k]])) |>
+  transmute(Dataset = dataset, `Top variant` = SNP, Position = pos, p = signif(p, 2),
+            `r² with rs676387` = round(R17[SNP, "rs676387"]^2, 2),
+            `r² with rs12450136` = round(R17[SNP, "rs12450136"]^2, 2)) |>
+  kable(caption = "Strongest variant in the region, per dataset")
+```
+
+```{r mlx-coloc}
+maf17 <- pmin(reg17$t2d$eaf, 1 - reg17$t2d$eaf)
+as_coloc17 <- function(k) {
+  d <- reg17[[k]]
+  base <- list(snp = d$SNP, beta = d$beta, varbeta = d$se^2, MAF = maf17)
+  if (k == "t2d") c(base, list(type = "cc", N = d$n, s = 0.5))
+  else if (k %in% names(quant_n)) c(base, list(type = "quant", N = quant_n[[k]]))
+  else c(base, list(type = "cc", N = cc[[k]][["n"]], s = cc[[k]][["s"]]))
+}
+pairs17 <- tribble(~a, ~b,
+  "t2d", "glu2h",            # positive control: should share the index variant
+  "t2d", "ad_sh", "t2d", "ad_raw", "t2d", "ad_kun",
+  "glu2h", "ad_sh", "glu2h", "ad_raw", "glu2h", "ad_kun")
+abf17 <- purrr::pmap(pairs17, \(a, b) suppressMessages(coloc::coloc.abf(as_coloc17(a), as_coloc17(b))))
+coloc17 <- purrr::map2_dfr(abf17, seq_len(nrow(pairs17)), \(r, i) {
+  top <- r$results |> slice_max(SNP.PP.H4, n = 1)
+  as_tibble(as.list(r$summary)) |>
+    mutate(Comparison = paste(labels17[[pairs17$a[i]]], "vs", labels17[[pairs17$b[i]]]),
+           `Top shared variant (if H4)` = sprintf("%s (%.2f)", top$snp, top$SNP.PP.H4))
+})
+coloc17 |>
+  transmute(Comparison, across(PP.H0.abf:PP.H4.abf, \(x) round(x, 3)), `Top shared variant (if H4)`) |>
+  rename_with(\(x) sub("PP\\.(H[0-4])\\.abf", "\\1", x)) |>
+  kable(caption = "coloc.abf posterior probabilities (default priors)")
+```
+
+```{r mlx-sensitivity, fig.width=11, fig.height=4.5}
+sens17 <- purrr::map2_dfr(abf17, seq_len(nrow(pairs17)), \(r, i) {
+  pp <- r$summary[paste0("PP.H", 0:4, ".abf")]
+  purrr::map_dfr(p12_grid, \(p12) { w <- pp * c(1, 1, 1, 1, p12 / 1e-5); w <- w / sum(w)
+    tibble(p12 = p12, H3 = w[[4]], H4 = w[[5]]) }) |>
+    mutate(comparison = paste(sub(" \\(.*", "", labels17[[pairs17$a[i]]]), "vs", labels17[[pairs17$b[i]]]))
+}) |>
+  filter(grepl("AD", comparison)) |>
+  pivot_longer(c(H3, H4), names_to = "hypothesis", values_to = "pp")
+ggplot(sens17, aes(p12, pp, colour = hypothesis)) +
+  geom_vline(xintercept = 1e-5, linetype = "dashed", colour = "grey50") +
+  geom_line(linewidth = 1.1) +
+  facet_wrap(~ comparison, nrow = 2) +
+  scale_x_log10() +
+  scale_colour_manual(values = c(H3 = "grey55", H4 = "#9a3324"),
+                      labels = c(H3 = "H3: distinct causal variants", H4 = "H4: shared causal variant")) +
+  labs(x = "p12 (dashed = default)", y = "Posterior probability", colour = NULL) +
+  theme_fm + theme(strip.text = element_text(size = 9))
+```
+
+**One AD signal or two?** `coloc.abf` assumes a single causal variant per trait, and SuSiE (which
+relaxes that) did not converge with the reference LD here. A simpler, more robust check is an
+approximate conditional analysis on the two candidate leads: the T2D index rs676387 and the top AD
+variant rs72826906 (r² ≈ 0.27). For z-scores $z_1, z_2$ with signed LD $r$, the association of
+variant 1 conditional on variant 2 is $z_{1\mid 2} = (z_1 - r z_2)/\sqrt{1 - r^2}$. If AD has one
+signal on the T2D haplotype, rs676387 should keep its AD association after conditioning on
+rs72826906; if AD's signal is on the other haplotype, it should not.
+
+```{r mlx-conditional}
+cond_pair <- function(k, s1, s2) {
+  d <- reg17[[k]]; z <- setNames(d$beta / d$se, d$SNP); r <- R17[s1, s2]
+  tibble(Trait = labels17[[k]], Variant = c(s1, s2),
+         `z (marginal)` = c(z[[s1]], z[[s2]]),
+         `z (conditional on the other)` = c((z[[s1]] - r * z[[s2]]) / sqrt(1 - r^2),
+                                            (z[[s2]] - r * z[[s1]]) / sqrt(1 - r^2)))
+}
+purrr::map_dfr(c("t2d", "glu2h", "ad_sh", "ad_raw", "ad_kun"), cond_pair, s1 = "rs676387", s2 = "rs72826906") |>
+  mutate(`p (marginal)` = signif(2 * pnorm(-abs(`z (marginal)`)), 2),
+         `p (conditional)` = signif(2 * pnorm(-abs(`z (conditional on the other)`)), 2),
+         across(starts_with("z ("), \(x) round(x, 2))) |>
+  kable(caption = sprintf("Approximate conditional analysis (signed r = %.2f between the two variants, 1000 Genomes European)",
+                          R17["rs676387", "rs72826906"]))
+```
+
+
+### Reading the results: chr17q21
+
+**T2D and 2 h glucose share one signal.** The positive control works: T2D and 2 h glucose colocalise
+(H4 = 0.90), and conditional on rs676387 the other haplotype's T2D association disappears (p = 0.58).
+This is a post-load-specific T2D locus, as at KCNJ11.
+
+**AD's signal sits mostly on the other haplotype.** The strongest AD variant (rs72826906, p = 6×10⁻⁶
+SlopeHunter-corrected) keeps its association after conditioning on the T2D index (p = 0.004), while
+the T2D index's AD association drops from p = 8×10⁻⁵ to 0.06. rs72826906 has no T2D or 2 h glucose
+effect of its own once rs676387 is accounted for. So most of the AD association at this locus comes
+from a variant that does not act through T2D or post-load glucose; the T2D variant picks it up through
+LD (r² ≈ 0.27). A small residual AD effect on the T2D haplotype cannot be excluded.
+
+**Why `coloc.abf` nonetheless leans to H4** (0.78 SlopeHunter-corrected, 0.50 raw): with a single
+causal variant assumed per trait, the AD evidence at the T2D haplotype (p ≈ 10⁻⁴) is enough for the
+default prior to favour sharing. The call is not robust: on the same posteriors, lowering p12 to
+5×10⁻⁶ gives H4 ≈ 0.63 (SlopeHunter) and 0.33 (raw), and at 1×10⁻⁶ about 0.26 and 0.09. The
+conditional analysis, which allows two variants, is the more reliable guide here.
+
+**Kunkle shows nothing at either variant** (p > 0.2), as with the amylin class estimate.
+
+**Overall.** This locus is not the amylin receptor: the variant is a proxy for the *MLX*-region T2D
+index, is not an eQTL for RAMP2, and its AD association is largely explained by a neighbouring
+variant without glycaemic effects. It does not add a second post-load locus to KCNJ11.

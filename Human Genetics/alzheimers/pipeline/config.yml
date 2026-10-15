@@ -183,6 +183,14 @@ contrast:
     file: data/cache/suzuki2024/suzuki2024_supplementary_tables.xlsx
     sheet: "ST6"                            # Supp. Table 6: Locus, Chromosome, Index SNV, Position (b37), Cluster assignment
     skip: 2                                 # title + blank row above the header
+  # POST-FREEZE additions (not in assignments/; reported separately and labelled as such). Applied
+  # only to mechanisms the frozen map left unclassed. Same cis rule, primary instrument set. Kept
+  # outside drug_targets: so editing it never touches the frozen targets.
+  post_freeze_classes:
+    dopamine_d2_agonist:
+      regex: "D2-like dopamine receptor agonist|Dopamine D2 receptor agonist"
+      added: 2026-10-15
+      reason: "bromocriptine (Cycloset) is FDA-approved for T2D; overlooked by the frozen class map"
   drug_targets:
     disease_id: MONDO_0005148               # type 2 diabetes mellitus (Open Targets)
     stages: [PHASE_2, PHASE_2_3, PHASE_3, PREAPPROVAL, APPROVAL]   # phase 2 or later for T2D (widened 2026-10-12)

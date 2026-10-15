@@ -176,3 +176,40 @@ run_cis_outcome <- function(cis, g_out, set, outcome, arm, cfg, bim, bfile, plin
     purrr::imap(split(d, d$drug_class), \(x, nm) one(x, "class", nm)))))) |>
     mutate(set = set, outcome = outcome, arm = arm, scale = "per log-odds of T2D", .before = 1)
 }
+
+# Per-SNP table behind the drug-target estimates (for scatter plots): the cis instruments with their
+# outcome effects and the nearest protein-coding gene of any kind (GRCh37, Ensembl), which need not be
+# the drug-target gene the variant was assigned to.
+cis_outcome_snps <- function(cis, g_out, set, outcome, arm, cfg) {
+  assert_frozen()
+  key <- paste("cis", set, outcome, arm, sep = "__")
+  d <- con_outcome_data(cis, g_out, key, cfg$apoe)$dat
+  d |> mutate(nearest_gene = purrr::map2_chr(chr, pos, nearest_gene_b37), set = set, outcome = outcome,
+              arm = arm, .before = 1)
+}
+
+nearest_gene_b37 <- function(chr, pos, flank = 500000) {
+  url <- sprintf("https://grch37.rest.ensembl.org/overlap/region/human/%s:%d-%d?feature=gene;biotype=protein_coding",
+                 chr, max(1, pos - flank), pos + flank)
+  g <- httr2::request(url) |> httr2::req_headers(Accept = "application/json") |> httr2::req_timeout(60) |>
+    httr2::req_retry(max_tries = 3) |> httr2::req_perform() |> httr2::resp_body_json()
+  if (!length(g)) return(NA_character_)
+  dist <- purrr::map_dbl(g, \(x) max(x$start - pos, pos - x$end, 0))
+  nm <- purrr::map_chr(g, \(x) x$external_name %||% x$id)
+  nm[which.min(dist)]
+}
+
+# ---- post-freeze drug classes ----------------------------------------------------------------------
+
+# Classes added after the freeze (config drug_targets: post_freeze_classes), applied only to mechanisms
+# the frozen class map left unclassed. Returns the same shape as classify_drug_targets(), with only the
+# newly classed rows, so select_cis() / run_cis_step0() can be reused unchanged.
+classify_post_freeze <- function(drugs, cfg, pf) {
+  frozen <- classify_drug_targets(drugs, cfg)
+  unclassed <- frozen |> filter(is.na(drug_class)) |> distinct(mechanism) |> pull(mechanism)
+  cfg2 <- cfg; cfg2$classes <- purrr::map(pf, "regex")
+  classify_drug_targets(drugs |> filter(mechanism %in% unclassed), cfg2) |>
+    filter(!is.na(drug_class)) |>
+    mutate(post_freeze = TRUE, added = as.character(purrr::map_chr(pf, \(x) as.character(x$added))[drug_class]))
+}
+

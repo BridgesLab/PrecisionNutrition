@@ -41,6 +41,7 @@ CFG_CON   <- cfg$contrast[c("cond_f_min", "instruments", "sd_mmol")]
 CFG_CONY  <- cfg$contrast[c("sd_mmol", "apoe")]
 CFG_CLUST <- cfg$contrast$clusters
 CFG_DRUG  <- cfg$contrast$drug_targets
+CFG_PF    <- cfg$contrast$post_freeze_classes
 CON_DIR   <- file.path(cfg$paths$results_dir, "contrast")
 CFG_APSS  <- cfg$mrapss
 CFG_APSS_GW <- utils::modifyList(cfg$mrapss, cfg$mrapss_sensitivity)   # p < 5e-8 sensitivity
@@ -172,7 +173,36 @@ m_cisy <- tar_map(values = cisy_values, names = "id", unlist = FALSE,
   tar_target(cis_y, { frozen_files
     run_cis_outcome(step0$instruments, g_out, set, outcome, arm, CFG_CONY, ld_bim, LD_BFILE, resolve_plink2(PLINK2)) },
     deployment = "main"))
+# Per-SNP drug-target data (outcome effects + nearest gene), for the scatter plots in t2d_ad_figures.qmd.
+m_cisd <- tar_map(values = cisy_values, names = "id", unlist = FALSE,
+  tar_target(cis_snps, { frozen_files
+    cis_outcome_snps(step0$instruments, g_out, set, outcome, arm, CFG_CONY) }, deployment = "main"))
+# Post-freeze drug classes (config drug_targets: post_freeze_classes): primary instrument set only,
+# every outcome arm. Reported in their own files, flagged post_freeze.
+pf_values <- con_out |> dplyr::mutate(id = paste(outcome, arm, sep = "__"))
+m_pfy <- tar_map(values = pf_values, names = "id", unlist = FALSE,
+  tar_target(pf_y, { frozen_files
+    list(results = run_cis_outcome(pf_step0$instruments, g_out, "primary_post_freeze", outcome, arm, CFG_CONY,
+                                   ld_bim, LD_BFILE, resolve_plink2(PLINK2), min_n = 1),
+         snps = cis_outcome_snps(pf_step0$instruments, g_out, "primary_post_freeze", outcome, arm, CFG_CONY)) },
+    deployment = "main"))
+t_post_freeze <- list(
+  tar_target(pf_targets, classify_post_freeze(drug_targets_raw, CFG_DRUG, CFG_PF)),
+  tar_target(pf_coords, gene_coords_b37(pf_targets$gene)),
+  tar_target(pf_step0, run_cis_step0(gwas_t2d_suzuki_eur, gwas_fg_chen, gwas_glu2h_chen, "primary_post_freeze",
+                                     pf_targets, pf_coords, CFG_DRUG$cis, LD_BFILE, resolve_plink2(PLINK2))),
+  tar_combine(pf_y_all, m_pfy[["pf_y"]], command = list(!!!.x)),
+  tar_target(csv_pf, c(
+    write_csv_target(pf_targets, file.path(CON_DIR, "post_freeze_drug_targets.csv")),
+    write_csv_target(pf_step0$summary, file.path(CON_DIR, "post_freeze_cis_summary.csv")),
+    write_csv_target(pluck_all(pf_y_all, "results") |> dplyr::mutate(post_freeze = TRUE),
+                     file.path(CON_DIR, "post_freeze_drug_target_results.csv")),
+    write_csv_target(pluck_all(pf_y_all, "snps") |> dplyr::mutate(post_freeze = TRUE),
+                     file.path(CON_DIR, "post_freeze_drug_target_snps.csv"))), format = "file")
+)
 t_contrast <- list(
+  tar_combine(cis_snps_all, m_cisd[["cis_snps"]], command = dplyr::bind_rows(!!!.x)),
+  tar_target(csv_cis_snps, write_csv_target(cis_snps_all, file.path(CON_DIR, "drug_target_snps.csv")), format = "file"),
   tar_combine(contrast_y_all, m_cony[["contrast_y"]], command = list(!!!.x)),
   tar_combine(cis_y_all, m_cisy[["cis_y"]], command = dplyr::bind_rows(!!!.x)),
   tar_target(csv_contrast_results, write_csv_target(pluck_all(contrast_y_all, "rows"),
@@ -357,6 +387,6 @@ t_notebooks <- list(
              format = "file", error = "continue", deployment = "main")
 )
 
-list(t_reference, t_datasets, t_datasets_chrpos, t_contrast, m_contrast, m_cis, m_cony, m_cisy, t_selection, t_instruments, m_classical, m_apss,
+list(t_reference, t_datasets, t_datasets_chrpos, t_contrast, m_contrast, m_cis, m_cony, m_cisy, m_cisd, t_post_freeze, m_pfy, t_selection, t_instruments, m_classical, m_apss,
      if (RUN_MRAID) m_mraid, m_cause, t_tables,
      t_notebooks)

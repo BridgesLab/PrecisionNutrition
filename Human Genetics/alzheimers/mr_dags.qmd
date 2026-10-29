@@ -1,0 +1,284 @@
+---
+title: "Causal diagrams for the talk"
+subtitle: "Instrument assumptions, a positive control, survival bias, mediation and the overall model"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: true
+    code-summary: "Show the code"
+    embed-resources: true
+knitr:
+  opts_chunk:
+    fig.path: "figures/dags-"   # own prefix: figures/dag-* belongs to exposure_survival_screen.qmd
+    dev: ["png", "pdf"]
+    dpi: 300
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+Illustrative directed acyclic graphs (DAGs), drawn by hand with `ggplot2` so the layout and colours
+are fixed. Nothing here is estimated.
+
+**Colour key, used in every diagram:**
+
+| Role | Colour |
+|---|---|
+| Genetic instruments (SNPs) | white, grey outline |
+| Exposure (BMI, lean mass) | Michigan maize |
+| Mediator (T2D, peak glucose) | Arboretum blue |
+| Outcome (AD; T2D in the positive control) | Michigan blue |
+| Unmeasured confounding (U) | light grey, dashed outline |
+| Selection / survival (lifespan) | Tappan red, square box when conditioned on |
+
+**Arrows:** solid = assumed causal path; dashed grey with a red X = path the instrument assumptions rule
+out; dotted red = spurious association created by conditioning on a collider (survivor bias); "?" = the effect being estimated.
+
+```{r setup}
+library(dplyr)
+library(tibble)
+library(ggplot2)
+
+# ---- palette: edit here ----------------------------------------------------------------------
+pal <- list(
+  instrument = c(fill = "white",   text = "#00274C", line = "grey45"),
+  exposure   = c(fill = "#FFCB05", text = "#00274C", line = "#00274C"),
+  mediator   = c(fill = "#2F65A7", text = "white",   line = "#2F65A7"),
+  outcome    = c(fill = "#00274C", text = "white",   line = "#00274C"),
+  confounder = c(fill = "grey92",  text = "grey30",  line = "grey55"),
+  selection  = c(fill = "#9A3324", text = "white",   line = "#9A3324"))
+edge_style <- list(
+  causal   = list(colour = "#00274C", linetype = "solid",  linewidth = 1.1),
+  question = list(colour = "#00274C", linetype = "solid",  linewidth = 1.1),
+  blocked  = list(colour = "grey65",  linetype = "dashed", linewidth = 0.9),
+  confound = list(colour = "grey55",  linetype = "solid",  linewidth = 0.8),
+  induced  = list(colour = "#9A3324", linetype = "dotted", linewidth = 1.1))
+# ----------------------------------------------------------------------------------------------
+
+# Nodes: name, label, x, y, role, boxed = conditioned on (drawn with a heavy frame). Box sizes are
+# computed from the text and the figure size, so arrows always end at the box edge.
+node <- function(name, label, x, y, role, boxed = FALSE, ...) tibble(name, label, x, y, role, boxed)
+# Edges: from, to, type (see edge_style), curvature (0 = straight), optional label at the midpoint.
+edge <- function(from, to, type = "causal", curvature = 0, label = NA_character_, arrow = TRUE)
+  tibble(from, to, type, curvature, label, arrow)
+
+# Half-width / half-height of each node box in data units. Text is drawn at `text_size` mm; a bold
+# character is ~0.62 em wide. Data units per inch come from the chunk's fig.width/height and limits.
+size_nodes <- function(nodes, xlim, ylim, text_size) {
+  fw <- knitr::opts_current$get("fig.width") %||% 9; fh <- knitr::opts_current$get("fig.height") %||% 5
+  upi <- max(diff(xlim) / (fw - 0.6), diff(ylim) / (fh - 0.9))      # data units per inch
+  em <- text_size * ggplot2::.pt / 72                                 # font size in inches
+  lines <- strsplit(nodes$label, "\n", fixed = TRUE)
+  nodes |> mutate(w = (purrr::map_int(lines, \(l) max(nchar(l))) * 0.62 * em / 2 + 0.14) * upi,
+                  h = (purrr::map_int(lines, length) * 1.05 * em / 2 + 0.11) * upi)
+}
+`%||%` <- function(a, b) if (is.null(a)) b else a
+
+# Shorten each edge so it starts and ends at the box edges rather than the centres.
+trim_edges <- function(nodes, edges, gap) {
+  e <- edges |>
+    left_join(nodes |> select(from = name, x = x, y = y, w0 = w, h0 = h), by = "from") |>
+    left_join(nodes |> select(to = name, xend = x, yend = y, w1 = w, h1 = h), by = "to")
+  dx <- e$xend - e$x; dy <- e$yend - e$y
+  frac <- function(w, h) pmin(abs(w / dx), abs(h / dy), na.rm = TRUE)
+  pad <- gap * (1 + 3 * nodes$boxed[match(c(e$from, e$to), nodes$name)])
+  f0 <- frac(e$w0 + pad[seq_len(nrow(e))], e$h0 + pad[seq_len(nrow(e))])
+  f1 <- frac(e$w1 + pad[nrow(e) + seq_len(nrow(e))], e$h1 + pad[nrow(e) + seq_len(nrow(e))])
+  e <- e |> mutate(x = x + dx * f0, y = y + dy * f0, xend = xend - dx * f1, yend = yend - dy * f1)
+  # Label position: the midpoint, pushed sideways for curved edges (positive curvature bends to the
+  # right of the direction of travel; the bulge is about curvature/2 of the chord length).
+  dx <- e$xend - e$x; dy <- e$yend - e$y
+  e |> mutate(mx = (x + xend) / 2 + 0.45 * curvature * dy, my = (y + yend) / 2 - 0.45 * curvature * dx)
+}
+
+draw_dag <- function(nodes, edges, title = NULL, caption = NULL, xlim, ylim, text_size = 4.6) {
+  nodes <- size_nodes(nodes, xlim, ylim, text_size)
+  gap <- 0.04 * max(diff(xlim), diff(ylim)) / 8
+  e <- trim_edges(nodes, edges, gap)
+  p <- ggplot()
+  for (i in seq_len(nrow(e))) {
+    s <- edge_style[[e$type[i]]]
+    arr <- if (e$arrow[i]) arrow(length = unit(0.22, "inches"), angle = 25, type = "closed") else NULL
+    geom <- if (e$curvature[i] == 0) geom_segment else geom_curve
+    args <- list(data = e[i, ], mapping = aes(x = x, y = y, xend = xend, yend = yend),
+                 colour = s$colour, linetype = s$linetype, linewidth = s$linewidth, arrow = arr)
+    if (e$curvature[i] != 0) args$curvature <- e$curvature[i]
+    p <- p + do.call(geom, args)
+  }
+  # Edge annotations after all edges, so they sit on top. Blocked paths get a red "X" drawn as two
+  # short strokes (font-independent), beside the label if there is one.
+  xr <- 0.1 * max(diff(xlim), diff(ylim)) / 8
+  for (i in seq_len(nrow(e))) {
+    if (e$type[i] == "blocked") {
+      cx <- e$mx[i] - if (is.na(e$label[i])) 0 else (nchar(e$label[i]) * 0.045 + 0.3) * max(diff(xlim), 8) / 8
+      p <- p + annotate("segment", x = cx - xr, xend = cx + xr, y = e$my[i] - xr, yend = e$my[i] + xr,
+                        colour = "#9A3324", linewidth = 1.6) +
+               annotate("segment", x = cx - xr, xend = cx + xr, y = e$my[i] + xr, yend = e$my[i] - xr,
+                        colour = "#9A3324", linewidth = 1.6)
+    }
+    if (!is.na(e$label[i]))
+      p <- p + annotate("label", x = e$mx[i], y = e$my[i], label = e$label[i], size = text_size * 0.82,
+                        label.size = 0, fill = "white", colour = edge_style[[e$type[i]]]$colour,
+                        fontface = "italic")
+  }
+  nd <- nodes |> mutate(fill = purrr::map_chr(role, \(r) pal[[r]][["fill"]]),
+                        line = purrr::map_chr(role, \(r) pal[[r]][["line"]]),
+                        text = purrr::map_chr(role, \(r) pal[[r]][["text"]]),
+                        lty = if_else(role == "confounder", "dashed", "solid"))
+  b <- filter(nd, boxed)
+  if (nrow(b)) p <- p + geom_rect(data = b, aes(xmin = x - w - 3 * gap, xmax = x + w + 3 * gap, ymin = y - h - 3 * gap,
+                                                ymax = y + h + 3 * gap), fill = "white",
+                                  colour = pal$selection[["line"]], linewidth = 1.8)
+  p + geom_rect(data = nd, aes(xmin = x - w, xmax = x + w, ymin = y - h, ymax = y + h,
+                               fill = I(fill), colour = I(line), linetype = I(lty)), linewidth = 0.9) +
+    geom_text(data = nd, aes(x, y, label = label, colour = I(text)), size = text_size, fontface = "bold",
+              lineheight = 0.95) +
+    coord_equal(xlim = xlim, ylim = ylim, clip = "off") +
+    labs(title = title, caption = caption) +
+    theme_void(base_size = 15) +
+    theme(plot.title = element_text(face = "bold", hjust = 0.5, colour = "#00274C"),
+          plot.caption = element_text(hjust = 0.5, colour = "grey30", size = 12),
+          plot.margin = margin(10, 20, 10, 20))
+}
+```
+
+## 0. The problem: confounding in observational data
+
+People with type 2 diabetes have higher rates of AD, but they also differ in age, adiposity,
+education, socioeconomic position and vascular risk, each of which can affect both conditions.
+Observational data cannot separate the T2D → AD effect (?) from these common causes (U), and
+measuring them all is not possible. This is the problem the genetic instrument solves.
+
+```{r confounding, fig.width=9, fig.height=4.8}
+n0 <- bind_rows(
+  node("X", "Type 2\ndiabetes", 0, 0, "exposure"),
+  node("Y", "Alzheimer's\ndisease", 5, 0, "outcome"),
+  node("U", "Age, adiposity, education,\nsocioeconomic position,\nvascular risk (U)", 2.5, 2.4, "confounder"))
+e0 <- bind_rows(edge("X", "Y", "question", label = "?"),
+                edge("U", "X", "confound"), edge("U", "Y", "confound"))
+draw_dag(n0, e0, caption = "Common causes (U) create an association whether or not T2D causes AD",
+         xlim = c(-1.3, 6.3), ylim = c(-0.9, 3.4))
+```
+
+## 1. The three instrumental-variable assumptions
+
+A genetic variant (G) is a valid instrument for exposure X if (1) it affects X (**relevance**),
+(2) it shares no cause with the outcome (**independence**: no G–U path), and (3) it affects the
+outcome only through X (**exclusion restriction**: no direct G → Y path). Unmeasured confounding of
+X and Y (U) is then irrelevant, because G is allocated at conception independently of U.
+
+```{r iv-generic, fig.width=9, fig.height=5}
+n1 <- bind_rows(
+  node("G", "Genetic\nvariants (G)", 0, 0, "instrument", w = 0.8, h = 0.42),
+  node("X", "Exposure (X)", 3.2, 0, "exposure", w = 0.85),
+  node("Y", "Outcome (Y)", 6.4, 0, "outcome", w = 0.85),
+  node("U", "Confounders (U)", 4.8, 2.2, "confounder", w = 0.95))
+e1 <- bind_rows(
+  edge("G", "X", label = "1. relevance"),
+  edge("X", "Y", "question", label = "?"),
+  edge("U", "X", "confound"), edge("U", "Y", "confound"),
+  edge("G", "U", "blocked", label = "2. independence"),
+  edge("G", "Y", "blocked", curvature = 0.35, label = "3. exclusion restriction"))
+draw_dag(n1, e1, xlim = c(-0.8, 7.2), ylim = c(-1.9, 2.7))
+```
+
+## 2. Positive control: BMI → type 2 diabetes
+
+The same structure with real traits. Diet, activity and socioeconomic position confound BMI and
+T2D in observational data, but they cannot change the BMI-associated variants a person inherited, so
+the genetic estimate is not confounded by them as long as the assumptions hold.
+
+```{r iv-bmi-t2d, fig.width=9, fig.height=5}
+n2 <- bind_rows(
+  node("G", "BMI-associated\nSNPs", 0, 0, "instrument", w = 0.85),
+  node("X", "BMI", 3.2, 0, "exposure", w = 0.5),
+  node("Y", "Type 2\ndiabetes", 6.4, 0, "outcome"),
+  node("U", "Diet, activity,\nsocioeconomic position (U)", 4.8, 2.3, "confounder", w = 1.4, h = 0.42))
+e2 <- bind_rows(
+  edge("G", "X"), edge("X", "Y", "question", label = "OR ≈ 3 per SD"),
+  edge("U", "X", "confound"), edge("U", "Y", "confound"),
+  edge("G", "U", "blocked"), edge("G", "Y", "blocked", curvature = 0.35))
+draw_dag(n2, e2, xlim = c(-0.9, 7.2), ylim = c(-1.9, 2.9))
+```
+
+## 3. Survival bias: lifespan as a collider
+
+To be counted as an AD case, a person has to live long enough to develop and be diagnosed with AD.
+Exposures that shorten life (BMI, T2D) and AD liability both affect survival, so studying survivors
+conditions on a collider and induces a spurious association between the exposure and AD
+(dotted red): a life-shortening exposure looks protective. Lean mass barely affects lifespan in our
+data, so it is the least exposed to this bias.
+
+```{r collider, fig.width=9, fig.height=5.5}
+n3 <- bind_rows(
+  node("X", "BMI / lean mass /\ntype 2 diabetes", 0, 1.6, "exposure", w = 1.0, h = 0.42),
+  node("Y", "Alzheimer's\ndisease", 0, -1.6, "outcome", w = 0.8, h = 0.42),
+  node("S", "Survival to\nold age (lifespan)", 4, 0, "selection", w = 1.0, h = 0.42, boxed = TRUE))
+e3 <- bind_rows(
+  edge("X", "S"), edge("Y", "S"),
+  edge("X", "Y", "question", label = "?"),
+  edge("X", "Y", "induced", curvature = 0.6, arrow = FALSE, label = "spurious"))
+draw_dag(n3, e3, caption = "Box = conditioned on (only survivors can become AD cases)",
+         xlim = c(-2.6, 5.3), ylim = c(-2.4, 2.4))
+```
+
+## 4. Mediation: lean mass → type 2 diabetes → AD
+
+The question is how much of lean mass's effect on AD runs through T2D (indirect path) versus other
+routes (direct path).
+
+```{r mediation, fig.width=9, fig.height=4.2}
+n4 <- bind_rows(
+  node("X", "Lean mass", 0, 0, "exposure", w = 0.75),
+  node("M", "Type 2\ndiabetes", 3.2, 1.6, "mediator", w = 0.7, h = 0.42),
+  node("Y", "Alzheimer's\ndisease", 6.4, 0, "outcome", w = 0.8, h = 0.42))
+e4 <- bind_rows(edge("X", "M", label = "a"), edge("M", "Y", label = "b"),
+                edge("X", "Y", "question", label = "direct"))
+draw_dag(n4, e4, caption = "Indirect effect = a × b", xlim = c(-1, 7.4), ylim = c(-0.9, 2.4))
+```
+
+**With unmeasured confounding.** Observational mediation analysis also needs no unmeasured
+confounding of the mediator and outcome (U → T2D and U → AD), which is rarely credible. Mendelian
+randomization handles it by instrumenting both lean mass and T2D with genetic variants
+(multivariable MR), so U is bypassed on both legs, subject to the same three assumptions.
+
+```{r mediation-u, fig.width=9, fig.height=5.5}
+n4u <- bind_rows(n4, node("U", "Confounders (U)", 3.2, -1.9, "confounder", w = 0.95),
+                 node("GX", "Lean mass\nSNPs", -2.6, 0, "instrument", w = 0.65, h = 0.42),
+                 node("GM", "T2D\nSNPs", 3.2, 3.6, "instrument", w = 0.5, h = 0.42))
+e4u <- bind_rows(e4, edge("GX", "X"), edge("GM", "M"),
+                 edge("U", "X", "confound"), edge("U", "M", "confound", curvature = -0.25),
+                 edge("U", "Y", "confound"))
+draw_dag(n4u, e4u, caption = "Indirect effect = a × b; U is bypassed because both lean mass and T2D are instrumented",
+         xlim = c(-3.5, 7.4), ylim = c(-2.6, 4.3))
+```
+
+## 5. The overall model
+
+Lean mass protects against AD; part of that may run through lower peak (2 h post-load) glucose.
+Each leg is instrumented, so unmeasured confounding (U) is bypassed. Survival bias is handled by
+correcting the AD associations for their link with lifespan (SlopeHunter). The 2 h glucose GWAS is
+adjusted for BMI, which is why the lean mass → glucose leg is still unresolved.
+
+```{r overall, fig.width=11, fig.height=6.5}
+n5 <- bind_rows(
+  node("GX", "Lean mass\nSNPs", -2.8, 0, "instrument", w = 0.65, h = 0.42),
+  node("X", "Lean mass", 0, 0, "exposure", w = 0.75),
+  node("M", "Peak (2 h)\nglucose", 3.4, 1.7, "mediator", w = 0.75, h = 0.42),
+  node("GM", "Glucose / T2D\nSNPs", 3.4, 3.7, "instrument", w = 0.85, h = 0.42),
+  node("Y", "Alzheimer's\ndisease", 6.8, 0, "outcome", w = 0.8, h = 0.42),
+  node("U", "Confounders (U)", 3.4, -1.9, "confounder", w = 0.95),
+  node("S", "Lifespan\n(SlopeHunter-corrected)", 9.9, 1.7, "selection", w = 1.15, h = 0.42, boxed = TRUE))
+e5 <- bind_rows(
+  edge("GX", "X"), edge("GM", "M"),
+  edge("X", "M", label = "a"), edge("M", "Y", label = "b"), edge("X", "Y", "question", label = "direct"),
+  edge("U", "X", "confound"), edge("U", "M", "confound", curvature = -0.25), edge("U", "Y", "confound"),
+  edge("Y", "S"), edge("M", "S", curvature = -0.2))
+draw_dag(n5, e5,
+         caption = "Instruments bypass U; the lifespan link is removed from the AD associations before estimation",
+         xlim = c(-3.7, 11.3), ylim = c(-2.6, 4.4))
+```

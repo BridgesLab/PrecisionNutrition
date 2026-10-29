@@ -128,6 +128,27 @@ datasets:
     type: binary
     cohorts: [IGAP]
     adjusted_for: null
+  # Uffelmann 2026 (PGC-ALZ3, Nature), EUR, 23andMe excluded; CNCR SURF share, CC BY-NC-SA 4.0.
+  # Added 2026-10-29 after the freeze as replication outcomes; R/prep_uffelmann.R writes the
+  # harmonised files (variant_id = rsID, GRCh37). sample_size = median per-SNP Neff.
+  ad_uffelmann_newc:
+    id: PGC-ALZ3-newc-EUR
+    label: "AD: Uffelmann 2026, cohorts new to PGC-ALZ (independent of Bellenguez)"
+    source: local_tsv
+    file: data/cache/sumstats/AD_uffelmann_newc_harmonised.tsv.gz
+    sample_size: 103313
+    type: binary
+    cohorts: [MVP, AllOfUs, Estonian, Regeneron, DBDS, HUSK, Lifelines]   # MVP is also in Suzuki T2D
+    adjusted_for: null
+  ad_uffelmann_cc:
+    id: PGC-ALZ3-cc-EUR
+    label: "AD: Uffelmann 2026, clinical cases only (all cohorts)"
+    source: local_tsv
+    file: data/cache/sumstats/AD_uffelmann_cc_harmonised.tsv.gz
+    sample_size: 307558
+    type: binary
+    cohorts: [EADB, IGAP, UKB, MVP, FinnGen]                             # overlaps Bellenguez; TO CONFIRM
+    adjusted_for: null
   lifespan:
     id: ebi-a-GCST006697
     label: "Parental lifespan (Martingale residual; + = shorter life)"
@@ -170,6 +191,9 @@ contrast:
     - {outcome: ad_bellenguez, arm: slopehunter, role: primary}
     - {outcome: ad_bellenguez, arm: raw,         role: sensitivity}
     - {outcome: ad_kunkle,     arm: raw,         role: sensitivity}
+    # Post-freeze (2026-10-29): Uffelmann 2026. SlopeHunter is not identified for either file, so raw only.
+    - {outcome: ad_uffelmann_newc, arm: raw,     role: replication}
+    - {outcome: ad_uffelmann_cc,   arm: raw,     role: sensitivity}
   apoe: {chr: "19", start: 44900000, end: 45920000}
   sd_mmol: {fg: 0.65, glu2h: 1.85}          # midpoints of the plan's ranges; TO CONFIRM from the MAGIC cohorts
   # restrict_to_index: candidates limited to Suzuki's index variants, so every instrument has a cluster.
@@ -236,6 +260,16 @@ slopehunter:
       fit_set: "excl_APOE (PRIMARY)"
       trusted: false
       reason: "not identified: raw r = -0.0008, sign agreement 0.499"
+    ad_uffelmann_newc:
+      fits_csv: R/fits/uffelmann_newc_lifespan_slopehunter_fits.csv   # R/prep_uffelmann.R
+      fit_set: "excl_APOE (PRIMARY)"
+      trusted: false
+      reason: "not identified: raw r = 0.034, sign agreement 0.509"
+    ad_uffelmann_cc:
+      fits_csv: R/fits/uffelmann_cc_lifespan_slopehunter_fits.csv
+      fit_set: "excl_APOE (PRIMARY)"
+      trusted: false
+      reason: "not identified: raw r = 0.047, sign agreement 0.514"
   null_permutations: 8
 
 # ---- instruments and methods ------------------------------------------------------------------

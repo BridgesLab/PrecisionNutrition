@@ -43,6 +43,9 @@ variants. This notebook tests that at the locus:
    causal variant.
 5. **Heterogeneity** among the seven KATP instruments.
 6. **Kunkle at the variant level** for the leads.
+7. The chr17q21 (MLX) signal behind the amylin estimate.
+8. **KATP specificity:** AD per mmol/L of 2 h glucose for KATP against GCK and genome-wide beta-cell variants, with Uffelmann 2026 as replication.
+9. **The vascular KATP channel** (ABCC9/KCNJ8): a regional lookup.
 
 Data come from the targets pipeline store (`_targets/`): Suzuki 2024 T2D (European), Bellenguez
 2022 AD raw and SlopeHunter-corrected, Kunkle 2019 AD. All positions are GRCh37. LD is from the
@@ -87,7 +90,7 @@ theme_fm <- theme_minimal(base_size = 14) +
 Each point is one drug-target instrument: its effect on T2D (x) against its effect on AD (y), both on
 the T2D risk allele, with 95% intervals (SlopeHunter-corrected Bellenguez). Labels give the nearest
 protein-coding gene and the rsID; where the nearest gene is not the drug-target gene the variant was
-assigned to (within 100 kb), the target is shown in brackets. The line through the origin is the
+assigned to (within 100 kb), the target is shown in brackets. The solid red line through the origin is the
 class estimate from the drug-target layer (`drug_target_results.csv`), which allows for the residual
 LD between variants, so it is not simply a fit to the points as drawn.
 
@@ -110,20 +113,22 @@ dt_lines <- read_csv("results/pipeline/contrast/drug_target_results.csv", show_c
             txt = sprintf("OR %.2f (%.2f, %.2f)\nper log-odds T2D", exp(b), exp(b - 1.96 * se), exp(b + 1.96 * se)))
 ```
 
-```{r scatter, fig.width=12, fig.height=5.5}
+```{r scatter, fig.width=12, fig.height=6}
 ggplot(dt_snps, aes(beta_t2d, beta_y)) +
-  geom_hline(yintercept = 0, colour = "grey70") +
-  geom_errorbar(aes(ymin = beta_y - 1.96 * se_y, ymax = beta_y + 1.96 * se_y), colour = "grey75", width = 0) +
-  geom_errorbar(aes(xmin = beta_t2d - 1.96 * se_t2d, xmax = beta_t2d + 1.96 * se_t2d), colour = "grey75",
+  # zero axes, drawn first and heavier than the grid
+  geom_hline(yintercept = 0, colour = "grey15", linewidth = 0.8) +
+  geom_vline(xintercept = 0, colour = "grey15", linewidth = 0.8) +
+  geom_errorbar(aes(ymin = beta_y - 1.96 * se_y, ymax = beta_y + 1.96 * se_y), colour = "grey70", width = 0) +
+  geom_errorbar(aes(xmin = beta_t2d - 1.96 * se_t2d, xmax = beta_t2d + 1.96 * se_t2d), colour = "grey70",
                 width = 0, orientation = "y") +
-  geom_abline(data = dt_lines, aes(slope = slope, intercept = 0), colour = "#9a3324", linewidth = 1) +
-  geom_point(colour = "#00274c", size = 2.5) +
+  geom_abline(data = dt_lines, aes(slope = slope, intercept = 0), colour = "#9a3324", linewidth = 1.1) +
+  geom_point(colour = "#00274c", size = 2.8) +
   ggrepel::geom_text_repel(aes(label = label), size = 3.6, lineheight = 0.9, min.segment.length = 0,
                            box.padding = 0.5, seed = 1) +
   geom_text(data = dt_lines, aes(x = -Inf, y = Inf, label = txt), hjust = -0.05, vjust = 1.2, size = 4,
             colour = "#9a3324") +
   facet_wrap(~ class, scales = "free") +
-  expand_limits(x = 0) +
+  expand_limits(x = 0, y = 0) +
   labs(x = "Variant effect on T2D (log-odds)", y = "Variant effect on AD (log-odds)") +
   theme_fm + theme(panel.grid.major.y = element_line())
 ```
@@ -505,3 +510,203 @@ conditional analysis, which allows two variants, is the more reliable guide here
 **Overall.** This locus is not the amylin receptor: the variant is a proxy for the *MLX*-region T2D
 index, is not an eQTL for RAMP2, and its AD association is largely explained by a neighbouring
 variant without glycaemic effects. It does not add a second post-load locus to KCNJ11.
+
+## 8. Is the KATP effect on AD larger than its glucose effect predicts?
+
+If the KATP channel affects AD through something other than glucose, KATP variants should
+give more AD per mmol/L of 2 h glucose than variants that raise glucose by other routes. The
+cleanest comparison is glucokinase (GCK), which acts in the same cell through a different step of
+the glucose-sensing pathway. The broader comparisons are the genome-wide beta-cell variants (Suzuki
+clusters) and all primary T2D instruments. The KCNJ11/ABCC8 (chr11 16.9–17.9 Mb) and GCK (chr7
+43.7–44.7 Mb) regions are left out of the genome-wide sets.
+
+All estimates use the same T2D selection (Suzuki 2024). For each group, AD and 2 h glucose are each
+regressed on the T2D effect (LD-aware GLS for the cis classes, IVW with multiplicative random effects
+genome-wide), and the AD effect per mmol/L of 2 h glucose is their ratio:
+$\hat\theta_{\text{mmol}} = \hat\theta_{AD}/\hat\theta_{2h}$, with
+$\text{SE} \approx |\hat\theta_{\text{mmol}}|\sqrt{(\text{SE}_{AD}/\hat\theta_{AD})^2 + (\text{SE}_{2h}/\hat\theta_{2h})^2}$.
+This treats MAGIC and the AD GWAS as independent samples. KATP minus comparator differences are
+tested with $z = \Delta/\sqrt{\text{SE}_1^2 + \text{SE}_2^2}$, since the groups share no variants.
+Two KATP sensitivity rows: without rs113264182 (the variant that flips sign in Kunkle), and rs5215
+alone (Wald ratios).
+
+```{r katp-specificity-data}
+# Sections 8-9 add the Uffelmann 2026 replication outcomes (post-freeze, raw; SlopeHunter not identified)
+datasets_all <- c(datasets, uff_newc = "gwas_ad_uffelmann_newc", uff_cc = "gwas_ad_uffelmann_cc")
+labels_all   <- c(labels, uff_newc = "AD, Uffelmann new cohorts (independent)",
+                  uff_cc = "AD, Uffelmann clinical only")
+katp_reg  <-\(d) filter(d, !(chr == 11 & between(pos, 16.9e6, 17.9e6)), !(chr == 7 & between(pos, 43.7e6, 44.7e6)))
+ivw_mre   <- function(bx, by, se) { f <- wls_mre(by, cbind(bx), se); c(b = unname(f$b[[1]]), se = sqrt(f$V[1, 1])) }
+cis_gls   <- function(x) {
+  Rk <- ld_matrix(x$SNP, bim, bfile, plink2); x <- x[match(rownames(Rk), x$SNP), ]
+  s <- if_else(x$ea == bim$a1[match(x$SNP, bim$SNP)], 1, -1); Rk <- Rk * outer(s, s)
+  if (nrow(x) == 1) Rk <- matrix(1)
+  a <- gls_ratio(x$beta_t2d, x$beta_y, x$se_y, Rk); g <- gls_ratio(x$beta_t2d, x$beta_2h, x$se_2h, Rk)
+  tibble(n = nrow(x), b_ad = a[["b"]], se_ad = a[["se"]], b_2h = g[["b"]], se_2h = g[["se"]])
+}
+dt_all <- read_csv("results/pipeline/contrast/drug_target_snps.csv", show_col_types = FALSE) |>
+  filter(set == "primary", drug_class %in% c("katp_secretagogue", "glucokinase"))
+cis_groups <- bind_rows(
+  dt_all |> filter(drug_class == "katp_secretagogue") |> mutate(group = "KATP (KCNJ11/ABCC8), all variants"),
+  dt_all |> filter(drug_class == "katp_secretagogue", SNP != "rs113264182") |> mutate(group = "KATP without rs113264182"),
+  dt_all |> filter(SNP == "rs5215") |> mutate(group = "KATP, rs5215 (E23K proxy) alone"),
+  dt_all |> filter(drug_class == "glucokinase") |> mutate(group = "Glucokinase (GCK)")) |>
+  group_by(outcome, arm, group) |> group_modify(\(x, ...) cis_gls(x)) |> ungroup()
+
+iod <- read_csv("results/pipeline/contrast/instrument_outcome_data.csv", show_col_types = FALSE) |>
+  filter(set == "primary") |> katp_reg()
+gw_groups <- bind_rows(
+  iod |> filter(grepl("^Beta cell", cluster)) |> mutate(group = "Beta cell, genome-wide"),
+  iod |> filter(cluster == "Beta cell -PI") |> mutate(group = "Beta cell -PI"),
+  iod |> filter(cluster == "Beta cell +PI") |> mutate(group = "Beta cell +PI"),
+  iod |> mutate(group = "All primary T2D instruments")) |>
+  group_by(outcome, arm, group) |>
+  group_modify(\(x, ...) { a <- ivw_mre(x$beta_t2d, x$beta_y, x$se_y); g <- ivw_mre(x$beta_t2d, x$beta_2h, x$se_2h)
+    tibble(n = nrow(x), b_ad = a[["b"]], se_ad = a[["se"]], b_2h = g[["b"]], se_2h = g[["se"]]) }) |> ungroup()
+
+spec <- bind_rows(cis_groups, gw_groups) |>
+  mutate(b_mmol = b_ad / b_2h, se_mmol = abs(b_mmol) * sqrt((se_ad / b_ad)^2 + (se_2h / b_2h)^2),
+         outcome_lab = factor(labels_all[c(ad_bellenguez.slopehunter = "ad_sh", ad_bellenguez.raw = "ad_raw",
+                                           ad_kunkle.raw = "ad_kun", ad_uffelmann_newc.raw = "uff_newc",
+                                           ad_uffelmann_cc.raw = "uff_cc")[paste(outcome, arm, sep = ".")]],
+                              levels = labels_all),
+         group = factor(group, levels = c("KATP (KCNJ11/ABCC8), all variants", "KATP without rs113264182",
+                                          "KATP, rs5215 (E23K proxy) alone", "Glucokinase (GCK)",
+                                          "Beta cell, genome-wide", "Beta cell -PI", "Beta cell +PI",
+                                          "All primary T2D instruments")))
+```
+
+```{r katp-specificity-plot, fig.width=16, fig.height=6}
+spec |>
+  mutate(katp = grepl("^KATP", group),
+         lo = exp(b_mmol - 1.96 * se_mmol), hi = exp(b_mmol + 1.96 * se_mmol)) |>
+  filter(paste(outcome, arm) %in% c("ad_bellenguez slopehunter", "ad_uffelmann_newc raw", "ad_uffelmann_cc raw")) |>
+  ggplot(aes(exp(b_mmol), forcats::fct_rev(group), colour = katp)) +
+  geom_vline(xintercept = 1, colour = "grey15", linewidth = 0.8) +
+  geom_errorbar(aes(xmin = lo, xmax = hi), width = 0.2, orientation = "y", linewidth = 0.8) +
+  geom_point(size = 3) +
+  geom_text(aes(x = Inf, label = sprintf("%.2f (%.2f, %.2f) n=%d", exp(b_mmol), lo, hi, n)),
+            hjust = 1, vjust = -0.6, size = 3.2, colour = "grey20") +
+  scale_x_log10() +
+  scale_colour_manual(values = c(`TRUE` = "#9a3324", `FALSE` = "#00274c"), guide = "none") +
+  coord_cartesian(xlim = c(0.6, 4.5)) +
+  facet_wrap(~ outcome_lab, nrow = 1) +
+  labs(x = "AD odds ratio per mmol/L of genetically raised 2 h glucose", y = NULL) +
+  theme_fm
+```
+
+```{r katp-specificity-table}
+spec |>
+  transmute(Outcome = outcome_lab, Group = group, `Variants` = n,
+            `AD log-OR per log-odds T2D` = sprintf("%.3f (%.3f)", b_ad, se_ad),
+            `2 h glucose per log-odds T2D (mmol/L)` = sprintf("%.2f", b_2h),
+            `AD OR per mmol/L 2 h glucose (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b_mmol),
+                                                               exp(b_mmol - 1.96 * se_mmol), exp(b_mmol + 1.96 * se_mmol))) |>
+  arrange(Outcome, Group) |>
+  kable()
+```
+
+```{r katp-specificity-diff}
+ref <- spec |> filter(group == "KATP (KCNJ11/ABCC8), all variants") |>
+  select(outcome, arm, k_ad = b_ad, kse_ad = se_ad, k_mmol = b_mmol, kse_mmol = se_mmol)
+spec |> filter(!grepl("^KATP", group)) |> inner_join(ref, by = c("outcome", "arm")) |>
+  transmute(Outcome = outcome_lab, `KATP vs` = group,
+            `Δ per log-odds T2D` = sprintf("%.2f", k_ad - b_ad),
+            `p (per log-odds T2D)` = signif(2 * pnorm(-abs((k_ad - b_ad) / sqrt(kse_ad^2 + se_ad^2))), 2),
+            `Δ per mmol/L 2 h glucose` = sprintf("%.2f", k_mmol - b_mmol),
+            `p (per mmol/L)` = signif(2 * pnorm(-abs((k_mmol - b_mmol) / sqrt(kse_mmol^2 + se_mmol^2))), 2)) |>
+  arrange(Outcome, `KATP vs`) |>
+  kable(caption = "KATP (all available variants) minus each comparator, log-OR scale")
+```
+
+## 9. The vascular KATP channel: ABCC9/KCNJ8 (SUR2/Kir6.1)
+
+If channel-family biology matters, the other KATP channel, made of Kir6.1 and SUR2 (*KCNJ8* and
+*ABCC9*, chr12p12.1) and mainly found in vascular smooth muscle and pericytes, is worth a look. *ABCC9*
+variants, notably rs704180, have been linked to hippocampal sclerosis of aging. These subunits are
+not targets of the T2D drugs in the frozen drug-target map (sulfonylureas bind SUR1), so this is a
+regional lookup, not an MR. A null here would not count against the KCNJ11 result, since the two
+channels act in different tissues.
+
+```{r abcc9-data}
+region12 <- list(chr = "12", start = 21.6e6, end = 22.4e6)   # LDHB 21.79, KCNJ8 21.92, ABCC9 21.95-22.09 Mb
+reg12 <- purrr::map(datasets_all, \(t) { x <- as.data.table(tar_read_raw(t))
+  x[as.character(chr) == region12$chr & pos >= region12$start & pos <= region12$end] })
+# Effective number of independent tests among common variants (Li & Ji 2005), for a region-wide threshold
+snps12 <- reg12$ad_sh[eaf > 0.01 & eaf < 0.99 & SNP %in% bim$SNP, SNP]
+ev12   <- abs(eigen(ld_matrix(snps12, bim, bfile, plink2), only.values = TRUE)$values)
+meff12 <- sum((ev12 >= 1) + (ev12 - floor(ev12)))
+```
+
+```{r abcc9-plot, fig.width=11, fig.height=13}
+genes12 <- tibble(gene = c("LDHB", "KCNJ8", "ABCC9"), start = c(21.788e6, 21.918e6, 21.950e6),
+                  end = c(21.811e6, 21.928e6, 22.094e6))
+purrr::imap_dfr(reg12, \(x, k) x[, .(SNP, pos, p, dataset = labels_all[[k]])]) |>
+  mutate(dataset = factor(dataset, levels = labels_all)) |>
+  ggplot(aes(pos / 1e6, -log10(p))) +
+  annotate("rect", xmin = genes12$start / 1e6, xmax = genes12$end / 1e6, ymin = -Inf, ymax = Inf,
+           fill = "#FFCB05", alpha = 0.25) +
+  geom_point(size = 0.8, colour = "grey45") +
+  geom_point(data = \(d) filter(d, SNP %in% c("rs704180", "rs2077105")), colour = "#9a3324", size = 2.5) +
+  geom_hline(yintercept = -log10(0.05 / meff12), linetype = "dashed", colour = "#2F65A7") +
+  facet_wrap(~ dataset, ncol = 1, scales = "free_y") +
+  labs(x = "chr12 position (Mb, GRCh37); shaded: LDHB, KCNJ8, ABCC9",
+       y = expression(-log[10]~p),
+       caption = sprintf("Red: rs704180 (ABCC9) and rs2077105 (T2D lead). Dashed: 0.05/%d effective tests.", round(meff12))) +
+  theme_fm
+```
+
+```{r abcc9-leads}
+purrr::imap_dfr(reg12, \(x, k) {
+  top <- x[order(p)][1]
+  rbind(x[SNP %in% c("rs704180", "rs2077105")], top)[, .(Dataset = labels_all[[k]], SNP, pos, ea, oa,
+                                                       beta = round(beta, 4), se = round(se, 4), p = format(p, digits = 2))] |>
+    unique() }) |>
+  kable(caption = sprintf("Named variants and the regional top hit per dataset; region-wide threshold p < %.1e",
+                          0.05 / meff12))
+```
+
+From the GTEx v8 portal (single-tissue eQTLs, looked up for this section): rs2077105, the T2D lead,
+is an eQTL for *LDHB* (lung, oesophagus muscularis) and shows no *KCNJ8* or *ABCC9* association.
+rs704180 is an *ABCC9* eQTL in adrenal gland (p = 4×10⁻¹³) and caudate (p = 2×10⁻⁵).
+
+## Reading the results: KATP specificity and SUR2
+
+Sections 8 and 9 were first run on Bellenguez and Kunkle. The Uffelmann 2026 (PGC-ALZ3) files were
+added afterwards as replication outcomes: the **new-cohorts** meta-analysis shares no cohorts with
+Bellenguez, so it is the independent test, while the **clinical-only** analysis is larger but overlaps
+Bellenguez's cohorts. SlopeHunter could not be estimated for either Uffelmann file (raw lifespan–AD
+correlation 0.03–0.05, as for Kunkle), so both are uncorrected. Neither file contains rs113264182 or
+rs1557763, so the KATP class has five variants there.
+
+**In Bellenguez, KATP looked special.** Per mmol/L of genetically raised 2 h glucose, the KATP class
+gave an AD odds ratio of about 1.5 (SlopeHunter-corrected), against 1.08 for GCK and 1.12 for the
+genome-wide beta-cell variants (KATP vs GCK p ≈ 0.03). Part of the gap is on the glucose side: per
+unit of T2D liability, KATP variants raise 2 h glucose less than half as much as GCK variants (0.57 vs
+1.40 mmol/L).
+
+**In the independent cohorts, KATP replicates but does not stand out.** The KATP class gives OR 1.29
+per log-odds of T2D (p = 0.007), close to Bellenguez's 1.27, and 1.58 per mmol/L of 2 h glucose. But
+GCK (1.25 per mmol/L) and the genome-wide beta-cell variants (1.22) now also raise AD, and the KATP
+excess is no longer significant (vs GCK p = 0.23; vs beta-cell p = 0.19). In the clinical-only file
+nothing differs (all p > 0.25), with beta-cell variants at 1.14 and all T2D instruments at 1.14 per
+mmol/L (both nominally significant).
+
+**The E23K proxy is not what replicates.** rs5215 gives a Wald ratio of 0.11 per log-odds of T2D in
+both Uffelmann files, less than half its Bellenguez value (0.27). The new-cohorts KATP estimate comes
+mainly from two other KCNJ11-region variants (rs1800467, rs16933952).
+
+**Overall.** T2D liability acting through insulin secretion raises AD risk, and that now holds in an
+independent sample, KATP variants included. The suggestion that the KATP channel adds something
+beyond the glucose it causes rested on Bellenguez alone and did not replicate.
+
+**Caveats.** All comparisons are nominal. The ratio-of-ratios standard error assumes MAGIC and the AD
+GWAS are independent. The new-cohorts file includes the Million Veteran Program, which is also in
+Suzuki T2D; that overlap biases every group slightly towards the observational T2D–AD association.
+
+**No AD signal at ABCC9/KCNJ8 in any dataset.** No variant in the 800 kb window passes the region-wide
+threshold (p < 2.1×10⁻⁴) in Bellenguez, Kunkle or either Uffelmann file; the closest is rs10161132
+(p = 4×10⁻⁴, Uffelmann clinical-only), about 300 kb from KCNJ8. rs704180, the ABCC9 variant
+linked to hippocampal sclerosis of aging, is null everywhere (p 0.06–0.42). The Bellenguez top hit
+(rs117295320) does not replicate. The region's genome-wide T2D signal (rs2077105) is an *LDHB* eQTL with
+no KCNJ8/ABCC9 effect and no AD association. There is no support for the vascular SUR2/Kir6.1 channel.

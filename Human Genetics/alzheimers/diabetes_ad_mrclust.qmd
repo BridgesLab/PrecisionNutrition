@@ -1,0 +1,204 @@
+---
+title: "MR-Clust: do T2D variants fall into groups with different effects on AD?"
+subtitle: "Exploratory clustering of instrument-specific estimates (Step 4 of the analysis plan)"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: true
+    code-summary: "Show the code"
+    embed-resources: true
+knitr:
+  opts_chunk:
+    fig.path: "figures/mrclust-"
+    dev: ["png", "pdf"]
+    dpi: 300
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+## What this is, and what it is not
+
+MR-Clust (Foley et al. 2021) treats each instrument's ratio estimate (its AD effect divided by its
+T2D effect) as a draw from a mixture: a **null** cluster (no effect on AD), one or more **substantive**
+clusters each with its own causal effect, and a **junk** component for outliers. It asks whether the
+T2D variants split into groups that act on AD differently, without being told which groups to look
+for.
+
+Because the AD effects go into the clustering, this is **hypothesis-generating, not a test**: it
+cannot be blinded, and any cluster it finds has been chosen by the outcome. The analysis plan fixed
+two rules in advance, which are kept here:
+
+- A degenerate solution (everything null) is acceptable and is reported as is, without tuning.
+- The persuasive result would be **concordance**: MR-Clust membership lining up with the clusters
+  defined without AD (Suzuki 2024), or with the KATP drug-target locus.
+
+Instruments are the Xue 2018 set (109, the set used for the talk figures) and the Suzuki 2024 primary
+set (273); outcome is SlopeHunter-corrected Bellenguez AD, with Kunkle as a check. Effects are on the
+T2D risk allele; estimates are log-odds of AD per log-odds of T2D.
+
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(knitr)
+
+con_dir <- "results/pipeline/contrast"
+snps <- read_csv(file.path(con_dir, "instrument_outcome_data.csv"), show_col_types = FALSE)
+xue_map <- read_csv(file.path(con_dir, "xue_cluster_map.csv"), show_col_types = FALSE) |> select(SNP, suzuki = cluster)
+
+# ---- settings: fixed before running ---------------------------------------------------------
+runs <- tribble(~set, ~outcome, ~arm, ~label,
+  "xue",     "ad_bellenguez", "slopehunter", "Xue instruments, Bellenguez (SlopeHunter)",
+  "primary", "ad_bellenguez", "slopehunter", "Suzuki instruments, Bellenguez (SlopeHunter)",
+  "xue",     "ad_kunkle",     "raw",         "Xue instruments, Kunkle",
+  "primary", "ad_kunkle",     "raw",         "Suzuki instruments, Kunkle")
+prob_cut <- 0.8      # a variant belongs to a cluster if its membership probability is at least this
+min_size <- 4        # substantive clusters with fewer variants are reported but not interpreted
+# ---------------------------------------------------------------------------------------------
+
+theme_mc <- theme_minimal(base_size = 14) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank())
+
+run_mrclust <- function(set, outcome, arm, label) {
+  d <- snps |> filter(.data$set == !!set, .data$outcome == !!outcome, .data$arm == !!arm) |>
+    select(-any_of("cluster"))
+  d <- if (set == "xue") left_join(d, xue_map, by = "SNP") else
+    left_join(d, read_csv("assignments/instrument_assignments.csv", show_col_types = FALSE) |>
+                select(SNP, suzuki = cluster), by = "SNP")
+  theta <- d$beta_y / d$beta_t2d
+  theta_se <- d$se_y / abs(d$beta_t2d)            # first-order SE of the ratio estimate
+  set.seed(20261028)
+  fit <- mrclust::mr_clust_em(theta = theta, theta_se = theta_se, bx = d$beta_t2d, by = d$beta_y,
+                              bxse = d$se_t2d, byse = d$se_y, obs_names = d$SNP,
+                              plot_results = list("best", min_pr = 0.5))
+  best <- fit$results$best
+  list(label = label, data = d, best = best,
+       assigned = best |> as_tibble() |> filter(probability >= prob_cut) |>
+         select(SNP = observation, cluster, probability, cluster_mean, cluster_class))
+}
+fits <- purrr::pmap(runs, run_mrclust)
+names(fits) <- runs$label
+```
+
+## Clusters found
+
+```{r cluster-summary}
+purrr::map_dfr(fits, \(f) {
+  f$best |> as_tibble() |>
+    group_by(cluster_class, cluster_mean) |>
+    summarise(n_any = n(), n_assigned = sum(probability >= prob_cut), .groups = "drop") |>
+    mutate(Run = f$label, .before = 1)
+}) |>
+  transmute(Run, Cluster = cluster_class,
+            `Effect (OR per log-odds T2D)` = if_else(is.na(cluster_mean), NA_character_, sprintf("%.2f", exp(cluster_mean))),
+            `Variants (any probability)` = n_any, `Variants (probability >= 0.8)` = n_assigned) |>
+  kable(caption = "MR-Clust best-fitting solution per run (BIC-selected number of clusters)")
+```
+
+```{r cluster-plots, fig.width=12, fig.height=10}
+plot_df <- purrr::map_dfr(fits, \(f) {
+  top <- f$best |> as_tibble() |> group_by(observation) |> slice_max(probability, n = 1, with_ties = FALSE) |>
+    ungroup() |> transmute(SNP = observation, cluster_class, probability)
+  f$data |> left_join(top, by = "SNP") |>
+    mutate(cluster_class = if_else(probability >= prob_cut, cluster_class, "unassigned (p < 0.8)"),
+           Run = f$label)
+})
+lines_df <- purrr::map_dfr(fits, \(f) f$best |> as_tibble() |> filter(!is.na(cluster_mean)) |>
+                             distinct(cluster_class, cluster_mean) |> mutate(Run = f$label))
+# Numbered clusters are relabelled by direction so a colour means the same thing in every panel.
+sign_label <- function(cls, mean) case_when(cls %in% c("Null", "Junk") ~ cls,
+                                            grepl("^unassigned", cls) ~ cls,
+                                            mean > 0 ~ "Positive", TRUE ~ "Negative")
+lines_df <- lines_df |> mutate(cluster_class = sign_label(cluster_class, cluster_mean))
+plot_df <- purrr::map_dfr(fits, \(f) {
+  top <- f$best |> as_tibble() |> group_by(observation) |> slice_max(probability, n = 1, with_ties = FALSE) |>
+    ungroup() |> transmute(SNP = observation, cluster_class = sign_label(cluster_class, cluster_mean), probability)
+  f$data |> left_join(top, by = "SNP") |>
+    mutate(cluster_class = if_else(probability >= prob_cut, cluster_class, "unassigned (p < 0.8)"), Run = f$label)
+})
+ggplot(plot_df, aes(beta_t2d, beta_y, colour = cluster_class)) +
+  geom_hline(yintercept = 0, colour = "grey70") +
+  geom_abline(data = lines_df, aes(slope = cluster_mean, intercept = 0, colour = cluster_class), linewidth = 0.9) +
+  geom_errorbar(aes(ymin = beta_y - 1.96 * se_y, ymax = beta_y + 1.96 * se_y), alpha = 0.3, width = 0) +
+  geom_point(size = 1.8) +
+  ggrepel::geom_text_repel(data = filter(plot_df, SNP == "rs5215"), aes(label = "rs5215 (KCNJ11)"),
+                           colour = "black", size = 3.5, seed = 1, min.segment.length = 0) +
+  facet_wrap(~ Run, scales = "free") +
+  expand_limits(x = 0) +
+  scale_colour_manual(values = c(Positive = "#9A3324", Negative = "#2F65A7", Null = "grey55", Junk = "#A5A508",
+                                 `unassigned (p < 0.8)` = "#FFCB05")) +
+  labs(x = "Variant effect on T2D (log-odds)", y = "Variant effect on AD (log-odds)", colour = "MR-Clust cluster") +
+  theme_mc
+```
+
+## Concordance with the clusters defined without AD
+
+If MR-Clust found a real pathway-specific effect, its non-null clusters should be enriched for a
+particular Suzuki cluster (for the Xue set, via the LD mapping in `xue_cluster_map.csv`). Fisher's
+exact test of non-null membership against beta-cell membership:
+
+```{r concordance}
+purrr::map_dfr(fits, \(f) {
+  a <- f$assigned |> filter(!grepl("Null|Junk", cluster_class, ignore.case = TRUE))
+  d <- f$data |> mutate(non_null = SNP %in% a$SNP, beta_cell = grepl("^Beta cell", suzuki))
+  tab <- table(factor(d$non_null, c(FALSE, TRUE)), factor(d$beta_cell, c(FALSE, TRUE)))
+  ft <- if (sum(d$non_null) > 0) fisher.test(tab) else NULL
+  tibble(Run = f$label, `Non-null variants` = sum(d$non_null),
+         `of which beta-cell` = sum(d$non_null & d$beta_cell),
+         `Beta-cell share overall` = sprintf("%d / %d", sum(d$beta_cell, na.rm = TRUE), nrow(d)),
+         `Fisher OR` = if (is.null(ft)) NA else round(unname(ft$estimate), 2),
+         `Fisher p` = if (is.null(ft)) NA else signif(ft$p.value, 2),
+         `rs5215 cluster` = {
+           r <- f$best |> as_tibble() |> filter(observation == "rs5215") |> slice_max(probability, n = 1)
+           if (nrow(r)) sprintf("%s (p = %.2f)", r$cluster_class, r$probability) else "not in set" })
+}) |> kable()
+```
+
+```{r non-null-members}
+purrr::map_dfr(fits, \(f) f$assigned |> filter(!grepl("Null|Junk", cluster_class, ignore.case = TRUE)) |>
+                 left_join(f$data |> select(SNP, chr, pos, suzuki, beta_t2d, beta_y, p_2h, p_fg), by = "SNP") |>
+                 mutate(Run = f$label, .before = 1)) |>
+  transmute(Run, Cluster = cluster_class, SNP, chr, pos, `Suzuki cluster` = suzuki,
+            `Membership p` = round(probability, 2), `T2D log-OR` = round(beta_t2d, 3),
+            `AD log-OR` = round(beta_y, 3), `2 h glucose p` = signif(p_2h, 2), `Fasting p` = signif(p_fg, 2)) |>
+  kable(caption = "Variants assigned (probability >= 0.8) to a non-null cluster")
+```
+
+## Reading the results
+
+**Suzuki instruments: essentially degenerate, as the plan anticipated.** 259 of 273 variants sit in
+the null cluster (218 confidently). A small positive cluster (OR 1.38 per log-odds T2D) has only one
+confident member, rs76675804 at the *THADA* locus (beta cell +PI). rs5215 leans toward that cluster
+but without confidence (membership probability 0.52). Kunkle finds nothing but the null cluster.
+
+**Xue instruments: a split into positive and negative groups, not a pathway.** MR-Clust prefers three
+components in SlopeHunter-corrected Bellenguez: a positive cluster (OR 1.18; 13 confident members),
+a negative cluster (OR 0.82; 7 confident members) and a null cluster. rs5215 (KCNJ11) is a confident
+member of the positive cluster (0.88), as is the *THADA* variant (rs17334919, the same locus as the
+Suzuki result). But membership does not line up with the clusters defined without AD: the positive
+cluster draws from every Suzuki cluster, and beta-cell variants are no more common in non-null
+clusters than elsewhere (Fisher OR 0.96, p = 1.0). A symmetric split around a near-null average is
+what MR-Clust tends to produce when single-variant ratios are simply more spread out than their
+standard errors allow, so this is better read as heterogeneity than as two biological groups.
+
+**The negative cluster is partly the MHC.** Two of its seven confident members are in the HLA region
+on chromosome 6 (rs1063355, rs2246618), and rs1063355 is also the lead member of the only non-null
+cluster in Kunkle. The other five (near *CDKAL1*, *GCKR*, *JAZF1*, *RBMS1* and on chromosome 22q13)
+are established T2D loci with no obvious common thread. The HLA region carries its
+own AD association (HLA-DR) and is routinely excluded from MR because of its long-range LD and
+pleiotropy; MR-APSS in the main pipeline already drops it. These variants are best treated as
+pleiotropic outliers.
+
+**Concordance, the result the plan named as persuasive, is absent.** Neither run concentrates
+beta-cell variants in a non-null cluster, and nothing replicates in Kunkle apart from the MHC variant.
+The one consistent thread is rs5215 sitting on the positive side in both Bellenguez runs, which adds
+nothing new to the fine-mapping result.
+
+**Overall:** MR-Clust does not reveal a subgroup of T2D variants with a distinct effect on AD. This is
+reported as is, without tuning, as fixed in the plan.

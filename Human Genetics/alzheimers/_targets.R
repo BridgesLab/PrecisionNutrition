@@ -187,6 +187,11 @@ m_pfy <- tar_map(values = pf_values, names = "id", unlist = FALSE,
          snps = cis_outcome_snps(pf_step0$instruments, g_out, "primary_post_freeze", outcome, arm, CFG_CONY)) },
     deployment = "main"))
 t_post_freeze <- list(
+  # Suzuki clusters for the Xue instruments by LD (talk figures, section 9).
+  tar_target(xue_cluster_map, map_to_suzuki_clusters(contrast_step0_xue$instruments, suzuki_clusters, ld_bim,
+                                                     LD_BFILE, resolve_plink2(PLINK2))),
+  tar_target(csv_xue_cluster_map, write_csv_target(xue_cluster_map, file.path(CON_DIR, "xue_cluster_map.csv")),
+             format = "file"),
   tar_target(pf_targets, classify_post_freeze(drug_targets_raw, CFG_DRUG, CFG_PF)),
   tar_target(pf_coords, gene_coords_b37(pf_targets$gene)),
   tar_target(pf_step0, run_cis_step0(gwas_t2d_suzuki_eur, gwas_fg_chen, gwas_glu2h_chen, "primary_post_freeze",

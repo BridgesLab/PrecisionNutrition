@@ -213,3 +213,22 @@ classify_post_freeze <- function(drugs, cfg, pf) {
     mutate(post_freeze = TRUE, added = as.character(purrr::map_chr(pf, \(x) as.character(x$added))[drug_class]))
 }
 
+
+# Suzuki cluster for instruments that are not Suzuki index variants (e.g. the Xue 2018 set): the
+# cluster of the index variant in highest LD within `kb`, if r^2 >= r2_min. Exposure-side only; a
+# post-freeze mapping, so reported with its r^2 and kept out of assignments/.
+map_to_suzuki_clusters <- function(inst, clusters, bim, bfile, plink2, kb = 500, r2_min = 0.5) {
+  idx <- as.data.table(clusters)[bim[, .(SNP, chr = as.character(chr), pos)], on = "SNP", nomatch = NULL]
+  inst <- as.data.table(inst)[, .(SNP, chr = as.character(chr), pos)]
+  cand <- idx[inst, on = "chr", allow.cartesian = TRUE, nomatch = NULL][abs(pos - i.pos) <= kb * 1000]
+  setnames(cand, c("SNP", "i.SNP", "pos", "i.pos"), c("index_snp", "SNP", "index_pos", "pos"))
+  if (!nrow(cand)) return(tibble(SNP = inst$SNP, cluster = NA_character_, index_snp = NA_character_, r2 = NA_real_))
+  R <- ld_matrix(unique(c(cand$SNP, cand$index_snp)), bim, bfile, plink2)
+  cand <- cand[SNP %chin% rownames(R) & index_snp %chin% rownames(R)]
+  cand[, r2 := R[cbind(SNP, index_snp)]^2]
+  best <- cand[order(-r2)][, .SD[1], by = SNP]
+  tibble(SNP = inst$SNP) |>
+    left_join(as_tibble(best[, .(SNP, index_snp, r2, cluster_raw = cluster)]), by = "SNP") |>
+    mutate(cluster = if_else(!is.na(r2) & r2 >= r2_min, cluster_raw, NA_character_)) |>
+    select(SNP, cluster, index_snp, r2)
+}

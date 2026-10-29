@@ -678,6 +678,26 @@ con_arm     <- "slopehunter"    # outcome arm for all three sections
 con_scale   <- "per mmol/L"
 con_methods <- c("IVW-MRE" = "IVW (standard)", "MRBEE" = "MRBEE (weak instruments, overlap)")
 con_cols    <- setNames(c("#00274c", "#ffcb05"), con_methods)
+# AD outcomes with display labels; Uffelmann 2026 added post-freeze as replication (raw only:
+# SlopeHunter is not identified for either file)
+con_outcomes <- tibble::tribble(
+  ~outcome,            ~arm,          ~dataset,
+  "ad_bellenguez",     "slopehunter", "Bellenguez (SlopeHunter-corrected)",
+  "ad_kunkle",         "raw",         "Kunkle (clinical)",
+  "ad_uffelmann_newc", "raw",         "Uffelmann 2026, new cohorts (independent)",
+  "ad_uffelmann_cc",   "raw",         "Uffelmann 2026, clinical only")
+# Pre-specified primary outcome and the replication cohort (shares no cohorts with Bellenguez)
+rep_outcomes <- con_outcomes[c(1, 3), ]
+rep_cols     <- setNames(c("#00274c", "#2F65A7"), rep_outcomes$dataset)
+rep_forest <- function(d, xlab, caption = NULL) {
+  ggplot(d, aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = label, colour = dataset)) +
+    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+    geom_pointrange(position = position_dodge(width = -0.6), linewidth = 0.9, size = 0.6) +
+    scale_x_log10() +
+    scale_colour_manual(values = rep_cols, breaks = rep_outcomes$dataset) +
+    labs(x = xlab, y = NULL, colour = NULL, caption = caption) +
+    theme_talk
+}
 mv_terms    <- c(fg = "Fasting glucose\n(adjusted for 2 h glucose)",
                  glu2h = "2 h glucose\n(adjusted for fasting glucose)",
                  `glu2h - fg` = "Difference\n(2 h minus fasting)")
@@ -751,6 +771,111 @@ mv |>
 :::
 :::
 
+
+### Replication in an independent AD GWAS
+
+The same model (Xue instruments) with AD from Uffelmann 2026 (PGC-ALZ3, Nature), added after the
+outcome-blind freeze. The **new-cohorts** meta-analysis contains only cohorts that were not in
+earlier AD GWAS, so it shares no participants with Bellenguez or Kunkle and is the independent test.
+The **clinical-only** analysis is larger (about 70,000 cases, no family-history proxies) but overlaps
+Bellenguez's cohorts. SlopeHunter could not be estimated for either file, so both are uncorrected.
+One caution: the new cohorts include the Million Veteran Program, which is also in the T2D GWAS used
+to select the instruments.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+mv_rep <- con |>
+  filter(set == con_set, step == "1 MVMR", scale == con_scale, estimator %in% names(con_methods)) |>
+  inner_join(con_outcomes, by = c("outcome", "arm")) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         method_label = factor(con_methods[estimator], levels = con_methods),
+         term_label = factor(mv_terms[term], levels = mv_terms),
+         dataset = factor(dataset, levels = rev(con_outcomes$dataset)))
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+mv_rep |>
+  filter(term != "glu2h - fg") |>        # difference is in the table
+  ggplot(aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = dataset, colour = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), linewidth = 0.9, size = 0.6) +
+  facet_wrap(~ term_label, nrow = 1) +
+  scale_x_log10(breaks = c(0.5, 0.7, 1, 1.4, 2)) +
+  scale_colour_manual(values = con_cols) +
+  labs(x = "Odds ratio for AD per mmol/L higher glucose (95% CI)", y = NULL, colour = NULL,
+       caption = "Xue 2018 T2D instruments; glucose effects from Chen 2021 (BMI-adjusted).") +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-replication-1.png){width=3300}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+mv_rep |>
+  arrange(desc(dataset), method_label, term_label) |>
+  transmute(`AD dataset` = dataset, Method = estimator, Term = gsub("\n", " ", term_label),
+            `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi)),
+            p = signif(p, 2), SNPs = n_snp) |>
+  kable()
+```
+
+::: {.cell-output-display}
+
+
+|AD dataset                                |Method  |Term                                       |OR (95% CI)       |      p| SNPs|
+|:-----------------------------------------|:-------|:------------------------------------------|:-----------------|------:|----:|
+|Bellenguez (SlopeHunter-corrected)        |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.90 (0.71, 1.13) | 0.3500|  109|
+|Bellenguez (SlopeHunter-corrected)        |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.19 (1.05, 1.35) | 0.0073|  109|
+|Bellenguez (SlopeHunter-corrected)        |IVW-MRE |Difference (2 h minus fasting)             |1.32 (0.97, 1.81) | 0.0780|  109|
+|Bellenguez (SlopeHunter-corrected)        |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.88 (0.76, 1.03) | 0.1100|  109|
+|Bellenguez (SlopeHunter-corrected)        |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.24 (1.09, 1.41) | 0.0011|  109|
+|Bellenguez (SlopeHunter-corrected)        |MRBEE   |Difference (2 h minus fasting)             |1.40 (1.11, 1.77) | 0.0046|  109|
+|Kunkle (clinical)                         |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.80 (0.51, 1.26) | 0.3400|  109|
+|Kunkle (clinical)                         |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.16 (0.95, 1.42) | 0.1400|  109|
+|Kunkle (clinical)                         |IVW-MRE |Difference (2 h minus fasting)             |1.45 (0.80, 2.66) | 0.2200|  109|
+|Kunkle (clinical)                         |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.75 (0.43, 1.30) | 0.3000|  109|
+|Kunkle (clinical)                         |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.21 (0.97, 1.52) | 0.0880|  109|
+|Kunkle (clinical)                         |MRBEE   |Difference (2 h minus fasting)             |1.62 (0.78, 3.35) | 0.1900|  109|
+|Uffelmann 2026, new cohorts (independent) |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |1.06 (0.80, 1.39) | 0.7000|  100|
+|Uffelmann 2026, new cohorts (independent) |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.14 (0.98, 1.32) | 0.0970|  100|
+|Uffelmann 2026, new cohorts (independent) |IVW-MRE |Difference (2 h minus fasting)             |1.08 (0.73, 1.58) | 0.7100|  100|
+|Uffelmann 2026, new cohorts (independent) |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |1.02 (0.78, 1.34) | 0.8700|  100|
+|Uffelmann 2026, new cohorts (independent) |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.17 (1.01, 1.36) | 0.0420|  100|
+|Uffelmann 2026, new cohorts (independent) |MRBEE   |Difference (2 h minus fasting)             |1.14 (0.77, 1.70) | 0.5100|  100|
+|Uffelmann 2026, clinical only             |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.98 (0.81, 1.18) | 0.8100|  115|
+|Uffelmann 2026, clinical only             |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.14 (1.03, 1.26) | 0.0092|  115|
+|Uffelmann 2026, clinical only             |IVW-MRE |Difference (2 h minus fasting)             |1.17 (0.91, 1.50) | 0.2300|  115|
+|Uffelmann 2026, clinical only             |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.94 (0.83, 1.07) | 0.3400|  115|
+|Uffelmann 2026, clinical only             |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.18 (1.07, 1.31) | 0.0014|  115|
+|Uffelmann 2026, clinical only             |MRBEE   |Difference (2 h minus fasting)             |1.26 (1.02, 1.54) | 0.0280|  115|
+
+
+:::
+:::
+
+
+**Reading the replication.** The 2 h glucose effect, adjusted for fasting glucose, replicates. In the
+independent new cohorts, MRBEE gives OR 1.17 (1.01, 1.36) per mmol/L (p = 0.04; IVW 1.14, 0.98–1.32),
+a little smaller than in Bellenguez (1.24); in the clinical-only file it is 1.18 (1.07, 1.31). Fasting
+glucose, adjusted for 2 h glucose, is null in every dataset (ORs 0.88–1.06). What does **not**
+replicate in the independent cohorts is the formal difference between the two: 1.14 (0.77, 1.70),
+against 1.40 (1.11, 1.77) in Bellenguez. The fasting estimate there is imprecise and slightly above 1,
+so the data cannot yet show that 2 h glucose matters *more* than fasting glucose, only that 2 h glucose
+has an effect at fixed fasting glucose and fasting glucose shows none at fixed 2 h glucose. The
+clinical-only file supports the difference (1.26, 1.02–1.54) but is not independent of Bellenguez.
 
 ### Validation: are the two exposures separable, and what does "adjusted" look like?
 
@@ -916,6 +1041,72 @@ cl |>
 :::
 
 
+
+::: {.cell}
+
+```{.r .cell-code}
+con_cl |>
+  filter(set == "primary",
+         model == "T2D effect x cluster" | (model == "T2D effect x beta-cell" & grepl("^Beta", group))) |>
+  mutate(group = if_else(model == "T2D effect x beta-cell", "All beta cell", group)) |>
+  inner_join(con_outcomes, by = c("outcome", "arm")) |>
+  filter(group != "other (small)") |>
+  mutate(est = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(b - 1.96 * se), exp(b + 1.96 * se)),
+         dataset = factor(dataset, levels = con_outcomes$dataset)) |>
+  arrange(dataset) |>
+  select(Cluster = group, dataset, est) |>
+  pivot_wider(names_from = dataset, values_from = est) |>
+  arrange(match(Cluster, cl$group)) |>
+  kable(caption = "Cluster estimates (AD OR per unit log-odds of T2D, 95% CI) in each AD dataset.")
+```
+
+::: {.cell-output-display}
+
+
+Table: Cluster estimates (AD OR per unit log-odds of T2D, 95% CI) in each AD dataset.
+
+|Cluster            |Bellenguez (SlopeHunter-corrected) |Kunkle (clinical) |Uffelmann 2026, new cohorts (independent) |Uffelmann 2026, clinical only |
+|:------------------|:----------------------------------|:-----------------|:-----------------------------------------|:-----------------------------|
+|All beta cell      |1.05 (1.00, 1.10)                  |1.01 (0.94, 1.09) |1.07 (1.02, 1.13)                         |1.05 (1.01, 1.09)             |
+|Beta cell -PI      |1.09 (0.99, 1.20)                  |1.05 (0.90, 1.22) |1.04 (0.93, 1.17)                         |1.06 (0.99, 1.14)             |
+|Beta cell +PI      |1.03 (0.98, 1.09)                  |1.01 (0.93, 1.09) |1.08 (1.02, 1.15)                         |1.05 (1.00, 1.09)             |
+|Lipodystrophy      |1.07 (0.94, 1.23)                  |1.22 (1.02, 1.47) |0.95 (0.83, 1.08)                         |1.06 (0.97, 1.16)             |
+|Residual glycaemic |1.02 (0.93, 1.13)                  |0.99 (0.84, 1.15) |1.02 (0.91, 1.14)                         |1.03 (0.95, 1.10)             |
+|Body fat           |1.00 (0.89, 1.13)                  |1.13 (0.95, 1.34) |1.05 (0.91, 1.20)                         |1.06 (0.97, 1.16)             |
+|Metabolic syndrome |0.98 (0.91, 1.06)                  |0.97 (0.86, 1.09) |1.08 (0.98, 1.19)                         |1.05 (0.99, 1.12)             |
+|Obesity            |0.96 (0.87, 1.04)                  |0.96 (0.85, 1.10) |0.91 (0.82, 1.01)                         |0.97 (0.90, 1.03)             |
+
+
+:::
+:::
+
+
+**Replication.** The same cluster estimates in the independent Uffelmann new cohorts beside the
+primary outcome. The beta-cell clusters replicate (all beta cell OR 1.07, 1.02–1.13; the +PI cluster
+carries it); obesity stays below 1 and lipodystrophy does not repeat.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+con_cl |>
+  filter(set == "primary",
+         model == "T2D effect x cluster" | (model == "T2D effect x beta-cell" & grepl("^Beta", group))) |>
+  mutate(group = if_else(model == "T2D effect x beta-cell", "All beta cell", group)) |>
+  inner_join(rep_outcomes, by = c("outcome", "arm")) |>
+  filter(group != "other (small)", group != "Liver/lipid metabolism") |>
+  mutate(label = factor(group, levels = rev(cl$group)),
+         dataset = factor(dataset, levels = rep_outcomes$dataset)) |>
+  rep_forest("Odds ratio for AD per unit higher log-odds of T2D (95% CI)",
+             "Suzuki 2024 clusters (frozen assignments).")
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-clusters-replication-plot-1.png){width=3000}
+:::
+:::
+
+
 ### Cluster effects on glucose beside the effect on AD
 
 The same variants, showing how T2D liability carried by each cluster moves fasting and 2 h glucose
@@ -1020,7 +1211,10 @@ on AD of T2D liability acting through that target. Right: how the same variants 
 2 h glucose, so each target's fasting vs post-load profile sits beside its AD estimate. KATP
 channels and amylin receptors act on 2 h glucose only and show the clearest AD signals;
 glucokinase moves 2 h glucose most and shows none. Classes with fewer than 3 variants are in the
-table only.
+table only. Fine-mapping (`diabetes_ad_fine_mapping.qmd`) qualifies both leads: the KATP signal is a
+small effect on the KCNJ11 E23K haplotype, consistent across all three AD datasets but nominal in
+each; the amylin signal comes from one variant that proxies the chr17q21 (*MLX*) T2D locus rather
+than RAMP2, and its AD association mostly belongs to a neighbouring variant with no glycaemic effect.
 
 
 ::: {.cell}
@@ -1079,7 +1273,8 @@ ggplot(dt_plot, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = serie
 ```{.r .cell-code}
 dt |>
   filter(trait == "AD (log-OR)") |>
-  mutate(Outcome = paste(c(ad_bellenguez = "Bellenguez", ad_kunkle = "Kunkle")[outcome], arm_labels[arm], sep = ", ")) |>
+  inner_join(con_outcomes, by = c("outcome", "arm")) |>
+  mutate(Outcome = factor(dataset, levels = con_outcomes$dataset)) |>
   transmute(Class = class, Outcome, SNPs = n_snp,
             `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi)), p = signif(p, 2)) |>
   arrange(Class, Outcome) |>
@@ -1089,32 +1284,219 @@ dt |>
 ::: {.cell-output-display}
 
 
-|Class                        |Outcome                           | SNPs|OR (95% CI)       |      p|
-|:----------------------------|:---------------------------------|----:|:-----------------|------:|
-|Amylin receptor              |Bellenguez, SlopeHunter-corrected |    3|1.77 (1.19, 2.62) | 0.0049|
-|Amylin receptor              |Bellenguez, Uncorrected           |    3|1.51 (1.03, 2.22) | 0.0340|
-|Amylin receptor              |Kunkle, Uncorrected               |    3|1.47 (0.74, 2.93) | 0.2700|
-|FGF21 / KLB                  |Bellenguez, SlopeHunter-corrected |    3|0.96 (0.51, 1.81) | 0.9100|
-|FGF21 / KLB                  |Bellenguez, Uncorrected           |    4|0.93 (0.59, 1.47) | 0.7600|
-|FGF21 / KLB                  |Kunkle, Uncorrected               |    4|1.32 (0.57, 3.04) | 0.5100|
-|Glucokinase                  |Bellenguez, SlopeHunter-corrected |   11|1.11 (0.94, 1.31) | 0.2100|
-|Glucokinase                  |Bellenguez, Uncorrected           |   11|1.05 (0.89, 1.23) | 0.5600|
-|Glucokinase                  |Kunkle, Uncorrected               |    9|0.91 (0.67, 1.22) | 0.5100|
-|Incretin (GLP1R, GIPR, DPP4) |Bellenguez, SlopeHunter-corrected |   17|0.97 (0.79, 1.19) | 0.7600|
-|Incretin (GLP1R, GIPR, DPP4) |Bellenguez, Uncorrected           |   17|0.99 (0.81, 1.20) | 0.8800|
-|Incretin (GLP1R, GIPR, DPP4) |Kunkle, Uncorrected               |   15|0.65 (0.45, 0.93) | 0.0190|
-|Insulin receptor             |Bellenguez, SlopeHunter-corrected |    7|1.26 (0.95, 1.66) | 0.1000|
-|Insulin receptor             |Bellenguez, Uncorrected           |    7|1.19 (0.91, 1.56) | 0.2100|
-|Insulin receptor             |Kunkle, Uncorrected               |    6|2.11 (1.30, 3.42) | 0.0027|
-|KATP channel (sulfonylureas) |Bellenguez, SlopeHunter-corrected |    7|1.27 (1.09, 1.48) | 0.0019|
-|KATP channel (sulfonylureas) |Bellenguez, Uncorrected           |    7|1.25 (1.08, 1.44) | 0.0030|
-|KATP channel (sulfonylureas) |Kunkle, Uncorrected               |    5|1.01 (0.72, 1.40) | 0.9800|
-|PPAR (glitazones)            |Bellenguez, SlopeHunter-corrected |   15|1.12 (0.98, 1.28) | 0.0860|
-|PPAR (glitazones)            |Bellenguez, Uncorrected           |   16|1.07 (0.95, 1.22) | 0.2600|
-|PPAR (glitazones)            |Kunkle, Uncorrected               |   14|1.20 (0.96, 1.51) | 0.1100|
-|SGLT                         |Bellenguez, SlopeHunter-corrected |    2|1.13 (0.54, 2.35) | 0.7500|
-|SGLT                         |Bellenguez, Uncorrected           |    2|1.13 (0.55, 2.31) | 0.7400|
-|SGLT                         |Kunkle, Uncorrected               |    2|1.43 (0.41, 5.02) | 0.5800|
+|Class                        |Outcome                                   | SNPs|OR (95% CI)       |       p|
+|:----------------------------|:-----------------------------------------|----:|:-----------------|-------:|
+|Amylin receptor              |Bellenguez (SlopeHunter-corrected)        |    3|1.77 (1.19, 2.62) | 0.00490|
+|Amylin receptor              |Kunkle (clinical)                         |    3|1.47 (0.74, 2.93) | 0.27000|
+|Amylin receptor              |Uffelmann 2026, clinical only             |    2|1.34 (0.98, 1.83) | 0.06800|
+|FGF21 / KLB                  |Bellenguez (SlopeHunter-corrected)        |    3|0.96 (0.51, 1.81) | 0.91000|
+|FGF21 / KLB                  |Kunkle (clinical)                         |    4|1.32 (0.57, 3.04) | 0.51000|
+|FGF21 / KLB                  |Uffelmann 2026, new cohorts (independent) |    4|1.32 (0.75, 2.30) | 0.34000|
+|FGF21 / KLB                  |Uffelmann 2026, clinical only             |    4|1.16 (0.83, 1.62) | 0.38000|
+|Glucokinase                  |Bellenguez (SlopeHunter-corrected)        |   11|1.11 (0.94, 1.31) | 0.21000|
+|Glucokinase                  |Kunkle (clinical)                         |    9|0.91 (0.67, 1.22) | 0.51000|
+|Glucokinase                  |Uffelmann 2026, new cohorts (independent) |    8|1.38 (1.13, 1.68) | 0.00130|
+|Glucokinase                  |Uffelmann 2026, clinical only             |    8|1.09 (0.97, 1.23) | 0.15000|
+|Incretin (GLP1R, GIPR, DPP4) |Bellenguez (SlopeHunter-corrected)        |   17|0.97 (0.79, 1.19) | 0.76000|
+|Incretin (GLP1R, GIPR, DPP4) |Kunkle (clinical)                         |   15|0.65 (0.45, 0.93) | 0.01900|
+|Incretin (GLP1R, GIPR, DPP4) |Uffelmann 2026, new cohorts (independent) |   14|0.85 (0.67, 1.08) | 0.18000|
+|Incretin (GLP1R, GIPR, DPP4) |Uffelmann 2026, clinical only             |   15|0.89 (0.77, 1.02) | 0.09400|
+|Insulin receptor             |Bellenguez (SlopeHunter-corrected)        |    7|1.26 (0.95, 1.66) | 0.10000|
+|Insulin receptor             |Kunkle (clinical)                         |    6|2.11 (1.30, 3.42) | 0.00270|
+|Insulin receptor             |Uffelmann 2026, new cohorts (independent) |    5|1.04 (0.74, 1.45) | 0.83000|
+|Insulin receptor             |Uffelmann 2026, clinical only             |    6|1.44 (1.19, 1.75) | 0.00024|
+|KATP channel (sulfonylureas) |Bellenguez (SlopeHunter-corrected)        |    7|1.27 (1.09, 1.48) | 0.00190|
+|KATP channel (sulfonylureas) |Kunkle (clinical)                         |    5|1.01 (0.72, 1.40) | 0.98000|
+|KATP channel (sulfonylureas) |Uffelmann 2026, new cohorts (independent) |    5|1.29 (1.07, 1.54) | 0.00680|
+|KATP channel (sulfonylureas) |Uffelmann 2026, clinical only             |    5|1.11 (0.99, 1.23) | 0.07200|
+|PPAR (glitazones)            |Bellenguez (SlopeHunter-corrected)        |   15|1.12 (0.98, 1.28) | 0.08600|
+|PPAR (glitazones)            |Kunkle (clinical)                         |   14|1.20 (0.96, 1.51) | 0.11000|
+|PPAR (glitazones)            |Uffelmann 2026, new cohorts (independent) |   13|1.18 (1.02, 1.36) | 0.02600|
+|PPAR (glitazones)            |Uffelmann 2026, clinical only             |   15|1.13 (1.03, 1.23) | 0.00750|
+|SGLT                         |Bellenguez (SlopeHunter-corrected)        |    2|1.13 (0.54, 2.35) | 0.75000|
+|SGLT                         |Kunkle (clinical)                         |    2|1.43 (0.41, 5.02) | 0.58000|
+|SGLT                         |Uffelmann 2026, new cohorts (independent) |    2|0.79 (0.35, 1.77) | 0.57000|
+|SGLT                         |Uffelmann 2026, clinical only             |    2|0.76 (0.46, 1.23) | 0.26000|
+
+
+:::
+:::
+
+
+**Replication.** Drug-target classes with at least 3 variants, in the primary outcome and the
+independent Uffelmann new cohorts. The KATP class replicates (OR 1.29, 1.07–1.54, per log-odds of
+T2D; 5 of 7 variants, as rs113264182 and rs1557763 are missing from the Uffelmann file). Glucokinase
+(1.38, 1.13–1.68) and PPAR (1.18, 1.02–1.36), null or borderline in Bellenguez, are positive there,
+which fits a general beta-cell / insulin-secretion effect better than a KATP-specific one. Amylin
+has no replication estimate: only one of its three variants (rs34779241) is in the Uffelmann file,
+and it shows no AD association there (p = 0.57).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+dt_ad |> select(target, label = class) |> distinct() |>
+  inner_join(dt |> filter(trait == "AD (log-OR)", n_snp >= 3) |> select(target, outcome, arm, b, se, n_snp),
+             by = "target") |>
+  inner_join(rep_outcomes, by = c("outcome", "arm")) |>
+  filter(target %in% dt_plot$target) |>
+  mutate(label = factor(label, levels = unique(dt_order$class)),
+         dataset = factor(dataset, levels = rep_outcomes$dataset)) |>
+  rep_forest("Odds ratio for AD per unit higher log-odds of T2D (95% CI)",
+             "Classes with at least 3 variants in an outcome.")
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-drug-replication-1.png){width=3000}
+:::
+:::
+
+
+**Classes we looked at but could not evaluate.** Several drug classes have no usable genetic
+instrument with this design, so their absence above means "not testable", not "no effect".
+
+- **SGLT2 inhibitors** (SLC5A2), **alpha-glucosidase inhibitors** (MGAM, SI, GAA, AMY2A) and
+  **metformin** (GPD2): no variant within 100 kb of these genes is associated with T2D, fasting or
+  2 h glucose beyond what chance gives across several hundred variants (best p ≈ 10⁻³), so a lower
+  threshold would only select noise. Metformin's other listed target, mitochondrial complex I, has
+  about 50 subunits and was excluded as too unspecific to instrument.
+- **11β-HSD1 inhibitors** (HSD11B1) and **GPR40 / GPR119 agonists** (FFAR1, GPR119), all phase 2–3
+  only: no instrument at HSD11B1 or FFAR1; GPR119 is on the X chromosome, which the pipeline does not
+  analyse.
+- **Too thin to interpret** (1–2 variants): SGLT1 (SLC5A1, in the table), the glucagon receptor and
+  DPP-4 (one variant each, folded into their classes), and **bromocriptine** (dopamine D2 agonists,
+  added after the freeze because it is FDA-approved for T2D and had been left unclassed: two weak
+  DRD2 variants, AD interval spanning roughly a halving to a doubling of odds;
+  `post_freeze_drug_target_results.csv`).
+
+Published drug-target studies reach some of these targets by selecting variants on HbA1c (larger
+samples) or by using rare loss-of-function carriers (for example sucrase-isomaltase deficiency as a
+lifelong analogue of alpha-glucosidase inhibition); neither is done here.
+
+## 9. Getting more specific: from T2D liability to the KATP channel
+
+The same quantity at each step: the effect on AD of one unit of T2D liability (log-odds), carried by
+an increasingly specific subset of T2D variants. If the AD signal sits in one pathway, broad T2D
+liability dilutes it and the estimate should grow as the instruments narrow onto that pathway.
+
+**Instruments: Xue 2018.** This section uses the Xue T2D instruments rather than the larger Suzuki
+2024 set, because the larger set adds many weak variants with little effect on 2 h glucose and
+dilutes the signal (section 6). The steps:
+
+1. **All T2D variants**: the Xue instruments.
+2. **2 h glucose beyond fasting glucose**: each variant's 2 h glucose effect minus the part predicted
+   by its fasting glucose effect (the adjustment in the section 6 model), keeping variants where that
+   2 h-specific component is positive with z > 1.96. Chosen on glucose data only.
+3. **Beta-cell clusters**: Xue variants in LD (r² ≥ 0.5, within 500 kb) with a Suzuki index variant
+   assigned to either beta-cell cluster. This LD mapping was made after the freeze
+   (`xue_cluster_map.csv`); 86 of 115 Xue instruments map to some cluster.
+4. **KATP channel**: in the Xue set the channel is represented by a single variant, rs5215 (KCNJ11
+   E23K), so this step is a single-variant ratio.
+
+Steps 1–3 use inverse-variance weighting with random-effects standard errors. The outcome is
+SlopeHunter-corrected Bellenguez; the table also gives Kunkle and the Uffelmann 2026 replication
+files (section 6). Two cautions: the KATP channel was
+singled out because it stood out among nine drug classes, so its estimate is probably inflated by
+that selection; and the steps are not independent (each overlaps the one above).
+
+
+::: {.cell}
+
+```{.r .cell-code}
+spec_set <- "xue"
+snp_data <- read_csv(file.path(con_dir, "instrument_outcome_data.csv"), show_col_types = FALSE) |>
+  filter(set == spec_set) |>
+  select(-any_of("cluster")) |>          # frozen clusters exist only for Suzuki index variants
+  left_join(read_csv(file.path(con_dir, "xue_cluster_map.csv"), show_col_types = FALSE) |> select(SNP, cluster),
+            by = "SNP")
+rho_fg2h <- read_csv(file.path(con_dir, "step0_strength.csv"), show_col_types = FALSE) |>
+  filter(set == spec_set) |> pull(error_cor_fg_2h)
+
+# 2 h-specific component of each variant: 2 h effect minus the fasting-predicted part (weighted slope
+# of 2 h on fasting effects), with the fasting/2 h error correlation from Step 0.
+two_h_specific <- function(x) {
+  delta <- coef(lm(beta_2h ~ 0 + beta_fg, data = x, weights = 1 / se_2h^2))[[1]]
+  x |> mutate(z_2h_spec = (beta_2h - delta * beta_fg) /
+                sqrt(se_2h^2 + delta^2 * se_fg^2 - 2 * delta * rho_fg2h * se_2h * se_fg))
+}
+ivw_t2d <- function(x) {
+  f <- summary(lm(beta_y ~ 0 + beta_t2d, data = x, weights = 1 / se_y^2))
+  tibble(b = f$coefficients[1, 1], se = f$coefficients[1, 2] / f$sigma * max(1, f$sigma), n_snp = nrow(x))
+}
+wald <- function(x) tibble(b = x$beta_y / x$beta_t2d, se = x$se_y / x$beta_t2d, n_snp = 1L)
+
+spec_arms <- con_outcomes
+spec_steps <- c("All T2D variants", "2 h glucose beyond fasting", "Beta-cell clusters", "KATP channel (rs5215, KCNJ11 E23K)")
+spec <- purrr::pmap_dfr(spec_arms, \(outcome, arm, dataset) {
+  x <- snp_data |> filter(.data$outcome == !!outcome, .data$arm == !!arm)
+  bind_rows(
+    ivw_t2d(x) |> mutate(step = spec_steps[1]),
+    ivw_t2d(filter(two_h_specific(x), z_2h_spec > 1.96)) |> mutate(step = spec_steps[2]),
+    ivw_t2d(filter(x, grepl("^Beta cell", cluster))) |> mutate(step = spec_steps[3]),
+    wald(filter(x, SNP == "rs5215")) |> mutate(step = spec_steps[4])) |>
+    mutate(dataset = dataset)
+}) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se, step = factor(step, levels = spec_steps),
+         dataset = factor(dataset, levels = spec_arms$dataset))
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+spec |>
+  filter(dataset == spec_arms$dataset[1]) |>
+  mutate(label = factor(sprintf("%s (%d)", step, n_snp), levels = rev(sprintf("%s (%d)", step, n_snp)))) |>
+  ggplot(aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(colour = "#00274c", linewidth = 1, size = 0.8) +
+  scale_x_log10(breaks = c(0.9, 1, 1.25, 1.5, 1.75)) +
+  labs(x = "Odds ratio for AD per unit higher log-odds of T2D (95% CI)", y = NULL,
+       caption = "Xue 2018 T2D instruments; each row a narrower subset (variants in brackets). AD: Bellenguez, SlopeHunter-corrected.") +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-specificity-1.png){width=3300}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+spec |>
+  arrange(dataset, step) |>
+  transmute(Dataset = dataset, Step = step, Variants = n_snp,
+            `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(ci_lo), exp(ci_hi)),
+            p = signif(2 * pnorm(-abs(b / se)), 2)) |>
+  kable()
+```
+
+::: {.cell-output-display}
+
+
+|Dataset                                   |Step                               | Variants|OR (95% CI)       |     p|
+|:-----------------------------------------|:----------------------------------|--------:|:-----------------|-----:|
+|Bellenguez (SlopeHunter-corrected)        |All T2D variants                   |      109|1.02 (0.99, 1.06) | 0.190|
+|Bellenguez (SlopeHunter-corrected)        |2 h glucose beyond fasting         |       25|1.02 (0.97, 1.08) | 0.340|
+|Bellenguez (SlopeHunter-corrected)        |Beta-cell clusters                 |       28|1.03 (0.98, 1.08) | 0.210|
+|Bellenguez (SlopeHunter-corrected)        |KATP channel (rs5215, KCNJ11 E23K) |        1|1.30 (1.01, 1.67) | 0.039|
+|Kunkle (clinical)                         |All T2D variants                   |      109|0.98 (0.93, 1.04) | 0.500|
+|Kunkle (clinical)                         |2 h glucose beyond fasting         |       19|1.02 (0.94, 1.11) | 0.640|
+|Kunkle (clinical)                         |Beta-cell clusters                 |       28|1.03 (0.95, 1.11) | 0.470|
+|Kunkle (clinical)                         |KATP channel (rs5215, KCNJ11 E23K) |        1|1.28 (0.84, 1.97) | 0.250|
+|Uffelmann 2026, new cohorts (independent) |All T2D variants                   |      100|1.03 (0.99, 1.08) | 0.110|
+|Uffelmann 2026, new cohorts (independent) |2 h glucose beyond fasting         |       21|1.04 (0.99, 1.10) | 0.110|
+|Uffelmann 2026, new cohorts (independent) |Beta-cell clusters                 |       29|1.05 (1.01, 1.10) | 0.027|
+|Uffelmann 2026, new cohorts (independent) |KATP channel (rs5215, KCNJ11 E23K) |        1|1.12 (0.85, 1.48) | 0.430|
+|Uffelmann 2026, clinical only             |All T2D variants                   |      115|1.02 (0.99, 1.05) | 0.150|
+|Uffelmann 2026, clinical only             |2 h glucose beyond fasting         |       25|1.04 (0.99, 1.09) | 0.098|
+|Uffelmann 2026, clinical only             |Beta-cell clusters                 |       30|1.05 (1.01, 1.08) | 0.021|
+|Uffelmann 2026, clinical only             |KATP channel (rs5215, KCNJ11 E23K) |        1|1.11 (0.94, 1.32) | 0.230|
 
 
 :::

@@ -4,6 +4,7 @@
 # which is gitignored; 23andMe excluded by the authors):
 #   newc_combined_eur_neff0.6_nsumstats1.txt.gz        cohorts new to PGC-ALZ (independent of Bellenguez)
 #   twent_case_control_eur_neff0.6_nsumstats1.txt.gz   main analysis, clinical cases only
+#   twent_combined_eur_neff0.6_nsumstats1.txt.gz       main analysis, clinical + proxy cases (combined)
 #
 # 1. Rewrites each file in the GWAS-Catalog-harmonised layout read_gwas_tsv() and
 #    prep_selection_merge() expect (variant_id = rsID, GRCh37).
@@ -20,7 +21,10 @@ sumstats <- "data/cache/sumstats"
 life_file <- file.path(sumstats, "LIFESPAN_pilling_harmonised.tsv.gz")
 plink2 <- path.expand(Sys.getenv("PLINK2_BIN", "~/bin/plink2"))
 files <- c(uffelmann_newc = "newc_combined_eur_neff0.6_nsumstats1.txt.gz",
-           uffelmann_cc   = "twent_case_control_eur_neff0.6_nsumstats1.txt.gz")
+           uffelmann_cc   = "twent_case_control_eur_neff0.6_nsumstats1.txt.gz",
+           uffelmann_all  = "twent_combined_eur_neff0.6_nsumstats1.txt.gz")
+# Optional: Rscript R/prep_uffelmann.R uffelmann_all   (process only the named files)
+if (length(args <- commandArgs(trailingOnly = TRUE))) files <- files[args]
 
 for (k in names(files)) {
   message("== ", k)

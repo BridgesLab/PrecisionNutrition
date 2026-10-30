@@ -124,6 +124,13 @@ pull_instruments <- function(id, par, cache_dir) {
 
 pull_snps <- function(snps, id, par, cache_dir) {
   snps <- sort(unique(snps))
+  # Datasets not on OpenGWAS (e.g. Uffelmann 2026) are read from a local GWAS-Catalog-harmonised
+  # file registered with options(mrmed.local_gwas = list(<id> = <path>)). No LD-proxy search:
+  # instruments absent from the file are dropped and show up as missing_in_outcome in the log.
+  local <- getOption("mrmed.local_gwas", list())[[id]]
+  if (!is.null(local))
+    return(cache_rds(cache_dir, paste0("lookup_", id), list(snps, id, local, tools::md5sum(local)),
+                     read_local_outcome(local, snps, id)))
   cache_rds(cache_dir, paste0("lookup_", id), list(snps, id, par[grep("^proxy", names(par))]),
             og_retry(function() TwoSampleMR::extract_outcome_data(
               snps = snps, outcomes = id, proxies = par$proxies, rsq = par$proxy_rsq,
@@ -192,6 +199,23 @@ mv_extract_mediator_priority <- function(x_id, m_id, par) {
 
 # Which SNPs came back as an LD proxy rather than themselves. extract_outcome_data() marks these
 # with proxy.outcome = TRUE when proxies are on.
+read_local_outcome <- function(path, snps, id) {
+  d <- data.table::fread(cmd = paste("gunzip -c", shQuote(path)), showProgress = FALSE,
+                         select = c("variant_id", "effect_allele", "other_allele", "effect_allele_frequency",
+                                    "beta", "standard_error", "p_value", "n"))
+  d <- d[variant_id %in% snps]
+  d[, p_value := suppressWarnings(as.numeric(p_value))]
+  d[is.finite(p_value) & p_value == 0, p_value := .Machine$double.xmin]
+  if (!nrow(d)) return(NULL)
+  out <- TwoSampleMR::format_data(as.data.frame(d), type = "outcome", snp_col = "variant_id",
+                                  beta_col = "beta", se_col = "standard_error",
+                                  eaf_col = "effect_allele_frequency", effect_allele_col = "effect_allele",
+                                  other_allele_col = "other_allele", pval_col = "p_value",
+                                  samplesize_col = "n")
+  out$id.outcome <- id; out$outcome <- id
+  out
+}
+
 proxied_snps <- function(d) {
   if (is.null(d) || !"proxy.outcome" %in% names(d)) return(character())
   d$SNP[!is.na(d$proxy.outcome) & d$proxy.outcome]

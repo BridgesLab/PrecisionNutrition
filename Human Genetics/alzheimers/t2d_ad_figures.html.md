@@ -698,6 +698,10 @@ rep_forest <- function(d, xlab, caption = NULL) {
     labs(x = xlab, y = NULL, colour = NULL, caption = caption) +
     theme_talk
 }
+# Combined Uffelmann (all cohorts, clinical + proxy): largest sample, but contains most of Bellenguez,
+# so it adds precision, not independent evidence. Raw: SlopeHunter not identified for it either.
+comb_out <- "ad_uffelmann_all"; comb_arm <- "raw"
+comb_lab <- "AD: Uffelmann 2026, all cohorts (uncorrected)"
 mv_terms    <- c(fg = "Fasting glucose\n(adjusted for 2 h glucose)",
                  glu2h = "2 h glucose\n(adjusted for fasting glucose)",
                  `glu2h - fg` = "Difference\n(2 h minus fasting)")
@@ -876,6 +880,76 @@ against 1.40 (1.11, 1.77) in Bellenguez. The fasting estimate there is imprecise
 so the data cannot yet show that 2 h glucose matters *more* than fasting glucose, only that 2 h glucose
 has an effect at fixed fasting glucose and fasting glucose shows none at fixed 2 h glucose. The
 clinical-only file supports the difference (1.26, 1.02–1.54) but is not independent of Bellenguez.
+
+### Combined Uffelmann (all cohorts)
+
+The section 6 model with the full Uffelmann 2026 European meta-analysis (clinical and family-history
+cases, about 354,000 effective sample size) as the outcome. This is the most precise estimate, but
+the file contains most of Bellenguez's cohorts, so it is not a replication.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+con |>
+  filter(set == con_set, outcome == comb_out, arm == comb_arm, step == "1 MVMR", scale == con_scale,
+         estimator %in% names(con_methods)) |>
+  mutate(method_label = factor(con_methods[estimator], levels = con_methods),
+         term_label = factor(mv_terms[term], levels = rev(mv_terms))) |>
+  ggplot(aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = term_label, colour = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), linewidth = 0.9, size = 0.7) +
+  scale_x_log10(breaks = c(0.7, 0.8, 1, 1.25, 1.5, 1.75)) +
+  scale_colour_manual(values = con_cols) +
+  labs(x = "Odds ratio for AD per mmol/L higher glucose (95% CI)\nDifference row: ratio of the two odds ratios",
+       y = NULL, colour = NULL, caption = paste("Xue 2018 instruments.", comb_lab)) +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-mvmr-combined-1.png){width=3000}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+con |>
+  filter(set %in% c("xue", "primary"), outcome == comb_out, arm == comb_arm, step == "1 MVMR",
+         scale == con_scale, estimator %in% names(con_methods)) |>
+  mutate(term_label = factor(mv_terms[term], levels = mv_terms)) |>
+  arrange(desc(set), estimator, term_label) |>
+  transmute(Instruments = c(xue = "Xue 2018", primary = "Suzuki 2024")[set], Method = estimator,
+            Term = gsub("\n", " ", term_label),
+            `OR (95% CI)` = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(b - 1.96 * se), exp(b + 1.96 * se)),
+            p = signif(p, 2), SNPs = n_snp) |>
+  kable()
+```
+
+::: {.cell-output-display}
+
+
+|Instruments |Method  |Term                                       |OR (95% CI)       |      p| SNPs|
+|:-----------|:-------|:------------------------------------------|:-----------------|------:|----:|
+|Xue 2018    |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.99 (0.82, 1.19) | 0.8900|  115|
+|Xue 2018    |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.12 (1.02, 1.24) | 0.0220|  115|
+|Xue 2018    |IVW-MRE |Difference (2 h minus fasting)             |1.14 (0.88, 1.47) | 0.3100|  115|
+|Xue 2018    |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.95 (0.84, 1.08) | 0.4400|  115|
+|Xue 2018    |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.16 (1.05, 1.28) | 0.0038|  115|
+|Xue 2018    |MRBEE   |Difference (2 h minus fasting)             |1.22 (1.00, 1.48) | 0.0490|  115|
+|Suzuki 2024 |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |1.04 (0.92, 1.17) | 0.5700|  289|
+|Suzuki 2024 |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.07 (1.01, 1.13) | 0.0140|  289|
+|Suzuki 2024 |IVW-MRE |Difference (2 h minus fasting)             |1.03 (0.89, 1.21) | 0.6700|  289|
+|Suzuki 2024 |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |1.02 (0.88, 1.18) | 0.7900|  289|
+|Suzuki 2024 |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.11 (1.04, 1.18) | 0.0026|  289|
+|Suzuki 2024 |MRBEE   |Difference (2 h minus fasting)             |1.09 (0.90, 1.31) | 0.3800|  289|
+
+
+:::
+:::
+
 
 ### Validation: are the two exposures separable, and what does "adjusted" look like?
 
@@ -1103,6 +1177,41 @@ con_cl |>
 
 ::: {.cell-output-display}
 ![](figures/talk-contrast-clusters-replication-plot-1.png){width=3000}
+:::
+:::
+
+
+### Combined Uffelmann (all cohorts)
+
+
+::: {.cell}
+
+```{.r .cell-code}
+cl_comb <- con_cl |>
+  filter(set == "primary", outcome == comb_out, arm == comb_arm,
+         model == "T2D effect x cluster" | (model == "T2D effect x beta-cell" & grepl("^Beta", group))) |>
+  mutate(group = if_else(model == "T2D effect x beta-cell", "All beta cell", group),
+         kind = if_else(group %in% beta_levels, "Beta-cell clusters", "Other clusters")) |>
+  filter(group != "other (small)", group != "Liver/lipid metabolism") |>
+  arrange(kind != "Beta-cell clusters", match(group, beta_levels), desc(b)) |>
+  mutate(label = sprintf("%s (%d)", group, n_snp), label = factor(label, levels = rev(label)))
+cl_comb_het <- con_cl |>
+  filter(set == "primary", outcome == comb_out, arm == comb_arm, model == "T2D effect x cluster") |>
+  distinct(het_Q, het_df, het_p)
+ggplot(cl_comb, aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = label, colour = kind)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(linewidth = 0.9, size = 0.7) +
+  facet_grid(kind ~ ., scales = "free_y", space = "free_y") +
+  scale_x_log10() +
+  scale_colour_manual(values = c("Beta-cell clusters" = "#9a3324", "Other clusters" = "#00274c"), guide = "none") +
+  labs(x = "Odds ratio for AD per unit higher log-odds of T2D (95% CI)", y = NULL,
+       caption = sprintf("%s. Heterogeneity across clusters: Q = %.1f, df = %d, p = %.2g",
+                         comb_lab, cl_comb_het$het_Q, cl_comb_het$het_df, cl_comb_het$het_p)) +
+  theme_talk + theme(strip.text.y = element_blank())
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-clusters-combined-1.png){width=2700}
 :::
 :::
 
@@ -1373,6 +1482,42 @@ Published drug-target studies reach some of these targets by selecting variants 
 samples) or by using rare loss-of-function carriers (for example sucrase-isomaltase deficiency as a
 lifelong analogue of alpha-glucosidase inhibition); neither is done here.
 
+### Combined Uffelmann (all cohorts)
+
+
+::: {.cell}
+
+```{.r .cell-code}
+dt_comb_ad <- dt |> filter(outcome == comb_out, arm == comb_arm, trait == "AD (log-OR)")
+dt_comb_order <- dt_comb_ad |> filter(n_snp >= 3) |> arrange(b) |> mutate(label = sprintf("%s (%d)", class, n_snp))
+dt |>
+  filter(outcome == comb_out, arm == comb_arm) |>
+  inner_join(dt_comb_order |> select(target, label), by = "target") |>
+  mutate(label = factor(label, levels = dt_comb_order$label),
+         panel = factor(if_else(trait == "AD (log-OR)", "AD risk", "Glucose"), levels = c("AD risk", "Glucose")),
+         series = case_when(trait == "AD (log-OR)" ~ "AD", grepl("^fasting", trait) ~ "Fasting glucose",
+                            TRUE ~ "2 h glucose"),
+         across(c(b, ci_lo, ci_hi), \(v) if_else(panel == "AD risk", exp(v), v))) |>
+  ggplot(aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = series)) +
+  geom_vline(data = data.frame(panel = factor(c("AD risk", "Glucose"), levels = c("AD risk", "Glucose")), x = c(1, 0)),
+             aes(xintercept = x), linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), linewidth = 0.9, size = 0.6) +
+  facet_wrap(~ panel, scales = "free_x",
+             labeller = as_labeller(c(`AD risk` = "Odds ratio for AD (95% CI)",
+                                      Glucose = "Glucose, mmol/L (95% CI)"))) +
+  scale_colour_manual(values = c(AD = "#00274c", `Fasting glucose` = "grey55", `2 h glucose` = "#9a3324"),
+                      breaks = c("Fasting glucose", "2 h glucose")) +
+  labs(x = "Per unit higher log-odds of T2D acting through the target", y = NULL, colour = NULL,
+       caption = paste("Variants per class in brackets (classes with at least 3).", comb_lab)) +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-contrast-drug-combined-1.png){width=3600}
+:::
+:::
+
+
 ## 9. Getting more specific: from T2D liability to the KATP channel
 
 The same quantity at each step: the effect on AD of one unit of T2D liability (log-odds), carried by
@@ -1499,6 +1644,37 @@ spec |>
 |Uffelmann 2026, clinical only             |KATP channel (rs5215, KCNJ11 E23K) |        1|1.11 (0.94, 1.32) | 0.230|
 
 
+:::
+:::
+
+
+### Combined Uffelmann (all cohorts)
+
+
+::: {.cell}
+
+```{.r .cell-code}
+spec_comb_x <- snp_data |> filter(outcome == comb_out, arm == comb_arm)
+bind_rows(
+  ivw_t2d(spec_comb_x) |> mutate(step = spec_steps[1]),
+  ivw_t2d(filter(two_h_specific(spec_comb_x), z_2h_spec > 1.96)) |> mutate(step = spec_steps[2]),
+  ivw_t2d(filter(spec_comb_x, grepl("^Beta cell", cluster))) |> mutate(step = spec_steps[3]),
+  wald(filter(spec_comb_x, SNP == "rs5215")) |> mutate(step = spec_steps[4])) |>
+  mutate(label = factor(sprintf("%s (%d)", step, n_snp), levels = rev(sprintf("%s (%d)", step, n_snp))),
+         p = 2 * pnorm(-abs(b / se))) |>
+  ggplot(aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(colour = "#00274c", linewidth = 1, size = 0.8) +
+  geom_text(aes(x = Inf, label = sprintf("%.2f (%.2f, %.2f)", exp(b), exp(b - 1.96 * se), exp(b + 1.96 * se))),
+            hjust = 1.05, vjust = -0.8, size = 3.8, colour = "grey30") +
+  scale_x_log10(breaks = c(0.9, 1, 1.25, 1.5, 1.75)) +
+  labs(x = "Odds ratio for AD per unit higher log-odds of T2D (95% CI)", y = NULL,
+       caption = paste("Xue 2018 T2D instruments; each row a narrower subset (variants in brackets).", comb_lab)) +
+  theme_talk
+```
+
+::: {.cell-output-display}
+![](figures/talk-specificity-combined-1.png){width=3300}
 :::
 :::
 

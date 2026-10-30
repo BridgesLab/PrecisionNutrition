@@ -226,15 +226,15 @@ draw_dag(n3, e3, caption = "Box = conditioned on (only survivors can become AD c
          xlim = c(-2.6, 5.3), ylim = c(-2.4, 2.4))
 ```
 
-## 4. Mediation: lean mass → type 2 diabetes → AD
+## 4. Mediation: lean mass → 2 h glucose → AD
 
-The question is how much of lean mass's effect on AD runs through T2D (indirect path) versus other
-routes (direct path).
+The question is how much of lean mass's effect on AD runs through 2 h (post-load) glucose (indirect
+path) versus other routes (direct path). This is the model in `mr_mediation.qmd`.
 
 ```{r mediation, fig.width=9, fig.height=4.2}
 n4 <- bind_rows(
   node("X", "Lean mass", 0, 0, "exposure", w = 0.75),
-  node("M", "Type 2\ndiabetes", 3.2, 1.6, "mediator", w = 0.7, h = 0.42),
+  node("M", "2 h glucose", 3.2, 1.6, "mediator", w = 0.85),
   node("Y", "Alzheimer's\ndisease", 6.4, 0, "outcome", w = 0.8, h = 0.42))
 e4 <- bind_rows(edge("X", "M", label = "a"), edge("M", "Y", label = "b"),
                 edge("X", "Y", "question", label = "direct"))
@@ -242,18 +242,18 @@ draw_dag(n4, e4, caption = "Indirect effect = a × b", xlim = c(-1, 7.4), ylim =
 ```
 
 **With unmeasured confounding.** Observational mediation analysis also needs no unmeasured
-confounding of the mediator and outcome (U → T2D and U → AD), which is rarely credible. Mendelian
-randomization handles it by instrumenting both lean mass and T2D with genetic variants
+confounding of the mediator and outcome (U → 2 h glucose and U → AD), which is rarely credible.
+Mendelian randomization handles it by instrumenting both lean mass and 2 h glucose with genetic variants
 (multivariable MR), so U is bypassed on both legs, subject to the same three assumptions.
 
 ```{r mediation-u, fig.width=9, fig.height=5.5}
 n4u <- bind_rows(n4, node("U", "Confounders (U)", 3.2, -1.9, "confounder", w = 0.95),
                  node("GX", "Lean mass\nSNPs", -2.6, 0, "instrument", w = 0.65, h = 0.42),
-                 node("GM", "T2D\nSNPs", 3.2, 3.6, "instrument", w = 0.5, h = 0.42))
+                 node("GM", "2 h glucose\nSNPs", 3.2, 3.6, "instrument", w = 0.7, h = 0.42))
 e4u <- bind_rows(e4, edge("GX", "X"), edge("GM", "M"),
                  edge("U", "X", "confound"), edge("U", "M", "confound", curvature = -0.25),
                  edge("U", "Y", "confound"))
-draw_dag(n4u, e4u, caption = "Indirect effect = a × b; U is bypassed because both lean mass and T2D are instrumented",
+draw_dag(n4u, e4u, caption = "Indirect effect = a × b; U is bypassed because both lean mass and 2 h glucose are instrumented",
          xlim = c(-3.5, 7.4), ylim = c(-2.6, 4.3))
 ```
 

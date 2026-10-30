@@ -7,7 +7,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 
 <meta name="author" content="Dave Bridges and Katie Kittell">
-<meta name="dcterms.date" content="2026-10-08">
+<meta name="dcterms.date" content="2026-10-30">
 
 <title>MR mediation: exposure → mediator → AD</title>
 <style>
@@ -176,7 +176,7 @@ window.Quarto = {
     <div>
     <div class="quarto-title-meta-heading">Published</div>
     <div class="quarto-title-meta-contents">
-      <p class="date">October 8, 2026</p>
+      <p class="date">October 30, 2026</p>
     </div>
   </div>
   
@@ -261,9 +261,14 @@ window.Quarto = {
 <span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ebi-a-GCST90002227"</span>, <span class="st">"2-h glucose (MAGIC, Chen 2021, EUR)"</span>,    <span class="st">"mediator"</span>,  <span class="st">"BMI"</span>,                    <span class="st">"Chen 2021 Nat Genet (PMID 34059833): 'FG, 2hGlu and FI analyses were adjusted for BMI'"</span>,</span>
 <span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ebi-a-GCST90027158"</span>, <span class="st">"AD: Bellenguez 2022 (proxy + clinical)"</span>, <span class="st">"outcome"</span>,   <span class="cn">NA</span>,                       <span class="cn">NA</span>,</span>
 <span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ieu-b-2"</span>,            <span class="st">"AD: Kunkle 2019 IGAP (clinical only)"</span>,   <span class="st">"outcome"</span>,   <span class="cn">NA</span>,                       <span class="cn">NA</span>,</span>
-<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ebi-a-GCST006697"</span>,   <span class="st">"Parental lifespan (Pilling, Martingale)"</span>,<span class="st">"selection"</span>, <span class="cn">NA</span>,                       <span class="cn">NA</span></span>
-<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>LIFESPAN_ID <span class="ot">&lt;-</span> <span class="st">"ebi-a-GCST006697"</span>   <span class="co"># selection axis; MUST match the axis b_SH was fit on (Step 2)</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"PGC-ALZ3-newc-EUR"</span>,  <span class="st">"AD: Uffelmann 2026, new cohorts (independent)"</span>, <span class="st">"outcome"</span>, <span class="cn">NA</span>,                 <span class="cn">NA</span>,</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ebi-a-GCST006697"</span>,   <span class="st">"Parental lifespan (Pilling, Martingale)"</span>,<span class="st">"selection"</span>, <span class="cn">NA</span>,                       <span class="cn">NA</span></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>LIFESPAN_ID <span class="ot">&lt;-</span> <span class="st">"ebi-a-GCST006697"</span>   <span class="co"># selection axis; MUST match the axis b_SH was fit on (Step 2)</span></span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="co"># Outcomes not on OpenGWAS, read from local harmonised files (R/prep_uffelmann.R; gitignored).</span></span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a><span class="co"># Added 2026-10-30 as the replication cohort: Uffelmann 2026 cohorts new to PGC-ALZ, no overlap</span></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a><span class="co"># with Bellenguez. Instruments missing from the file are dropped (no LD-proxy search).</span></span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a><span class="fu">options</span>(<span class="at">mrmed.local_gwas =</span> <span class="fu">list</span>(<span class="st">`</span><span class="at">PGC-ALZ3-newc-EUR</span><span class="st">`</span> <span class="ot">=</span> <span class="st">"data/cache/sumstats/AD_uffelmann_newc_harmonised.tsv.gz"</span>))</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <div class="callout callout-style-default callout-warning callout-titled">
@@ -300,28 +305,35 @@ Warning
 <span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  <span class="co"># (the mediator-side BMI adjustment of 2hGlu remains). Not in Step 2; IVW-MRE by analogy with</span></span>
 <span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  <span class="co"># lean mass (pipeline: heterogeneous, Q p ~ 1e-13 / 1e-4, no directional pleiotropy flagged).</span></span>
 <span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ffm_2hglu"</span>,      <span class="st">"ukb-b-13354"</span>,        <span class="st">"ebi-a-GCST90002227"</span>, <span class="st">"ebi-a-GCST90027158"</span>, <span class="st">"ivw_mre"</span>,  <span class="st">"ivw_mre"</span>,        <span class="st">"mv_ivw_mre"</span>,  <span class="st">"slopehunter"</span>,       <span class="st">"trait"</span>,        <span class="fu">list</span>(),         <span class="st">"XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."</span>,</span>
-<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ffm_2hglu"</span>,      <span class="st">"ukb-b-13354"</span>,        <span class="st">"ebi-a-GCST90002227"</span>, <span class="st">"ieu-b-2"</span>,            <span class="st">"ivw_mre"</span>,  <span class="st">"ivw_mre"</span>,        <span class="st">"mv_ivw_mre"</span>,  <span class="st">"none"</span>,              <span class="st">"trait"</span>,        <span class="fu">list</span>(),         <span class="st">"XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."</span></span>
-<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
-<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
-<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Pre-specified hypothesis signs (lean mass lowers glucose, glucose raises AD, lean mass</span></span>
-<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># lowers AD). Reported against the estimates; they do not enter any gate.</span></span>
-<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">hyp_sign_xm =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">hyp_sign_my =</span> <span class="sc">+</span><span class="dv">1</span>, <span class="at">hyp_sign_total =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
-<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Equivalence bound for the indirect effect (log-OR per unit X). PRE-SPECIFY BEFORE RUNNING.</span></span>
-<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># = 10% of |naive X -&gt; AD (IVW-MRE)|, per triad and outcome. Fixed numbers, not read from a</span></span>
-<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="co"># CSV, so a re-run cannot silently move a pre-specified bound.</span></span>
-<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   lean mass: Step 2 exposure_ad_naive.csv (Bellenguez -0.1009, Kunkle -0.1299)</span></span>
-<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   fat-free mass: not in Step 2; targets pipeline IVW-MRE, results/pipeline/results.csv at</span></span>
-<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   42568d8 (Bellenguez -0.2497, Kunkle -0.2356). Fixed 2026-10-08, before this triad was run.</span></span>
-<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">equiv_bound_indirect =</span> <span class="fu">case_when</span>(</span>
-<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"leanmass_2hglu"</span> <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ebi-a-GCST90027158"</span> <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.1009</span>,   <span class="co"># 0.0101</span></span>
-<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"leanmass_2hglu"</span> <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ieu-b-2"</span>            <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.1299</span>,   <span class="co"># 0.0130</span></span>
-<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"ffm_2hglu"</span>      <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ebi-a-GCST90027158"</span> <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.2497</span>,   <span class="co"># 0.0250</span></span>
-<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"ffm_2hglu"</span>      <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ieu-b-2"</span>            <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.2356</span>,   <span class="co"># 0.0236</span></span>
-<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                              <span class="sc">~</span> <span class="cn">NA_real_</span>)</span>
-<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>  )</span>
-<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Survival-bias adjustment per outcome follows Step 2: Bellenguez's b_SH is applied; Kunkle's</span></span>
-<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a><span class="co"># fit is not identified (raw r = -0.0008), so Kunkle is "none" in the primary analysis.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ffm_2hglu"</span>,      <span class="st">"ukb-b-13354"</span>,        <span class="st">"ebi-a-GCST90002227"</span>, <span class="st">"ieu-b-2"</span>,            <span class="st">"ivw_mre"</span>,  <span class="st">"ivw_mre"</span>,        <span class="st">"mv_ivw_mre"</span>,  <span class="st">"none"</span>,              <span class="st">"trait"</span>,        <span class="fu">list</span>(),         <span class="st">"XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."</span>,</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>  <span class="co"># Replication outcome (2026-10-30): SlopeHunter not identified for this file, so "none" is primary.</span></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>  <span class="st">"leanmass_2hglu"</span>, <span class="st">"ebi-a-GCST90000025"</span>, <span class="st">"ebi-a-GCST90002227"</span>, <span class="st">"PGC-ALZ3-newc-EUR"</span>,  <span class="st">"ivw_mre"</span>,  <span class="st">"ivw_mre"</span>,        <span class="st">"mv_ivw_mre"</span>,  <span class="st">"none"</span>,              <span class="st">"trait"</span>,        <span class="fu">list</span>(),         <span class="st">"Replication (Uffelmann new cohorts). Methods as for Bellenguez."</span>,</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ffm_2hglu"</span>,      <span class="st">"ukb-b-13354"</span>,        <span class="st">"ebi-a-GCST90002227"</span>, <span class="st">"PGC-ALZ3-newc-EUR"</span>,  <span class="st">"ivw_mre"</span>,  <span class="st">"ivw_mre"</span>,        <span class="st">"mv_ivw_mre"</span>,  <span class="st">"none"</span>,              <span class="st">"trait"</span>,        <span class="fu">list</span>(),         <span class="st">"Replication (Uffelmann new cohorts). Methods as for Bellenguez."</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Pre-specified hypothesis signs (lean mass lowers glucose, glucose raises AD, lean mass</span></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="co"># lowers AD). Reported against the estimates; they do not enter any gate.</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>    <span class="at">hyp_sign_xm =</span> <span class="sc">-</span><span class="dv">1</span>, <span class="at">hyp_sign_my =</span> <span class="sc">+</span><span class="dv">1</span>, <span class="at">hyp_sign_total =</span> <span class="sc">-</span><span class="dv">1</span>,</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Equivalence bound for the indirect effect (log-OR per unit X). PRE-SPECIFY BEFORE RUNNING.</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># = 10% of |naive X -&gt; AD (IVW-MRE)|, per triad and outcome. Fixed numbers, not read from a</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="co"># CSV, so a re-run cannot silently move a pre-specified bound.</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   lean mass: Step 2 exposure_ad_naive.csv (Bellenguez -0.1009, Kunkle -0.1299)</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   fat-free mass: not in Step 2; targets pipeline IVW-MRE, results/pipeline/results.csv at</span></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>    <span class="co">#   42568d8 (Bellenguez -0.2497, Kunkle -0.2356). Fixed 2026-10-08, before this triad was run.</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">equiv_bound_indirect =</span> <span class="fu">case_when</span>(</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"leanmass_2hglu"</span> <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ebi-a-GCST90027158"</span> <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.1009</span>,   <span class="co"># 0.0101</span></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"leanmass_2hglu"</span> <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ieu-b-2"</span>            <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.1299</span>,   <span class="co"># 0.0130</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"ffm_2hglu"</span>      <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ebi-a-GCST90027158"</span> <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.2497</span>,   <span class="co"># 0.0250</span></span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"ffm_2hglu"</span>      <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"ieu-b-2"</span>            <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.2356</span>,   <span class="co"># 0.0236</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a>      <span class="co"># Uffelmann new cohorts: naive IVW-MRE on the local file, fixed 2026-10-30 before the</span></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a>      <span class="co"># mediation arms were run (lean mass -0.0539, fat-free mass -0.1605).</span></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"leanmass_2hglu"</span> <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"PGC-ALZ3-newc-EUR"</span>  <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.0539</span>,   <span class="co"># 0.0054</span></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a>      triad_id <span class="sc">==</span> <span class="st">"ffm_2hglu"</span>      <span class="sc">&amp;</span> outcome_id <span class="sc">==</span> <span class="st">"PGC-ALZ3-newc-EUR"</span>  <span class="sc">~</span> <span class="fl">0.10</span> <span class="sc">*</span> <span class="fl">0.1605</span>,   <span class="co"># 0.0161</span></span>
+<span id="cb4-33"><a href="#cb4-33" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                              <span class="sc">~</span> <span class="cn">NA_real_</span>)</span>
+<span id="cb4-34"><a href="#cb4-34" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-35"><a href="#cb4-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-36"><a href="#cb4-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Survival-bias adjustment per outcome follows Step 2: Bellenguez's b_SH is applied; Kunkle's</span></span>
+<span id="cb4-37"><a href="#cb4-37" aria-hidden="true" tabindex="-1"></a><span class="co"># fit is not identified (raw r = -0.0008), so Kunkle is "none" in the primary analysis.</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 </section>
@@ -337,38 +349,39 @@ Warning
 <span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>bsh_sources <span class="ot">&lt;-</span> tibble<span class="sc">::</span><span class="fu">tribble</span>(</span>
 <span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>  <span class="sc">~</span>ad_id,               <span class="sc">~</span>fits_csv,                                          <span class="sc">~</span>fit_set,              <span class="sc">~</span>trusted, <span class="sc">~</span>reason,                                                  <span class="sc">~</span>boot_rds,</span>
 <span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ebi-a-GCST90027158"</span>, <span class="st">"smoking/results/indexevent_slopehunter_fits.csv"</span>,  <span class="st">"excl_APOE (PRIMARY)"</span>, <span class="cn">TRUE</span>,     <span class="st">"validated in the smoking pipeline"</span>,                      <span class="cn">NA_character_</span>,</span>
-<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ieu-b-2"</span>,            <span class="st">"R/fits/kunkle_lifespan_slopehunter_fits.csv"</span>,      <span class="st">"excl_APOE (PRIMARY)"</span>, <span class="cn">FALSE</span>,    <span class="st">"not identified: raw r = -0.0008, sign agreement 0.499"</span>,  <span class="cn">NA_character_</span></span>
-<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>SETTINGS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_draws             =</span> <span class="dv">5000</span>,   <span class="co"># Monte Carlo draws per arm</span></span>
-<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_grid              =</span> <span class="dv">21</span>,     <span class="co"># b_SH grid points at which the legs are refit</span></span>
-<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">grid_sd             =</span> <span class="dv">4</span>,      <span class="co"># grid spans b_SH +/- 4 SE</span></span>
-<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_boot_cor          =</span> <span class="dv">300</span>,    <span class="co"># SNP-level bootstrap reps for the leg correlation matrix</span></span>
-<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed                =</span> <span class="dv">20261001</span>,</span>
-<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">cond_f_min          =</span> <span class="dv">10</span>,     <span class="co"># gate: conditional F for X and for M</span></span>
-<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">k_min_x_in_mediator =</span> <span class="dv">10</span>,     <span class="co"># eQTL mediators: skip if fewer X instruments are present</span></span>
-<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">common_snp_set      =</span> <span class="cn">TRUE</span>,   <span class="co"># raw arm uses the same SNPs as the adjusted arm (see below)</span></span>
-<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">presso_nboot        =</span> <span class="dv">1000</span>,</span>
-<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">grapple_loss        =</span> <span class="st">"huber"</span>,<span class="co"># matches TwoSampleMR's mr_raps default for the univariable legs</span></span>
-<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">gencov              =</span> <span class="dv">0</span>,      <span class="co"># X/M sample overlap for conditional F (Pei UKB vs MAGIC: none)</span></span>
-<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">sampler             =</span> sample_legs_mvn   <span class="co"># Bayesian hook; see R/mr_mediation_helpers.R</span></span>
-<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>)</span>
-<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a><span class="co"># The 2 x 2 sensitivity grid: every triad x outcome under both adjustment states.</span></span>
-<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>ADJUSTMENTS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"slopehunter"</span>, <span class="st">"none"</span>)</span>
-<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a><span class="co"># Overrides the pre-specification check below. Leave FALSE: the equivalence bound exists to be</span></span>
-<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># chosen before the indirect effect is seen.</span></span>
-<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a>ALLOW_UNSET_EQUIV_BOUND <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
-<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="st">"data/cache/mediation"</span>   <span class="co"># gitignored with the rest of data/cache</span></span>
-<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a></span>
-<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a><span class="co"># Which instrument wins when an X and an M instrument are in LD during the MVMR re-clump.</span></span>
-<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># "mediator" (default since 2026-10-08): the M instrument always wins. "pooled": the smaller</span></span>
-<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># p-value wins, i.e. TwoSampleMR::mv_extract_exposures() unmodified (the original spec).</span></span>
-<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co"># Why: see "Why the mediator's instruments get priority" under Instruments.</span></span>
-<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a>MV_CLUMP_PRIORITY <span class="ot">&lt;-</span> <span class="st">"mediator"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>  <span class="st">"ieu-b-2"</span>,            <span class="st">"R/fits/kunkle_lifespan_slopehunter_fits.csv"</span>,      <span class="st">"excl_APOE (PRIMARY)"</span>, <span class="cn">FALSE</span>,    <span class="st">"not identified: raw r = -0.0008, sign agreement 0.499"</span>,  <span class="cn">NA_character_</span>,</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>  <span class="st">"PGC-ALZ3-newc-EUR"</span>,  <span class="st">"R/fits/uffelmann_newc_lifespan_slopehunter_fits.csv"</span>, <span class="st">"excl_APOE (PRIMARY)"</span>, <span class="cn">FALSE</span>, <span class="st">"not identified: raw r = 0.034, sign agreement 0.509"</span>,    <span class="cn">NA_character_</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>SETTINGS <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_draws             =</span> <span class="dv">5000</span>,   <span class="co"># Monte Carlo draws per arm</span></span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_grid              =</span> <span class="dv">21</span>,     <span class="co"># b_SH grid points at which the legs are refit</span></span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a>  <span class="at">grid_sd             =</span> <span class="dv">4</span>,      <span class="co"># grid spans b_SH +/- 4 SE</span></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  <span class="at">n_boot_cor          =</span> <span class="dv">300</span>,    <span class="co"># SNP-level bootstrap reps for the leg correlation matrix</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>  <span class="at">seed                =</span> <span class="dv">20261001</span>,</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a>  <span class="at">cond_f_min          =</span> <span class="dv">10</span>,     <span class="co"># gate: conditional F for X and for M</span></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="at">k_min_x_in_mediator =</span> <span class="dv">10</span>,     <span class="co"># eQTL mediators: skip if fewer X instruments are present</span></span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>  <span class="at">common_snp_set      =</span> <span class="cn">TRUE</span>,   <span class="co"># raw arm uses the same SNPs as the adjusted arm (see below)</span></span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>  <span class="at">presso_nboot        =</span> <span class="dv">1000</span>,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>  <span class="at">grapple_loss        =</span> <span class="st">"huber"</span>,<span class="co"># matches TwoSampleMR's mr_raps default for the univariable legs</span></span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>  <span class="at">gencov              =</span> <span class="dv">0</span>,      <span class="co"># X/M sample overlap for conditional F (Pei UKB vs MAGIC: none)</span></span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>  <span class="at">sampler             =</span> sample_legs_mvn   <span class="co"># Bayesian hook; see R/mr_mediation_helpers.R</span></span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>)</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a><span class="co"># The 2 x 2 sensitivity grid: every triad x outcome under both adjustment states.</span></span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>ADJUSTMENTS <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"slopehunter"</span>, <span class="st">"none"</span>)</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-30"><a href="#cb5-30" aria-hidden="true" tabindex="-1"></a><span class="co"># Overrides the pre-specification check below. Leave FALSE: the equivalence bound exists to be</span></span>
+<span id="cb5-31"><a href="#cb5-31" aria-hidden="true" tabindex="-1"></a><span class="co"># chosen before the indirect effect is seen.</span></span>
+<span id="cb5-32"><a href="#cb5-32" aria-hidden="true" tabindex="-1"></a>ALLOW_UNSET_EQUIV_BOUND <span class="ot">&lt;-</span> <span class="cn">FALSE</span></span>
+<span id="cb5-33"><a href="#cb5-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-34"><a href="#cb5-34" aria-hidden="true" tabindex="-1"></a>CACHE_DIR <span class="ot">&lt;-</span> <span class="st">"data/cache/mediation"</span>   <span class="co"># gitignored with the rest of data/cache</span></span>
+<span id="cb5-35"><a href="#cb5-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-36"><a href="#cb5-36" aria-hidden="true" tabindex="-1"></a><span class="co"># Which instrument wins when an X and an M instrument are in LD during the MVMR re-clump.</span></span>
+<span id="cb5-37"><a href="#cb5-37" aria-hidden="true" tabindex="-1"></a><span class="co"># "mediator" (default since 2026-10-08): the M instrument always wins. "pooled": the smaller</span></span>
+<span id="cb5-38"><a href="#cb5-38" aria-hidden="true" tabindex="-1"></a><span class="co"># p-value wins, i.e. TwoSampleMR::mv_extract_exposures() unmodified (the original spec).</span></span>
+<span id="cb5-39"><a href="#cb5-39" aria-hidden="true" tabindex="-1"></a><span class="co"># Why: see "Why the mediator's instruments get priority" under Instruments.</span></span>
+<span id="cb5-40"><a href="#cb5-40" aria-hidden="true" tabindex="-1"></a>MV_CLUMP_PRIORITY <span class="ot">&lt;-</span> <span class="st">"mediator"</span></span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 </div>
 <p><code>common_snp_set = TRUE</code> means the <strong>raw</strong> arm also drops SNPs that have no lifespan association. Raw and SlopeHunter-adjusted estimates then share an identical SNP set, so the difference between them reflects the adjustment alone and not a change in instruments. With <code>FALSE</code>, the raw arm reproduces the prior univariable instrument set exactly.</p>
@@ -409,7 +422,7 @@ Warning
 <div class="cell">
 <details class="code-fold">
 <summary>Show the code</summary>
-<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">&lt;-</span> ieugwasr<span class="sc">::</span><span class="fu">gwasinfo</span>(datasets<span class="sc">$</span>id)</span>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a>info <span class="ot">&lt;-</span> ieugwasr<span class="sc">::</span><span class="fu">gwasinfo</span>(<span class="fu">setdiff</span>(datasets<span class="sc">$</span>id, <span class="fu">names</span>(<span class="fu">getOption</span>(<span class="st">"mrmed.local_gwas"</span>, <span class="fu">list</span>()))))</span>
 <span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a>info <span class="sc">|&gt;</span></span>
 <span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="fu">any_of</span>(<span class="fu">c</span>(<span class="st">"id"</span>, <span class="st">"trait"</span>, <span class="st">"author"</span>, <span class="st">"year"</span>, <span class="st">"pmid"</span>, <span class="st">"population"</span>, <span class="st">"sample_size"</span>,</span>
 <span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>                  <span class="st">"ncase"</span>, <span class="st">"ncontrol"</span>, <span class="st">"unit"</span>))) <span class="sc">|&gt;</span></span>
@@ -871,6 +884,12 @@ Note
 <td style="text-align: right;">1217</td>
 <td style="text-align: right;">903</td>
 </tr>
+<tr class="odd">
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: right;">1186</td>
+<td style="text-align: right;">896</td>
+<td style="text-align: right;">851</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -938,6 +957,14 @@ Note
 <td style="text-align: right;">0.1120</td>
 <td style="text-align: left;">NO</td>
 <td style="text-align: left;">not identified: raw r = -0.0008, sign agreement 0.499</td>
+<td style="text-align: left;">normal approx.</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: right;">0.505</td>
+<td style="text-align: right;">0.2940</td>
+<td style="text-align: left;">NO</td>
+<td style="text-align: left;">not identified: raw r = 0.034, sign agreement 0.509</td>
 <td style="text-align: left;">normal approx.</td>
 </tr>
 </tbody>
@@ -1036,7 +1063,7 @@ Important
 <caption>Primary analysis (per-outcome adjustment from the config). Point estimate with 95% Monte Carlo percentile interval. % mediated is shown only when every gate passes.</caption>
 <colgroup>
 <col style="width: 3%">
-<col style="width: 9%">
+<col style="width: 11%">
 <col style="width: 2%">
 <col style="width: 1%">
 <col style="width: 6%">
@@ -1047,7 +1074,7 @@ Important
 <col style="width: 6%">
 <col style="width: 2%">
 <col style="width: 3%">
-<col style="width: 18%">
+<col style="width: 17%">
 <col style="width: 17%">
 </colgroup>
 <thead>
@@ -1102,6 +1129,22 @@ Important
 <td style="text-align: left;">COLLIDER RISK: M adjusted for BMI</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">run</td>
+<td style="text-align: left;">-0.1635 [-0.2587, -0.0686]</td>
+<td style="text-align: left;">-0.3300 [-0.4026, -0.2576]</td>
+<td style="text-align: left;">0.0195 [-0.0622, 0.1041]</td>
+<td style="text-align: left;">-0.1416 [-0.2446, -0.0371]</td>
+<td style="text-align: left;">-0.0064 [-0.0351, 0.0203]</td>
+<td style="text-align: left;">0.0142 / 0.0138</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: right;">0.850</td>
+<td style="text-align: left;">conditional F &lt;= 10</td>
+<td style="text-align: left;">COLLIDER RISK: M adjusted for BMI</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
@@ -1117,7 +1160,7 @@ Important
 <td style="text-align: left;">conditional F &lt;= 10</td>
 <td style="text-align: left;">COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
@@ -1131,6 +1174,22 @@ Important
 <td style="text-align: left;">—</td>
 <td style="text-align: right;">0.850</td>
 <td style="text-align: left;">conditional F &lt;= 10; indirect/total discordant; proportion outside [0,1]</td>
+<td style="text-align: left;">COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">run</td>
+<td style="text-align: left;">-0.0535 [-0.1067, 0.0000]</td>
+<td style="text-align: left;">-0.1692 [-0.2144, -0.1248]</td>
+<td style="text-align: left;">0.0290 [-0.0428, 0.1013]</td>
+<td style="text-align: left;">-0.0516 [-0.1091, 0.0066]</td>
+<td style="text-align: left;">-0.0049 [-0.0178, 0.0073]</td>
+<td style="text-align: left;">0.0064 / 0.0064</td>
+<td style="text-align: left;">—</td>
+<td style="text-align: right;">0.840</td>
+<td style="text-align: left;">conditional F &lt;= 10; total CI includes 0</td>
 <td style="text-align: left;">COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI</td>
 </tr>
 </tbody>
@@ -1207,7 +1266,7 @@ Warning
 <caption>Gate outcomes for every arm that ran.</caption>
 <colgroup>
 <col style="width: 5%">
-<col style="width: 13%">
+<col style="width: 15%">
 <col style="width: 4%">
 <col style="width: 2%">
 <col style="width: 3%">
@@ -1289,6 +1348,22 @@ Warning
 <td style="text-align: left;">conditional F &lt;= 10</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">28.1</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: left;">conditional F &lt;= 10</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
@@ -1304,7 +1379,7 @@ Warning
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">conditional F &lt;= 10</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
@@ -1320,7 +1395,7 @@ Warning
 <td style="text-align: left;">TRUE</td>
 <td style="text-align: left;">conditional F &lt;= 10</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
@@ -1335,6 +1410,22 @@ Warning
 <td style="text-align: left;">inconclusive</td>
 <td style="text-align: left;">FALSE</td>
 <td style="text-align: left;">conditional F &lt;= 10; indirect/total discordant; proportion outside [0,1]</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">45.2</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: left;">inconclusive</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: left;">conditional F &lt;= 10; total CI includes 0</td>
 </tr>
 </tbody>
 </table>
@@ -1361,15 +1452,15 @@ Warning
 <table class="caption-top table table-sm table-striped small">
 <caption>Decomposition consistency.</caption>
 <colgroup>
-<col style="width: 8%">
-<col style="width: 20%">
+<col style="width: 7%">
+<col style="width: 23%">
 <col style="width: 6%">
 <col style="width: 4%">
 <col style="width: 9%">
 <col style="width: 18%">
 <col style="width: 13%">
 <col style="width: 8%">
-<col style="width: 9%">
+<col style="width: 8%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1390,7 +1481,7 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.2470</td>
-<td style="text-align: right;">-0.223</td>
+<td style="text-align: right;">-0.2230</td>
 <td style="text-align: right;">-0.04110</td>
 <td style="text-align: right;">-0.01720</td>
 <td style="text-align: right;">0.61</td>
@@ -1401,7 +1492,7 @@ Warning
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: right;">-0.1930</td>
-<td style="text-align: right;">-0.165</td>
+<td style="text-align: right;">-0.1650</td>
 <td style="text-align: right;">-0.04870</td>
 <td style="text-align: right;">-0.02150</td>
 <td style="text-align: right;">0.68</td>
@@ -1412,44 +1503,66 @@ Warning
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.2600</td>
-<td style="text-align: right;">-0.204</td>
+<td style="text-align: right;">-0.2040</td>
 <td style="text-align: right;">-0.06040</td>
 <td style="text-align: right;">-0.00401</td>
 <td style="text-align: right;">0.82</td>
 <td style="text-align: right;">0.93</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: right;">-0.1630</td>
+<td style="text-align: right;">-0.1480</td>
+<td style="text-align: right;">-0.02180</td>
+<td style="text-align: right;">-0.00644</td>
+<td style="text-align: right;">0.32</td>
+<td style="text-align: right;">0.92</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.0988</td>
-<td style="text-align: right;">-0.100</td>
+<td style="text-align: right;">-0.1000</td>
 <td style="text-align: right;">-0.00838</td>
 <td style="text-align: right;">-0.00980</td>
 <td style="text-align: right;">-0.06</td>
 <td style="text-align: right;">0.93</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: right;">-0.1040</td>
-<td style="text-align: right;">-0.105</td>
+<td style="text-align: right;">-0.1050</td>
 <td style="text-align: right;">-0.01220</td>
 <td style="text-align: right;">-0.01240</td>
 <td style="text-align: right;">-0.01</td>
 <td style="text-align: right;">0.93</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
 <td style="text-align: right;">-0.1290</td>
-<td style="text-align: right;">-0.125</td>
+<td style="text-align: right;">-0.1250</td>
 <td style="text-align: right;">-0.00244</td>
 <td style="text-align: right;">0.00219</td>
 <td style="text-align: right;">0.11</td>
 <td style="text-align: right;">0.94</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: right;">-0.0535</td>
+<td style="text-align: right;">-0.0565</td>
+<td style="text-align: right;">-0.00191</td>
+<td style="text-align: right;">-0.00491</td>
+<td style="text-align: right;">-0.11</td>
+<td style="text-align: right;">0.93</td>
 </tr>
 </tbody>
 </table>
@@ -1480,20 +1593,20 @@ Warning
 <caption>Conditional F (gencov = 0 ) and Sanderson-Windmeijer Q, per arm. SNP counts are after SlopeHunter SNP loss. A significant Q indicates pleiotropy or heterogeneity beyond what X and M explain.</caption>
 <colgroup>
 <col style="width: 7%">
-<col style="width: 20%">
-<col style="width: 6%">
-<col style="width: 6%">
+<col style="width: 22%">
+<col style="width: 5%">
+<col style="width: 5%">
 <col style="width: 4%">
 <col style="width: 5%">
-<col style="width: 7%">
-<col style="width: 7%">
+<col style="width: 6%">
+<col style="width: 6%">
 <col style="width: 4%">
 <col style="width: 4%">
 <col style="width: 3%">
 <col style="width: 4%">
 <col style="width: 6%">
+<col style="width: 4%">
 <col style="width: 5%">
-<col style="width: 6%">
 </colgroup>
 <thead>
 <tr class="header">
@@ -1567,6 +1680,23 @@ Warning
 <td style="text-align: left;">mv_ivw_mre</td>
 </tr>
 <tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: right;">419</td>
+<td style="text-align: right;">532</td>
+<td style="text-align: right;">390</td>
+<td style="text-align: right;">380</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">28.1</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: right;">557.8</td>
+<td style="text-align: right;">0.0e+00</td>
+<td style="text-align: left;">ivw_mre</td>
+<td style="text-align: left;">ivw_mre</td>
+<td style="text-align: left;">mv_ivw_mre</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
@@ -1583,7 +1713,7 @@ Warning
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">mv_ivw_mre</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">slopehunter</td>
@@ -1600,7 +1730,7 @@ Warning
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">mv_ivw_mre</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">none</td>
@@ -1613,6 +1743,23 @@ Warning
 <td style="text-align: right;">2.4</td>
 <td style="text-align: right;">628.5</td>
 <td style="text-align: right;">3.0e-07</td>
+<td style="text-align: left;">ivw_mre</td>
+<td style="text-align: left;">ivw_mre</td>
+<td style="text-align: left;">mv_ivw_mre</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: right;">470</td>
+<td style="text-align: right;">613</td>
+<td style="text-align: right;">433</td>
+<td style="text-align: right;">423</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">45.2</td>
+<td style="text-align: right;">2.8</td>
+<td style="text-align: right;">583.9</td>
+<td style="text-align: right;">1.0e-06</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">ivw_mre</td>
 <td style="text-align: left;">mv_ivw_mre</td>
@@ -1680,8 +1827,8 @@ Warning
 <td style="text-align: right;">8.86e-04</td>
 <td style="text-align: right;">0.459</td>
 <td style="text-align: right;">0.001</td>
-<td style="text-align: right;">5</td>
-<td style="text-align: right;">-0.165</td>
+<td style="text-align: right;">4</td>
+<td style="text-align: right;">-0.163</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
@@ -1693,7 +1840,7 @@ Warning
 <td style="text-align: right;">7.94e-05</td>
 <td style="text-align: right;">0.948</td>
 <td style="text-align: right;">0.001</td>
-<td style="text-align: right;">3</td>
+<td style="text-align: right;">5</td>
 <td style="text-align: right;">-0.314</td>
 </tr>
 </tbody>
@@ -1884,10 +2031,10 @@ Warning
 <table class="caption-top table table-sm table-striped small">
 <caption>All four cells of the grid per triad. NOT RUN cells carry their reason.</caption>
 <colgroup>
-<col style="width: 8%">
-<col style="width: 20%">
+<col style="width: 7%">
+<col style="width: 23%">
 <col style="width: 6%">
-<col style="width: 43%">
+<col style="width: 42%">
 <col style="width: 4%">
 <col style="width: 4%">
 <col style="width: 5%">
@@ -1947,6 +2094,26 @@ Warning
 <td style="text-align: left;">—</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">run</td>
+<td style="text-align: right;">-0.1630</td>
+<td style="text-align: right;">-0.1420</td>
+<td style="text-align: right;">-0.00644</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">slopehunter</td>
+<td style="text-align: left;">NOT RUN: b_SH not applied (not identified: raw r = 0.034, sign agreement 0.509)</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">AD: Bellenguez 2022 (proxy + clinical)</td>
 <td style="text-align: left;">none</td>
@@ -1981,6 +2148,26 @@ Warning
 <td style="text-align: left;">AD: Kunkle 2019 IGAP (clinical only)</td>
 <td style="text-align: left;">slopehunter</td>
 <td style="text-align: left;">NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499)</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: right;">NA</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">none</td>
+<td style="text-align: left;">run</td>
+<td style="text-align: right;">-0.0535</td>
+<td style="text-align: right;">-0.0516</td>
+<td style="text-align: right;">-0.00491</td>
+<td style="text-align: left;">—</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">AD: Uffelmann 2026, new cohorts (independent)</td>
+<td style="text-align: left;">slopehunter</td>
+<td style="text-align: left;">NOT RUN: b_SH not applied (not identified: raw r = 0.034, sign agreement 0.509)</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
 <td style="text-align: right;">NA</td>
@@ -2064,18 +2251,21 @@ Warning
 <span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>} <span class="cf">else</span> {</span>
 <span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggplot</span>(plot_df, <span class="fu">aes</span>(b, arm, <span class="at">colour =</span> estimand)) <span class="sc">+</span></span>
 <span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_vline</span>(<span class="at">xintercept =</span> <span class="dv">0</span>, <span class="at">linetype =</span> <span class="dv">2</span>, <span class="at">colour =</span> <span class="st">"grey50"</span>) <span class="sc">+</span></span>
-<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> mc_lo, <span class="at">xmax =</span> mc_hi), <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>)) <span class="sc">+</span></span>
-<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">total =</span> <span class="st">"grey40"</span>, <span class="at">direct =</span> <span class="st">"#00274c"</span>, <span class="at">indirect =</span> <span class="st">"#ffcb05"</span>)) <span class="sc">+</span></span>
-<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>triad_id, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
-<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"effect on AD (log-OR per unit exposure), 95% Monte Carlo interval"</span>, <span class="at">y =</span> <span class="cn">NULL</span>,</span>
-<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>         <span class="at">colour =</span> <span class="cn">NULL</span>, <span class="at">title =</span> <span class="st">"Total, direct and indirect effects by triad and outcome arm"</span>) <span class="sc">+</span></span>
-<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
-<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a>    <span class="fu">geom_pointrange</span>(<span class="fu">aes</span>(<span class="at">xmin =</span> mc_lo, <span class="at">xmax =</span> mc_hi), <span class="at">position =</span> <span class="fu">position_dodge</span>(<span class="at">width =</span> <span class="fl">0.6</span>),</span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>                    <span class="at">linewidth =</span> <span class="fl">0.9</span>, <span class="at">size =</span> <span class="fl">0.6</span>) <span class="sc">+</span></span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Colours follow the DAGs (mr_dags.qmd): direct = the navy X -&gt; AD arrow, indirect = the</span></span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>    <span class="co"># Arboretum-blue mediator box, total = the maize exposure box.</span></span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a>    <span class="fu">scale_colour_manual</span>(<span class="at">values =</span> <span class="fu">c</span>(<span class="at">total =</span> <span class="st">"#FFCB05"</span>, <span class="at">direct =</span> <span class="st">"#00274C"</span>, <span class="at">indirect =</span> <span class="st">"#2F65A7"</span>)) <span class="sc">+</span></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>    <span class="fu">facet_wrap</span>(<span class="sc">~</span>triad_id, <span class="at">scales =</span> <span class="st">"free_x"</span>) <span class="sc">+</span></span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a>    <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"effect on AD (log-OR per unit exposure), 95% Monte Carlo interval"</span>, <span class="at">y =</span> <span class="cn">NULL</span>,</span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>         <span class="at">colour =</span> <span class="cn">NULL</span>, <span class="at">title =</span> <span class="st">"Total, direct and indirect effects by triad and outcome arm"</span>) <span class="sc">+</span></span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a>    <span class="fu">theme_minimal</span>(<span class="at">base_size =</span> <span class="dv">12</span>)</span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
 </details>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
-<p><img src="figures/mr_mediation-forest-1.png" class="img-fluid figure-img" width="816"></p>
+<p><img src="figures/mr_mediation-forest-1.png" class="img-fluid figure-img" width="864"></p>
 </figure>
 </div>
 </div>
@@ -2232,6 +2422,30 @@ Warning
 <td style="text-align: left;">lifespan looked up via LD proxy</td>
 </tr>
 <tr class="odd">
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">outcome_table</td>
+<td style="text-align: left;">missing_in_outcome</td>
+<td style="text-align: right;">290</td>
+<td style="text-align: left;">instrument SNPs with no outcome association (after proxy search)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">outcome_table</td>
+<td style="text-align: left;">missing_in_lifespan</td>
+<td style="text-align: right;">45</td>
+<td style="text-align: left;">no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">outcome_table</td>
+<td style="text-align: left;">proxy_used</td>
+<td style="text-align: right;">34</td>
+<td style="text-align: left;">lifespan looked up via LD proxy</td>
+</tr>
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">harmonise_total</td>
@@ -2239,7 +2453,7 @@ Warning
 <td style="text-align: right;">22</td>
 <td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">harmonise_mvmr</td>
@@ -2247,7 +2461,7 @@ Warning
 <td style="text-align: right;">5</td>
 <td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_total</td>
@@ -2255,7 +2469,7 @@ Warning
 <td style="text-align: right;">26</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
@@ -2263,7 +2477,7 @@ Warning
 <td style="text-align: right;">25</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">harmonise_xm</td>
@@ -2271,7 +2485,7 @@ Warning
 <td style="text-align: right;">21</td>
 <td style="text-align: left;">X instruments lost in the mediator GWAS</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">harmonise_xm</td>
@@ -2279,7 +2493,7 @@ Warning
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">mediator looked up via LD proxy</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">harmonise_total</td>
@@ -2287,7 +2501,7 @@ Warning
 <td style="text-align: right;">22</td>
 <td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">harmonise_mvmr</td>
@@ -2295,7 +2509,7 @@ Warning
 <td style="text-align: right;">5</td>
 <td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_total</td>
@@ -2303,7 +2517,7 @@ Warning
 <td style="text-align: right;">26</td>
 <td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
@@ -2311,7 +2525,7 @@ Warning
 <td style="text-align: right;">25</td>
 <td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">harmonise_xm</td>
@@ -2319,7 +2533,7 @@ Warning
 <td style="text-align: right;">21</td>
 <td style="text-align: left;">X instruments lost in the mediator GWAS</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">harmonise_xm</td>
@@ -2327,7 +2541,7 @@ Warning
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">mediator looked up via LD proxy</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">harmonise_total</td>
@@ -2335,7 +2549,7 @@ Warning
 <td style="text-align: right;">85</td>
 <td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">harmonise_mvmr</td>
@@ -2343,7 +2557,7 @@ Warning
 <td style="text-align: right;">65</td>
 <td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">slopehunter_total</td>
@@ -2351,7 +2565,7 @@ Warning
 <td style="text-align: right;">21</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
@@ -2359,7 +2573,7 @@ Warning
 <td style="text-align: right;">21</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">harmonise_xm</td>
@@ -2367,7 +2581,7 @@ Warning
 <td style="text-align: right;">21</td>
 <td style="text-align: left;">X instruments lost in the mediator GWAS</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">ffm_2hglu</td>
 <td style="text-align: left;">NA</td>
 <td style="text-align: left;">harmonise_xm</td>
@@ -2375,6 +2589,94 @@ Warning
 <td style="text-align: right;">1</td>
 <td style="text-align: left;">mediator looked up via LD proxy</td>
 </tr>
+<tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">harmonise_total</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">112</td>
+<td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">harmonise_mvmr</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">83</td>
+<td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">slopehunter_total</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">22</td>
+<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">slopehunter_mvmr</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">harmonise_xm</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">21</td>
+<td style="text-align: left;">X instruments lost in the mediator GWAS</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">ffm_2hglu</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">harmonise_xm</td>
+<td style="text-align: left;">proxy_used</td>
+<td style="text-align: right;">1</td>
+<td style="text-align: left;">mediator looked up via LD proxy</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">ebi-a-GCST90027158</td>
+<td style="text-align: left;">harmonise_total</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">79</td>
+<td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">ebi-a-GCST90027158</td>
+<td style="text-align: left;">harmonise_mvmr</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">15</td>
+<td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">ebi-a-GCST90027158</td>
+<td style="text-align: left;">slopehunter_total</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">38</td>
+<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">ebi-a-GCST90027158</td>
+<td style="text-align: left;">slopehunter_mvmr</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">29</td>
+<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">harmonise_xm</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">74</td>
+<td style="text-align: left;">X instruments lost in the mediator GWAS</td>
+</tr>
 <tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">ebi-a-GCST90027158</td>
@@ -2397,7 +2699,7 @@ Warning
 <td style="text-align: left;">slopehunter_total</td>
 <td style="text-align: left;">dropped</td>
 <td style="text-align: right;">38</td>
-<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+<td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
 </tr>
 <tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
@@ -2405,7 +2707,7 @@ Warning
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
 <td style="text-align: right;">29</td>
-<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+<td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
 </tr>
 <tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
@@ -2416,46 +2718,6 @@ Warning
 <td style="text-align: left;">X instruments lost in the mediator GWAS</td>
 </tr>
 <tr class="even">
-<td style="text-align: left;">leanmass_2hglu</td>
-<td style="text-align: left;">ebi-a-GCST90027158</td>
-<td style="text-align: left;">harmonise_total</td>
-<td style="text-align: left;">dropped</td>
-<td style="text-align: right;">79</td>
-<td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">leanmass_2hglu</td>
-<td style="text-align: left;">ebi-a-GCST90027158</td>
-<td style="text-align: left;">harmonise_mvmr</td>
-<td style="text-align: left;">dropped</td>
-<td style="text-align: right;">15</td>
-<td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">leanmass_2hglu</td>
-<td style="text-align: left;">ebi-a-GCST90027158</td>
-<td style="text-align: left;">slopehunter_total</td>
-<td style="text-align: left;">dropped</td>
-<td style="text-align: right;">38</td>
-<td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
-</tr>
-<tr class="odd">
-<td style="text-align: left;">leanmass_2hglu</td>
-<td style="text-align: left;">ebi-a-GCST90027158</td>
-<td style="text-align: left;">slopehunter_mvmr</td>
-<td style="text-align: left;">dropped</td>
-<td style="text-align: right;">29</td>
-<td style="text-align: left;">no lifespan effect; dropped from the SlopeHunter-adjusted arm</td>
-</tr>
-<tr class="even">
-<td style="text-align: left;">leanmass_2hglu</td>
-<td style="text-align: left;">NA</td>
-<td style="text-align: left;">harmonise_xm</td>
-<td style="text-align: left;">dropped</td>
-<td style="text-align: right;">74</td>
-<td style="text-align: left;">X instruments lost in the mediator GWAS</td>
-</tr>
-<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">harmonise_total</td>
@@ -2463,7 +2725,7 @@ Warning
 <td style="text-align: right;">159</td>
 <td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">harmonise_mvmr</td>
@@ -2471,7 +2733,7 @@ Warning
 <td style="text-align: right;">78</td>
 <td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">slopehunter_total</td>
@@ -2479,12 +2741,52 @@ Warning
 <td style="text-align: right;">28</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td style="text-align: left;">leanmass_2hglu</td>
 <td style="text-align: left;">ieu-b-2</td>
 <td style="text-align: left;">slopehunter_mvmr</td>
 <td style="text-align: left;">dropped</td>
 <td style="text-align: right;">26</td>
+<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">NA</td>
+<td style="text-align: left;">harmonise_xm</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">74</td>
+<td style="text-align: left;">X instruments lost in the mediator GWAS</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">harmonise_total</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">189</td>
+<td style="text-align: left;">X instruments lost aligning to the outcome (missing or ambiguous palindrome)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">harmonise_mvmr</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">110</td>
+<td style="text-align: left;">re-clumped X u M SNPs lost aligning to the outcome</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">slopehunter_total</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">28</td>
+<td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">leanmass_2hglu</td>
+<td style="text-align: left;">PGC-ALZ3-newc-EUR</td>
+<td style="text-align: left;">slopehunter_mvmr</td>
+<td style="text-align: left;">dropped</td>
+<td style="text-align: right;">24</td>
 <td style="text-align: left;">no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)</td>
 </tr>
 <tr class="odd">

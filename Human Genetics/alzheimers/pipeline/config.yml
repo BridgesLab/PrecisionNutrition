@@ -149,6 +149,15 @@ datasets:
     type: binary
     cohorts: [EADB, IGAP, UKB, MVP, FinnGen]                             # overlaps Bellenguez; TO CONFIRM
     adjusted_for: null
+  ad_uffelmann_all:
+    id: PGC-ALZ3-combined-EUR
+    label: "AD: Uffelmann 2026, all cohorts (clinical + proxy)"
+    source: local_tsv
+    file: data/cache/sumstats/AD_uffelmann_all_harmonised.tsv.gz
+    sample_size: 354310
+    type: binary
+    cohorts: [EADB, IGAP, UKB, MVP, FinnGen]                             # contains most of Bellenguez
+    adjusted_for: null
   lifespan:
     id: ebi-a-GCST006697
     label: "Parental lifespan (Martingale residual; + = shorter life)"
@@ -194,6 +203,7 @@ contrast:
     # Post-freeze (2026-10-29): Uffelmann 2026. SlopeHunter is not identified for either file, so raw only.
     - {outcome: ad_uffelmann_newc, arm: raw,     role: replication}
     - {outcome: ad_uffelmann_cc,   arm: raw,     role: sensitivity}
+    - {outcome: ad_uffelmann_all,  arm: raw,     role: sensitivity}   # largest; not independent of Bellenguez
   apoe: {chr: "19", start: 44900000, end: 45920000}
   sd_mmol: {fg: 0.65, glu2h: 1.85}          # midpoints of the plan's ranges; TO CONFIRM from the MAGIC cohorts
   # restrict_to_index: candidates limited to Suzuki's index variants, so every instrument has a cluster.
@@ -270,6 +280,11 @@ slopehunter:
       fit_set: "excl_APOE (PRIMARY)"
       trusted: false
       reason: "not identified: raw r = 0.047, sign agreement 0.514"
+    ad_uffelmann_all:
+      fits_csv: R/fits/uffelmann_all_lifespan_slopehunter_fits.csv
+      fit_set: "excl_APOE (PRIMARY)"
+      trusted: false
+      reason: "weak: raw r = 0.115, sign agreement 0.515; b_SH 0.35 within permutation null (median 0.31)"
   null_permutations: 8
 
 # ---- instruments and methods ------------------------------------------------------------------

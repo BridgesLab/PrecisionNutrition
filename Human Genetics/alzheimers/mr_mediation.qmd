@@ -101,9 +101,14 @@ datasets <- tibble::tribble(
   "ebi-a-GCST90002227", "2-h glucose (MAGIC, Chen 2021, EUR)",    "mediator",  "BMI",                    "Chen 2021 Nat Genet (PMID 34059833): 'FG, 2hGlu and FI analyses were adjusted for BMI'",
   "ebi-a-GCST90027158", "AD: Bellenguez 2022 (proxy + clinical)", "outcome",   NA,                       NA,
   "ieu-b-2",            "AD: Kunkle 2019 IGAP (clinical only)",   "outcome",   NA,                       NA,
+  "PGC-ALZ3-newc-EUR",  "AD: Uffelmann 2026, new cohorts (independent)", "outcome", NA,                 NA,
   "ebi-a-GCST006697",   "Parental lifespan (Pilling, Martingale)","selection", NA,                       NA
 )
 LIFESPAN_ID <- "ebi-a-GCST006697"   # selection axis; MUST match the axis b_SH was fit on (Step 2)
+# Outcomes not on OpenGWAS, read from local harmonised files (R/prep_uffelmann.R; gitignored).
+# Added 2026-10-30 as the replication cohort: Uffelmann 2026 cohorts new to PGC-ALZ, no overlap
+# with Bellenguez. Instruments missing from the file are dropped (no LD-proxy search).
+options(mrmed.local_gwas = list(`PGC-ALZ3-newc-EUR` = "data/cache/sumstats/AD_uffelmann_newc_harmonised.tsv.gz"))
 ```
 
 ::: {.callout-warning}
@@ -147,7 +152,10 @@ triads <- tibble::tribble(
   # (the mediator-side BMI adjustment of 2hGlu remains). Not in Step 2; IVW-MRE by analogy with
   # lean mass (pipeline: heterogeneous, Q p ~ 1e-13 / 1e-4, no directional pleiotropy flagged).
   "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ebi-a-GCST90027158", "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "slopehunter",       "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL.",
-  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL.",
+  # Replication outcome (2026-10-30): SlopeHunter not identified for this file, so "none" is primary.
+  "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "PGC-ALZ3-newc-EUR",  "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "Replication (Uffelmann new cohorts). Methods as for Bellenguez.",
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "PGC-ALZ3-newc-EUR",  "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "Replication (Uffelmann new cohorts). Methods as for Bellenguez."
 ) |>
   mutate(
     # Pre-specified hypothesis signs (lean mass lowers glucose, glucose raises AD, lean mass
@@ -164,6 +172,10 @@ triads <- tibble::tribble(
       triad_id == "leanmass_2hglu" & outcome_id == "ieu-b-2"            ~ 0.10 * 0.1299,   # 0.0130
       triad_id == "ffm_2hglu"      & outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.2497,   # 0.0250
       triad_id == "ffm_2hglu"      & outcome_id == "ieu-b-2"            ~ 0.10 * 0.2356,   # 0.0236
+      # Uffelmann new cohorts: naive IVW-MRE on the local file, fixed 2026-10-30 before the
+      # mediation arms were run (lean mass -0.0539, fat-free mass -0.1605).
+      triad_id == "leanmass_2hglu" & outcome_id == "PGC-ALZ3-newc-EUR"  ~ 0.10 * 0.0539,   # 0.0054
+      triad_id == "ffm_2hglu"      & outcome_id == "PGC-ALZ3-newc-EUR"  ~ 0.10 * 0.1605,   # 0.0161
       TRUE                                                              ~ NA_real_)
   )
 
@@ -181,7 +193,8 @@ triads <- tibble::tribble(
 bsh_sources <- tibble::tribble(
   ~ad_id,               ~fits_csv,                                          ~fit_set,              ~trusted, ~reason,                                                  ~boot_rds,
   "ebi-a-GCST90027158", "smoking/results/indexevent_slopehunter_fits.csv",  "excl_APOE (PRIMARY)", TRUE,     "validated in the smoking pipeline",                      NA_character_,
-  "ieu-b-2",            "R/fits/kunkle_lifespan_slopehunter_fits.csv",      "excl_APOE (PRIMARY)", FALSE,    "not identified: raw r = -0.0008, sign agreement 0.499",  NA_character_
+  "ieu-b-2",            "R/fits/kunkle_lifespan_slopehunter_fits.csv",      "excl_APOE (PRIMARY)", FALSE,    "not identified: raw r = -0.0008, sign agreement 0.499",  NA_character_,
+  "PGC-ALZ3-newc-EUR",  "R/fits/uffelmann_newc_lifespan_slopehunter_fits.csv", "excl_APOE (PRIMARY)", FALSE, "not identified: raw r = 0.034, sign agreement 0.509",    NA_character_
 )
 
 SETTINGS <- list(
@@ -254,7 +267,7 @@ European-only. Covariate adjustment is not exposed by the API, so it is taken fr
 `datasets` table above (with its source) and turned into a per-triad flag.
 
 ```{r gwasinfo}
-info <- ieugwasr::gwasinfo(datasets$id)
+info <- ieugwasr::gwasinfo(setdiff(datasets$id, names(getOption("mrmed.local_gwas", list()))))
 info |>
   select(any_of(c("id", "trait", "author", "year", "pmid", "population", "sample_size",
                   "ncase", "ncontrol", "unit"))) |>
@@ -707,7 +720,7 @@ results |>
 
 ## Forest plot
 
-```{r forest, fig.width=8.5, fig.height=5}
+```{r forest, fig.width=9, fig.height=6.5}
 plot_df <- results |>
   filter(status == "run") |>
   select(triad_id, outcome, adjustment, primary,
@@ -723,8 +736,11 @@ if (nrow(plot_df) == 0) {
 } else {
   ggplot(plot_df, aes(b, arm, colour = estimand)) +
     geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
-    geom_pointrange(aes(xmin = mc_lo, xmax = mc_hi), position = position_dodge(width = 0.6)) +
-    scale_colour_manual(values = c(total = "grey40", direct = "#00274c", indirect = "#ffcb05")) +
+    geom_pointrange(aes(xmin = mc_lo, xmax = mc_hi), position = position_dodge(width = 0.6),
+                    linewidth = 0.9, size = 0.6) +
+    # Colours follow the DAGs (mr_dags.qmd): direct = the navy X -> AD arrow, indirect = the
+    # Arboretum-blue mediator box, total = the maize exposure box.
+    scale_colour_manual(values = c(total = "#FFCB05", direct = "#00274C", indirect = "#2F65A7")) +
     facet_wrap(~triad_id, scales = "free_x") +
     labs(x = "effect on AD (log-OR per unit exposure), 95% Monte Carlo interval", y = NULL,
          colour = NULL, title = "Total, direct and indirect effects by triad and outcome arm") +

@@ -118,9 +118,14 @@ datasets <- tibble::tribble(
   "ebi-a-GCST90002227", "2-h glucose (MAGIC, Chen 2021, EUR)",    "mediator",  "BMI",                    "Chen 2021 Nat Genet (PMID 34059833): 'FG, 2hGlu and FI analyses were adjusted for BMI'",
   "ebi-a-GCST90027158", "AD: Bellenguez 2022 (proxy + clinical)", "outcome",   NA,                       NA,
   "ieu-b-2",            "AD: Kunkle 2019 IGAP (clinical only)",   "outcome",   NA,                       NA,
+  "PGC-ALZ3-newc-EUR",  "AD: Uffelmann 2026, new cohorts (independent)", "outcome", NA,                 NA,
   "ebi-a-GCST006697",   "Parental lifespan (Pilling, Martingale)","selection", NA,                       NA
 )
 LIFESPAN_ID <- "ebi-a-GCST006697"   # selection axis; MUST match the axis b_SH was fit on (Step 2)
+# Outcomes not on OpenGWAS, read from local harmonised files (R/prep_uffelmann.R; gitignored).
+# Added 2026-10-30 as the replication cohort: Uffelmann 2026 cohorts new to PGC-ALZ, no overlap
+# with Bellenguez. Instruments missing from the file are dropped (no LD-proxy search).
+options(mrmed.local_gwas = list(`PGC-ALZ3-newc-EUR` = "data/cache/sumstats/AD_uffelmann_newc_harmonised.tsv.gz"))
 ```
 :::
 
@@ -169,7 +174,10 @@ triads <- tibble::tribble(
   # (the mediator-side BMI adjustment of 2hGlu remains). Not in Step 2; IVW-MRE by analogy with
   # lean mass (pipeline: heterogeneous, Q p ~ 1e-13 / 1e-4, no directional pleiotropy flagged).
   "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ebi-a-GCST90027158", "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "slopehunter",       "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL.",
-  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL."
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "ieu-b-2",            "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "XY: IVW-MRE by analogy with lean mass (not in Step 2). XM: PROVISIONAL.",
+  # Replication outcome (2026-10-30): SlopeHunter not identified for this file, so "none" is primary.
+  "leanmass_2hglu", "ebi-a-GCST90000025", "ebi-a-GCST90002227", "PGC-ALZ3-newc-EUR",  "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "Replication (Uffelmann new cohorts). Methods as for Bellenguez.",
+  "ffm_2hglu",      "ukb-b-13354",        "ebi-a-GCST90002227", "PGC-ALZ3-newc-EUR",  "ivw_mre",  "ivw_mre",        "mv_ivw_mre",  "none",              "trait",        list(),         "Replication (Uffelmann new cohorts). Methods as for Bellenguez."
 ) |>
   mutate(
     # Pre-specified hypothesis signs (lean mass lowers glucose, glucose raises AD, lean mass
@@ -186,6 +194,10 @@ triads <- tibble::tribble(
       triad_id == "leanmass_2hglu" & outcome_id == "ieu-b-2"            ~ 0.10 * 0.1299,   # 0.0130
       triad_id == "ffm_2hglu"      & outcome_id == "ebi-a-GCST90027158" ~ 0.10 * 0.2497,   # 0.0250
       triad_id == "ffm_2hglu"      & outcome_id == "ieu-b-2"            ~ 0.10 * 0.2356,   # 0.0236
+      # Uffelmann new cohorts: naive IVW-MRE on the local file, fixed 2026-10-30 before the
+      # mediation arms were run (lean mass -0.0539, fat-free mass -0.1605).
+      triad_id == "leanmass_2hglu" & outcome_id == "PGC-ALZ3-newc-EUR"  ~ 0.10 * 0.0539,   # 0.0054
+      triad_id == "ffm_2hglu"      & outcome_id == "PGC-ALZ3-newc-EUR"  ~ 0.10 * 0.1605,   # 0.0161
       TRUE                                                              ~ NA_real_)
   )
 
@@ -208,7 +220,8 @@ triads <- tibble::tribble(
 bsh_sources <- tibble::tribble(
   ~ad_id,               ~fits_csv,                                          ~fit_set,              ~trusted, ~reason,                                                  ~boot_rds,
   "ebi-a-GCST90027158", "smoking/results/indexevent_slopehunter_fits.csv",  "excl_APOE (PRIMARY)", TRUE,     "validated in the smoking pipeline",                      NA_character_,
-  "ieu-b-2",            "R/fits/kunkle_lifespan_slopehunter_fits.csv",      "excl_APOE (PRIMARY)", FALSE,    "not identified: raw r = -0.0008, sign agreement 0.499",  NA_character_
+  "ieu-b-2",            "R/fits/kunkle_lifespan_slopehunter_fits.csv",      "excl_APOE (PRIMARY)", FALSE,    "not identified: raw r = -0.0008, sign agreement 0.499",  NA_character_,
+  "PGC-ALZ3-newc-EUR",  "R/fits/uffelmann_newc_lifespan_slopehunter_fits.csv", "excl_APOE (PRIMARY)", FALSE, "not identified: raw r = 0.034, sign agreement 0.509",    NA_character_
 )
 
 SETTINGS <- list(
@@ -291,7 +304,7 @@ European-only. Covariate adjustment is not exposed by the API, so it is taken fr
 ::: {.cell}
 
 ```{.r .cell-code}
-info <- ieugwasr::gwasinfo(datasets$id)
+info <- ieugwasr::gwasinfo(setdiff(datasets$id, names(getOption("mrmed.local_gwas", list()))))
 info |>
   select(any_of(c("id", "trait", "author", "year", "pmid", "population", "sample_size",
                   "ncase", "ncontrol", "unit"))) |>
@@ -558,6 +571,7 @@ Table: Outcome-table coverage. SNPs without lifespan are dropped from adjusted a
 |:------------------|----------:|------------:|-------------:|
 |ebi-a-GCST90027158 |       1186|         1125|          1031|
 |ieu-b-2            |       1186|         1217|           903|
+|PGC-ALZ3-newc-EUR  |       1186|          896|           851|
 
 
 :::
@@ -601,6 +615,7 @@ Table: Selection slope per AD outcome (from Step 2).
 |:------------------|------:|------:|:-------|:-----------------------------------------------------|:--------------|
 |ebi-a-GCST90027158 | -0.944| 0.0701|yes     |validated in the smoking pipeline                     |normal approx. |
 |ieu-b-2            |  1.100| 0.1120|NO      |not identified: raw r = -0.0008, sign agreement 0.499 |normal approx. |
+|PGC-ALZ3-newc-EUR  |  0.505| 0.2940|NO      |not identified: raw r = 0.034, sign agreement 0.509   |normal approx. |
 
 
 :::
@@ -707,12 +722,14 @@ results |>
 
 Table: Primary analysis (per-outcome adjustment from the config). Point estimate with 95% Monte Carlo percentile interval. % mediated is shown only when every gate passes.
 
-|triad_id       |outcome                                |adjustment  |status |total                      |X→M                        |M→Y&#124;X                |direct                     |indirect                   |indirect SE (MC / delta) |% mediated | FDR indirect|gates                                                                    |collider_risk                                                           |
-|:--------------|:--------------------------------------|:-----------|:------|:--------------------------|:--------------------------|:-------------------------|:--------------------------|:--------------------------|:------------------------|:----------|------------:|:------------------------------------------------------------------------|:-----------------------------------------------------------------------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1927 [-0.2698, -0.1131] |-0.3300 [-0.4028, -0.2591] |0.0650 [-0.0040, 0.1345]  |-0.1440 [-0.2292, -0.0582] |-0.0215 [-0.0465, 0.0013]  |0.0122 / 0.0118          |—          |        0.064|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.2604 [-0.3999, -0.1217] |-0.3300 [-0.4014, -0.2578] |0.0121 [-0.1086, 0.1301]  |-0.2000 [-0.3456, -0.0529] |-0.0040 [-0.0438, 0.0360]  |0.0204 / 0.0204          |—          |        0.850|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run    |-0.1045 [-0.1477, -0.0596] |-0.1692 [-0.2151, -0.1245] |0.0731 [0.0145, 0.1336]   |-0.0922 [-0.1383, -0.0445] |-0.0124 [-0.0244, -0.0024] |0.0056 / 0.0055          |—          |        0.035|conditional F <= 10                                                      |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run    |-0.1294 [-0.2104, -0.0516] |-0.1692 [-0.2130, -0.1243] |-0.0130 [-0.1278, 0.0992] |-0.1270 [-0.2141, -0.0450] |0.0022 [-0.0166, 0.0219]   |0.0098 / 0.0098          |—          |        0.850|conditional F <= 10; indirect/total discordant; proportion outside [0,1] |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|triad_id       |outcome                                       |adjustment  |status |total                      |X→M                        |M→Y&#124;X                |direct                     |indirect                   |indirect SE (MC / delta) |% mediated | FDR indirect|gates                                                                    |collider_risk                                                           |
+|:--------------|:---------------------------------------------|:-----------|:------|:--------------------------|:--------------------------|:-------------------------|:--------------------------|:--------------------------|:------------------------|:----------|------------:|:------------------------------------------------------------------------|:-----------------------------------------------------------------------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |run    |-0.1927 [-0.2698, -0.1131] |-0.3300 [-0.4028, -0.2591] |0.0650 [-0.0040, 0.1345]  |-0.1440 [-0.2292, -0.0582] |-0.0215 [-0.0465, 0.0013]  |0.0122 / 0.0118          |—          |        0.064|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)          |none        |run    |-0.2604 [-0.3999, -0.1217] |-0.3300 [-0.4014, -0.2578] |0.0121 [-0.1086, 0.1301]  |-0.2000 [-0.3456, -0.0529] |-0.0040 [-0.0438, 0.0360]  |0.0204 / 0.0204          |—          |        0.850|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
+|ffm_2hglu      |AD: Uffelmann 2026, new cohorts (independent) |none        |run    |-0.1635 [-0.2587, -0.0686] |-0.3300 [-0.4026, -0.2576] |0.0195 [-0.0622, 0.1041]  |-0.1416 [-0.2446, -0.0371] |-0.0064 [-0.0351, 0.0203]  |0.0142 / 0.0138          |—          |        0.850|conditional F <= 10                                                      |COLLIDER RISK: M adjusted for BMI                                       |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |run    |-0.1045 [-0.1477, -0.0596] |-0.1692 [-0.2151, -0.1245] |0.0731 [0.0145, 0.1336]   |-0.0922 [-0.1383, -0.0445] |-0.0124 [-0.0244, -0.0024] |0.0056 / 0.0055          |—          |        0.035|conditional F <= 10                                                      |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)          |none        |run    |-0.1294 [-0.2104, -0.0516] |-0.1692 [-0.2130, -0.1243] |-0.0130 [-0.1278, 0.0992] |-0.1270 [-0.2141, -0.0450] |0.0022 [-0.0166, 0.0219]   |0.0098 / 0.0098          |—          |        0.850|conditional F <= 10; indirect/total discordant; proportion outside [0,1] |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
+|leanmass_2hglu |AD: Uffelmann 2026, new cohorts (independent) |none        |run    |-0.0535 [-0.1067, 0.0000]  |-0.1692 [-0.2144, -0.1248] |0.0290 [-0.0428, 0.1013]  |-0.0516 [-0.1091, 0.0066]  |-0.0049 [-0.0178, 0.0073]  |0.0064 / 0.0064          |—          |        0.840|conditional F <= 10; total CI includes 0                                 |COLLIDER RISK: X adjusted for appendicular fat mass; M adjusted for BMI |
 
 
 :::
@@ -754,14 +771,16 @@ results |>
 
 Table: Gate outcomes for every arm that ran.
 
-|triad_id       |outcome                                |adjustment  |primary | cond_F_x| cond_F_m|gate_condF |gate_total_ci |gate_sign_concordant |flag_direct_opposite |flag_prop_outside_01 |equivalence       |hypothesis_consistent |gate_summary                                                             |
-|:--------------|:--------------------------------------|:-----------|:-------|--------:|--------:|:----------|:-------------|:--------------------|:--------------------|:--------------------|:-----------------|:---------------------|:------------------------------------------------------------------------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     20.7|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     20.7|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     26.1|      2.4|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |FALSE   |     29.3|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |TRUE    |     29.3|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |indirect non-zero |TRUE                  |conditional F <= 10                                                      |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |TRUE    |     39.1|      2.4|FALSE      |TRUE          |FALSE                |FALSE                |TRUE                 |inconclusive      |FALSE                 |conditional F <= 10; indirect/total discordant; proportion outside [0,1] |
+|triad_id       |outcome                                       |adjustment  |primary | cond_F_x| cond_F_m|gate_condF |gate_total_ci |gate_sign_concordant |flag_direct_opposite |flag_prop_outside_01 |equivalence       |hypothesis_consistent |gate_summary                                                             |
+|:--------------|:---------------------------------------------|:-----------|:-------|--------:|--------:|:----------|:-------------|:--------------------|:--------------------|:--------------------|:-----------------|:---------------------|:------------------------------------------------------------------------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |none        |FALSE   |     20.7|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |TRUE    |     20.7|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)          |none        |TRUE    |     26.1|      2.4|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|ffm_2hglu      |AD: Uffelmann 2026, new cohorts (independent) |none        |TRUE    |     28.1|      2.8|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |none        |FALSE   |     29.3|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10                                                      |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |TRUE    |     29.3|      2.6|FALSE      |TRUE          |TRUE                 |FALSE                |FALSE                |indirect non-zero |TRUE                  |conditional F <= 10                                                      |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)          |none        |TRUE    |     39.1|      2.4|FALSE      |TRUE          |FALSE                |FALSE                |TRUE                 |inconclusive      |FALSE                 |conditional F <= 10; indirect/total discordant; proportion outside [0,1] |
+|leanmass_2hglu |AD: Uffelmann 2026, new cohorts (independent) |none        |TRUE    |     45.2|      2.8|FALSE      |FALSE         |TRUE                 |FALSE                |FALSE                |inconclusive      |TRUE                  |conditional F <= 10; total CI includes 0                                 |
 
 
 :::
@@ -794,14 +813,16 @@ results |>
 
 Table: Decomposition consistency.
 
-|triad_id       |outcome                                |adjustment  |   total| direct + indirect| difference method (total − direct)| product method (indirect)| gap / SE(total)| r(total, direct)|
-|:--------------|:--------------------------------------|:-----------|-------:|-----------------:|----------------------------------:|-------------------------:|---------------:|----------------:|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.2470|            -0.223|                           -0.04110|                  -0.01720|            0.61|             0.92|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1930|            -0.165|                           -0.04870|                  -0.02150|            0.68|             0.91|
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.2600|            -0.204|                           -0.06040|                  -0.00401|            0.82|             0.93|
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        | -0.0988|            -0.100|                           -0.00838|                  -0.00980|           -0.06|             0.93|
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter | -0.1040|            -0.105|                           -0.01220|                  -0.01240|           -0.01|             0.93|
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        | -0.1290|            -0.125|                           -0.00244|                   0.00219|            0.11|             0.94|
+|triad_id       |outcome                                       |adjustment  |   total| direct + indirect| difference method (total − direct)| product method (indirect)| gap / SE(total)| r(total, direct)|
+|:--------------|:---------------------------------------------|:-----------|-------:|-----------------:|----------------------------------:|-------------------------:|---------------:|----------------:|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |none        | -0.2470|           -0.2230|                           -0.04110|                  -0.01720|            0.61|             0.92|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter | -0.1930|           -0.1650|                           -0.04870|                  -0.02150|            0.68|             0.91|
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)          |none        | -0.2600|           -0.2040|                           -0.06040|                  -0.00401|            0.82|             0.93|
+|ffm_2hglu      |AD: Uffelmann 2026, new cohorts (independent) |none        | -0.1630|           -0.1480|                           -0.02180|                  -0.00644|            0.32|             0.92|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |none        | -0.0988|           -0.1000|                           -0.00838|                  -0.00980|           -0.06|             0.93|
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter | -0.1040|           -0.1050|                           -0.01220|                  -0.01240|           -0.01|             0.93|
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)          |none        | -0.1290|           -0.1250|                           -0.00244|                   0.00219|            0.11|             0.94|
+|leanmass_2hglu |AD: Uffelmann 2026, new cohorts (independent) |none        | -0.0535|           -0.0565|                           -0.00191|                  -0.00491|           -0.11|             0.93|
 
 
 :::
@@ -833,14 +854,16 @@ results |>
 
 Table: Conditional F (gencov =  0 ) and Sanderson-Windmeijer Q, per arm. SNP counts are after SlopeHunter SNP loss. A significant Q indicates pleiotropy or heterogeneity beyond what X and M explain.
 
-|triad_id       |outcome                                |adjustment  | n_snp_total| n_snp_xm| n_snp_mvmr| n_mvmr_x_inst| n_mvmr_m_inst| cond_F_x| cond_F_m| mvmr_Q| mvmr_Q_p|method_total |method_xm |method_mvmr |
-|:--------------|:--------------------------------------|:-----------|-----------:|--------:|----------:|-------------:|-------------:|--------:|--------:|------:|--------:|:------------|:---------|:-----------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |         506|      532|        467|           456|            12|     20.7|      2.6|  693.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         506|      532|        467|           456|            12|     20.7|      2.6|  682.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |         447|      532|        410|           402|             9|     26.1|      2.4|  518.9|  1.4e-04|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |         571|      613|        524|           513|            12|     29.3|      2.6|  776.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |         571|      613|        524|           513|            12|     29.3|      2.6|  744.0|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |         500|      613|        463|           455|             9|     39.1|      2.4|  628.5|  3.0e-07|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|triad_id       |outcome                                       |adjustment  | n_snp_total| n_snp_xm| n_snp_mvmr| n_mvmr_x_inst| n_mvmr_m_inst| cond_F_x| cond_F_m| mvmr_Q| mvmr_Q_p|method_total |method_xm |method_mvmr |
+|:--------------|:---------------------------------------------|:-----------|-----------:|--------:|----------:|-------------:|-------------:|--------:|--------:|------:|--------:|:------------|:---------|:-----------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |none        |         506|      532|        467|           456|            12|     20.7|      2.6|  693.4|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |         506|      532|        467|           456|            12|     20.7|      2.6|  682.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)          |none        |         447|      532|        410|           402|             9|     26.1|      2.4|  518.9|  1.4e-04|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|ffm_2hglu      |AD: Uffelmann 2026, new cohorts (independent) |none        |         419|      532|        390|           380|            11|     28.1|      2.8|  557.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |none        |         571|      613|        524|           513|            12|     29.3|      2.6|  776.8|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |         571|      613|        524|           513|            12|     29.3|      2.6|  744.0|  0.0e+00|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)          |none        |         500|      613|        463|           455|             9|     39.1|      2.4|  628.5|  3.0e-07|ivw_mre      |ivw_mre   |mv_ivw_mre  |
+|leanmass_2hglu |AD: Uffelmann 2026, new cohorts (independent) |none        |         470|      613|        433|           423|            11|     45.2|      2.8|  583.9|  1.0e-06|ivw_mre      |ivw_mre   |mv_ivw_mre  |
 
 
 :::
@@ -875,8 +898,8 @@ Table: X → M: heterogeneity, Egger intercept and MR-PRESSO.
 
 |triad_id       | xm_n_snp| xm_mean_F| xm_ivw_mre_b| xm_ivw_mre_se|  xm_Q_p| xm_egger_intercept| xm_egger_int_p| xm_presso_global_p| xm_presso_n_outlier| xm_presso_b|
 |:--------------|--------:|---------:|------------:|-------------:|-------:|------------------:|--------------:|------------------:|-------------------:|-----------:|
-|leanmass_2hglu |      613|      96.8|       -0.169|        0.0228| 0.0e+00|           8.86e-04|          0.459|              0.001|                   5|      -0.165|
-|ffm_2hglu      |      532|      85.0|       -0.330|        0.0374| 7.8e-06|           7.94e-05|          0.948|              0.001|                   3|      -0.314|
+|leanmass_2hglu |      613|      96.8|       -0.169|        0.0228| 0.0e+00|           8.86e-04|          0.459|              0.001|                   4|      -0.163|
+|ffm_2hglu      |      532|      85.0|       -0.330|        0.0374| 7.8e-06|           7.94e-05|          0.948|              0.001|                   5|      -0.314|
 
 
 :::
@@ -998,16 +1021,20 @@ results |>
 
 Table: All four cells of the grid per triad. NOT RUN cells carry their reason.
 
-|triad_id       |outcome                                |adjustment  |status                                                                            | total_b| direct_b| indirect_b|proportion |
-|:--------------|:--------------------------------------|:-----------|:---------------------------------------------------------------------------------|-------:|--------:|----------:|:----------|
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.2470|  -0.2060|   -0.01720|—          |
-|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1930|  -0.1440|   -0.02150|—          |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.2600|  -0.2000|   -0.00401|—          |
-|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)   |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |none        |run                                                                               | -0.0988|  -0.0905|   -0.00980|—          |
-|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical) |slopehunter |run                                                                               | -0.1040|  -0.0922|   -0.01240|—          |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |none        |run                                                                               | -0.1290|  -0.1270|    0.00219|—          |
-|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)   |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
+|triad_id       |outcome                                       |adjustment  |status                                                                            | total_b| direct_b| indirect_b|proportion |
+|:--------------|:---------------------------------------------|:-----------|:---------------------------------------------------------------------------------|-------:|--------:|----------:|:----------|
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |none        |run                                                                               | -0.2470|  -0.2060|   -0.01720|—          |
+|ffm_2hglu      |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |run                                                                               | -0.1930|  -0.1440|   -0.02150|—          |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)          |none        |run                                                                               | -0.2600|  -0.2000|   -0.00401|—          |
+|ffm_2hglu      |AD: Kunkle 2019 IGAP (clinical only)          |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
+|ffm_2hglu      |AD: Uffelmann 2026, new cohorts (independent) |none        |run                                                                               | -0.1630|  -0.1420|   -0.00644|—          |
+|ffm_2hglu      |AD: Uffelmann 2026, new cohorts (independent) |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = 0.034, sign agreement 0.509)   |      NA|       NA|         NA|—          |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |none        |run                                                                               | -0.0988|  -0.0905|   -0.00980|—          |
+|leanmass_2hglu |AD: Bellenguez 2022 (proxy + clinical)        |slopehunter |run                                                                               | -0.1040|  -0.0922|   -0.01240|—          |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)          |none        |run                                                                               | -0.1290|  -0.1270|    0.00219|—          |
+|leanmass_2hglu |AD: Kunkle 2019 IGAP (clinical only)          |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = -0.0008, sign agreement 0.499) |      NA|       NA|         NA|—          |
+|leanmass_2hglu |AD: Uffelmann 2026, new cohorts (independent) |none        |run                                                                               | -0.0535|  -0.0516|   -0.00491|—          |
+|leanmass_2hglu |AD: Uffelmann 2026, new cohorts (independent) |slopehunter |NOT RUN: b_SH not applied (not identified: raw r = 0.034, sign agreement 0.509)   |      NA|       NA|         NA|—          |
 
 
 :::
@@ -1064,8 +1091,11 @@ if (nrow(plot_df) == 0) {
 } else {
   ggplot(plot_df, aes(b, arm, colour = estimand)) +
     geom_vline(xintercept = 0, linetype = 2, colour = "grey50") +
-    geom_pointrange(aes(xmin = mc_lo, xmax = mc_hi), position = position_dodge(width = 0.6)) +
-    scale_colour_manual(values = c(total = "grey40", direct = "#00274c", indirect = "#ffcb05")) +
+    geom_pointrange(aes(xmin = mc_lo, xmax = mc_hi), position = position_dodge(width = 0.6),
+                    linewidth = 0.9, size = 0.6) +
+    # Colours follow the DAGs (mr_dags.qmd): direct = the navy X -> AD arrow, indirect = the
+    # Arboretum-blue mediator box, total = the maize exposure box.
+    scale_colour_manual(values = c(total = "#FFCB05", direct = "#00274C", indirect = "#2F65A7")) +
     facet_wrap(~triad_id, scales = "free_x") +
     labs(x = "effect on AD (log-OR per unit exposure), 95% Monte Carlo interval", y = NULL,
          colour = NULL, title = "Total, direct and indirect effects by triad and outcome arm") +
@@ -1074,7 +1104,7 @@ if (nrow(plot_df) == 0) {
 ```
 
 ::: {.cell-output-display}
-![](figures/mr_mediation-forest-1.png){width=816}
+![](figures/mr_mediation-forest-1.png){width=864}
 :::
 :::
 
@@ -1144,6 +1174,9 @@ Table: Instrument deviations and dropped SNPs (SNP lists are in the CSV).
 |NA             |ieu-b-2            |outcome_table     |proxy_used          | 107|outcome looked up via LD proxy                                                                                                                                                                                                |
 |NA             |ieu-b-2            |outcome_table     |missing_in_lifespan | 314|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm                                                                              |
 |NA             |ieu-b-2            |outcome_table     |proxy_used          |  55|lifespan looked up via LD proxy                                                                                                                                                                                               |
+|NA             |PGC-ALZ3-newc-EUR  |outcome_table     |missing_in_outcome  | 290|instrument SNPs with no outcome association (after proxy search)                                                                                                                                                              |
+|NA             |PGC-ALZ3-newc-EUR  |outcome_table     |missing_in_lifespan |  45|no ebi-a-GCST006697 association, or dropped aligning lifespan to the outcome alleles; these SNPs are DROPPED from every SlopeHunter-adjusted arm                                                                              |
+|NA             |PGC-ALZ3-newc-EUR  |outcome_table     |proxy_used          |  34|lifespan looked up via LD proxy                                                                                                                                                                                               |
 |ffm_2hglu      |ebi-a-GCST90027158 |harmonise_total   |dropped             |  22|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
 |ffm_2hglu      |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |   5|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
 |ffm_2hglu      |ebi-a-GCST90027158 |slopehunter_total |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
@@ -1162,6 +1195,12 @@ Table: Instrument deviations and dropped SNPs (SNP lists are in the CSV).
 |ffm_2hglu      |ieu-b-2            |slopehunter_mvmr  |dropped             |  21|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
 |ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
 |ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                                                                                               |
+|ffm_2hglu      |PGC-ALZ3-newc-EUR  |harmonise_total   |dropped             | 112|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|ffm_2hglu      |PGC-ALZ3-newc-EUR  |harmonise_mvmr    |dropped             |  83|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|ffm_2hglu      |PGC-ALZ3-newc-EUR  |slopehunter_total |dropped             |  22|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|ffm_2hglu      |PGC-ALZ3-newc-EUR  |slopehunter_mvmr  |dropped             |  23|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|ffm_2hglu      |NA                 |harmonise_xm      |dropped             |  21|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|ffm_2hglu      |NA                 |harmonise_xm      |proxy_used          |   1|mediator looked up via LD proxy                                                                                                                                                                                               |
 |leanmass_2hglu |ebi-a-GCST90027158 |harmonise_total   |dropped             |  79|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
 |leanmass_2hglu |ebi-a-GCST90027158 |harmonise_mvmr    |dropped             |  15|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
 |leanmass_2hglu |ebi-a-GCST90027158 |slopehunter_total |dropped             |  38|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
@@ -1176,6 +1215,11 @@ Table: Instrument deviations and dropped SNPs (SNP lists are in the CSV).
 |leanmass_2hglu |ieu-b-2            |harmonise_mvmr    |dropped             |  78|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
 |leanmass_2hglu |ieu-b-2            |slopehunter_total |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
 |leanmass_2hglu |ieu-b-2            |slopehunter_mvmr  |dropped             |  26|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
+|leanmass_2hglu |PGC-ALZ3-newc-EUR  |harmonise_total   |dropped             | 189|X instruments lost aligning to the outcome (missing or ambiguous palindrome)                                                                                                                                                  |
+|leanmass_2hglu |PGC-ALZ3-newc-EUR  |harmonise_mvmr    |dropped             | 110|re-clumped X u M SNPs lost aligning to the outcome                                                                                                                                                                            |
+|leanmass_2hglu |PGC-ALZ3-newc-EUR  |slopehunter_total |dropped             |  28|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
+|leanmass_2hglu |PGC-ALZ3-newc-EUR  |slopehunter_mvmr  |dropped             |  24|no lifespan effect; dropped from the RAW arm too (common_snp_set = TRUE)                                                                                                                                                      |
 |leanmass_2hglu |NA                 |harmonise_xm      |dropped             |  74|X instruments lost in the mediator GWAS                                                                                                                                                                                       |
 
 

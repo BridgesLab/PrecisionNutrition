@@ -355,6 +355,7 @@ route would add — and that is limited by cis-eQTL sharing across tissues anywa
 | `robust_mr_raps.qmd` | MR-RAPS: random-effects pleiotropy (τ²) + weak-instrument profile score |
 | `robust_mr_mrbee.qmd` | MRBEE: bias-corrected estimating equation; overlap via R_xy |
 | `robust_mr_summary.qmd` | Reconciles robust vs conventional estimates (rationale: `ROBUST_MR.md`) |
+| `mevalonate_pathway_mr_bmd.qmd` | eQTL / LDL-C cis-MR for FDPS, GGPS1, PDSS1, PDSS2, COQ2 → heel eBMD; PDSS2/PDSS1/COQ2 as negative controls |
 | `summary-tables.qmd` | Collates outputs for figures/tables |
 
 See `README.md` for execution order, datasets, and software/reproducibility notes.
@@ -387,6 +388,20 @@ See `README.md` for execution order, datasets, and software/reproducibility note
   *or* from null. MRAID excluded by design (two-sample assumption violated);
   deferred to a UKB → MGI/BioVU design. Rationale and full method matrix in
   `ROBUST_MR.md`.
+- **2026-11-02** — **Mevalonate pathway eQTL MR** (`mevalonate_pathway_mr_bmd.qmd`).
+  Tested FDPS, GGPS1, PDSS1, PDSS2, COQ2 → heel eBMD (Morris 2019) using (a)
+  LDL-C cis-instruments in the FDPS gene window and (b) eQTLGen whole-blood
+  cis-eQTL instruments for all five genes. Instruments queried at tiered thresholds
+  (5e-8 → fallback 1e-5). Findings: no genome-wide significant cis-LDL-C SNPs at
+  FDPS; the three suggestive hits (p ~ 3–10×10⁻⁶) are weak (F ≈ 19–21, β_LDL-C
+  ≈ 0.01 SD), and the apparent Wald ratio of −0.999 (p = 1.4×10⁻⁷) is an artifact
+  where β_outcome ≈ −β_exposure by coincidence of similar-magnitude noisy estimates.
+  eQTL arm: FDPS β = −0.020 (p = 0.17, n = 1 instrument); GGPS1 β = +0.003
+  (p = 0.58, n = 1); PDSS1 / COQ2 returned no instruments even at p < 1e-5.
+  PDSS2 β ≈ 0 (p = 0.98) — clean negative control as expected. FDPS/GGPS1
+  cannot be tested cleanly with current public summary data; the HMGCR-specific
+  drug-target result remains the only reliable mevalonate-pathway genetic estimate.
+  Output: `MR Results - Mevalonate Pathway BMD.csv`, `figures/mevalonate-pathway-bmd-1.png`.
 - **2026-08-12** — Extended §3b with the InSIDE-assumption class: **MR-RAPS**
   (`robust_mr_raps.qmd`) and **MRBEE** (`robust_mr_mrbee.qmd`), both run at 5e-8
   and 5e-5 on the same harmonised substrate. Two revisions to the previous

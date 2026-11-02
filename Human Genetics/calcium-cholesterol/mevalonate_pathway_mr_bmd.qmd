@@ -1,0 +1,354 @@
+---
+title: "Mevalonate Pathway Genes → Heel eBMD: Drug-Target MR (FDPS, GGPS1) and Negative Controls (PDSS1, PDSS2, COQ2)"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+    embed-resources: true
+fig-path: "figures/"
+---
+
+## Rationale
+
+The HMGCR drug-target MR shows β ≈ −0.115 for LDL-C–instrumented HMGCR → heel eBMD, while
+PCSK9 is null (β ≈ −0.014). This implicates the mevalonate pathway (not LDL-C lowering per se)
+in bone protection. Two specific hypotheses motivate testing further nodes:
+
+1. **FDPS** (farnesyl diphosphate synthase, chr1): direct target of N-bisphosphonates — the
+   most potent clinical anti-resorptives. If mevalonate → bone works, blocking FDPS should
+   also associate with higher BMD.
+
+2. **GGPS1** (geranylgeranyl diphosphate synthase, chr1): immediately downstream of FDPS;
+   produces GGPP for Rho GTPase prenylation in osteoclasts. Aim 2B proposes an osteoclast-specific
+   Ggps1 KO. A genetic signal here would pre-validate the target.
+
+3. **PDSS1 / PDSS2 / COQ2** (ubiquinone / CoQ10 synthesis): same FPP precursor, different
+   branch (→ decaprenyl-PP → CoQ10). No reason to expect a BMD signal. Serve as negative
+   controls: a null at these loci would sharpen the specificity argument for the
+   geranylgeranylation arm.
+
+### Instrument strategy
+
+- **FDPS**: cis-LDL-C instruments (same approach as HMGCR/PCSK9 in `drug_target_mr_bmd.qmd`).
+  FDPS is in the mevalonate pathway upstream of squalene synthase, so cis-SNPs may affect LDL-C.
+  Also run eQTL instruments as sensitivity.
+- **GGPS1 / PDSS1 / PDSS2 / COQ2**: eQTL instruments only. These genes do not directly
+  affect cholesterol synthesis (GGPS1 diverts FPP to geranylgeranylation; PDSS1/2 and COQ2
+  divert to ubiquinone), so LDL-C cis-instruments would be non-specific.
+
+eQTLs sourced from eQTLGen whole blood (OpenGWAS `eqtl-a-ENSG...`), the same tissue used for
+the existing HMGCR eQTL analysis. Outcome: Heel eBMD Morris 2019 (`ebi-a-GCST006979`,
+n = 426,824).
+
+```{r setup, message=FALSE, warning=FALSE}
+library(TwoSampleMR)
+library(ieugwasr)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(knitr)
+
+set.seed(42)
+WINDOW_KB <- 500
+
+# ── Gene windows (GRCh37/hg19) ──────────────────────────────────────────────
+gene_windows <- tribble(
+  ~gene,   ~ensg,               ~chr, ~gene_start,  ~gene_end,
+  "FDPS",  "ENSG00000160752",      1,   155293520,   155317327,
+  "GGPS1", "ENSG00000152904",      1,   235680500,   235702834,
+  "PDSS1", "ENSG00000148154",     10,    26546855,    26666990,
+  "PDSS2", "ENSG00000164494",      6,   107521143,   107601893,
+  "COQ2",  "ENSG00000173541",      4,    84137350,    84178264,
+) |>
+  mutate(
+    region_start = pmax(0, gene_start - WINDOW_KB * 1000),
+    region_end   = gene_end + WINDOW_KB * 1000,
+    region_str   = paste0(chr, ":", region_start, "-", region_end)
+  )
+
+kable(gene_windows |> select(gene, ensg, chr, region_start, region_end),
+      caption = "Gene windows (GRCh37, ±500 kb)")
+
+# ── Exposure / outcome IDs ───────────────────────────────────────────────────
+LDLC_ID    <- "ieu-b-110"          # UKB Neale Lab LDL-C, n ≈ 440k
+BMD_ID     <- "ebi-a-GCST006979"   # Morris 2019 heel eBMD, n = 426,824
+
+# eQTLGen whole blood ENSG IDs (eqtl-a-<ENSG without version>)
+eqtl_ids <- gene_windows |>
+  mutate(eqtl_id = paste0("eqtl-a-", ensg)) |>
+  select(gene, eqtl_id)
+
+kable(eqtl_ids, caption = "OpenGWAS eQTL IDs (eQTLGen whole blood)")
+```
+
+## Part 1 — FDPS: LDL-C cis-instruments → Heel eBMD
+
+```{r fdps-ldlc, message=FALSE, warning=FALSE}
+fdps_win <- gene_windows |> filter(gene == "FDPS")
+
+cat("Querying LDL-C associations in FDPS window:", fdps_win$region_str, "\n")
+fdps_raw <- tryCatch(
+  ieugwasr::associations(
+    variants  = fdps_win$region_str,
+    id        = LDLC_ID,
+    proxies   = 0
+  ),
+  error = function(e) { warning("FDPS LDL-C query failed: ", e$message); NULL }
+)
+
+if (!is.null(fdps_raw) && nrow(fdps_raw) > 0) {
+  cat("Raw SNPs in FDPS window:", nrow(fdps_raw), "\n")
+
+  fdps_sig <- fdps_raw |> filter(p <= 5e-8)
+  if (nrow(fdps_sig) == 0) fdps_sig <- fdps_raw |> filter(p <= 1e-5)
+  cat("Instruments (tiered 5e-8 / 1e-5):", nrow(fdps_sig), "\n")
+
+  if (nrow(fdps_sig) > 0) {
+    fdps_clumped <- tryCatch(
+      ieugwasr::ld_clump(
+        dplyr::tibble(rsid = fdps_sig$rsid, pval = fdps_sig$p, id = fdps_sig$id),
+        plink_bin = genetics.binaRies::get_plink_binary(),
+        bfile     = genetics.binaRies::get_reference_data(population = "EUR")
+      ),
+      error = function(e) {
+        warning("Clumping failed: ", e$message, " — using top SNP by p-value")
+        fdps_sig |> arrange(p) |> slice(1) |> mutate(rsid = rsid)
+      }
+    )
+
+    fdps_exp <- fdps_sig |>
+      filter(rsid %in% fdps_clumped$rsid) |>
+      transmute(
+        SNP           = rsid,
+        beta.exposure = beta,
+        se.exposure   = se,
+        pval.exposure = p,
+        eaf.exposure  = eaf,
+        effect_allele.exposure = ea,
+        other_allele.exposure  = nea,
+        exposure      = "LDL-C",
+        id.exposure   = LDLC_ID,
+        gene          = "FDPS",
+        mr_keep.exposure = TRUE
+      )
+
+    fdps_out <- extract_outcome_data(snps = fdps_exp$SNP, outcomes = BMD_ID)
+    fdps_dat <- harmonise_data(fdps_exp, fdps_out)
+
+    if (nrow(fdps_dat |> filter(mr_keep)) > 0) {
+      fdps_res <- mr(fdps_dat) |> mutate(gene = "FDPS", approach = "LDL-C cis-instruments")
+      kable(fdps_res |> select(gene, approach, method, nsnp, b, se, pval),
+            caption = "FDPS LDL-C cis-instrument MR → Heel eBMD", digits = 4)
+    } else {
+      cat("No SNPs survived harmonisation for FDPS.\n")
+    }
+  } else {
+    cat("No genome-wide significant SNPs in FDPS window for LDL-C.\n")
+  }
+} else {
+  cat("No LDL-C associations returned for FDPS window.\n")
+}
+```
+
+## Part 2 — eQTL instruments (all five genes → Heel eBMD)
+
+Using eQTLGen whole blood cis-eQTLs from OpenGWAS. Each gene gets a Wald ratio
+(if one instrument) or IVW (if multiple instruments survive clumping).
+
+```{r eqtl-mr, message=FALSE, warning=FALSE}
+run_eqtl_mr <- function(gene_name, eqtl_id, bmd_id, win_str) {
+  cat("\n── Processing", gene_name, "(", eqtl_id, ") ──\n")
+
+  # Pull eQTL exposure from OpenGWAS
+  exp_raw <- tryCatch(
+    ieugwasr::associations(variants = win_str, id = eqtl_id, proxies = 0),
+    error = function(e) { warning(gene_name, " eQTL query failed: ", e$message); NULL }
+  )
+
+  if (is.null(exp_raw) || nrow(exp_raw) == 0) {
+    cat("  No eQTL data returned.\n")
+    return(NULL)
+  }
+
+  cat("  Raw eQTL SNPs:", nrow(exp_raw), "\n")
+  exp_sig <- exp_raw |> filter(p <= 5e-8)
+  if (nrow(exp_sig) == 0) exp_sig <- exp_raw |> filter(p <= 1e-5)
+  cat("  Instruments (tiered 5e-8 / 1e-5):", nrow(exp_sig), "\n")
+
+  if (nrow(exp_sig) == 0) {
+    cat("  No instruments even at p<1e-5.\n")
+    return(NULL)
+  }
+
+  # Clump if multiple instruments
+  if (nrow(exp_sig) > 1) {
+    exp_sig <- tryCatch(
+      ieugwasr::ld_clump(
+        dplyr::tibble(rsid = exp_sig$rsid, pval = exp_sig$p, id = exp_sig$id),
+        plink_bin = genetics.binaRies::get_plink_binary(),
+        bfile     = genetics.binaRies::get_reference_data(population = "EUR")
+      ) |>
+        inner_join(exp_raw, by = c("rsid", "id")),
+      error = function(e) {
+        warning("  Clumping failed — using top SNP"); exp_sig |> arrange(p) |> slice(1)
+      }
+    )
+  }
+
+  # Format as TwoSampleMR exposure
+  exp_df <- exp_sig |>
+    transmute(
+      SNP                        = rsid,
+      beta.exposure              = beta,
+      se.exposure                = se,
+      pval.exposure              = p,
+      eaf.exposure               = eaf,
+      effect_allele.exposure     = ea,
+      other_allele.exposure      = nea,
+      exposure                   = paste0(gene_name, " expression"),
+      id.exposure                = eqtl_id,
+      gene                       = gene_name,
+      mr_keep.exposure           = TRUE
+    )
+
+  out_df <- tryCatch(
+    extract_outcome_data(snps = exp_df$SNP, outcomes = bmd_id),
+    error = function(e) { warning("  Outcome extraction failed: ", e$message); NULL }
+  )
+  if (is.null(out_df) || nrow(out_df) == 0) { cat("  No outcome data.\n"); return(NULL) }
+
+  harm_df <- harmonise_data(exp_df, out_df)
+  kept    <- harm_df |> filter(mr_keep)
+  cat("  Instruments after harmonisation:", nrow(kept), "\n")
+  if (nrow(kept) == 0) return(NULL)
+
+  mean_F <- mean((kept$beta.exposure / kept$se.exposure)^2, na.rm = TRUE)
+  cat("  n instruments:", nrow(kept), " | mean F:", round(mean_F, 1), "\n")
+
+  mr(harm_df) |>
+    mutate(gene = gene_name, approach = "eQTL (eQTLGen blood)", F_stat = mean_F)
+}
+
+# Run for all five genes
+eqtl_results <- purrr::map2_dfr(
+  gene_windows$gene,
+  eqtl_ids$eqtl_id,
+  ~ run_eqtl_mr(.x, .y, BMD_ID,
+                gene_windows |> filter(gene == .x) |> pull(region_str))
+)
+
+if (nrow(eqtl_results) > 0) {
+  kable(
+    eqtl_results |>
+      filter(method %in% c("Wald ratio", "Inverse variance weighted")) |>
+      select(gene, approach, method, nsnp, b, se, pval) |>
+      arrange(gene),
+    caption = "eQTL MR → Heel eBMD (all genes)",
+    digits  = 4
+  )
+}
+```
+
+## Part 3 — Combined results and figure
+
+```{r combine-results, message=FALSE, warning=FALSE}
+# Collect all results
+all_results <- bind_rows(
+  if (exists("fdps_res")) fdps_res |> mutate(gene = "FDPS", approach = "LDL-C cis"),
+  if (exists("eqtl_results") && nrow(eqtl_results) > 0) eqtl_results
+) |>
+  filter(method %in% c("Wald ratio", "Inverse variance weighted")) |>
+  mutate(
+    ci_lo = b - 1.96 * se,
+    ci_hi = b + 1.96 * se,
+    sig   = pval < 0.05,
+    gene  = factor(gene, levels = c("COQ2", "PDSS2", "PDSS1", "GGPS1", "FDPS")),
+    group = case_when(
+      gene %in% c("FDPS", "GGPS1") ~ "Hypothesis (mevalonate → prenylation → osteoclast)",
+      TRUE                          ~ "Negative control (mevalonate → CoQ10)"
+    )
+  )
+
+if (nrow(all_results) > 0) {
+  col_pos <- "#006600"
+  col_neg <- "#777777"
+
+  p <- ggplot(all_results, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = gene,
+                                color = sig, shape = sig, size = sig)) +
+    geom_vline(xintercept = 0, linetype = "dashed", linewidth = 0.5) +
+    geom_errorbarh(height = 0.2, linewidth = 0.9, aes(size = NULL)) +
+    geom_point() +
+    geom_text(aes(label = sprintf("β=%+.3f  p=%.3f", b, pval)),
+              hjust = -0.1, size = 3, color = "black") +
+    facet_wrap(~approach, scales = "free_x", ncol = 1) +
+    scale_color_manual(values = c(`TRUE` = col_pos, `FALSE` = col_neg), guide = "none") +
+    scale_shape_manual(values = c(`TRUE` = 18, `FALSE` = 15), guide = "none") +
+    scale_size_manual(values  = c(`TRUE` = 4.5, `FALSE` = 3.0), guide = "none") +
+    geom_rect(data = all_results |> distinct(gene, group) |> filter(group != "Negative control (mevalonate → CoQ10)"),
+              aes(xmin = -Inf, xmax = Inf, ymin = as.numeric(gene) - 0.45,
+                  ymax = as.numeric(gene) + 0.45),
+              inherit.aes = FALSE, fill = col_pos, alpha = 0.05) +
+    labs(
+      title    = "Mevalonate Pathway Genes → Heel eBMD (Morris 2019, n = 426,824)",
+      subtitle = "FDPS and GGPS1: hypothesis genes; PDSS1/PDSS2/COQ2: negative controls",
+      x = "Effect on heel eBMD (SD per instrument unit)",
+      y = NULL,
+      caption = "eQTL instruments from eQTLGen whole blood (OpenGWAS). FDPS also tested with LDL-C cis-instruments."
+    ) +
+    theme_classic(base_size = 12) +
+    theme(
+      plot.title    = element_text(face = "bold"),
+      strip.background = element_rect(fill = "#00274C"),
+      strip.text    = element_text(color = "white", face = "bold"),
+      panel.grid.major.x = element_line(color = "gray92")
+    )
+
+  print(p)
+
+  ggsave("figures/mevalonate-pathway-bmd-1.png", p, width = 11, height = 6,
+         dpi = 150, bg = "white")
+}
+```
+
+## Part 4 — Save results
+
+```{r save, message=FALSE, warning=FALSE}
+if (nrow(all_results) > 0) {
+  all_results |>
+    select(gene, approach, method, nsnp, b, se, ci_lo, ci_hi, pval, sig) |>
+    write.csv("MR Results - Mevalonate Pathway BMD.csv", row.names = FALSE)
+  cat("Saved: MR Results - Mevalonate Pathway BMD.csv\n")
+}
+
+kable(
+  all_results |>
+    filter(method %in% c("Wald ratio", "Inverse variance weighted")) |>
+    transmute(
+      Gene      = gene,
+      Approach  = approach,
+      n_SNPs    = nsnp,
+      Beta      = round(b, 4),
+      SE        = round(se, 4),
+      `95% CI`  = paste0("(", round(ci_lo, 3), ", ", round(ci_hi, 3), ")"),
+      P         = formatC(pval, digits = 3, format = "g"),
+      Sig       = ifelse(sig, "✓", "")
+    ) |> arrange(Gene),
+  caption = "Summary: Mevalonate pathway gene expression → Heel eBMD"
+)
+```
+
+## Interpretation
+
+**Expected pattern** (consistent with GGPP → osteoclast prenylation hypothesis):
+
+| Gene | Prediction | Rationale |
+|------|-----------|-----------|
+| FDPS | ↓ expression → ↑ BMD (negative β) | depletes GGPP; mimics N-bisphosphonate |
+| GGPS1 | ↓ expression → ↑ BMD (negative β) | directly depletes GGPP for GTPase prenylation |
+| PDSS1 | null | CoQ10 branch; no osteoclast prenylation mechanism |
+| PDSS2 | null | CoQ10 branch; no osteoclast prenylation mechanism |
+| COQ2 | null | CoQ10 branch; no osteoclast prenylation mechanism |
+
+A positive result at FDPS and/or GGPS1 with nulls at PDSS1/PDSS2/COQ2 would constitute
+strong specificity evidence for the geranylgeranylation arm of the mevalonate pathway.

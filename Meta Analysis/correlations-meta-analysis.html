@@ -1,0 +1,1710 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.10.18">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="Dave Bridges and Kaelin Loftus">
+<meta name="dcterms.date" content="2026-11-03">
+
+<title>Calcium–Cholesterol Correlation Meta-Analysis</title>
+<style>
+/* Default styles provided by pandoc.
+** See https://pandoc.org/MANUAL.html#variables-for-html for config info.
+*/
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: 1.5em;}
+div.column{flex: auto;}
+@media screen {
+div.columns{gap: min(4vw, 1.5em);}
+div.column{overflow-x: auto;}
+}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="correlations-meta-analysis_files/libs/clipboard/clipboard.min.js"></script>
+<script src="correlations-meta-analysis_files/libs/quarto-html/quarto.js" type="module"></script>
+<script src="correlations-meta-analysis_files/libs/quarto-html/tabsets/tabsets.js" type="module"></script>
+<script src="correlations-meta-analysis_files/libs/quarto-html/popper.min.js"></script>
+<script src="correlations-meta-analysis_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="correlations-meta-analysis_files/libs/quarto-html/anchor.min.js"></script>
+<link href="correlations-meta-analysis_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="correlations-meta-analysis_files/libs/quarto-html/quarto-syntax-highlighting-64a204ab8560d761af7679ceaba22944.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="correlations-meta-analysis_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="correlations-meta-analysis_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="correlations-meta-analysis_files/libs/bootstrap/bootstrap-917079515d91bccb85b543faf8aa8bb6.min.css" rel="stylesheet" append-hash="true" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="quarto-light">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+<div id="quarto-margin-sidebar" class="sidebar margin-sidebar">
+  <nav id="TOC" role="doc-toc" class="toc-active">
+    <h2 id="toc-title">Table of contents</h2>
+   
+  <ul>
+  <li><a href="#purpose" id="toc-purpose" class="nav-link active" data-scroll-target="#purpose">Purpose</a></li>
+  <li><a href="#data" id="toc-data" class="nav-link" data-scroll-target="#data">Data</a></li>
+  <li><a href="#cleaning-and-coding" id="toc-cleaning-and-coding" class="nav-link" data-scroll-target="#cleaning-and-coding">Cleaning and Coding</a></li>
+  <li><a href="#within-study-pooling" id="toc-within-study-pooling" class="nav-link" data-scroll-target="#within-study-pooling">Within-Study Pooling</a></li>
+  <li><a href="#meta-analysis" id="toc-meta-analysis" class="nav-link" data-scroll-target="#meta-analysis">Meta-Analysis</a>
+  <ul class="collapse">
+  <li><a href="#helper-function" id="toc-helper-function" class="nav-link" data-scroll-target="#helper-function">Helper function</a></li>
+  <li><a href="#primary-analyses-serum-calcium-unadjusted" id="toc-primary-analyses-serum-calcium-unadjusted" class="nav-link" data-scroll-target="#primary-analyses-serum-calcium-unadjusted">Primary analyses — Serum Calcium (unadjusted)</a></li>
+  <li><a href="#summary-table-primary-analyses" id="toc-summary-table-primary-analyses" class="nav-link" data-scroll-target="#summary-table-primary-analyses">Summary table — primary analyses</a></li>
+  </ul></li>
+  <li><a href="#summary-forest-plot-all-primary-outcomes" id="toc-summary-forest-plot-all-primary-outcomes" class="nav-link" data-scroll-target="#summary-forest-plot-all-primary-outcomes">Summary Forest Plot — All Primary Outcomes</a></li>
+  <li><a href="#sensitivity-analyses" id="toc-sensitivity-analyses" class="nav-link" data-scroll-target="#sensitivity-analyses">Sensitivity Analyses</a>
+  <ul class="collapse">
+  <li><a href="#corrected-calcium-unadjusted" id="toc-corrected-calcium-unadjusted" class="nav-link" data-scroll-target="#corrected-calcium-unadjusted">Corrected calcium (unadjusted)</a></li>
+  <li><a href="#adjusted-correlations-serum-calcium" id="toc-adjusted-correlations-serum-calcium" class="nav-link" data-scroll-target="#adjusted-correlations-serum-calcium">Adjusted correlations (serum calcium)</a></li>
+  </ul></li>
+  <li><a href="#subgroup-analyses" id="toc-subgroup-analyses" class="nav-link" data-scroll-target="#subgroup-analyses">Subgroup Analyses</a></li>
+  <li><a href="#session-information" id="toc-session-information" class="nav-link" data-scroll-target="#session-information">Session Information</a></li>
+  </ul>
+<div class="quarto-alternate-formats"><h2>Other Formats</h2><ul><li><a href="correlations-meta-analysis.pdf"><i class="bi bi-file-pdf"></i>PDF</a></li></ul></div></nav>
+</div>
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Calcium–Cholesterol Correlation Meta-Analysis</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>Dave Bridges and Kaelin Loftus </p>
+          </div>
+  </div>
+    
+    <div>
+    <div class="quarto-title-meta-heading">Published</div>
+    <div class="quarto-title-meta-contents">
+      <p class="date">November 3, 2026</p>
+    </div>
+  </div>
+  
+    
+  </div>
+  
+
+
+</header>
+
+
+<section id="purpose" class="level2">
+<h2 class="anchored" data-anchor-id="purpose">Purpose</h2>
+<p>Pre-registered meta-analysis (PROSPERO CRD420250645066) of cross-sectional associations between serum calcium and serum cholesterol. Correlation coefficients are Fisher-<em>z</em> transformed for pooling and back-transformed for presentation, as specified in the registration. Separate meta-analyses are run for each lipid outcome (Total Cholesterol primary; LDL, HDL, Triglycerides secondary). Primary calcium exposure is serum calcium; corrected calcium is a sensitivity analysis. When a paper reports only sex- or disease-stratified estimates (no combined figure), stratum estimates are pooled within-study via a Fisher-<em>z</em> weighted average before entering the between-study meta-analysis, giving one effect per study.</p>
+</section>
+<section id="data" class="level2">
+<h2 class="anchored" data-anchor-id="data">Data</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>corr.raw <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a>  <span class="st">"Screening Log for Calcium and Cholesterol Meta-Analysis - Correlations.csv"</span>,</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>  <span class="at">show_col_types =</span> <span class="cn">FALSE</span></span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="cleaning-and-coding" class="level2">
+<h2 class="anchored" data-anchor-id="cleaning-and-coding">Cleaning and Coding</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb2"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># ── helper: fix non-standard minus signs and stray characters in r ──────────</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>clean_r <span class="ot">&lt;-</span> <span class="cf">function</span>(x) {</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>  x <span class="sc">|&gt;</span></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace_all</span>(<span class="st">"[−–—]"</span>, <span class="st">"-"</span>) <span class="sc">|&gt;</span>   <span class="co"># em/en-dash → minus</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace_all</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">.{2,}"</span>, <span class="st">"."</span>)                   <span class="sc">|&gt;</span>  <span class="co"># double decimals</span></span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_replace_all</span>(<span class="st">"[^0-9</span><span class="sc">\\</span><span class="st">.</span><span class="sc">\\</span><span class="st">-]"</span>, <span class="st">""</span>)              <span class="sc">|&gt;</span>   <span class="co"># anything else</span></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">as.numeric</span>()</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="co"># ── parse calcium type and lipid outcome from Association column ─────────────</span></span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a>corr <span class="ot">&lt;-</span> corr.raw <span class="sc">|&gt;</span></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a>    <span class="co"># fix OCR/typo variants before splitting</span></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>    <span class="at">assoc_clean =</span> Association <span class="sc">|&gt;</span></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">"Correctect"</span>, <span class="st">"Corrected"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">"Cholestrol|Choelstrol"</span>, <span class="st">"Cholesterol"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_replace_all</span>(<span class="st">"Triglycerdies"</span>, <span class="st">"Triglycerides"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_squish</span>(),</span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">adjusted =</span> <span class="fu">str_detect</span>(assoc_clean, <span class="st">"</span><span class="sc">\\</span><span class="st">(adjusted</span><span class="sc">\\</span><span class="st">)"</span>),</span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-22"><a href="#cb2-22" aria-hidden="true" tabindex="-1"></a>    <span class="co"># everything left of " - "</span></span>
+<span id="cb2-23"><a href="#cb2-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">calcium_raw =</span> <span class="fu">str_extract</span>(assoc_clean, <span class="st">"^.+?(?= - )"</span>) <span class="sc">|&gt;</span> <span class="fu">str_trim</span>(),</span>
+<span id="cb2-24"><a href="#cb2-24" aria-hidden="true" tabindex="-1"></a>    <span class="co"># everything right of the first " - ", strip "(adjusted)"</span></span>
+<span id="cb2-25"><a href="#cb2-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">lipid_raw   =</span> <span class="fu">str_extract</span>(assoc_clean, <span class="st">"(?&lt;= - ).+$"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-26"><a href="#cb2-26" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">str_remove</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">s*</span><span class="sc">\\</span><span class="st">(adjusted</span><span class="sc">\\</span><span class="st">)"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb2-27"><a href="#cb2-27" aria-hidden="true" tabindex="-1"></a>                    <span class="fu">str_trim</span>(),</span>
+<span id="cb2-28"><a href="#cb2-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-29"><a href="#cb2-29" aria-hidden="true" tabindex="-1"></a>    <span class="at">calcium_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb2-30"><a href="#cb2-30" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(calcium_raw, <span class="st">"^Serum Calcium$"</span>)           <span class="sc">~</span> <span class="st">"Serum"</span>,</span>
+<span id="cb2-31"><a href="#cb2-31" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(calcium_raw, <span class="st">"Corrected Calcium"</span>)         <span class="sc">~</span> <span class="st">"Corrected"</span>,</span>
+<span id="cb2-32"><a href="#cb2-32" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(calcium_raw, <span class="st">"Ionic Calcium"</span>)             <span class="sc">~</span> <span class="st">"Ionic"</span>,</span>
+<span id="cb2-33"><a href="#cb2-33" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(calcium_raw, <span class="st">"Hair Calcium"</span>)              <span class="sc">~</span> <span class="st">"Hair"</span>,</span>
+<span id="cb2-34"><a href="#cb2-34" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(calcium_raw, <span class="st">"Calcium Intake"</span>)            <span class="sc">~</span> <span class="st">"Intake"</span>,</span>
+<span id="cb2-35"><a href="#cb2-35" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(calcium_raw, <span class="st">"Change in Serum Calcium"</span>)   <span class="sc">~</span> <span class="st">"Change"</span>,</span>
+<span id="cb2-36"><a href="#cb2-36" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                  <span class="sc">~</span> <span class="st">"Other"</span></span>
+<span id="cb2-37"><a href="#cb2-37" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-38"><a href="#cb2-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-39"><a href="#cb2-39" aria-hidden="true" tabindex="-1"></a>    <span class="at">lipid_type =</span> <span class="fu">case_when</span>(</span>
+<span id="cb2-40"><a href="#cb2-40" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(lipid_raw, <span class="st">"Total Cholesterol"</span>)           <span class="sc">~</span> <span class="st">"Total Cholesterol"</span>,</span>
+<span id="cb2-41"><a href="#cb2-41" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(lipid_raw, <span class="st">"LDL Cholesterol"</span>)             <span class="sc">~</span> <span class="st">"LDL Cholesterol"</span>,</span>
+<span id="cb2-42"><a href="#cb2-42" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(lipid_raw, <span class="st">"HDL Cholesterol"</span>)             <span class="sc">~</span> <span class="st">"HDL Cholesterol"</span>,</span>
+<span id="cb2-43"><a href="#cb2-43" aria-hidden="true" tabindex="-1"></a>      <span class="fu">str_detect</span>(lipid_raw, <span class="st">"Triglycerides"</span>)               <span class="sc">~</span> <span class="st">"Triglycerides"</span>,</span>
+<span id="cb2-44"><a href="#cb2-44" aria-hidden="true" tabindex="-1"></a>      <span class="cn">TRUE</span>                                                  <span class="sc">~</span> <span class="st">"Other"</span></span>
+<span id="cb2-45"><a href="#cb2-45" aria-hidden="true" tabindex="-1"></a>    ),</span>
+<span id="cb2-46"><a href="#cb2-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-47"><a href="#cb2-47" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_clean =</span> <span class="fu">clean_r</span>(<span class="fu">as.character</span>(r)),</span>
+<span id="cb2-48"><a href="#cb2-48" aria-hidden="true" tabindex="-1"></a>    <span class="at">n       =</span> <span class="fu">as.integer</span>(n)</span>
+<span id="cb2-49"><a href="#cb2-49" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb2-50"><a href="#cb2-50" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(<span class="sc">!</span><span class="fu">is.na</span>(r_clean), <span class="sc">!</span><span class="fu">is.na</span>(n), <span class="fu">abs</span>(r_clean) <span class="sc">&lt;</span> <span class="dv">1</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>corr <span class="sc">|&gt;</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(calcium_type, lipid_type, adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Observations by calcium type, lipid outcome, and adjustment status"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Observations by calcium type, lipid outcome, and adjustment status</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">calcium_type</th>
+<th style="text-align: left;">lipid_type</th>
+<th style="text-align: left;">adjusted</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Change</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">7</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">15</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">14</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Corrected</td>
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hair</td>
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hair</td>
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Hair</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Hair</td>
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Intake</td>
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Intake</td>
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Intake</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Intake</td>
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">1</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Ionic</td>
+<td style="text-align: left;">Other</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Ionic</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">3</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">41</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">39</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">Other</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">12</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">56</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: left;">FALSE</td>
+<td style="text-align: right;">48</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Serum</td>
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: left;">TRUE</td>
+<td style="text-align: right;">2</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="within-study-pooling" class="level2">
+<h2 class="anchored" data-anchor-id="within-study-pooling">Within-Study Pooling</h2>
+<p>When a paper supplies only stratum-specific estimates (e.g.&nbsp;males and females separately), a single study-level estimate is computed via Fisher-<em>z</em> weighted average before the between-study meta-analysis.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Fisher-z weighted mean within study × calcium_type × lipid_type × adjusted</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>pool_within_study <span class="ot">&lt;-</span> <span class="cf">function</span>(r_vec, n_vec) {</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>  <span class="co"># variance of Fisher z is 1/(n-3); weight = n-3</span></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>  w    <span class="ot">&lt;-</span> n_vec <span class="sc">-</span> <span class="dv">3</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>  z    <span class="ot">&lt;-</span> <span class="fu">atanh</span>(r_vec)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>  z_p  <span class="ot">&lt;-</span> <span class="fu">sum</span>(z <span class="sc">*</span> w) <span class="sc">/</span> <span class="fu">sum</span>(w)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>  n_p  <span class="ot">&lt;-</span> <span class="fu">sum</span>(w) <span class="sc">+</span> <span class="dv">3</span>L          <span class="co"># effective n preserving total precision</span></span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">list</span>(<span class="at">r_pooled =</span> <span class="fu">tanh</span>(z_p), <span class="at">n_pooled =</span> <span class="fu">as.integer</span>(<span class="fu">round</span>(n_p)))</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>corr.study <span class="ot">&lt;-</span> corr <span class="sc">|&gt;</span></span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(StudyID, calcium_type, lipid_type, adjusted) <span class="sc">|&gt;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>    <span class="fu">pool_within_study</span>(r_clean, n) <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>(),</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>    <span class="at">k_strata =</span> <span class="fu">n</span>(),</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>    <span class="at">.groups =</span> <span class="st">"drop"</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a>corr.study <span class="sc">|&gt;</span></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(calcium_type <span class="sc">==</span> <span class="st">"Serum"</span>, <span class="sc">!</span>adjusted, lipid_type <span class="sc">!=</span> <span class="st">"Other"</span>) <span class="sc">|&gt;</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">count</span>(lipid_type) <span class="sc">|&gt;</span></span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Studies contributing to each primary serum-calcium analysis"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Studies contributing to each primary serum-calcium analysis</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">lipid_type</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: right;">20</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: right;">16</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: right;">27</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: right;">23</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="meta-analysis" class="level2">
+<h2 class="anchored" data-anchor-id="meta-analysis">Meta-Analysis</h2>
+<section id="helper-function" class="level3">
+<h3 class="anchored" data-anchor-id="helper-function">Helper function</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>run_metacor <span class="ot">&lt;-</span> <span class="cf">function</span>(data, calcium, lipid, <span class="at">adj =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a>                        <span class="at">label =</span> <span class="cn">NULL</span>) {</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>  d <span class="ot">&lt;-</span> data <span class="sc">|&gt;</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="fu">filter</span>(</span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>      calcium_type <span class="sc">==</span> calcium,</span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a>      lipid_type   <span class="sc">==</span> lipid,</span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>      adjusted     <span class="sc">==</span> adj</span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    )</span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">nrow</span>(d) <span class="sc">&lt;</span> <span class="dv">2</span>) {</span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a>    <span class="fu">message</span>(<span class="st">"Fewer than 2 studies for "</span>, calcium, <span class="st">" – "</span>, lipid,</span>
+<span id="cb5-12"><a href="#cb5-12" aria-hidden="true" tabindex="-1"></a>            <span class="st">" (adjusted="</span>, adj, <span class="st">"); skipping."</span>)</span>
+<span id="cb5-13"><a href="#cb5-13" aria-hidden="true" tabindex="-1"></a>    <span class="fu">return</span>(<span class="fu">invisible</span>(<span class="cn">NULL</span>))</span>
+<span id="cb5-14"><a href="#cb5-14" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb5-15"><a href="#cb5-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-16"><a href="#cb5-16" aria-hidden="true" tabindex="-1"></a>  title_str <span class="ot">&lt;-</span> label <span class="sc">%||%</span></span>
+<span id="cb5-17"><a href="#cb5-17" aria-hidden="true" tabindex="-1"></a>    <span class="fu">paste0</span>(calcium, <span class="st">" Calcium vs "</span>, lipid, <span class="cf">if</span> (adj) <span class="st">" (adjusted)"</span>)</span>
+<span id="cb5-18"><a href="#cb5-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-19"><a href="#cb5-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">metacor</span>(</span>
+<span id="cb5-20"><a href="#cb5-20" aria-hidden="true" tabindex="-1"></a>    <span class="at">cor      =</span> r_pooled,</span>
+<span id="cb5-21"><a href="#cb5-21" aria-hidden="true" tabindex="-1"></a>    <span class="at">n        =</span> n_pooled,</span>
+<span id="cb5-22"><a href="#cb5-22" aria-hidden="true" tabindex="-1"></a>    <span class="at">studlab  =</span> StudyID,</span>
+<span id="cb5-23"><a href="#cb5-23" aria-hidden="true" tabindex="-1"></a>    <span class="at">data     =</span> d,</span>
+<span id="cb5-24"><a href="#cb5-24" aria-hidden="true" tabindex="-1"></a>    <span class="at">common   =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-25"><a href="#cb5-25" aria-hidden="true" tabindex="-1"></a>    <span class="at">random   =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb5-26"><a href="#cb5-26" aria-hidden="true" tabindex="-1"></a>    <span class="at">method.tau =</span> <span class="st">"REML"</span>,</span>
+<span id="cb5-27"><a href="#cb5-27" aria-hidden="true" tabindex="-1"></a>    <span class="at">title    =</span> title_str</span>
+<span id="cb5-28"><a href="#cb5-28" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb5-29"><a href="#cb5-29" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+</div>
+</section>
+<section id="primary-analyses-serum-calcium-unadjusted" class="level3">
+<h3 class="anchored" data-anchor-id="primary-analyses-serum-calcium-unadjusted">Primary analyses — Serum Calcium (unadjusted)</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb6"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a>ma.tc <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"Total Cholesterol"</span>)</span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(ma.tc)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Review:     Serum Calcium vs Total Cholesterol
+
+             COR             95% CI %W(common) %W(random)
+3HNLM7SK  0.4076 [ 0.1943;  0.5841]        0.3        2.6
+3K3SR4LH  0.2028 [ 0.1841;  0.2214]       38.6        4.9
+5U4UWY36  0.2717 [ 0.2281;  0.3142]        6.7        4.8
+6Y5SI2AT -0.0092 [-0.0676;  0.0492]        4.3        4.7
+8NDZN8JG  0.2100 [ 0.0771;  0.3356]        0.8        3.8
+929HG3HU  0.1410 [-0.1171;  0.3813]        0.2        2.4
+BAIHLI9K  0.2159 [ 0.0172;  0.3982]        0.4        3.0
+E89EL3SV  0.2860 [ 0.1703;  0.3939]        1.0        4.0
+EMFFHSXE  0.1310 [ 0.0551;  0.2054]        2.5        4.5
+EUFWGNDG  0.1800 [-0.0016;  0.3501]        0.4        3.2
+GC9LMXIA  0.2670 [ 0.0531;  0.4575]        0.3        2.8
+GG4W6JEK  0.1670 [ 0.0085;  0.3173]        0.6        3.5
+GS9K2EFS  0.2475 [ 0.2179;  0.2766]       14.9        4.9
+JKSVFKZN  0.0236 [-0.2718;  0.3150]        0.2        2.0
+KVR6MWMF  0.2700 [ 0.0563;  0.4601]        0.3        2.8
+MDQVA29G  0.1700 [ 0.0320;  0.3016]        0.7        3.8
+MYJZBVSM -0.2098 [-0.3485; -0.0621]        0.6        3.6
+P89YLSCG  0.0556 [-0.0043;  0.1151]        4.0        4.7
+RP74Q73F  0.1520 [ 0.0754;  0.2268]        2.4        4.5
+S7JXX5BY  0.3832 [ 0.2629;  0.4918]        0.8        3.9
+SD2QQDYG  0.3791 [ 0.2122;  0.5245]        0.4        3.2
+T8TUXYIY  0.3860 [ 0.2674;  0.4931]        0.8        3.9
+WYZEH8Q9 -0.0025 [-0.0738;  0.0689]        2.9        4.6
+XGCQ2XS7  0.2285 [ 0.0225;  0.4159]        0.3        2.9
+XKPS2AC7  0.2475 [ 0.2179;  0.2766]       14.9        4.9
+YPPQBIXU  0.2805 [ 0.0372;  0.4923]        0.2        2.5
+YU9EQ7K9 -0.0027 [-0.1685;  0.1633]        0.5        3.4
+
+Number of studies: k = 27
+Number of observations: o = 26477
+
+                        COR           95% CI     z  p-value
+Common effect model  0.1992 [0.1876; 0.2108] 32.81 &lt; 0.0001
+Random effects model 0.1868 [0.1321; 0.2404]  6.60 &lt; 0.0001
+
+Quantifying heterogeneity (with 95% CIs):
+ tau^2 = 0.0166 [0.0082; 0.0354]; tau = 0.1288 [0.0908; 0.1881]
+ I^2 = 87.4% [82.8%; 90.7%]; H = 2.82 [2.41; 3.29]
+
+Test of heterogeneity:
+      Q d.f.  p-value
+ 206.33   26 &lt; 0.0001
+
+Details of meta-analysis methods:
+- Inverse variance method
+- Restricted maximum-likelihood estimator for tau^2
+- Q-Profile method for confidence interval of tau^2 and tau
+- Calculation of I^2 based on Q
+- Fisher's z transformation of correlations</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb8"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="fu">forest</span>(ma.tc,</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">sortvar   =</span> r_pooled,</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.square  =</span> color_scheme[<span class="dv">1</span>],</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.diamond =</span> color_scheme[<span class="dv">2</span>],</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab      =</span> <span class="st">"Correlation (r)"</span>,</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">main      =</span> <span class="st">"Serum Calcium vs Total Cholesterol"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/forest-tc-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>ma.ldl <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"LDL Cholesterol"</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(ma.ldl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Review:     Serum Calcium vs LDL Cholesterol
+
+             COR             95% CI %W(common) %W(random)
+5U4UWY36  0.2229 [ 0.1782;  0.2666]       11.7        7.3
+6Y5SI2AT -0.0744 [-0.1323; -0.0161]        7.4        7.2
+8NDZN8JG  0.1560 [ 0.0214;  0.2851]        1.4        5.9
+929HG3HU  0.0096 [-0.1722;  0.1908]        0.7        5.1
+E89EL3SV  0.2810 [ 0.1650;  0.3893]        1.7        6.2
+EMFFHSXE  0.0920 [ 0.0157;  0.1673]        4.3        6.9
+GS9K2EFS  0.1835 [ 0.1532;  0.2136]       25.8        7.4
+JKSVFKZN  0.0890 [-0.2100;  0.3728]        0.3        3.2
+KVR6MWMF  0.2400 [ 0.0243;  0.4344]        0.5        4.4
+P89YLSCG  0.0142 [-0.0457;  0.0740]        7.0        7.1
+RP74Q73F  0.0560 [-0.0216;  0.1329]        4.2        6.9
+S7JXX5BY  0.3600 [ 0.2376;  0.4711]        1.4        6.0
+SD2QQDYG  0.2712 [ 0.1473;  0.3867]        1.5        6.0
+T8TUXYIY  0.3360 [ 0.2132;  0.4483]        1.4        6.0
+WYZEH8Q9 -0.1000 [-0.1701; -0.0289]        4.9        7.0
+XKPS2AC7  0.1577 [ 0.1271;  0.1880]       25.8        7.4
+
+Number of studies: k = 16
+Number of observations: o = 15270
+
+                        COR           95% CI     z  p-value
+Common effect model  0.1344 [0.1188; 0.1499] 16.68 &lt; 0.0001
+Random effects model 0.1415 [0.0700; 0.2116]  3.86   0.0001
+
+Quantifying heterogeneity (with 95% CIs):
+ tau^2 = 0.0182 [0.0083; 0.0461]; tau = 0.1349 [0.0910; 0.2148]
+ I^2 = 91.4% [87.7%; 94.0%]; H = 3.42 [2.85; 4.09]
+
+Test of heterogeneity:
+      Q d.f.  p-value
+ 175.14   15 &lt; 0.0001
+
+Details of meta-analysis methods:
+- Inverse variance method
+- Restricted maximum-likelihood estimator for tau^2
+- Q-Profile method for confidence interval of tau^2 and tau
+- Calculation of I^2 based on Q
+- Fisher's z transformation of correlations</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb11"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="fu">forest</span>(ma.ldl,</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">sortvar   =</span> r_pooled,</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.square  =</span> color_scheme[<span class="dv">1</span>],</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.diamond =</span> color_scheme[<span class="dv">2</span>],</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab      =</span> <span class="st">"Correlation (r)"</span>,</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">main      =</span> <span class="st">"Serum Calcium vs LDL Cholesterol"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/forest-ldl-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>ma.hdl <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"HDL Cholesterol"</span>)</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(ma.hdl)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Review:     Serum Calcium vs HDL Cholesterol
+
+             COR             95% CI %W(common) %W(random)
+3K3SR4LH  0.0612 [ 0.0418;  0.0805]       39.6        7.5
+5U4UWY36  0.1644 [ 0.1189;  0.2093]        6.9        7.0
+6H866AUW  0.0089 [-0.1257;  0.1432]        0.8        4.4
+6Y5SI2AT -0.0243 [-0.0826;  0.0342]        4.4        6.7
+8NDZN8JG  0.1730 [ 0.0388;  0.3010]        0.8        4.4
+929HG3HU  0.1500 [-0.1080;  0.3891]        0.2        2.0
+BAIHLI9K -0.1264 [-0.3178;  0.0749]        0.4        2.9
+D57GIVXZ -0.2870 [-0.5281; -0.0031]        0.2        1.7
+E89EL3SV -0.0720 [-0.1920;  0.0501]        1.0        4.7
+EMFFHSXE  0.0670 [-0.0095;  0.1427]        2.5        6.1
+GS9K2EFS  0.1251 [ 0.0942;  0.1557]       15.2        7.3
+KVR6MWMF  0.0800 [-0.1394;  0.2919]        0.3        2.6
+P89YLSCG -0.0047 [-0.0646;  0.0552]        4.2        6.6
+QRYL7VZU -0.0400 [-0.1738;  0.0953]        0.8        4.4
+RP74Q73F  0.0060 [-0.0715;  0.0835]        2.5        6.1
+S7JXX5BY  0.2004 [ 0.0684;  0.3255]        0.8        4.4
+SD2QQDYG -0.0850 [-0.2625;  0.0981]        0.4        3.2
+T8TUXYIY  0.2150 [ 0.0852;  0.3377]        0.8        4.4
+WYZEH8Q9 -0.0115 [-0.0827;  0.0599]        2.9        6.3
+XKPS2AC7  0.1359 [ 0.1050;  0.1664]       15.2        7.3
+
+Number of studies: k = 20
+Number of observations: o = 25815
+
+                        COR           95% CI     z  p-value
+Common effect model  0.0790 [0.0668; 0.0911] 12.70 &lt; 0.0001
+Random effects model 0.0523 [0.0089; 0.0954]  2.36   0.0182
+
+Quantifying heterogeneity (with 95% CIs):
+ tau^2 = 0.0065 [0.0029; 0.0250]; tau = 0.0804 [0.0542; 0.1582]
+ I^2 = 81.1% [71.6%; 87.3%]; H = 2.30 [1.88; 2.81]
+
+Test of heterogeneity:
+      Q d.f.  p-value
+ 100.31   19 &lt; 0.0001
+
+Details of meta-analysis methods:
+- Inverse variance method
+- Restricted maximum-likelihood estimator for tau^2
+- Q-Profile method for confidence interval of tau^2 and tau
+- Calculation of I^2 based on Q
+- Fisher's z transformation of correlations</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb14"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="fu">forest</span>(ma.hdl,</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">sortvar   =</span> r_pooled,</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.square  =</span> color_scheme[<span class="dv">1</span>],</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.diamond =</span> color_scheme[<span class="dv">2</span>],</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab      =</span> <span class="st">"Correlation (r)"</span>,</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">main      =</span> <span class="st">"Serum Calcium vs HDL Cholesterol"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/forest-hdl-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>ma.tg <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"Triglycerides"</span>)</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(ma.tg)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>Review:     Serum Calcium vs Triglycerides
+
+             COR             95% CI %W(common) %W(random)
+5U4UWY36  0.1271 [ 0.0811;  0.1726]       10.9        5.2
+6H866AUW  0.2516 [ 0.1213;  0.3734]        1.3        4.4
+6Y5SI2AT  0.1142 [ 0.0561;  0.1715]        6.9        5.1
+8NDZN8JG  0.0990 [-0.0366;  0.2310]        1.3        4.4
+929HG3HU -0.0970 [-0.3425;  0.1609]        0.4        3.0
+BAIHLI9K  0.3768 [ 0.1917;  0.5359]        0.6        3.6
+E89EL3SV  0.0050 [-0.1167;  0.1266]        1.6        4.5
+EMFFHSXE  0.1490 [ 0.0734;  0.2229]        4.0        5.0
+EUFWGNDG  0.3900 [ 0.2244;  0.5337]        0.7        3.8
+GC9LMXIA  0.3010 [ 0.0899;  0.4862]        0.5        3.4
+GS9K2EFS  0.1261 [ 0.0952;  0.1567]       24.1        5.3
+JKSVFKZN  0.1966 [-0.1028;  0.4634]        0.3        2.6
+KVR6MWMF  0.3000 [ 0.0888;  0.4854]        0.5        3.4
+P89YLSCG  0.1152 [ 0.0557;  0.1739]        6.6        5.1
+Q6IEN22V  0.0898 [-0.0932;  0.2670]        0.7        3.8
+QRYL7VZU -0.0010 [-0.1357;  0.1338]        1.3        4.4
+RP74Q73F  0.1640 [ 0.0876;  0.2385]        3.9        5.0
+S7JXX5BY  0.2188 [ 0.0876;  0.3426]        1.3        4.4
+T8TUXYIY  0.1730 [ 0.0417;  0.2984]        1.3        4.4
+VGB9ATLX -0.3869 [-0.4705; -0.2964]        2.2        4.8
+WYZEH8Q9  0.1511 [ 0.0806;  0.2200]        4.6        5.0
+XKPS2AC7  0.1415 [ 0.1107;  0.1720]       24.1        5.3
+YU9EQ7K9  0.1243 [-0.0425;  0.2844]        0.8        4.0
+
+Number of studies: k = 23
+Number of observations: o = 16328
+
+                        COR           95% CI     z  p-value
+Common effect model  0.1242 [0.1090; 0.1393] 15.92 &lt; 0.0001
+Random effects model 0.1311 [0.0648; 0.1963]  3.86   0.0001
+
+Quantifying heterogeneity (with 95% CIs):
+ tau^2 = 0.0218 [0.0112; 0.0504]; tau = 0.1477 [0.1058; 0.2244]
+ I^2 = 84.9% [78.5%; 89.4%]; H = 2.57 [2.16; 3.07]
+
+Test of heterogeneity:
+      Q d.f.  p-value
+ 145.44   22 &lt; 0.0001
+
+Details of meta-analysis methods:
+- Inverse variance method
+- Restricted maximum-likelihood estimator for tau^2
+- Q-Profile method for confidence interval of tau^2 and tau
+- Calculation of I^2 based on Q
+- Fisher's z transformation of correlations</code></pre>
+</div>
+</div>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a><span class="fu">forest</span>(ma.tg,</span>
+<span id="cb17-2"><a href="#cb17-2" aria-hidden="true" tabindex="-1"></a>       <span class="at">sortvar   =</span> r_pooled,</span>
+<span id="cb17-3"><a href="#cb17-3" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.square  =</span> color_scheme[<span class="dv">1</span>],</span>
+<span id="cb17-4"><a href="#cb17-4" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.diamond =</span> color_scheme[<span class="dv">2</span>],</span>
+<span id="cb17-5"><a href="#cb17-5" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab      =</span> <span class="st">"Correlation (r)"</span>,</span>
+<span id="cb17-6"><a href="#cb17-6" aria-hidden="true" tabindex="-1"></a>       <span class="at">main      =</span> <span class="st">"Serum Calcium vs Triglycerides"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/forest-tg-1.png" class="img-fluid figure-img" width="960"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="summary-table-primary-analyses" class="level3">
+<h3 class="anchored" data-anchor-id="summary-table-primary-analyses">Summary table — primary analyses</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>extract_ma <span class="ot">&lt;-</span> <span class="cf">function</span>(ma, label) {</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.null</span>(ma)) <span class="fu">return</span>(<span class="cn">NULL</span>)</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">tibble</span>(</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">Outcome        =</span> label,</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">k              =</span> ma<span class="sc">$</span>k,</span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_random       =</span> <span class="fu">tanh</span>(ma<span class="sc">$</span>TE.random),</span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_random_lower =</span> <span class="fu">tanh</span>(ma<span class="sc">$</span>lower.random),</span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_random_upper =</span> <span class="fu">tanh</span>(ma<span class="sc">$</span>upper.random),</span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_random       =</span> ma<span class="sc">$</span>pval.random,</span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">I2             =</span> ma<span class="sc">$</span>I2,</span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a>    <span class="at">tau            =</span> <span class="fu">sqrt</span>(ma<span class="sc">$</span>tau2),</span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">r_common       =</span> <span class="fu">tanh</span>(ma<span class="sc">$</span>TE.common),</span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a>    <span class="at">p_common       =</span> ma<span class="sc">$</span>pval.common</span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a>  )</span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.tc,  <span class="st">"Total Cholesterol"</span>),</span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.ldl, <span class="st">"LDL Cholesterol"</span>),</span>
+<span id="cb18-20"><a href="#cb18-20" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.hdl, <span class="st">"HDL Cholesterol"</span>),</span>
+<span id="cb18-21"><a href="#cb18-21" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.tg,  <span class="st">"Triglycerides"</span>)</span>
+<span id="cb18-22"><a href="#cb18-22" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb18-23"><a href="#cb18-23" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb18-24"><a href="#cb18-24" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Summary of primary meta-analyses (serum calcium, unadjusted, random-effects)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Summary of primary meta-analyses (serum calcium, unadjusted, random-effects)</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 3%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Outcome</th>
+<th style="text-align: right;">k</th>
+<th style="text-align: right;">r_random</th>
+<th style="text-align: right;">r_random_lower</th>
+<th style="text-align: right;">r_random_upper</th>
+<th style="text-align: right;">p_random</th>
+<th style="text-align: right;">I2</th>
+<th style="text-align: right;">tau</th>
+<th style="text-align: right;">r_common</th>
+<th style="text-align: right;">p_common</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: right;">27</td>
+<td style="text-align: right;">0.187</td>
+<td style="text-align: right;">0.132</td>
+<td style="text-align: right;">0.240</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.874</td>
+<td style="text-align: right;">0.129</td>
+<td style="text-align: right;">0.199</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: right;">16</td>
+<td style="text-align: right;">0.142</td>
+<td style="text-align: right;">0.070</td>
+<td style="text-align: right;">0.212</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.914</td>
+<td style="text-align: right;">0.135</td>
+<td style="text-align: right;">0.134</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: right;">20</td>
+<td style="text-align: right;">0.052</td>
+<td style="text-align: right;">0.009</td>
+<td style="text-align: right;">0.095</td>
+<td style="text-align: right;">0.018</td>
+<td style="text-align: right;">0.811</td>
+<td style="text-align: right;">0.080</td>
+<td style="text-align: right;">0.079</td>
+<td style="text-align: right;">0</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: right;">23</td>
+<td style="text-align: right;">0.131</td>
+<td style="text-align: right;">0.065</td>
+<td style="text-align: right;">0.196</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.849</td>
+<td style="text-align: right;">0.148</td>
+<td style="text-align: right;">0.124</td>
+<td style="text-align: right;">0</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="summary-forest-plot-all-primary-outcomes" class="level2">
+<h2 class="anchored" data-anchor-id="summary-forest-plot-all-primary-outcomes">Summary Forest Plot — All Primary Outcomes</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb19"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="co"># metabind combines multiple metacor objects; plot only the pooled estimates</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>ma.all <span class="ot">&lt;-</span> <span class="fu">metabind</span>(ma.tc, ma.ldl, ma.hdl, ma.tg,</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>                   <span class="at">pooled =</span> <span class="st">"random"</span>,</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a>                   <span class="at">name   =</span> <span class="fu">c</span>(<span class="st">"Total Cholesterol"</span>, <span class="st">"LDL Cholesterol"</span>,</span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a>                              <span class="st">"HDL Cholesterol"</span>, <span class="st">"Triglycerides"</span>))</span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb19-7"><a href="#cb19-7" aria-hidden="true" tabindex="-1"></a><span class="fu">forest</span>(ma.all,</span>
+<span id="cb19-8"><a href="#cb19-8" aria-hidden="true" tabindex="-1"></a>       <span class="at">hetstat    =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb19-9"><a href="#cb19-9" aria-hidden="true" tabindex="-1"></a>       <span class="at">test.overall =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb19-10"><a href="#cb19-10" aria-hidden="true" tabindex="-1"></a>       <span class="at">col.square   =</span> color_scheme[<span class="dv">1</span>],</span>
+<span id="cb19-11"><a href="#cb19-11" aria-hidden="true" tabindex="-1"></a>       <span class="at">xlab         =</span> <span class="st">"Pooled correlation with serum calcium (r)"</span>,</span>
+<span id="cb19-12"><a href="#cb19-12" aria-hidden="true" tabindex="-1"></a>       <span class="at">main         =</span> <span class="st">"Serum Calcium vs Serum Lipids"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/summary-forest-1.png" class="img-fluid figure-img" width="768"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="sensitivity-analyses" class="level2">
+<h2 class="anchored" data-anchor-id="sensitivity-analyses">Sensitivity Analyses</h2>
+<section id="corrected-calcium-unadjusted" class="level3">
+<h3 class="anchored" data-anchor-id="corrected-calcium-unadjusted">Corrected calcium (unadjusted)</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>ma.tc.corr  <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Corrected"</span>, <span class="st">"Total Cholesterol"</span>,</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>                            <span class="at">label =</span> <span class="st">"Corrected Ca vs Total Cholesterol"</span>)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>ma.ldl.corr <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Corrected"</span>, <span class="st">"LDL Cholesterol"</span>,</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>                            <span class="at">label =</span> <span class="st">"Corrected Ca vs LDL Cholesterol"</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>ma.hdl.corr <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Corrected"</span>, <span class="st">"HDL Cholesterol"</span>,</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>                            <span class="at">label =</span> <span class="st">"Corrected Ca vs HDL Cholesterol"</span>)</span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>ma.tg.corr  <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Corrected"</span>, <span class="st">"Triglycerides"</span>,</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>                            <span class="at">label =</span> <span class="st">"Corrected Ca vs Triglycerides"</span>)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.tc.corr,  <span class="st">"Total Cholesterol"</span>),</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.ldl.corr, <span class="st">"LDL Cholesterol"</span>),</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.hdl.corr, <span class="st">"HDL Cholesterol"</span>),</span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.tg.corr,  <span class="st">"Triglycerides"</span>)</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Sensitivity: corrected calcium (unadjusted, random-effects)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Sensitivity: corrected calcium (unadjusted, random-effects)</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 3%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Outcome</th>
+<th style="text-align: right;">k</th>
+<th style="text-align: right;">r_random</th>
+<th style="text-align: right;">r_random_lower</th>
+<th style="text-align: right;">r_random_upper</th>
+<th style="text-align: right;">p_random</th>
+<th style="text-align: right;">I2</th>
+<th style="text-align: right;">tau</th>
+<th style="text-align: right;">r_common</th>
+<th style="text-align: right;">p_common</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: right;">11</td>
+<td style="text-align: right;">0.154</td>
+<td style="text-align: right;">0.118</td>
+<td style="text-align: right;">0.189</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.543</td>
+<td style="text-align: right;">0.034</td>
+<td style="text-align: right;">0.133</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: right;">6</td>
+<td style="text-align: right;">0.164</td>
+<td style="text-align: right;">0.096</td>
+<td style="text-align: right;">0.230</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.661</td>
+<td style="text-align: right;">0.071</td>
+<td style="text-align: right;">0.139</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.017</td>
+<td style="text-align: right;">-0.033</td>
+<td style="text-align: right;">0.066</td>
+<td style="text-align: right;">0.514</td>
+<td style="text-align: right;">0.683</td>
+<td style="text-align: right;">0.062</td>
+<td style="text-align: right;">0.023</td>
+<td style="text-align: right;">0.004</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: right;">10</td>
+<td style="text-align: right;">0.109</td>
+<td style="text-align: right;">0.061</td>
+<td style="text-align: right;">0.157</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.659</td>
+<td style="text-align: right;">0.053</td>
+<td style="text-align: right;">0.090</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+<section id="adjusted-correlations-serum-calcium" class="level3">
+<h3 class="anchored" data-anchor-id="adjusted-correlations-serum-calcium">Adjusted correlations (serum calcium)</h3>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a>ma.tc.adj <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"Total Cholesterol"</span>, <span class="at">adj =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>                         <span class="at">label =</span> <span class="st">"Serum Ca vs Total Cholesterol (adjusted)"</span>)</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>ma.ldl.adj <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"LDL Cholesterol"</span>, <span class="at">adj =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-4"><a href="#cb21-4" aria-hidden="true" tabindex="-1"></a>                          <span class="at">label =</span> <span class="st">"Serum Ca vs LDL Cholesterol (adjusted)"</span>)</span>
+<span id="cb21-5"><a href="#cb21-5" aria-hidden="true" tabindex="-1"></a>ma.hdl.adj <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"HDL Cholesterol"</span>, <span class="at">adj =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-6"><a href="#cb21-6" aria-hidden="true" tabindex="-1"></a>                          <span class="at">label =</span> <span class="st">"Serum Ca vs HDL Cholesterol (adjusted)"</span>)</span>
+<span id="cb21-7"><a href="#cb21-7" aria-hidden="true" tabindex="-1"></a>ma.tg.adj  <span class="ot">&lt;-</span> <span class="fu">run_metacor</span>(corr.study, <span class="st">"Serum"</span>, <span class="st">"Triglycerides"</span>, <span class="at">adj =</span> <span class="cn">TRUE</span>,</span>
+<span id="cb21-8"><a href="#cb21-8" aria-hidden="true" tabindex="-1"></a>                          <span class="at">label =</span> <span class="st">"Serum Ca vs Triglycerides (adjusted)"</span>)</span>
+<span id="cb21-9"><a href="#cb21-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb21-10"><a href="#cb21-10" aria-hidden="true" tabindex="-1"></a><span class="fu">bind_rows</span>(</span>
+<span id="cb21-11"><a href="#cb21-11" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.tc.adj,  <span class="st">"Total Cholesterol"</span>),</span>
+<span id="cb21-12"><a href="#cb21-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.ldl.adj, <span class="st">"LDL Cholesterol"</span>),</span>
+<span id="cb21-13"><a href="#cb21-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.hdl.adj, <span class="st">"HDL Cholesterol"</span>),</span>
+<span id="cb21-14"><a href="#cb21-14" aria-hidden="true" tabindex="-1"></a>  <span class="fu">extract_ma</span>(ma.tg.adj,  <span class="st">"Triglycerides"</span>)</span>
+<span id="cb21-15"><a href="#cb21-15" aria-hidden="true" tabindex="-1"></a>) <span class="sc">|&gt;</span></span>
+<span id="cb21-16"><a href="#cb21-16" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="fu">across</span>(<span class="fu">where</span>(is.numeric), \(x) <span class="fu">round</span>(x, <span class="dv">3</span>))) <span class="sc">|&gt;</span></span>
+<span id="cb21-17"><a href="#cb21-17" aria-hidden="true" tabindex="-1"></a>  <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Sensitivity: serum calcium, adjusted correlations (random-effects)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Sensitivity: serum calcium, adjusted correlations (random-effects)</caption>
+<colgroup>
+<col style="width: 18%">
+<col style="width: 3%">
+<col style="width: 9%">
+<col style="width: 15%">
+<col style="width: 15%">
+<col style="width: 9%">
+<col style="width: 6%">
+<col style="width: 6%">
+<col style="width: 9%">
+<col style="width: 9%">
+</colgroup>
+<thead>
+<tr class="header">
+<th style="text-align: left;">Outcome</th>
+<th style="text-align: right;">k</th>
+<th style="text-align: right;">r_random</th>
+<th style="text-align: right;">r_random_lower</th>
+<th style="text-align: right;">r_random_upper</th>
+<th style="text-align: right;">p_random</th>
+<th style="text-align: right;">I2</th>
+<th style="text-align: right;">tau</th>
+<th style="text-align: right;">r_common</th>
+<th style="text-align: right;">p_common</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Total Cholesterol</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.343</td>
+<td style="text-align: right;">0.246</td>
+<td style="text-align: right;">0.433</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.204</td>
+<td style="text-align: right;">0.035</td>
+<td style="text-align: right;">0.343</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">LDL Cholesterol</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.340</td>
+<td style="text-align: right;">0.254</td>
+<td style="text-align: right;">0.421</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.340</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="odd">
+<td style="text-align: left;">HDL Cholesterol</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.171</td>
+<td style="text-align: right;">0.078</td>
+<td style="text-align: right;">0.261</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.171</td>
+<td style="text-align: right;">0.000</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Triglycerides</td>
+<td style="text-align: right;">2</td>
+<td style="text-align: right;">0.162</td>
+<td style="text-align: right;">0.069</td>
+<td style="text-align: right;">0.253</td>
+<td style="text-align: right;">0.001</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.000</td>
+<td style="text-align: right;">0.162</td>
+<td style="text-align: right;">0.001</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</section>
+</section>
+<section id="subgroup-analyses" class="level2">
+<h2 class="anchored" data-anchor-id="subgroup-analyses">Subgroup Analyses</h2>
+<p>Pre-registered subgroups (sex, menopausal status, disease status) are available via the raw stratum data in <code>corr</code>. Run only when ≥ 3 studies per subgroup.</p>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb22"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a><span class="co"># Extract studies that reported sex-stratified data and have ≥ 3 per sex</span></span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a>sex_data <span class="ot">&lt;-</span> corr <span class="sc">|&gt;</span></span>
+<span id="cb22-3"><a href="#cb22-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">filter</span>(</span>
+<span id="cb22-4"><a href="#cb22-4" aria-hidden="true" tabindex="-1"></a>    calcium_type <span class="sc">==</span> <span class="st">"Serum"</span>,</span>
+<span id="cb22-5"><a href="#cb22-5" aria-hidden="true" tabindex="-1"></a>    lipid_type   <span class="sc">==</span> <span class="st">"Total Cholesterol"</span>,</span>
+<span id="cb22-6"><a href="#cb22-6" aria-hidden="true" tabindex="-1"></a>    <span class="sc">!</span>adjusted,</span>
+<span id="cb22-7"><a href="#cb22-7" aria-hidden="true" tabindex="-1"></a>    <span class="fu">str_detect</span>(notes, <span class="fu">regex</span>(<span class="st">"^male|^female"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb22-8"><a href="#cb22-8" aria-hidden="true" tabindex="-1"></a>  ) <span class="sc">|&gt;</span></span>
+<span id="cb22-9"><a href="#cb22-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">sex =</span> <span class="fu">if_else</span>(<span class="fu">str_detect</span>(notes, <span class="fu">regex</span>(<span class="st">"^female"</span>, <span class="at">ignore_case =</span> <span class="cn">TRUE</span>)),</span>
+<span id="cb22-10"><a href="#cb22-10" aria-hidden="true" tabindex="-1"></a>                       <span class="st">"Female"</span>, <span class="st">"Male"</span>)) <span class="sc">|&gt;</span></span>
+<span id="cb22-11"><a href="#cb22-11" aria-hidden="true" tabindex="-1"></a>  <span class="co"># one estimate per study × sex (pool sub-strata if any)</span></span>
+<span id="cb22-12"><a href="#cb22-12" aria-hidden="true" tabindex="-1"></a>  <span class="fu">group_by</span>(StudyID, sex) <span class="sc">|&gt;</span></span>
+<span id="cb22-13"><a href="#cb22-13" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summarise</span>(<span class="fu">pool_within_study</span>(r_clean, n) <span class="sc">|&gt;</span> <span class="fu">as_tibble</span>(),</span>
+<span id="cb22-14"><a href="#cb22-14" aria-hidden="true" tabindex="-1"></a>            <span class="at">.groups =</span> <span class="st">"drop"</span>)</span>
+<span id="cb22-15"><a href="#cb22-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb22-16"><a href="#cb22-16" aria-hidden="true" tabindex="-1"></a>sex_data <span class="sc">|&gt;</span> <span class="fu">count</span>(sex) <span class="sc">|&gt;</span> <span class="fu">kable</span>(<span class="at">caption =</span> <span class="st">"Studies with sex-stratified data (Total Cholesterol)"</span>)</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<table class="caption-top table table-sm table-striped small">
+<caption>Studies with sex-stratified data (Total Cholesterol)</caption>
+<thead>
+<tr class="header">
+<th style="text-align: left;">sex</th>
+<th style="text-align: right;">n</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td style="text-align: left;">Female</td>
+<td style="text-align: right;">8</td>
+</tr>
+<tr class="even">
+<td style="text-align: left;">Male</td>
+<td style="text-align: right;">5</td>
+</tr>
+</tbody>
+</table>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">sum</span>(sex_data<span class="sc">$</span>sex <span class="sc">==</span> <span class="st">"Female"</span>) <span class="sc">&gt;=</span> <span class="dv">3</span>) {</span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  ma.female <span class="ot">&lt;-</span> <span class="fu">metacor</span>(r_pooled, n_pooled, <span class="at">studlab =</span> StudyID,</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>                       <span class="at">data =</span> <span class="fu">filter</span>(sex_data, sex <span class="sc">==</span> <span class="st">"Female"</span>),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>                       <span class="at">common =</span> <span class="cn">TRUE</span>, <span class="at">random =</span> <span class="cn">TRUE</span>, <span class="at">method.tau =</span> <span class="st">"REML"</span>,</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a>                       <span class="at">title =</span> <span class="st">"Serum Ca vs Total Cholesterol — Females"</span>)</span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>(ma.female)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">forest</span>(ma.female, <span class="at">xlab =</span> <span class="st">"Correlation (r)"</span>,</span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">col.square =</span> color_scheme[<span class="dv">1</span>], <span class="at">col.diamond =</span> color_scheme[<span class="dv">2</span>])</span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/subgroup-sex-1.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb24"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> (<span class="fu">sum</span>(sex_data<span class="sc">$</span>sex <span class="sc">==</span> <span class="st">"Male"</span>) <span class="sc">&gt;=</span> <span class="dv">3</span>) {</span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a>  ma.male <span class="ot">&lt;-</span> <span class="fu">metacor</span>(r_pooled, n_pooled, <span class="at">studlab =</span> StudyID,</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a>                     <span class="at">data =</span> <span class="fu">filter</span>(sex_data, sex <span class="sc">==</span> <span class="st">"Male"</span>),</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a>                     <span class="at">common =</span> <span class="cn">TRUE</span>, <span class="at">random =</span> <span class="cn">TRUE</span>, <span class="at">method.tau =</span> <span class="st">"REML"</span>,</span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a>                     <span class="at">title =</span> <span class="st">"Serum Ca vs Total Cholesterol — Males"</span>)</span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">summary</span>(ma.male)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">forest</span>(ma.male, <span class="at">xlab =</span> <span class="st">"Correlation (r)"</span>,</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a>         <span class="at">col.square =</span> color_scheme[<span class="dv">1</span>], <span class="at">col.diamond =</span> color_scheme[<span class="dv">2</span>])</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>}</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output-display">
+<div>
+<figure class="figure">
+<p><img src="figures/subgroup-sex-2.png" class="img-fluid figure-img" width="672"></p>
+</figure>
+</div>
+</div>
+</div>
+</section>
+<section id="session-information" class="level2">
+<h2 class="anchored" data-anchor-id="session-information">Session Information</h2>
+<div class="cell">
+<details class="code-fold">
+<summary>Show the code</summary>
+<div class="code-copy-outer-scaffold"><div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="fu">sessionInfo</span>()</span></code></pre></div><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></div>
+</details>
+<div class="cell-output cell-output-stdout">
+<pre><code>R version 4.6.1 (2026-06-24)
+Platform: aarch64-apple-darwin23
+Running under: macOS Golden Gate 27.2
+
+Matrix products: default
+BLAS:   /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRblas.0.dylib 
+LAPACK: /Library/Frameworks/R.framework/Versions/4.6/Resources/lib/libRlapack.dylib;  LAPACK version 3.12.1
+
+locale:
+[1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
+
+time zone: America/Detroit
+tzcode source: internal
+
+attached base packages:
+[1] stats     graphics  grDevices utils     datasets  methods   base     
+
+other attached packages:
+ [1] knitr_1.51      meta_8.5-0      metabook_0.2-0  lubridate_1.9.5
+ [5] forcats_1.0.1   stringr_1.6.0   dplyr_1.2.1     purrr_1.2.2    
+ [9] readr_2.2.0     tidyr_1.3.2     tibble_3.3.1    ggplot2_4.0.3  
+[13] tidyverse_2.0.0
+
+loaded via a namespace (and not attached):
+ [1] gtable_0.3.6        xfun_0.59           htmlwidgets_1.6.4  
+ [4] CompQuadForm_1.4.4  lattice_0.22-9      mathjaxr_2.0-0     
+ [7] tzdb_0.5.0          numDeriv_2016.8-1.1 vctrs_0.7.3        
+[10] tools_4.6.1         Rdpack_2.6.6        generics_0.1.4     
+[13] parallel_4.6.1      pkgconfig_2.0.3     Matrix_1.7-5       
+[16] RColorBrewer_1.1-3  S7_0.2.2            lifecycle_1.0.5    
+[19] compiler_4.6.1      farver_2.1.2        htmltools_0.5.9    
+[22] yaml_2.3.12         pillar_1.11.1       nloptr_2.2.1       
+[25] crayon_1.5.3        MASS_7.3-65         reformulas_0.4.4   
+[28] metadat_1.6-0       boot_1.3-32         nlme_3.1-169       
+[31] tidyselect_1.2.1    digest_0.6.39       stringi_1.8.9      
+[34] splines_4.6.1       fastmap_1.2.0       grid_4.6.1         
+[37] cli_3.6.6           metafor_5.0-1       magrittr_2.0.5     
+[40] withr_3.0.3         scales_1.4.0        bit64_4.8.2        
+[43] timechange_0.4.0    rmarkdown_2.31      bit_4.6.0          
+[46] otel_0.2.0          lme4_2.0-1          hms_1.1.4          
+[49] evaluate_1.0.5      rbibutils_2.4.1     rlang_1.3.0        
+[52] Rcpp_1.1.1-1.1      glue_1.8.1          xml2_1.6.0         
+[55] rstudioapi_0.19.0   vroom_1.7.1         minqa_1.2.8        
+[58] jsonlite_2.0.0      R6_2.6.1           </code></pre>
+</div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+  window.document.addEventListener("DOMContentLoaded", function (event) {
+    const icon = "";
+    const anchorJS = new window.AnchorJS();
+    anchorJS.options = {
+      placement: 'right',
+      icon: icon
+    };
+    anchorJS.add('.anchored');
+    const isCodeAnnotation = (el) => {
+      for (const clz of el.classList) {
+        if (clz.startsWith('code-annotation-')) {                     
+          return true;
+        }
+      }
+      return false;
+    }
+    const onCopySuccess = function(e) {
+      // button target
+      const button = e.trigger;
+      // don't keep focus
+      button.blur();
+      // flash "checked"
+      button.classList.add('code-copy-button-checked');
+      var currentTitle = button.getAttribute("title");
+      button.setAttribute("title", "Copied!");
+      let tooltip;
+      if (window.bootstrap) {
+        button.setAttribute("data-bs-toggle", "tooltip");
+        button.setAttribute("data-bs-placement", "left");
+        button.setAttribute("data-bs-title", "Copied!");
+        tooltip = new bootstrap.Tooltip(button, 
+          { trigger: "manual", 
+            customClass: "code-copy-button-tooltip",
+            offset: [0, -8]});
+        tooltip.show();    
+      }
+      setTimeout(function() {
+        if (tooltip) {
+          tooltip.hide();
+          button.removeAttribute("data-bs-title");
+          button.removeAttribute("data-bs-toggle");
+          button.removeAttribute("data-bs-placement");
+        }
+        button.setAttribute("title", currentTitle);
+        button.classList.remove('code-copy-button-checked');
+      }, 1000);
+      // clear code selection
+      e.clearSelection();
+    }
+    const getTextToCopy = function(trigger) {
+      const outerScaffold = trigger.parentElement.cloneNode(true);
+      const codeEl = outerScaffold.querySelector('code');
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+    const clipboard = new window.ClipboardJS('.code-copy-button:not([data-in-quarto-modal])', {
+      text: getTextToCopy
+    });
+    clipboard.on('success', onCopySuccess);
+    if (window.document.getElementById('quarto-embedded-source-code-modal')) {
+      const clipboardModal = new window.ClipboardJS('.code-copy-button[data-in-quarto-modal]', {
+        text: getTextToCopy,
+        container: window.document.getElementById('quarto-embedded-source-code-modal')
+      });
+      clipboardModal.on('success', onCopySuccess);
+    }
+      var localhostRegex = new RegExp(/^(?:http|https):\/\/localhost\:?[0-9]*\//);
+      var mailtoRegex = new RegExp(/^mailto:/);
+        var filterRegex = new RegExp('/' + window.location.host + '/');
+      var isInternal = (href) => {
+          return filterRegex.test(href) || localhostRegex.test(href) || mailtoRegex.test(href);
+      }
+      // Inspect non-navigation links and adorn them if external
+     var links = window.document.querySelectorAll('a[href]:not(.nav-link):not(.navbar-brand):not(.toc-action):not(.sidebar-link):not(.sidebar-item-toggle):not(.pagination-link):not(.no-external):not([aria-hidden]):not(.dropdown-item):not(.quarto-navigation-tool):not(.about-link)');
+      for (var i=0; i<links.length; i++) {
+        const link = links[i];
+        if (!isInternal(link.href)) {
+          // undo the damage that might have been done by quarto-nav.js in the case of
+          // links that we want to consider external
+          if (link.dataset.originalHref !== undefined) {
+            link.href = link.dataset.originalHref;
+          }
+        }
+      }
+    function tippyHover(el, contentFn, onTriggerFn, onUntriggerFn) {
+      const config = {
+        allowHTML: true,
+        maxWidth: 500,
+        delay: 100,
+        arrow: false,
+        appendTo: function(el) {
+            return el.parentElement;
+        },
+        interactive: true,
+        interactiveBorder: 10,
+        theme: 'quarto',
+        placement: 'bottom-start',
+      };
+      if (contentFn) {
+        config.content = contentFn;
+      }
+      if (onTriggerFn) {
+        config.onTrigger = onTriggerFn;
+      }
+      if (onUntriggerFn) {
+        config.onUntrigger = onUntriggerFn;
+      }
+      window.tippy(el, config); 
+    }
+    const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+    for (var i=0; i<noterefs.length; i++) {
+      const ref = noterefs[i];
+      tippyHover(ref, function() {
+        // use id or data attribute instead here
+        let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+        try { href = new URL(href).hash; } catch {}
+        const id = href.replace(/^#\/?/, "");
+        const note = window.document.getElementById(id);
+        if (note) {
+          return note.innerHTML;
+        } else {
+          return "";
+        }
+      });
+    }
+    const xrefs = window.document.querySelectorAll('a.quarto-xref');
+    const processXRef = (id, note) => {
+      // Strip column container classes
+      const stripColumnClz = (el) => {
+        el.classList.remove("page-full", "page-columns");
+        if (el.children) {
+          for (const child of el.children) {
+            stripColumnClz(child);
+          }
+        }
+      }
+      stripColumnClz(note)
+      if (id === null || id.startsWith('sec-')) {
+        // Special case sections, only their first couple elements
+        const container = document.createElement("div");
+        if (note.children && note.children.length > 2) {
+          container.appendChild(note.children[0].cloneNode(true));
+          for (let i = 1; i < note.children.length; i++) {
+            const child = note.children[i];
+            if (child.tagName === "P" && child.innerText === "") {
+              continue;
+            } else {
+              container.appendChild(child.cloneNode(true));
+              break;
+            }
+          }
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(container);
+          }
+          return container.innerHTML
+        } else {
+          if (window.Quarto?.typesetMath) {
+            window.Quarto.typesetMath(note);
+          }
+          return note.innerHTML;
+        }
+      } else {
+        // Remove any anchor links if they are present
+        const anchorLink = note.querySelector('a.anchorjs-link');
+        if (anchorLink) {
+          anchorLink.remove();
+        }
+        if (window.Quarto?.typesetMath) {
+          window.Quarto.typesetMath(note);
+        }
+        if (note.classList.contains("callout")) {
+          return note.outerHTML;
+        } else {
+          return note.innerHTML;
+        }
+      }
+    }
+    for (var i=0; i<xrefs.length; i++) {
+      const xref = xrefs[i];
+      tippyHover(xref, undefined, function(instance) {
+        instance.disable();
+        let url = xref.getAttribute('href');
+        let hash = undefined; 
+        if (url.startsWith('#')) {
+          hash = url;
+        } else {
+          try { hash = new URL(url).hash; } catch {}
+        }
+        if (hash) {
+          const id = hash.replace(/^#\/?/, "");
+          const note = window.document.getElementById(id);
+          if (note !== null) {
+            try {
+              const html = processXRef(id, note.cloneNode(true));
+              instance.setContent(html);
+            } finally {
+              instance.enable();
+              instance.show();
+            }
+          } else {
+            // See if we can fetch this
+            fetch(url.split('#')[0])
+            .then(res => res.text())
+            .then(html => {
+              const parser = new DOMParser();
+              const htmlDoc = parser.parseFromString(html, "text/html");
+              const note = htmlDoc.getElementById(id);
+              if (note !== null) {
+                const html = processXRef(id, note);
+                instance.setContent(html);
+              } 
+            }).finally(() => {
+              instance.enable();
+              instance.show();
+            });
+          }
+        } else {
+          // See if we can fetch a full url (with no hash to target)
+          // This is a special case and we should probably do some content thinning / targeting
+          fetch(url)
+          .then(res => res.text())
+          .then(html => {
+            const parser = new DOMParser();
+            const htmlDoc = parser.parseFromString(html, "text/html");
+            const note = htmlDoc.querySelector('main.content');
+            if (note !== null) {
+              // This should only happen for chapter cross references
+              // (since there is no id in the URL)
+              // remove the first header
+              if (note.children.length > 0 && note.children[0].tagName === "HEADER") {
+                note.children[0].remove();
+              }
+              const html = processXRef(null, note);
+              instance.setContent(html);
+            } 
+          }).finally(() => {
+            instance.enable();
+            instance.show();
+          });
+        }
+      }, function(instance) {
+      });
+    }
+        let selectedAnnoteEl;
+        const selectorForAnnotation = ( cell, annotation) => {
+          let cellAttr = 'data-code-cell="' + cell + '"';
+          let lineAttr = 'data-code-annotation="' +  annotation + '"';
+          const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+          return selector;
+        }
+        const selectCodeLines = (annoteEl) => {
+          const doc = window.document;
+          const targetCell = annoteEl.getAttribute("data-target-cell");
+          const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+          const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+          const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+          const lineIds = lines.map((line) => {
+            return targetCell + "-" + line;
+          })
+          let top = null;
+          let height = null;
+          let parent = null;
+          if (lineIds.length > 0) {
+              //compute the position of the single el (top and bottom and make a div)
+              const el = window.document.getElementById(lineIds[0]);
+              top = el.offsetTop;
+              height = el.offsetHeight;
+              parent = el.parentElement.parentElement;
+            if (lineIds.length > 1) {
+              const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+              const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+              height = bottom - top;
+            }
+            if (top !== null && height !== null && parent !== null) {
+              // cook up a div (if necessary) and position it 
+              let div = window.document.getElementById("code-annotation-line-highlight");
+              if (div === null) {
+                div = window.document.createElement("div");
+                div.setAttribute("id", "code-annotation-line-highlight");
+                div.style.position = 'absolute';
+                parent.appendChild(div);
+              }
+              div.style.top = top - 2 + "px";
+              div.style.height = height + 4 + "px";
+              div.style.left = 0;
+              let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+              if (gutterDiv === null) {
+                gutterDiv = window.document.createElement("div");
+                gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+                gutterDiv.style.position = 'absolute';
+                const codeCell = window.document.getElementById(targetCell);
+                const gutter = codeCell.querySelector('.code-annotation-gutter');
+                gutter.appendChild(gutterDiv);
+              }
+              gutterDiv.style.top = top - 2 + "px";
+              gutterDiv.style.height = height + 4 + "px";
+            }
+            selectedAnnoteEl = annoteEl;
+          }
+        };
+        const unselectCodeLines = () => {
+          const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+          elementsIds.forEach((elId) => {
+            const div = window.document.getElementById(elId);
+            if (div) {
+              div.remove();
+            }
+          });
+          selectedAnnoteEl = undefined;
+        };
+          // Handle positioning of the toggle
+      window.addEventListener(
+        "resize",
+        throttle(() => {
+          elRect = undefined;
+          if (selectedAnnoteEl) {
+            selectCodeLines(selectedAnnoteEl);
+          }
+        }, 10)
+      );
+      function throttle(fn, ms) {
+      let throttle = false;
+      let timer;
+        return (...args) => {
+          if(!throttle) { // first call gets through
+              fn.apply(this, args);
+              throttle = true;
+          } else { // all the others get throttled
+              if(timer) clearTimeout(timer); // cancel #2
+              timer = setTimeout(() => {
+                fn.apply(this, args);
+                timer = throttle = false;
+              }, ms);
+          }
+        };
+      }
+        // Attach click handler to the DT
+        const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+        for (const annoteDlNode of annoteDls) {
+          annoteDlNode.addEventListener('click', (event) => {
+            const clickedEl = event.target;
+            if (clickedEl !== selectedAnnoteEl) {
+              unselectCodeLines();
+              const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+              if (activeEl) {
+                activeEl.classList.remove('code-annotation-active');
+              }
+              selectCodeLines(clickedEl);
+              clickedEl.classList.add('code-annotation-active');
+            } else {
+              // Unselect the line
+              unselectCodeLines();
+              clickedEl.classList.remove('code-annotation-active');
+            }
+          });
+        }
+    const findCites = (el) => {
+      const parentEl = el.parentElement;
+      if (parentEl) {
+        const cites = parentEl.dataset.cites;
+        if (cites) {
+          return {
+            el,
+            cites: cites.split(' ')
+          };
+        } else {
+          return findCites(el.parentElement)
+        }
+      } else {
+        return undefined;
+      }
+    };
+    var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+    for (var i=0; i<bibliorefs.length; i++) {
+      const ref = bibliorefs[i];
+      const citeInfo = findCites(ref);
+      if (citeInfo) {
+        tippyHover(citeInfo.el, function() {
+          var popup = window.document.createElement('div');
+          citeInfo.cites.forEach(function(cite) {
+            var citeDiv = window.document.createElement('div');
+            citeDiv.classList.add('hanging-indent');
+            citeDiv.classList.add('csl-entry');
+            var biblioDiv = window.document.getElementById('ref-' + cite);
+            if (biblioDiv) {
+              citeDiv.innerHTML = biblioDiv.innerHTML;
+            }
+            popup.appendChild(citeDiv);
+          });
+          return popup.innerHTML;
+        });
+      }
+    }
+  });
+  </script>
+</div> <!-- /content -->
+
+
+
+
+</body></html>

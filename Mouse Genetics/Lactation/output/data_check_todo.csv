@@ -1,0 +1,12 @@
+status,study,area,check,detail
+MISSING,ATGL,Lipids,lipid table available,no lipid_path in manifest
+MISSING,HFD,Lipids,lipid table available,no lipid_path in manifest
+MISSING,WFD,Lipids,lipid table available,no lipid_path in manifest
+MISSING,BodyFat,Lipids,lipid table available,no lipid_path in manifest
+MISSING,BodyFat,RNA,RNA available,no rna_path in manifest
+MISSING,IMAGE_GDM,Lipids,lipid table available,no lipid_path in manifest
+MISSING,IMAGE_GDM,RNA,RNA available,no rna_path in manifest
+WARN,TSC,Linkage,RNA-lipid pairing,10 paired; 1 RNA-only; 0 lipid-only
+WARN,OXTR,Lipids,DHA outliers (within group),"533, 546, 553"
+WARN,OXTR,Lipids,lactation day,no lactation_day column
+WARN,HFD,RNA,library-size outliers,"GSM5356181, GSM5356190"

@@ -1,0 +1,65 @@
+study,area,check,status,detail
+TSC,RNA,RNA available,PASS,22216 genes x 11 samples
+TSC,RNA,gene symbols,PASS,
+TSC,RNA,raw integer counts,PASS,
+TSC,RNA,library size,PASS,"range 25,815,173-37,891,363"
+TSC,RNA,library-size outliers,PASS,
+TSC,Genes,Lipg,PASS,median CPM 3.5; counts 74-252; 100% of samples >= 10 counts
+TSC,Genes,Mfsd2a,PASS,median CPM 37.0; counts 485-1818; 100% of samples >= 10 counts
+TSC,Genes,Btn1a1,PASS,median CPM 1467.5; counts 34621-76501; 100% of samples >= 10 counts
+TSC,RNA,epithelial markers,PASS,"4 of 4 present (Krt8, Krt18, Epcam, Csn2)"
+TSC,Lipids,lipid table available,PASS,10 rows
+TSC,Lipids,unique sample IDs,PASS,
+TSC,Lipids,DHA missing values,PASS,
+TSC,Lipids,DHA plausible range,PASS,0.49-0.97 mol%
+TSC,Lipids,DHA outliers (within group),PASS,
+TSC,Lipids,mol% values valid,PASS,
+TSC,Lipids,total-fat covariate,PASS,
+TSC,Lipids,lactation day,PASS,
+TSC,Lipids,specificity FAs,PASS,
+TSC,Linkage,RNA-lipid pairing,WARN,10 paired; 1 RNA-only; 0 lipid-only
+TSC,Linkage,paired n per group,PASS,KO = 5; WT = 5
+OXTR,RNA,RNA available,PASS,33905 genes x 8 samples
+OXTR,RNA,gene symbols,PASS,
+OXTR,RNA,raw integer counts,PASS,
+OXTR,RNA,library size,PASS,"range 3,753,644-8,596,883"
+OXTR,RNA,library-size outliers,PASS,
+OXTR,Genes,Lipg,PASS,median CPM 4.2; counts 7-41; 88% of samples >= 10 counts
+OXTR,Genes,Mfsd2a,PASS,median CPM 50.0; counts 176-482; 100% of samples >= 10 counts
+OXTR,Genes,Btn1a1,PASS,median CPM 709.9; counts 1405-7648; 100% of samples >= 10 counts
+OXTR,Lipids,lipid table available,PASS,12 rows
+OXTR,Lipids,unique sample IDs,PASS,
+OXTR,Lipids,DHA missing values,PASS,
+OXTR,Lipids,DHA plausible range,PASS,2.84-8.83 mol%
+OXTR,Lipids,DHA outliers (within group),WARN,"533, 546, 553"
+OXTR,Lipids,mol% values valid,PASS,
+OXTR,Lipids,total-fat covariate,PASS,
+OXTR,Lipids,lactation day,WARN,no lactation_day column
+OXTR,Lipids,specificity FAs,PASS,
+OXTR,Lipids,PC-DHA,PASS,
+OXTR,Linkage,RNA-lipid pairing,INFO,different individuals: group-level contrast only
+OXTR,Linkage,group labels match,PASS,KO vs flox
+OXTR,Linkage,n per group (RNA / lipid),PASS,KO = 4 / 5; flox = 4 / 6
+ATGL,RNA,RNA available,SKIP,not sequenced (validation cohort; qPCR later)
+ATGL,Lipids,lipid table available,MISSING,no lipid_path in manifest
+ATGL,Linkage,RNA-lipid pairing,SKIP,needs both RNA and lipid data
+HFD,RNA,RNA available,PASS,22216 genes x 16 samples
+HFD,RNA,gene symbols,PASS,
+HFD,RNA,raw integer counts,PASS,
+HFD,RNA,library size,PASS,"range 8,665,579-39,236,404"
+HFD,RNA,library-size outliers,WARN,"GSM5356181, GSM5356190"
+HFD,Genes,Lipg,PASS,median CPM 3.1; counts 21-259; 100% of samples >= 10 counts
+HFD,Genes,Mfsd2a,PASS,median CPM 24.6; counts 141-1907; 100% of samples >= 10 counts
+HFD,Genes,Btn1a1,PASS,median CPM 1015.8; counts 9973-49043; 100% of samples >= 10 counts
+HFD,RNA,epithelial markers,PASS,"4 of 4 present (Krt8, Krt18, Epcam, Csn2)"
+HFD,Lipids,lipid table available,MISSING,no lipid_path in manifest
+HFD,Linkage,RNA-lipid pairing,SKIP,needs both RNA and lipid data
+WFD,RNA,RNA available,SKIP,not sequenced (validation cohort; qPCR later)
+WFD,Lipids,lipid table available,MISSING,no lipid_path in manifest
+WFD,Linkage,RNA-lipid pairing,SKIP,needs both RNA and lipid data
+BodyFat,RNA,RNA available,MISSING,no rna_path in manifest
+BodyFat,Lipids,lipid table available,MISSING,no lipid_path in manifest
+BodyFat,Linkage,RNA-lipid pairing,SKIP,needs both RNA and lipid data
+IMAGE_GDM,RNA,RNA available,MISSING,no rna_path in manifest
+IMAGE_GDM,Lipids,lipid table available,MISSING,no lipid_path in manifest
+IMAGE_GDM,Linkage,RNA-lipid pairing,SKIP,needs both RNA and lipid data

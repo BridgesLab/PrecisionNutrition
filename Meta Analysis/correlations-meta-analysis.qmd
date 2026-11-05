@@ -1,0 +1,391 @@
+---
+title: "Calcium–Cholesterol Correlation Meta-Analysis"
+author: "Dave Bridges and Kaelin Loftus"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+  pdf: default
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+    fig.keep: "all"
+execute:
+  echo: true
+  warning: false
+---
+
+```{r setup}
+#| echo: false
+#| message: false
+library(tidyverse)
+library(meta)
+library(knitr)
+
+color_scheme <- c("#00274c", "#ffcb05")
+```
+
+## Purpose
+
+Pre-registered meta-analysis (PROSPERO CRD420250645066) of cross-sectional
+associations between serum calcium and serum cholesterol.  Correlation
+coefficients are Fisher-*z* transformed for pooling and back-transformed for
+presentation, as specified in the registration.  Separate meta-analyses are
+run for each lipid outcome (Total Cholesterol primary; LDL, HDL, Triglycerides
+secondary).  Primary calcium exposure is serum calcium; corrected calcium is a
+sensitivity analysis.  When a paper reports only sex- or disease-stratified
+estimates (no combined figure), stratum estimates are pooled within-study via a
+Fisher-*z* weighted average before entering the between-study meta-analysis,
+giving one effect per study.
+
+## Data
+
+```{r data-entry}
+corr.raw <- read_csv(
+  "Screening Log for Calcium and Cholesterol Meta-Analysis - Correlations.csv",
+  show_col_types = FALSE
+)
+```
+
+## Cleaning and Coding
+
+```{r cleaning}
+# ── helper: fix non-standard minus signs and stray characters in r ──────────
+clean_r <- function(x) {
+  x |>
+    str_replace_all("[−–—]", "-") |>   # em/en-dash → minus
+    str_replace_all("\\.{2,}", ".")                   |>  # double decimals
+    str_replace_all("[^0-9\\.\\-]", "")              |>   # anything else
+    as.numeric()
+}
+
+# ── parse calcium type and lipid outcome from Association column ─────────────
+corr <- corr.raw |>
+  mutate(
+    # fix OCR/typo variants before splitting
+    assoc_clean = Association |>
+      str_replace_all("Correctect", "Corrected") |>
+      str_replace_all("Cholestrol|Choelstrol", "Cholesterol") |>
+      str_replace_all("Triglycerdies", "Triglycerides") |>
+      str_squish(),
+
+    adjusted = str_detect(assoc_clean, "\\(adjusted\\)"),
+
+    # everything left of " - "
+    calcium_raw = str_extract(assoc_clean, "^.+?(?= - )") |> str_trim(),
+    # everything right of the first " - ", strip "(adjusted)"
+    lipid_raw   = str_extract(assoc_clean, "(?<= - ).+$") |>
+                    str_remove("\\s*\\(adjusted\\)") |>
+                    str_trim(),
+
+    calcium_type = case_when(
+      str_detect(calcium_raw, "^Serum Calcium$")           ~ "Serum",
+      str_detect(calcium_raw, "Corrected Calcium")         ~ "Corrected",
+      str_detect(calcium_raw, "Ionic Calcium")             ~ "Ionic",
+      str_detect(calcium_raw, "Hair Calcium")              ~ "Hair",
+      str_detect(calcium_raw, "Calcium Intake")            ~ "Intake",
+      str_detect(calcium_raw, "Change in Serum Calcium")   ~ "Change",
+      TRUE                                                  ~ "Other"
+    ),
+
+    lipid_type = case_when(
+      str_detect(lipid_raw, "Total Cholesterol")           ~ "Total Cholesterol",
+      str_detect(lipid_raw, "LDL Cholesterol")             ~ "LDL Cholesterol",
+      str_detect(lipid_raw, "HDL Cholesterol")             ~ "HDL Cholesterol",
+      str_detect(lipid_raw, "Triglycerides")               ~ "Triglycerides",
+      TRUE                                                  ~ "Other"
+    ),
+
+    r_clean = clean_r(as.character(r)),
+    n       = as.integer(n)
+  ) |>
+  filter(!is.na(r_clean), !is.na(n), abs(r_clean) < 1)
+```
+
+```{r coding-summary}
+corr |>
+  count(calcium_type, lipid_type, adjusted) |>
+  kable(caption = "Observations by calcium type, lipid outcome, and adjustment status")
+```
+
+## Within-Study Pooling
+
+When a paper supplies only stratum-specific estimates (e.g. males and females
+separately), a single study-level estimate is computed via Fisher-*z* weighted
+average before the between-study meta-analysis.
+
+```{r within-study-pool}
+# Fisher-z weighted mean within study × calcium_type × lipid_type × adjusted
+pool_within_study <- function(r_vec, n_vec) {
+  # variance of Fisher z is 1/(n-3); weight = n-3
+  w    <- n_vec - 3
+  z    <- atanh(r_vec)
+  z_p  <- sum(z * w) / sum(w)
+  n_p  <- sum(w) + 3L          # effective n preserving total precision
+  list(r_pooled = tanh(z_p), n_pooled = as.integer(round(n_p)))
+}
+
+corr.study <- corr |>
+  group_by(StudyID, calcium_type, lipid_type, adjusted) |>
+  summarise(
+    pool_within_study(r_clean, n) |> as_tibble(),
+    k_strata = n(),
+    .groups = "drop"
+  )
+
+corr.study |>
+  filter(calcium_type == "Serum", !adjusted, lipid_type != "Other") |>
+  count(lipid_type) |>
+  kable(caption = "Studies contributing to each primary serum-calcium analysis")
+```
+
+## Meta-Analysis
+
+### Helper function
+
+```{r ma-function}
+run_metacor <- function(data, calcium, lipid, adj = FALSE,
+                        label = NULL) {
+  d <- data |>
+    filter(
+      calcium_type == calcium,
+      lipid_type   == lipid,
+      adjusted     == adj
+    )
+
+  if (nrow(d) < 2) {
+    message("Fewer than 2 studies for ", calcium, " – ", lipid,
+            " (adjusted=", adj, "); skipping.")
+    return(invisible(NULL))
+  }
+
+  title_str <- label %||%
+    paste0(calcium, " Calcium vs ", lipid, if (adj) " (adjusted)")
+
+  metacor(
+    cor      = r_pooled,
+    n        = n_pooled,
+    studlab  = StudyID,
+    data     = d,
+    common   = TRUE,
+    random   = TRUE,
+    method.tau = "REML",
+    title    = title_str
+  )
+}
+```
+
+### Primary analyses — Serum Calcium (unadjusted)
+
+```{r primary-tc}
+ma.tc <- run_metacor(corr.study, "Serum", "Total Cholesterol")
+summary(ma.tc)
+```
+
+```{r forest-tc}
+#| fig.width: 10
+#| fig.height: 6
+forest(ma.tc,
+       sortvar   = r_pooled,
+       col.square  = color_scheme[1],
+       col.diamond = color_scheme[2],
+       xlab      = "Correlation (r)",
+       main      = "Serum Calcium vs Total Cholesterol")
+```
+
+```{r primary-ldl}
+ma.ldl <- run_metacor(corr.study, "Serum", "LDL Cholesterol")
+summary(ma.ldl)
+```
+
+```{r forest-ldl}
+#| fig.width: 10
+#| fig.height: 6
+forest(ma.ldl,
+       sortvar   = r_pooled,
+       col.square  = color_scheme[1],
+       col.diamond = color_scheme[2],
+       xlab      = "Correlation (r)",
+       main      = "Serum Calcium vs LDL Cholesterol")
+```
+
+```{r primary-hdl}
+ma.hdl <- run_metacor(corr.study, "Serum", "HDL Cholesterol")
+summary(ma.hdl)
+```
+
+```{r forest-hdl}
+#| fig.width: 10
+#| fig.height: 6
+forest(ma.hdl,
+       sortvar   = r_pooled,
+       col.square  = color_scheme[1],
+       col.diamond = color_scheme[2],
+       xlab      = "Correlation (r)",
+       main      = "Serum Calcium vs HDL Cholesterol")
+```
+
+```{r primary-tg}
+ma.tg <- run_metacor(corr.study, "Serum", "Triglycerides")
+summary(ma.tg)
+```
+
+```{r forest-tg}
+#| fig.width: 10
+#| fig.height: 6
+forest(ma.tg,
+       sortvar   = r_pooled,
+       col.square  = color_scheme[1],
+       col.diamond = color_scheme[2],
+       xlab      = "Correlation (r)",
+       main      = "Serum Calcium vs Triglycerides")
+```
+
+### Summary table — primary analyses
+
+```{r summary-table}
+extract_ma <- function(ma, label) {
+  if (is.null(ma)) return(NULL)
+  tibble(
+    Outcome        = label,
+    k              = ma$k,
+    r_random       = tanh(ma$TE.random),
+    r_random_lower = tanh(ma$lower.random),
+    r_random_upper = tanh(ma$upper.random),
+    p_random       = ma$pval.random,
+    I2             = ma$I2,
+    tau            = sqrt(ma$tau2),
+    r_common       = tanh(ma$TE.common),
+    p_common       = ma$pval.common
+  )
+}
+
+bind_rows(
+  extract_ma(ma.tc,  "Total Cholesterol"),
+  extract_ma(ma.ldl, "LDL Cholesterol"),
+  extract_ma(ma.hdl, "HDL Cholesterol"),
+  extract_ma(ma.tg,  "Triglycerides")
+) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  kable(caption = "Summary of primary meta-analyses (serum calcium, unadjusted, random-effects)")
+```
+
+## Summary Forest Plot — All Primary Outcomes
+
+```{r summary-forest}
+#| fig.width: 8
+#| fig.height: 4
+# metabind combines multiple metacor objects; plot only the pooled estimates
+ma.all <- metabind(ma.tc, ma.ldl, ma.hdl, ma.tg,
+                   pooled = "random",
+                   name   = c("Total Cholesterol", "LDL Cholesterol",
+                              "HDL Cholesterol", "Triglycerides"))
+
+forest(ma.all,
+       hetstat    = FALSE,
+       test.overall = FALSE,
+       col.square   = color_scheme[1],
+       xlab         = "Pooled correlation with serum calcium (r)",
+       main         = "Serum Calcium vs Serum Lipids")
+```
+
+## Sensitivity Analyses
+
+### Corrected calcium (unadjusted)
+
+```{r sensitivity-corrected}
+ma.tc.corr  <- run_metacor(corr.study, "Corrected", "Total Cholesterol",
+                            label = "Corrected Ca vs Total Cholesterol")
+ma.ldl.corr <- run_metacor(corr.study, "Corrected", "LDL Cholesterol",
+                            label = "Corrected Ca vs LDL Cholesterol")
+ma.hdl.corr <- run_metacor(corr.study, "Corrected", "HDL Cholesterol",
+                            label = "Corrected Ca vs HDL Cholesterol")
+ma.tg.corr  <- run_metacor(corr.study, "Corrected", "Triglycerides",
+                            label = "Corrected Ca vs Triglycerides")
+
+bind_rows(
+  extract_ma(ma.tc.corr,  "Total Cholesterol"),
+  extract_ma(ma.ldl.corr, "LDL Cholesterol"),
+  extract_ma(ma.hdl.corr, "HDL Cholesterol"),
+  extract_ma(ma.tg.corr,  "Triglycerides")
+) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  kable(caption = "Sensitivity: corrected calcium (unadjusted, random-effects)")
+```
+
+### Adjusted correlations (serum calcium)
+
+```{r sensitivity-adjusted}
+ma.tc.adj <- run_metacor(corr.study, "Serum", "Total Cholesterol", adj = TRUE,
+                         label = "Serum Ca vs Total Cholesterol (adjusted)")
+ma.ldl.adj <- run_metacor(corr.study, "Serum", "LDL Cholesterol", adj = TRUE,
+                          label = "Serum Ca vs LDL Cholesterol (adjusted)")
+ma.hdl.adj <- run_metacor(corr.study, "Serum", "HDL Cholesterol", adj = TRUE,
+                          label = "Serum Ca vs HDL Cholesterol (adjusted)")
+ma.tg.adj  <- run_metacor(corr.study, "Serum", "Triglycerides", adj = TRUE,
+                          label = "Serum Ca vs Triglycerides (adjusted)")
+
+bind_rows(
+  extract_ma(ma.tc.adj,  "Total Cholesterol"),
+  extract_ma(ma.ldl.adj, "LDL Cholesterol"),
+  extract_ma(ma.hdl.adj, "HDL Cholesterol"),
+  extract_ma(ma.tg.adj,  "Triglycerides")
+) |>
+  mutate(across(where(is.numeric), \(x) round(x, 3))) |>
+  kable(caption = "Sensitivity: serum calcium, adjusted correlations (random-effects)")
+```
+
+## Subgroup Analyses
+
+Pre-registered subgroups (sex, menopausal status, disease status) are available
+via the raw stratum data in `corr`.  Run only when ≥ 3 studies per subgroup.
+
+```{r subgroup-sex}
+# Extract studies that reported sex-stratified data and have ≥ 3 per sex
+sex_data <- corr |>
+  filter(
+    calcium_type == "Serum",
+    lipid_type   == "Total Cholesterol",
+    !adjusted,
+    str_detect(notes, regex("^male|^female", ignore_case = TRUE))
+  ) |>
+  mutate(sex = if_else(str_detect(notes, regex("^female", ignore_case = TRUE)),
+                       "Female", "Male")) |>
+  # one estimate per study × sex (pool sub-strata if any)
+  group_by(StudyID, sex) |>
+  summarise(pool_within_study(r_clean, n) |> as_tibble(),
+            .groups = "drop")
+
+sex_data |> count(sex) |> kable(caption = "Studies with sex-stratified data (Total Cholesterol)")
+
+if (sum(sex_data$sex == "Female") >= 3) {
+  ma.female <- metacor(r_pooled, n_pooled, studlab = StudyID,
+                       data = filter(sex_data, sex == "Female"),
+                       common = TRUE, random = TRUE, method.tau = "REML",
+                       title = "Serum Ca vs Total Cholesterol — Females")
+  summary(ma.female)
+  forest(ma.female, xlab = "Correlation (r)",
+         col.square = color_scheme[1], col.diamond = color_scheme[2])
+}
+
+if (sum(sex_data$sex == "Male") >= 3) {
+  ma.male <- metacor(r_pooled, n_pooled, studlab = StudyID,
+                     data = filter(sex_data, sex == "Male"),
+                     common = TRUE, random = TRUE, method.tau = "REML",
+                     title = "Serum Ca vs Total Cholesterol — Males")
+  summary(ma.male)
+  forest(ma.male, xlab = "Correlation (r)",
+         col.square = color_scheme[1], col.diamond = color_scheme[2])
+}
+```
+
+## Session Information
+
+```{r session-info}
+sessionInfo()
+```

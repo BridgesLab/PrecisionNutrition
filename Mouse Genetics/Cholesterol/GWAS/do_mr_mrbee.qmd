@@ -1,0 +1,267 @@
+---
+title: "Bidirectional MR: Cholesterol ↔ Calcium (DO mice)"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    code-fold: true
+    df-print: kable
+---
+
+## Overview
+
+Same-sample bidirectional MR in the Svenson DO HFD v12 cohort (n ≈ 763 for
+calcium, n ≈ 835 for cholesterol). Both traits are rank-normalised; the
+same individuals provide both GWAS, so 100% sample overlap correction is
+required.
+
+Co-primary methods:
+
+- **MRBEE.IMRP.UV** — bias-corrected IVW estimating the overlap correlation
+  (Rxy) from null SNPs in the GWAS data via `errorCov()`
+- **IVW (overlap-corrected)** — first-order correction to numerator
+  (covariance bias) and denominator (winner's curse); independent
+  implementation for cross-check
+
+MR-APSS results are read from `do_mr_apss_results.csv` when present (produced
+by `do_mr_apss.R` on Great Lakes).
+
+```{r setup}
+#| message: false
+library(tidyverse)
+library(MRBEE)    # remotes::install_github("noahlorinczcomi/MRBEE")
+library(kableExtra)
+
+# Files live alongside this QMD
+DATA_DIR <- "."
+
+P_THRESH <- 5e-6   # relax to 1e-5 if fewer than 3 instruments
+WIND_MB  <- 1      # one top SNP per Mb window
+MIN_F    <- 10
+```
+
+## Load GWAS summary statistics
+
+```{r load}
+read_gemma <- function(path, trait) {
+  if (!file.exists(path))
+    stop("File not found: ", path,
+         "\nDownload from cluster: scp greatlakes:.../GEMMA/DO_HFD/output/",
+         basename(path), " .")
+  read_tsv(path, col_types = cols(.default = "d", rs = "c",
+                                  allele1 = "c", allele0 = "c"),
+           show_col_types = FALSE) |>
+    rename(snp = rs, pos = ps, a1 = allele1, a0 = allele0, pval = p_wald) |>
+    mutate(trait   = trait,
+           chr_num = as.integer(str_extract(snp, "^[^_]+"))) |>
+    filter(!is.na(beta), !is.na(se), se > 0)
+}
+
+chol <- read_gemma(file.path(DATA_DIR, "cholesterol_all.assoc.txt"), "cholesterol")
+ca   <- read_gemma(file.path(DATA_DIR, "calcium2_all.assoc.txt"),    "calcium2")
+
+harm <- inner_join(
+  chol |> select(snp, chr_num, pos, a1, a0, af,
+                 beta_chol = beta, se_chol = se, pval_chol = pval),
+  ca   |> select(snp, beta_ca = beta, se_ca = se, pval_ca = pval),
+  by = "snp"
+) |>
+  mutate(F_chol = (beta_chol / se_chol)^2,
+         F_ca   = (beta_ca   / se_ca)^2)
+
+tibble(
+  Trait        = c("Cholesterol", "Calcium (19-wk)"),
+  `GWAS SNPs`  = c(nrow(chol), nrow(ca)),
+  `Harmonised` = nrow(harm)
+)
+```
+
+## Rxy: overlap correlation from null SNPs
+
+MRBEE estimates the error covariance from SNPs that are null for both traits.
+For complete sample overlap this directly captures the phenotypic correlation
+without needing the phenotype files.
+
+```{r rxy}
+Z_null <- harm |>
+  filter(pval_chol > 0.05, pval_ca > 0.05) |>
+  transmute(z_chol = beta_chol / se_chol,
+            z_ca   = beta_ca   / se_ca) |>
+  as.matrix()
+
+Rxy <- tryCatch(
+  as.matrix(MRBEE::errorCov(ZMatrix = Z_null)),
+  error = function(e) {
+    message("errorCov() failed: ", e$message, " — using cor(Z_null)")
+    cor(Z_null, use = "complete.obs")
+  }
+)
+
+cat("Rxy (error covariance matrix):\n")
+print(round(Rxy, 4))
+cat("\nOverlap correlation ρ =", round(Rxy[1, 2], 4), "\n")
+```
+
+## Instrument selection
+
+One top SNP per `r WIND_MB` Mb window, p < `r P_THRESH`, F ≥ `r MIN_F`.
+
+```{r instruments}
+select_instruments <- function(df, pval_col, f_col,
+                               p_thresh = P_THRESH, wind_mb = WIND_MB,
+                               min_f = MIN_F) {
+  sig <- df |> filter(.data[[pval_col]] < p_thresh) |> arrange(.data[[pval_col]])
+  if (nrow(sig) == 0) {
+    warning("No SNPs below p < ", p_thresh, ". Try relaxing P_THRESH to 1e-5.")
+    return(sig[0, ])
+  }
+  kept <- list()
+  while (nrow(sig) > 0) {
+    top <- sig[1, ]
+    kept[[length(kept) + 1]] <- top
+    sig <- sig |>
+      filter(!(chr_num == top$chr_num & abs(pos - top$pos) < wind_mb * 1e6))
+  }
+  bind_rows(kept) |> filter(.data[[f_col]] >= min_f)
+}
+
+iv_chol <- select_instruments(harm, "pval_chol", "F_chol")
+iv_ca   <- select_instruments(harm, "pval_ca",   "F_ca")
+
+bind_rows(
+  iv_chol |> mutate(arm = "Cholesterol instruments"),
+  iv_ca   |> mutate(arm = "Calcium instruments")
+) |>
+  group_by(arm) |>
+  summarise(n      = n(),
+            mean_F = round(mean(if_else(arm[1] == "Cholesterol instruments",
+                                        F_chol, F_ca)), 1),
+            min_p  = signif(min(if_else(arm[1] == "Cholesterol instruments",
+                                        pval_chol, pval_ca)), 2),
+            .groups = "drop")
+```
+
+## MRBEE.IMRP.UV
+
+```{r mrbee}
+run_mrbee <- function(ivs, exp_beta, exp_se, out_beta, out_se, Rxy, label) {
+  if (nrow(ivs) < 3) { warning(label, ": < 3 instruments"); return(NULL) }
+  res <- tryCatch(
+    MRBEE::MRBEE.IMRP.UV(
+      by   = ivs[[out_beta]], bx   = ivs[[exp_beta]],
+      byse = ivs[[out_se]],  bxse = ivs[[exp_se]],
+      Rxy  = Rxy),
+    error = function(e) { warning(label, ": ", e$message); NULL })
+  if (is.null(res)) return(NULL)
+  b  <- as.numeric(res$theta)[1]
+  v  <- if (!is.null(res$vartheta)) res$vartheta else res$covtheta
+  se <- sqrt(as.numeric(v)[1])
+  tibble(arm = label, method = "MRBEE.IMRP.UV",
+         n_ivs = nrow(ivs),
+         mean_F = round(mean((ivs[[exp_beta]] / ivs[[exp_se]])^2), 1),
+         beta = b, se = se,
+         pval = 2 * pnorm(abs(b / se), lower.tail = FALSE),
+         n_pleiotropic = if (!is.null(res$delta))
+                           sum(abs(as.numeric(res$delta)) > 1e-8) else NA_integer_)
+}
+
+r_mrbee_chol <- run_mrbee(iv_chol, "beta_chol", "se_chol", "beta_ca",   "se_ca",
+                           Rxy, "cholesterol → calcium")
+r_mrbee_ca   <- run_mrbee(iv_ca,   "beta_ca",   "se_ca",   "beta_chol", "se_chol",
+                           Rxy, "calcium → cholesterol")
+```
+
+## Overlap-corrected IVW
+
+```{r ivw-corrected}
+run_ivw_corrected <- function(ivs, exp_beta, exp_se, out_beta, out_se,
+                              Rxy, label) {
+  if (nrow(ivs) < 2) return(NULL)
+  bx <- ivs[[exp_beta]]; bxse <- ivs[[exp_se]]
+  by <- ivs[[out_beta]]; byse <- ivs[[out_se]]
+  rho <- Rxy[1, 2]; w <- 1 / byse^2
+  num   <- sum(w * bx * by)  - rho * sum(w * bxse * byse)
+  denom <- sum(w * bx^2)     - sum(w * bxse^2)
+  if (denom <= 0) { warning(label, ": corrected denom ≤ 0"); return(NULL) }
+  beta <- num / denom
+  se   <- sqrt(sum(w * (by - beta * bx)^2) /
+               ((length(bx) - 1) * sum(w * bx^2)))
+  tibble(arm = label, method = "IVW (overlap-corrected)",
+         n_ivs = length(bx),
+         mean_F = round(mean((bx / bxse)^2), 1),
+         beta = beta, se = se,
+         pval = 2 * pnorm(abs(beta / se), lower.tail = FALSE),
+         n_pleiotropic = NA_integer_)
+}
+
+r_ivw_chol <- run_ivw_corrected(iv_chol, "beta_chol", "se_chol",
+                                 "beta_ca",   "se_ca",   Rxy, "cholesterol → calcium")
+r_ivw_ca   <- run_ivw_corrected(iv_ca,   "beta_ca",   "se_ca",
+                                 "beta_chol", "se_chol", Rxy, "calcium → cholesterol")
+```
+
+## Results
+
+```{r results}
+results <- bind_rows(r_mrbee_chol, r_ivw_chol, r_mrbee_ca, r_ivw_ca) |>
+  mutate(ci_lo = beta - 1.96 * se, ci_hi = beta + 1.96 * se) |>
+  relocate(arm, method, n_ivs, mean_F, beta, se, ci_lo, ci_hi, pval, n_pleiotropic)
+
+results |>
+  mutate(across(c(beta, se, ci_lo, ci_hi), \(x) round(x, 4)),
+         pval = signif(pval, 3)) |>
+  kbl(caption = "Bidirectional MR results (DO mice)") |>
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) |>
+  pack_rows("Cholesterol → Calcium", 1, 2) |>
+  pack_rows("Calcium → Cholesterol", 3, 4)
+```
+
+```{r forest}
+#| fig-width: 7
+#| fig-height: 4
+#| fig-cap: "Forest plot — bidirectional MR, DO mice. Dashed line = null."
+
+results |>
+  mutate(label = paste0(method, "\n(", arm, ")"),
+         label = fct_rev(fct_inorder(label))) |>
+  ggplot(aes(x = beta, y = label)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(aes(xmin = ci_lo, xmax = ci_hi), height = 0.2,
+                 colour = "#00274c") +
+  geom_point(size = 3, colour = "#00274c") +
+  labs(x = "Effect estimate (SD units, rank-normalised)",
+       y = NULL,
+       title = "Bidirectional MR: Cholesterol ↔ Calcium (DO mice)") +
+  theme_classic(base_size = 12)
+```
+
+## Save and combine with MR-APSS
+
+```{r save}
+write_csv(results, file.path(DATA_DIR, "do_bidirectional_mr_results.csv"))
+
+write_csv(
+  bind_rows(
+    iv_chol |> mutate(arm = "cholesterol → calcium"),
+    iv_ca   |> mutate(arm = "calcium → cholesterol")
+  ),
+  file.path(DATA_DIR, "do_bidirectional_mr_instruments.csv")
+)
+
+apss_path <- file.path(DATA_DIR, "do_mr_apss_results.csv")
+if (file.exists(apss_path)) {
+  apss <- read_csv(apss_path, show_col_types = FALSE)
+  combined <- bind_rows(results, apss) |> arrange(arm, method)
+  write_csv(combined, file.path(DATA_DIR, "do_bidirectional_mr_all_methods.csv"))
+  cat("Combined with MR-APSS → do_bidirectional_mr_all_methods.csv\n")
+  combined |>
+    select(arm, method, n_ivs, beta, se, pval) |>
+    mutate(across(c(beta, se), \(x) round(x, 4)), pval = signif(pval, 3)) |>
+    kbl(caption = "All methods combined") |>
+    kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+} else {
+  cat("do_mr_apss_results.csv not found — run do_mr_apss.R on the cluster,\n",
+      "download here, then re-render.\n")
+}
+```

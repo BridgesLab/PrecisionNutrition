@@ -250,9 +250,31 @@ bind_rows(diag_chol, diag_ca) |>
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
-## Overlap-corrected IVW
+## IVW (standard and overlap-corrected)
+
+Standard IVW assumes independent samples; it is upward-biased here due to
+100% sample overlap (phenotypic correlation ρ ≈ `r round(Rxy[1,2], 3)`
+inflates the numerator). The corrected version subtracts the covariance
+term. Comparing the two directly shows how much the overlap is driving the
+estimate.
 
 ```{r ivw-corrected}
+run_ivw_standard <- function(ivs, exp_beta, exp_se, out_beta, out_se, label) {
+  if (nrow(ivs) < 2) return(NULL)
+  bx <- ivs[[exp_beta]]; bxse <- ivs[[exp_se]]
+  by <- ivs[[out_beta]]; byse <- ivs[[out_se]]
+  w    <- 1 / byse^2
+  beta <- sum(w * bx * by) / sum(w * bx^2)
+  se   <- sqrt(sum(w * (by - beta * bx)^2) /
+               ((length(bx) - 1) * sum(w * bx^2)))
+  tibble(arm = label, method = "IVW (standard)",
+         n_ivs = length(bx),
+         mean_F = round(mean((bx / bxse)^2), 1),
+         beta = beta, se = se,
+         pval = 2 * pnorm(abs(beta / se), lower.tail = FALSE),
+         n_pleiotropic = NA_integer_)
+}
+
 run_ivw_corrected <- function(ivs, exp_beta, exp_se, out_beta, out_se,
                               Rxy, label) {
   if (nrow(ivs) < 2) return(NULL)
@@ -273,10 +295,14 @@ run_ivw_corrected <- function(ivs, exp_beta, exp_se, out_beta, out_se,
          n_pleiotropic = NA_integer_)
 }
 
-r_ivw_chol <- run_ivw_corrected(iv_chol, "beta_chol", "se_chol",
-                                 "beta_ca",   "se_ca",   Rxy, "cholesterol → calcium")
-r_ivw_ca   <- run_ivw_corrected(iv_ca,   "beta_ca",   "se_ca",
-                                 "beta_chol", "se_chol", Rxy, "calcium → cholesterol")
+r_ivw_std_chol  <- run_ivw_standard(iv_chol,  "beta_chol", "se_chol",
+                                     "beta_ca",   "se_ca",   "cholesterol → calcium")
+r_ivw_std_ca    <- run_ivw_standard(iv_ca,    "beta_ca",   "se_ca",
+                                     "beta_chol", "se_chol", "calcium → cholesterol")
+r_ivw_chol      <- run_ivw_corrected(iv_chol, "beta_chol", "se_chol",
+                                     "beta_ca",   "se_ca",   Rxy, "cholesterol → calcium")
+r_ivw_ca        <- run_ivw_corrected(iv_ca,   "beta_ca",   "se_ca",
+                                     "beta_chol", "se_chol", Rxy, "calcium → cholesterol")
 ```
 
 ```{r load-apss-notes}
@@ -326,7 +352,8 @@ this instrument count. We treat MRBEE and overlap-corrected IVW as co-primary;
 MR-APSS is reported for transparency.
 
 ```{r results}
-results <- bind_rows(r_mrbee_chol, r_ivw_chol, r_mrbee_ca, r_ivw_ca) |>
+results <- bind_rows(r_mrbee_chol, r_ivw_std_chol, r_ivw_chol,
+                     r_mrbee_ca,   r_ivw_std_ca,   r_ivw_ca) |>
   mutate(ci_lo = beta - 1.96 * se, ci_hi = beta + 1.96 * se) |>
   relocate(arm, method, n_ivs, mean_F, beta, se, ci_lo, ci_hi, pval, n_pleiotropic)
 

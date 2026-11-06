@@ -279,6 +279,27 @@ r_ivw_ca   <- run_ivw_corrected(iv_ca,   "beta_ca",   "se_ca",
                                  "beta_chol", "se_chol", Rxy, "calcium → cholesterol")
 ```
 
+```{r load-apss-notes}
+#| include: false
+apss_path <- file.path(DATA_DIR, "do_mr_apss_results.csv")
+if (file.exists(apss_path)) {
+  apss_notes <- read_csv(apss_path, show_col_types = FALSE)
+  apss_chol  <- apss_notes |> filter(arm == "cholesterol → calcium")
+  pi0_val    <- if (nrow(apss_chol) > 0 && !is.na(apss_chol$pi0[1]))
+                  round(apss_chol$pi0[1], 2) else NA_real_
+  n_pleio    <- if (nrow(apss_chol) > 0 && !is.na(apss_chol$n_pleiotropic[1]))
+                  apss_chol$n_pleiotropic[1] else NA_integer_
+  n_ivs_apss <- if (nrow(apss_chol) > 0) apss_chol$n_ivs[1] else NA_integer_
+} else {
+  pi0_val <- NA_real_; n_pleio <- NA_integer_; n_ivs_apss <- NA_integer_
+}
+fmt_pi0 <- if (!is.na(pi0_val))
+  paste0(pi0_val, " (", round(pi0_val * 100), "% of instruments called pleiotropic)")
+  else "not yet available — run do_mr_apss.R"
+fmt_pleio <- if (!is.na(n_pleio) && !is.na(n_ivs_apss))
+  paste0(n_pleio, " of ", n_ivs_apss) else "not yet available"
+```
+
 ## Results
 
 **Calcium → cholesterol direction** is not evaluable: fewer than 3 genetic
@@ -288,16 +309,16 @@ the weaker genetic architecture of calcium relative to cholesterol in DO HFD
 mice at this sample size, not a methodological failure.
 
 **MR-APSS vs. MRBEE/IVW discrepancy (cholesterol → calcium):** MRBEE and
-overlap-corrected IVW agree closely (β ≈ 0.0075) while MR-APSS gives a
-near-null estimate with inflated SE. MR-APSS fits a mixture model (EM) to
-separate pleiotropic from causal instruments and estimates pi0 (proportion
-pleiotropic) from the instrument set itself. With only ~15 instruments the EM
-is underpowered to distinguish real pleiotropy from sampling noise, and
-previously estimated pi0 ≈ 0.40 (40% pleiotropic), which aggressively
-down-weights the estimate toward zero and inflates variance. MRBEE corrects
-for overlap bias via `errorCov()` without discarding instruments, making it
-more reliable at this instrument count. We treat MRBEE and overlap-corrected
-IVW as co-primary; MR-APSS is reported for transparency.
+overlap-corrected IVW agree closely while MR-APSS gives a near-null estimate
+with inflated SE. MR-APSS fits a mixture model (EM) to separate pleiotropic
+from causal instruments and estimates pi0 (proportion pleiotropic) from the
+instrument set itself. With only ~`r n_ivs_apss` instruments the EM is
+underpowered to distinguish real pleiotropy from sampling noise; it estimated
+pi0 = `r fmt_pi0`, flagging `r fmt_pleio` instruments as pleiotropic and
+aggressively down-weighting them toward zero. MRBEE corrects for overlap bias
+via `errorCov()` without discarding instruments, making it more reliable at
+this instrument count. We treat MRBEE and overlap-corrected IVW as co-primary;
+MR-APSS is reported for transparency.
 
 ```{r results}
 results <- bind_rows(r_mrbee_chol, r_ivw_chol, r_mrbee_ca, r_ivw_ca) |>

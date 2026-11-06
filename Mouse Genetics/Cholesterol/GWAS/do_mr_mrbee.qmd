@@ -293,11 +293,16 @@ if (file.exists(apss_path)) {
 } else {
   pi0_val <- NA_real_; n_pleio <- NA_integer_; n_ivs_apss <- NA_integer_
 }
-fmt_pi0 <- if (!is.na(pi0_val))
+fmt_pi0 <- if (!is.na(pi0_val)) {
   paste0(pi0_val, " (", round(pi0_val * 100), "% of instruments called pleiotropic)")
-  else "not yet available — run do_mr_apss.R"
-fmt_pleio <- if (!is.na(n_pleio) && !is.na(n_ivs_apss))
-  paste0(n_pleio, " of ", n_ivs_apss) else "not yet available"
+} else {
+  "not yet available — run do_mr_apss.R"
+}
+fmt_pleio <- if (!is.na(n_pleio) && !is.na(n_ivs_apss)) {
+  paste0(n_pleio, " of ", n_ivs_apss)
+} else {
+  "not yet available"
+}
 ```
 
 ## Results

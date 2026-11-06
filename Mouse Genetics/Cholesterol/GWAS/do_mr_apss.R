@@ -151,8 +151,8 @@ make_mrdat <- function(ivs, exp_b, exp_se, out_b, out_se, pval_exp, pval_out,
 
 # ── Run MR-APSS (one direction) ──────────────────────────────────────────────
 run_apss <- function(mrdat, C, Omega, label) {
-  if (nrow(mrdat) < 4) {
-    warning(label, ": fewer than 4 instruments, skipping MR-APSS")
+  if (nrow(mrdat) < 3) {
+    warning(label, ": fewer than 3 instruments, skipping MR-APSS")
     return(NULL)
   }
 

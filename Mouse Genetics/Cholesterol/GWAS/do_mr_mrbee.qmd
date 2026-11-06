@@ -245,23 +245,25 @@ write_csv(
 )
 
 apss_path <- file.path(DATA_DIR, "do_mr_apss_results.csv")
-plot_data <- if (file.exists(apss_path)) {
+if (file.exists(apss_path)) {
   apss <- read_csv(apss_path, show_col_types = FALSE)
-  combined <- bind_rows(results, apss) |> arrange(arm, method)
-  write_csv(combined, file.path(DATA_DIR, "do_bidirectional_mr_all_methods.csv"))
+  plot_data <- bind_rows(results, apss) |> arrange(arm, method)
+  write_csv(plot_data, file.path(DATA_DIR, "do_bidirectional_mr_all_methods.csv"))
   cat("Combined with MR-APSS → do_bidirectional_mr_all_methods.csv\n")
-  combined |>
-    select(arm, method, n_ivs, beta, se, pval) |>
-    mutate(across(c(beta, se), \(x) round(x, 4)), pval = signif(pval, 3)) |>
-    kbl(caption = "All methods combined") |>
-    kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) |>
-    print()
-  combined
 } else {
+  plot_data <- results
   cat("do_mr_apss_results.csv not found — run do_mr_apss.R on the cluster,\n",
       "download here, then re-render.\n")
-  results
 }
+```
+
+```{r combined-table}
+plot_data |>
+  select(arm, method, n_ivs, beta, se, pval) |>
+  mutate(across(c(beta, se), \(x) round(x, 4)), pval = signif(pval, 3)) |>
+  kbl(caption = if (file.exists(file.path(DATA_DIR, "do_mr_apss_results.csv")))
+        "All methods combined" else "MRBEE + IVW results") |>
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
 ```{r forest}

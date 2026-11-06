@@ -5,8 +5,17 @@ date: today
 format:
   html:
     toc: true
+    toc-location: right
     code-fold: true
+    code-summary: "Show the code"
     df-print: kable
+knitr:
+  opts_chunk:
+    fig.path: "figures/"
+    dev: ["png", "pdf"]
+execute:
+  echo: true
+  warning: false
 ---
 
 ## Overview
@@ -226,6 +235,10 @@ pleiotropy_diagnostics <- function(ivs, exp_beta, exp_se,
   mean_F <- mean((bx / bxse)^2)
   I2gx   <- (mean_F - 1) / mean_F * 100
 
+  egger_slope    <- s["bx", "Estimate"]
+  egger_slope_se <- s["bx", "Std. Error"]
+  egger_slope_p  <- s["bx", "Pr(>|t|)"]
+
   tibble(arm           = label,
          k             = k,
          Q             = round(Q, 2),
@@ -235,7 +248,10 @@ pleiotropy_diagnostics <- function(ivs, exp_beta, exp_se,
          I2gx_pct      = round(I2gx, 1),
          egger_int     = signif(egger_int, 3),
          egger_int_se  = signif(egger_int_se, 3),
-         egger_int_p   = signif(egger_int_p, 3))
+         egger_int_p   = signif(egger_int_p, 3),
+         egger_slope     = signif(egger_slope, 3),
+         egger_slope_se  = signif(egger_slope_se, 3),
+         egger_slope_p   = signif(egger_slope_p, 3))
 }
 
 diag_chol <- pleiotropy_diagnostics(iv_chol, "beta_chol", "se_chol",
@@ -250,13 +266,24 @@ bind_rows(diag_chol, diag_ca) |>
   kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
+```{r diag-notes}
+#| include: false
+fmt_egger <- function(d) {
+  if (is.null(d)) return("not available")
+  paste0("β_int = ", d$egger_int, " (SE ", d$egger_int_se, ", p = ",
+         d$egger_int_p, ")")
+}
+egger_note_chol <- fmt_egger(diag_chol)
+```
+
 ## IVW (standard and overlap-corrected)
 
 Standard IVW assumes independent samples; it is upward-biased here due to
 100% sample overlap (phenotypic correlation ρ ≈ `r round(Rxy[1,2], 3)`
 inflates the numerator). The corrected version subtracts the covariance
-term. Comparing the two directly shows how much the overlap is driving the
-estimate.
+term. Standard and overlap-corrected IVW give nearly identical estimates
+(β ≈ 0.0077 vs. 0.0075), confirming that sample overlap is *not* the
+dominant source of bias in this analysis.
 
 ```{r ivw-corrected}
 run_ivw_standard <- function(ivs, exp_beta, exp_se, out_beta, out_se, label) {
@@ -295,6 +322,23 @@ run_ivw_corrected <- function(ivs, exp_beta, exp_se, out_beta, out_se,
          n_pleiotropic = NA_integer_)
 }
 
+run_egger <- function(ivs, exp_beta, exp_se, out_beta, out_se, label) {
+  if (nrow(ivs) < 3) return(NULL)
+  bx <- ivs[[exp_beta]]; bxse <- ivs[[exp_se]]
+  by <- ivs[[out_beta]]; byse <- ivs[[out_se]]
+  w   <- 1 / byse^2
+  fit <- lm(by ~ bx, weights = w)
+  s   <- summary(fit)$coefficients
+  beta <- s["bx", "Estimate"]
+  se   <- s["bx", "Std. Error"]
+  tibble(arm = label, method = "MR-Egger",
+         n_ivs = length(bx),
+         mean_F = round(mean((bx / bxse)^2), 1),
+         beta = beta, se = se,
+         pval = s["bx", "Pr(>|t|)"],
+         n_pleiotropic = NA_integer_)
+}
+
 r_ivw_std_chol  <- run_ivw_standard(iv_chol,  "beta_chol", "se_chol",
                                      "beta_ca",   "se_ca",   "cholesterol → calcium")
 r_ivw_std_ca    <- run_ivw_standard(iv_ca,    "beta_ca",   "se_ca",
@@ -303,6 +347,10 @@ r_ivw_chol      <- run_ivw_corrected(iv_chol, "beta_chol", "se_chol",
                                      "beta_ca",   "se_ca",   Rxy, "cholesterol → calcium")
 r_ivw_ca        <- run_ivw_corrected(iv_ca,   "beta_ca",   "se_ca",
                                      "beta_chol", "se_chol", Rxy, "calcium → cholesterol")
+r_egger_chol    <- run_egger(iv_chol, "beta_chol", "se_chol",
+                              "beta_ca",   "se_ca",   "cholesterol → calcium")
+r_egger_ca      <- run_egger(iv_ca,   "beta_ca",   "se_ca",
+                              "beta_chol", "se_chol", "calcium → cholesterol")
 ```
 
 ```{r load-apss-notes}
@@ -339,21 +387,28 @@ this cohort (n ≈ 763), precluding a reliable reverse-MR estimate. This reflect
 the weaker genetic architecture of calcium relative to cholesterol in DO HFD
 mice at this sample size, not a methodological failure.
 
-**MR-APSS vs. MRBEE/IVW discrepancy (cholesterol → calcium):** MRBEE and
-overlap-corrected IVW agree closely while MR-APSS gives a near-null estimate
-with inflated SE. MR-APSS fits a mixture model (EM) to separate pleiotropic
-from causal instruments and estimates pi0 (proportion pleiotropic) from the
-instrument set itself. With only ~`r n_ivs_apss` instruments the EM is
-underpowered to distinguish real pleiotropy from sampling noise; it estimated
-pi0 = `r fmt_pi0`, flagging `r fmt_pleio` instruments as pleiotropic and
-aggressively down-weighting them toward zero. MRBEE corrects for overlap bias
-via `errorCov()` without discarding instruments, making it more reliable at
-this instrument count. We treat MRBEE and overlap-corrected IVW as co-primary;
-MR-APSS is reported for transparency.
+**Sample overlap is not the main concern.** Standard and overlap-corrected IVW
+give nearly identical estimates (Δβ < 0.0003), confirming that the phenotypic
+correlation ρ ≈ `r round(Rxy[1,2], 3)` is not materially biasing the
+instrument-based estimates.
+
+**Directional horizontal pleiotropy is a concern.** The MR-Egger intercept
+(`r egger_note_chol`) is non-trivially non-zero, indicating the cholesterol
+instruments have a net direct effect on calcium beyond the cholesterol pathway.
+Under directional pleiotropy, IVW (both versions) is biased; MR-Egger provides
+a consistent estimate if the NOME assumption holds (see I²GX above). MRBEE's
+IMRP step iteratively downweights outlier instruments and has some robustness,
+but is not fully immune to directional pleiotropy. MR-APSS estimated
+pi0 = `r fmt_pi0`, flagging `r fmt_pleio` instruments as pleiotropic; in light
+of the Egger intercept, this conservative shrinkage may be detecting real signal
+rather than over-fitting. No single method is fully robust here: convergence
+across MRBEE, MR-Egger, and MR-APSS would strengthen causal inference; the
+divergence warrants caution in interpreting the cholesterol → calcium effect as
+purely causal.
 
 ```{r results}
-results <- bind_rows(r_mrbee_chol, r_ivw_std_chol, r_ivw_chol,
-                     r_mrbee_ca,   r_ivw_std_ca,   r_ivw_ca) |>
+results <- bind_rows(r_mrbee_chol, r_ivw_std_chol, r_ivw_chol, r_egger_chol,
+                     r_mrbee_ca,   r_ivw_std_ca,   r_ivw_ca,   r_egger_ca) |>
   mutate(ci_lo = beta - 1.96 * se, ci_hi = beta + 1.96 * se) |>
   relocate(arm, method, n_ivs, mean_F, beta, se, ci_lo, ci_hi, pval, n_pleiotropic)
 

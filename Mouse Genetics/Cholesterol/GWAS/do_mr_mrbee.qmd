@@ -188,6 +188,68 @@ r_mrbee_ca   <- run_mrbee(iv_ca,   "beta_ca",   "se_ca",   "beta_chol", "se_chol
                            Rxy, "calcium → cholesterol")
 ```
 
+## Pleiotropy diagnostics
+
+MR-Egger intercept (directional pleiotropy), Cochran's Q → I² (heterogeneity),
+and I²GX (NOME violation for MR-Egger; Bowden et al. 2016 IJE).
+I²GX ≈ 1 − 1/F̄: values > 0.90 indicate MR-Egger is reliable; below that,
+the NOME assumption fails and the Egger slope is biased.
+
+```{r pleiotropy-diag}
+pleiotropy_diagnostics <- function(ivs, exp_beta, exp_se,
+                                   out_beta, out_se, label) {
+  if (nrow(ivs) < 3) {
+    message(label, ": < 3 instruments, skipping diagnostics")
+    return(NULL)
+  }
+  bx <- ivs[[exp_beta]]; bxse <- ivs[[exp_se]]
+  by <- ivs[[out_beta]]; byse <- ivs[[out_se]]
+  k  <- length(bx)
+  w  <- 1 / byse^2
+
+  # Ratio estimates and IVW beta (unweighted for Q)
+  beta_ivw   <- sum(w * bx * by) / sum(w * bx^2)
+  beta_ratio <- by / bx
+
+  # Cochran's Q and I²
+  Q     <- sum(w * bx^2 * (beta_ratio - beta_ivw)^2)
+  I2    <- max(0, (Q - (k - 1)) / Q) * 100
+
+  # MR-Egger (weighted, intercept included)
+  fit          <- lm(by ~ bx, weights = w)
+  s            <- summary(fit)$coefficients
+  egger_int    <- s["(Intercept)", "Estimate"]
+  egger_int_se <- s["(Intercept)", "Std. Error"]
+  egger_int_p  <- s["(Intercept)", "Pr(>|t|)"]
+
+  # I²GX (NOME check): uses mean F-statistic approximation (Bowden 2016)
+  mean_F <- mean((bx / bxse)^2)
+  I2gx   <- (mean_F - 1) / mean_F * 100
+
+  tibble(arm           = label,
+         k             = k,
+         Q             = round(Q, 2),
+         Q_df          = k - 1L,
+         Q_pval        = signif(pchisq(Q, df = k - 1, lower.tail = FALSE), 3),
+         I2_pct        = round(I2, 1),
+         I2gx_pct      = round(I2gx, 1),
+         egger_int     = signif(egger_int, 3),
+         egger_int_se  = signif(egger_int_se, 3),
+         egger_int_p   = signif(egger_int_p, 3))
+}
+
+diag_chol <- pleiotropy_diagnostics(iv_chol, "beta_chol", "se_chol",
+                                     "beta_ca",   "se_ca",
+                                     "cholesterol → calcium")
+diag_ca   <- pleiotropy_diagnostics(iv_ca,   "beta_ca",   "se_ca",
+                                     "beta_chol", "se_chol",
+                                     "calcium → cholesterol")
+
+bind_rows(diag_chol, diag_ca) |>
+  kbl(caption = "Pleiotropy diagnostics") |>
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+```
+
 ## Overlap-corrected IVW
 
 ```{r ivw-corrected}

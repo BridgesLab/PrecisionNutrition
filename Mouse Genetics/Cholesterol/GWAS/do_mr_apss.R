@@ -32,7 +32,7 @@ OUT_DIR   <- file.path(GEMMA_DIR, "output")
 N_CA      <- 763L   # non-NA calcium2 sample size (from extract_calcium_phenotype.R)
 
 # ── Thresholds ───────────────────────────────────────────────────────────────
-P_THRESH <- 5e-6
+P_THRESH <- 1e-5
 WIND_MB  <- 1
 MIN_F    <- 10
 
@@ -108,10 +108,22 @@ select_instruments <- function(df, pval_col, f_col,
   bind_rows(kept) |> filter(.data[[f_col]] >= min_f)
 }
 
-iv_chol <- select_instruments(harm, "pval_chol", "F_chol")
-iv_ca   <- select_instruments(harm, "pval_ca",   "F_ca")
-cat("Cholesterol instruments:", nrow(iv_chol), "\n")
-cat("Calcium instruments:",     nrow(iv_ca),   "\n")
+steiger_filter <- function(ivs, f_exp_col, f_out_col, label) {
+  n_before <- nrow(ivs)
+  ivs <- ivs |> filter(.data[[f_exp_col]] > .data[[f_out_col]])
+  cat(label, ": Steiger removed", n_before - nrow(ivs), "of", n_before,
+      "instruments\n")
+  ivs
+}
+
+iv_chol_raw <- select_instruments(harm, "pval_chol", "F_chol")
+iv_ca_raw   <- select_instruments(harm, "pval_ca",   "F_ca")
+
+iv_chol <- steiger_filter(iv_chol_raw, "F_chol", "F_ca",   "cholesterol → calcium")
+iv_ca   <- steiger_filter(iv_ca_raw,   "F_ca",   "F_chol", "calcium → cholesterol")
+
+cat("Cholesterol instruments (post-Steiger):", nrow(iv_chol), "\n")
+cat("Calcium instruments (post-Steiger):",     nrow(iv_ca),   "\n")
 
 # ── Build MRdat for MRAPSS() ─────────────────────────────────────────────────
 # MR-APSS expects: SNP, A1, A2, b.exp, b.out, se.exp, se.out,

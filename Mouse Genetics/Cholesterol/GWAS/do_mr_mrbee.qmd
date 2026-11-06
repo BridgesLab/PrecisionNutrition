@@ -36,7 +36,7 @@ library(kableExtra)
 # Files live alongside this QMD
 DATA_DIR <- "."
 
-P_THRESH <- 5e-6   # relax to 1e-5 if fewer than 3 instruments
+P_THRESH <- 1e-5#5e-6   # relax to 1e-5 if fewer than 3 instruments
 WIND_MB  <- 1      # one top SNP per Mb window
 MIN_F    <- 10
 ```
@@ -103,9 +103,13 @@ print(round(Rxy, 4))
 cat("\nOverlap correlation ρ =", round(Rxy[1, 2], 4), "\n")
 ```
 
-## Instrument selection
+## Instrument selection & Steiger filtering
 
 One top SNP per `r WIND_MB` Mb window, p < `r P_THRESH`, F ≥ `r MIN_F`.
+Steiger filter then removes instruments where the SNP explains more variance
+in the *outcome* than the exposure (F_exposure ≤ F_outcome), which flags
+potential reverse-causation instruments. Both traits are rank-normalised with
+the same N, so F is proportional to R² and the comparison is direct.
 
 ```{r instruments}
 select_instruments <- function(df, pval_col, f_col,
@@ -126,19 +130,31 @@ select_instruments <- function(df, pval_col, f_col,
   bind_rows(kept) |> filter(.data[[f_col]] >= min_f)
 }
 
-iv_chol <- select_instruments(harm, "pval_chol", "F_chol")
-iv_ca   <- select_instruments(harm, "pval_ca",   "F_ca")
+steiger_filter <- function(ivs, f_exp_col, f_out_col, label) {
+  n_before <- nrow(ivs)
+  ivs <- ivs |> filter(.data[[f_exp_col]] > .data[[f_out_col]])
+  n_removed <- n_before - nrow(ivs)
+  if (n_removed > 0)
+    message(label, ": Steiger removed ", n_removed, " of ", n_before, " instruments")
+  ivs
+}
+
+iv_chol_raw <- select_instruments(harm, "pval_chol", "F_chol")
+iv_ca_raw   <- select_instruments(harm, "pval_ca",   "F_ca")
+
+iv_chol <- steiger_filter(iv_chol_raw, "F_chol", "F_ca",   "cholesterol → calcium")
+iv_ca   <- steiger_filter(iv_ca_raw,   "F_ca",   "F_chol", "calcium → cholesterol")
 
 bind_rows(
-  iv_chol |> mutate(arm = "Cholesterol instruments"),
-  iv_ca   |> mutate(arm = "Calcium instruments")
+  iv_chol_raw |> mutate(arm = "Cholesterol (pre-Steiger)",  F = F_chol, pval_iv = pval_chol),
+  iv_chol     |> mutate(arm = "Cholesterol (post-Steiger)", F = F_chol, pval_iv = pval_chol),
+  iv_ca_raw   |> mutate(arm = "Calcium (pre-Steiger)",      F = F_ca,   pval_iv = pval_ca),
+  iv_ca       |> mutate(arm = "Calcium (post-Steiger)",     F = F_ca,   pval_iv = pval_ca)
 ) |>
   group_by(arm) |>
   summarise(n      = n(),
-            mean_F = round(mean(if_else(arm[1] == "Cholesterol instruments",
-                                        F_chol, F_ca)), 1),
-            min_p  = signif(min(if_else(arm[1] == "Cholesterol instruments",
-                                        pval_chol, pval_ca)), 2),
+            mean_F = round(mean(F), 1),
+            min_p  = signif(min(pval_iv), 2),
             .groups = "drop")
 ```
 
@@ -212,28 +228,7 @@ results |>
   mutate(across(c(beta, se, ci_lo, ci_hi), \(x) round(x, 4)),
          pval = signif(pval, 3)) |>
   kbl(caption = "Bidirectional MR results (DO mice)") |>
-  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) |>
-  pack_rows("Cholesterol → Calcium", 1, 2) |>
-  pack_rows("Calcium → Cholesterol", 3, 4)
-```
-
-```{r forest}
-#| fig-width: 7
-#| fig-height: 4
-#| fig-cap: "Forest plot — bidirectional MR, DO mice. Dashed line = null."
-
-results |>
-  mutate(label = paste0(method, "\n(", arm, ")"),
-         label = fct_rev(fct_inorder(label))) |>
-  ggplot(aes(x = beta, y = label)) +
-  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
-  geom_errorbarh(aes(xmin = ci_lo, xmax = ci_hi), height = 0.2,
-                 colour = "#00274c") +
-  geom_point(size = 3, colour = "#00274c") +
-  labs(x = "Effect estimate (SD units, rank-normalised)",
-       y = NULL,
-       title = "Bidirectional MR: Cholesterol ↔ Calcium (DO mice)") +
-  theme_classic(base_size = 12)
+  kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
 ```
 
 ## Save and combine with MR-APSS
@@ -250,7 +245,7 @@ write_csv(
 )
 
 apss_path <- file.path(DATA_DIR, "do_mr_apss_results.csv")
-if (file.exists(apss_path)) {
+plot_data <- if (file.exists(apss_path)) {
   apss <- read_csv(apss_path, show_col_types = FALSE)
   combined <- bind_rows(results, apss) |> arrange(arm, method)
   write_csv(combined, file.path(DATA_DIR, "do_bidirectional_mr_all_methods.csv"))
@@ -259,9 +254,38 @@ if (file.exists(apss_path)) {
     select(arm, method, n_ivs, beta, se, pval) |>
     mutate(across(c(beta, se), \(x) round(x, 4)), pval = signif(pval, 3)) |>
     kbl(caption = "All methods combined") |>
-    kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE)
+    kable_styling(bootstrap_options = c("striped", "condensed"), full_width = FALSE) |>
+    print()
+  combined
 } else {
   cat("do_mr_apss_results.csv not found — run do_mr_apss.R on the cluster,\n",
       "download here, then re-render.\n")
+  results
 }
+```
+
+```{r forest}
+#| fig-width: 7
+#| fig-height: 5
+#| fig-cap: "Forest plot — bidirectional MR, DO mice. Calcium → cholesterol arm is underpowered (3 instruments); treat as directional only."
+
+plot_data |>
+  mutate(ci_lo = beta - 1.96 * se,
+         ci_hi = beta + 1.96 * se,
+         label = paste0(method, " (n=", n_ivs, ")"),
+         label = fct_rev(fct_inorder(label))) |>
+  ggplot(aes(x = beta, y = label, colour = arm)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey50") +
+  geom_errorbarh(aes(xmin = ci_lo, xmax = ci_hi), height = 0.2) +
+  geom_point(size = 3) +
+  facet_wrap(~arm, scales = "free_x", ncol = 1) +
+  scale_colour_manual(values = c("cholesterol → calcium" = "#00274c",
+                                  "calcium → cholesterol" = "#9a3324"),
+                      guide = "none") +
+  labs(x = "Effect estimate (SD units, rank-normalised)",
+       y = NULL,
+       title = "Bidirectional MR: Cholesterol ↔ Calcium (DO mice)") +
+  theme_classic(base_size = 12) +
+  theme(strip.background = element_blank(),
+        strip.text = element_text(face = "bold"))
 ```

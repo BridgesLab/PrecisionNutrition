@@ -36,7 +36,7 @@ library(kableExtra)
 # Files live alongside this QMD
 DATA_DIR <- "."
 
-P_THRESH <- 1e-5#5e-6   # relax to 1e-5 if fewer than 3 instruments
+P_THRESH <- 1e-5   # relax to 1e-5 if fewer than 3 instruments
 WIND_MB  <- 1      # one top SNP per Mb window
 MIN_F    <- 10
 ```
@@ -219,6 +219,24 @@ r_ivw_ca   <- run_ivw_corrected(iv_ca,   "beta_ca",   "se_ca",
 
 ## Results
 
+**Calcium → cholesterol direction** is not evaluable: fewer than 3 genetic
+instruments for serum calcium survive p < `r P_THRESH` and Steiger filtering in
+this cohort (n ≈ 763), precluding a reliable reverse-MR estimate. This reflects
+the weaker genetic architecture of calcium relative to cholesterol in DO HFD
+mice at this sample size, not a methodological failure.
+
+**MR-APSS vs. MRBEE/IVW discrepancy (cholesterol → calcium):** MRBEE and
+overlap-corrected IVW agree closely (β ≈ 0.0075) while MR-APSS gives a
+near-null estimate with inflated SE. MR-APSS fits a mixture model (EM) to
+separate pleiotropic from causal instruments and estimates pi0 (proportion
+pleiotropic) from the instrument set itself. With only ~15 instruments the EM
+is underpowered to distinguish real pleiotropy from sampling noise, and
+previously estimated pi0 ≈ 0.40 (40% pleiotropic), which aggressively
+down-weights the estimate toward zero and inflates variance. MRBEE corrects
+for overlap bias via `errorCov()` without discarding instruments, making it
+more reliable at this instrument count. We treat MRBEE and overlap-corrected
+IVW as co-primary; MR-APSS is reported for transparency.
+
 ```{r results}
 results <- bind_rows(r_mrbee_chol, r_ivw_chol, r_mrbee_ca, r_ivw_ca) |>
   mutate(ci_lo = beta - 1.96 * se, ci_hi = beta + 1.96 * se) |>
@@ -269,7 +287,7 @@ plot_data |>
 ```{r forest}
 #| fig-width: 7
 #| fig-height: 5
-#| fig-cap: "Forest plot — bidirectional MR, DO mice. Calcium → cholesterol arm is underpowered (3 instruments); treat as directional only."
+#| fig-cap: "Forest plot — bidirectional MR, DO mice (cholesterol → calcium only). The reverse direction (calcium → cholesterol) lacked sufficient genetic instruments after Steiger filtering and is not shown."
 
 plot_data |>
   mutate(ci_lo = beta - 1.96 * se,

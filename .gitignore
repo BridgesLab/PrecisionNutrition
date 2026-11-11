@@ -49,3 +49,14 @@ Human Genetics/PheWeb Summary Statistics/*.tsv.gz
 Human Genetics/PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz
 
 /Human Genetics/alzheimers/data/cache
+
+#Temporary Excel files
+~$*.xlsx
+
+#Mouse cholesterol GWAS: GEMMA association output (~55 MB each) and an orphan render (no source file)
+Mouse Genetics/Cholesterol/GWAS/*.assoc.txt
+Mouse Genetics/Cholesterol/GWAS/do_mr_mrbee.html
+Mouse Genetics/Cholesterol/GWAS/do_mr_mrbee_files/
+
+#Lactation raw data (GEO downloads, GC-MS spreadsheet; ~400 MB)
+Mouse Genetics/Lactation/data/

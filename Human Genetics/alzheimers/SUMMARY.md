@@ -150,6 +150,21 @@ PRESSO loses nominal significance (IVW p 0.045 → 0.11). MR-APSS already calls 
   BMI's estimate crosses 0 only at b ≈ −0.73, so the sign flip needs a selection slope near the
   one fitted. "No protective effect" does not need it.
 
+**Cross-check by MVMR (Zhang et al.'s step 2, `mvmr_lifespan_indexevent.qmd`).** Uncorrected AD
+is regressed on the exposure and lifespan jointly. Lifespan instruments at AD loci (APOE,
+PTK2B–CLU, MHC) are excluded, leaving 7 usable, and they win LD conflicts at clumping. MRBEE is
+primary: lifespan's mean conditional F is about 2.5 among 400–500 body-composition variants, so
+IVW under-corrects.
+
+- **Bellenguez:** the lifespan coefficient is −0.63 to −1.15 (b_SH −0.944), and the exposure
+  estimates match the SlopeHunter arm: lean mass −0.111 vs −0.111, fat-free mass −0.188 vs −0.169,
+  fat mass −0.054 vs −0.057, BMI +0.025 vs +0.029, 2 h glucose 0.121 vs 0.148. These are stable when
+  each lifespan variant is dropped.
+- **Kunkle and Uffelmann new cohorts:** MVMR cannot identify the selection term, so it stays close
+  to uncorrected. Lean mass and fat-free mass are protective, 2 h glucose is null. Fat mass is
+  protective in Uffelmann (−0.151, p = 0.02), where survival bias can neither be removed nor ruled
+  out. So the adiposity-as-survival-bias reading rests on Bellenguez alone.
+
 ## Where this leaves the mediation hypothesis
 
 | Leg | Evidence |

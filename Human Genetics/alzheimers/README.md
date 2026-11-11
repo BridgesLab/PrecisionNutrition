@@ -36,6 +36,8 @@ SlopeHunter arm propagates it per estimate (see `pipeline/README.md`, "Survival 
 exposure_survival_screen.qmd        Step 1 — screen (self-contained; OpenGWAS API)
 exposure_ad_indexevent.qmd          Step 2 — naive + SlopeHunter correction
 R/fit_selection_slope.R             SlopeHunter prep + fit + linear-correction engine
+mvmr_lifespan_indexevent.qmd        Cross-check — MVMR with lifespan as a second exposure (Zhang et al. 2026, step 2)
+R/mvmr_lifespan.R                   its engine; writes results/mvmr_lifespan/
 scripts/fetch_kunkle_sumstats.sh    Turnkey fetch/normalize of Kunkle b_SH inputs
 docs/MR_visual_inspection.mediawiki SOP section (scatter/funnel + decision matrix) for the lab wiki
 ```

@@ -33,7 +33,8 @@ through lower post-load (2 h) glucose? Motivating triad: **lean mass → 2 h glu
   lean mass / fat-free mass (3.5–5.3k candidates, 1000G LD) were **unreliable** (effects > 1 SD/SD,
   opposite signs for two FG GWAS).
 - **Classical suite** with Q, I², I²_GX, F, Steiger; scatter / funnel / leave-one-out plots per pair.
-- **Survival collider:** Bellenguez outcomes also run SlopeHunter-adjusted (b_SH = −0.944).
+- **Survival collider:** Bellenguez outcomes also run SlopeHunter-adjusted (b_SH = −0.944). Since
+  2026-11-11 that arm's SEs, p-values and intervals include the uncertainty in b_SH (see 7).
 - **Latent heritable confounding:** CAUSE q·η and the MR-APSS background slope, every pair in both
   directions.
 - 80 associations: exposure → mediator, adiposity → glycemic, → AD, → lifespan, and their reverses.
@@ -64,8 +65,8 @@ significance, not magnitude.
 
 | → AD (MR-APSS) | Bellenguez raw | Bellenguez SlopeHunter | Kunkle |
 |---|---|---|---|
-| BMI | −0.023, p = 0.016 | +0.007, p = 0.48 | −0.004, p = 0.85 |
-| Fat mass | −0.029, p = 0.002 | −0.002, p = 0.80 | −0.021, p = 0.35 |
+| BMI | −0.023, p = 0.016 | +0.007, p = 0.49 | −0.004, p = 0.85 |
+| Fat mass | −0.029, p = 0.002 | −0.002, p = 0.81 | −0.021, p = 0.35 |
 
 Both are abolished by SlopeHunter (CAUSE also goes to ~0) and absent in Kunkle, as Step 2 found for
 BMI with IVW. AD liability also predicts **lower** fat mass (reverse direction: CAUSE −0.079, CrI
@@ -132,6 +133,22 @@ its positive association with BMI is the expected biology.
 b_SH = −0.944 is identified (raw lifespan–AD r = −0.18 on 2,243 clumped SNPs), reproduced by refit
 (−0.935, SE 0.080), and lies outside its permutation null (−0.41 to +0.22, 8 permutations). Kunkle's
 b_SH is not identified and is never applied.
+
+**Uncertainty in b_SH (added 2026-11-11).** Zhang et al. 2026 (AJHG; medRxiv 2026.02.26.26347193)
+found SlopeHunter rejects a true null in ~50% of simulations, because the error in b̂ is shared by
+every instrument and is usually ignored. Our SNP-level arm ignored it too. It is now propagated per
+estimate (`propagate_bsh()`, `pipeline/README.md`). No result in `results.csv` or the contrast,
+cluster or drug-target tables crosses p = 0.05 when it is added. Using the much wider
+permutation-null SD (0.22, vs bootstrap SE 0.070), only fat mass → Bellenguez by IVW, IVW-FE and
+PRESSO loses nominal significance (IVW p 0.045 → 0.11). MR-APSS already calls that null.
+`bsh_grid.csv` holds each estimate at fixed b. Under MR-APSS:
+
+- **Lean mass, fat-free mass:** protective at every b from 0 to −1.08.
+- **2 h glucose (p < 5×10⁻⁸):** positive at every b, including the permutation-null median
+  (0.056, p = 0.017).
+- **BMI, fat mass:** already null at the permutation-null median b = −0.41 (p = 0.29, 0.063).
+  BMI's estimate crosses 0 only at b ≈ −0.73, so the sign flip needs a selection slope near the
+  one fitted. "No protective effect" does not need it.
 
 ## Where this leaves the mediation hypothesis
 

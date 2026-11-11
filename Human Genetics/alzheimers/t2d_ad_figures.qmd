@@ -221,6 +221,9 @@ kable(fmt_table(body))
 
 ## 4. Glycemic traits → AD, SlopeHunter-corrected
 
+SlopeHunter-corrected intervals here and in sections 6–8 include the uncertainty in b_SH, which
+is propagated per estimate (see `pipeline/README.md`).
+
 ```{r ad-glycemic, fig.width=12, fig.height=4.5}
 glyc <- talk_rows(glyc_exposures, ad_outcome)
 forest_or(filter(glyc, arm == "slopehunter"), range(exp(c(glyc$ci_lo, glyc$ci_hi))))

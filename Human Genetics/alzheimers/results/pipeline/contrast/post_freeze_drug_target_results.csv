@@ -1,19 +1,19 @@
-set,outcome,arm,scale,level,target,n_snp,max_abs_r,within_2Mb_of_APOE,trait,b,se,p,post_freeze
-primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,AD (log-OR),0.11584490470295697,0.37245516093084835,0.7557774560121115,TRUE
-primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE
-primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE
-primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,AD (log-OR),0.11584490470295697,0.37245516093084835,0.7557774560121115,TRUE
-primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE
-primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE
-primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,AD (log-OR),-0.18144762354952684,0.36049874096995643,0.6147365826294284,TRUE
-primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE
-primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE
-primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,AD (log-OR),-0.18144762354952684,0.36049874096995643,0.6147365826294284,TRUE
-primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE
-primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE
-primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,AD (log-OR),-0.4322734472359648,0.6338840799869232,0.49527435949446874,TRUE
-primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE
-primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE
-primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,AD (log-OR),-0.4322734472359648,0.6338840799869232,0.49527435949446874,TRUE
-primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE
-primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE
+set,outcome,arm,scale,level,target,n_snp,max_abs_r,within_2Mb_of_APOE,trait,b,se,p,post_freeze,se_cond_bsh,p_cond_bsh,dtheta_dbsh,se_bsh_term,p_bsh_cons,bsh_tip
+primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,AD (log-OR),0.11584490470295697,0.373110279737758,0.756192654633908,TRUE,0.372455160930848,0.755777456012112,-0.315049913073685,0.022100541666757,0.759775356825428,-0.575932942749581
+primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE,0.0807524111340797,0.0439873481591979,0,0,0.0439873481591979,NA
+primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE,0.38916318779267,0.954033819506817,0,0,0.954033819506817,NA
+primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,AD (log-OR),0.11584490470295697,0.373110279737758,0.756192654633908,TRUE,0.372455160930848,0.755777456012112,-0.315049913073685,0.022100541666757,0.759775356825428,-0.575932942749581
+primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE,0.0807524111340797,0.0439873481591979,0,0,0.0439873481591979,NA
+primary_post_freeze,ad_bellenguez,slopehunter,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE,0.38916318779267,0.954033819506817,0,0,0.954033819506817,NA
+primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,AD (log-OR),-0.18144762354952684,0.36049874096995643,0.6147365826294284,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,AD (log-OR),-0.18144762354952684,0.36049874096995643,0.6147365826294284,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_bellenguez,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,AD (log-OR),-0.4322734472359648,0.6338840799869232,0.49527435949446874,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,gene,DRD2,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,AD (log-OR),-0.4322734472359648,0.6338840799869232,0.49527435949446874,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,fasting glucose (mmol/L),0.16265242335236058,0.0807524111340797,0.043987348159197893,TRUE,NA,NA,NA,NA,NA,NA
+primary_post_freeze,ad_kunkle,raw,per log-odds of T2D,class,dopamine_d2_agonist,2,0.0560397,FALSE,2h glucose (mmol/L),0.022432132062246677,0.38916318779267,0.9540338195068171,TRUE,NA,NA,NA,NA,NA,NA

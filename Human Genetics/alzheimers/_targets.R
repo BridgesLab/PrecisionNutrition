@@ -200,7 +200,8 @@ t_post_freeze <- list(
   tar_target(csv_pf, c(
     write_csv_target(pf_targets, file.path(CON_DIR, "post_freeze_drug_targets.csv")),
     write_csv_target(pf_step0$summary, file.path(CON_DIR, "post_freeze_cis_summary.csv")),
-    write_csv_target(pluck_all(pf_y_all, "results") |> dplyr::mutate(post_freeze = TRUE),
+    write_csv_target(propagate_bsh(pluck_all(pf_y_all, "results"), BSH_KEYS$drug_target, bsh_par) |>
+                       dplyr::mutate(post_freeze = TRUE),
                      file.path(CON_DIR, "post_freeze_drug_target_results.csv")),
     write_csv_target(pluck_all(pf_y_all, "snps") |> dplyr::mutate(post_freeze = TRUE),
                      file.path(CON_DIR, "post_freeze_drug_target_snps.csv"))), format = "file")
@@ -210,15 +211,19 @@ t_contrast <- list(
   tar_target(csv_cis_snps, write_csv_target(cis_snps_all, file.path(CON_DIR, "drug_target_snps.csv")), format = "file"),
   tar_combine(contrast_y_all, m_cony[["contrast_y"]], command = list(!!!.x)),
   tar_combine(cis_y_all, m_cisy[["cis_y"]], command = dplyr::bind_rows(!!!.x)),
-  tar_target(csv_contrast_results, write_csv_target(pluck_all(contrast_y_all, "rows"),
+  # SlopeHunter rows carry the b_SH uncertainty (propagate_bsh, selection.R); per-SNP tables cannot.
+  tar_target(csv_contrast_results, write_csv_target(propagate_bsh(pluck_all(contrast_y_all, "rows"),
+                                                                  BSH_KEYS$contrast, bsh_par),
                                                     file.path(CON_DIR, "results.csv")), format = "file"),
-  tar_target(csv_contrast_groups, write_csv_target(pluck_all(contrast_y_all, "groups"),
+  tar_target(csv_contrast_groups, write_csv_target(propagate_bsh(pluck_all(contrast_y_all, "groups"),
+                                                                 BSH_KEYS$cluster, bsh_par),
                                                    file.path(CON_DIR, "cluster_results.csv")), format = "file"),
   tar_target(csv_contrast_errcor, write_csv_target(pluck_all(contrast_y_all, "error_cor"),
                                                    file.path(CON_DIR, "error_correlations.csv")), format = "file"),
   tar_target(csv_contrast_data, write_csv_target(pluck_all(contrast_y_all, "data"),
                                                  file.path(CON_DIR, "instrument_outcome_data.csv")), format = "file"),
-  tar_target(csv_cis_results, write_csv_target(cis_y_all, file.path(CON_DIR, "drug_target_results.csv")), format = "file"),
+  tar_target(csv_cis_results, write_csv_target(propagate_bsh(cis_y_all, BSH_KEYS$drug_target, bsh_par),
+                                                file.path(CON_DIR, "drug_target_results.csv")), format = "file"),
   tar_combine(cis_step0_all, m_cis[["cis_step0"]], command = list(!!!.x)),
   tar_target(csv_cis_summary, write_csv_target(pluck_all(cis_step0_all, "summary"),
                                                file.path(CON_DIR, "step0_cis_summary.csv")), format = "file"),
@@ -346,8 +351,21 @@ t_tables <- list(
   tar_target(cause_posteriors, purrr::set_names(purrr::map(purrr::compact(cause_all), "posterior"),
                                                 purrr::map_chr(purrr::compact(cause_all), \(x) x$rows$assoc_id[1]))),
 
+  # b_SH uncertainty (selection.R): the SlopeHunter rows of every results CSV carry it, and the grid
+  # gives each SlopeHunter estimate at fixed values of b.
+  tar_target(bsh_par, bsh_params(bsh_table, bsh_checks_all)),
+  tar_target(bsh_grid_all, dplyr::bind_rows(
+    bsh_sensitivity_grid(results, BSH_KEYS$results, bsh_par, "results"),
+    bsh_sensitivity_grid(pluck_all(contrast_y_all, "rows"), BSH_KEYS$contrast, bsh_par, "contrast"),
+    bsh_sensitivity_grid(pluck_all(contrast_y_all, "groups"), BSH_KEYS$cluster, bsh_par, "cluster"),
+    bsh_sensitivity_grid(cis_y_all, BSH_KEYS$drug_target, bsh_par, "drug_target"),
+    bsh_sensitivity_grid(pluck_all(pf_y_all, "results"), BSH_KEYS$drug_target, bsh_par,
+                         "post_freeze_drug_target"))),
+  tar_target(csv_bsh_grid, write_csv_target(bsh_grid_all, file.path(RES_DIR, "bsh_grid.csv")), format = "file"),
+
   # CSV outputs (tracked in git; SNP lists are semicolon-joined in `removed`).
-  tar_target(csv_results, write_csv_target(results, file.path(RES_DIR, "results.csv")), format = "file"),
+  tar_target(csv_results, write_csv_target(propagate_bsh(results, BSH_KEYS$results, bsh_par),
+                                           file.path(RES_DIR, "results.csv")), format = "file"),
   tar_target(csv_instruments, write_csv_target(instruments_primary, file.path(RES_DIR, "instruments_primary.csv")), format = "file"),
   tar_target(csv_instruments_classical, write_csv_target(instruments_classical, file.path(RES_DIR, "instruments_classical.csv")), format = "file"),
   tar_combine(figures_all, m_classical[["diag_classical"]], m_apss[["diag_apss"]], command = c(!!!.x), format = "file"),
@@ -383,7 +401,7 @@ t_notebooks <- list(
   # Results + diagnostics report. Reads only results/pipeline/, so it re-renders whenever the
   # tables or figures change. Local only (nb_ targets are excluded on Great Lakes).
   tar_target(nb_report,
-             { csv_results; csv_associations; csv_datasets; csv_step2_gap; csv_bsh_checks
+             { csv_results; csv_associations; csv_datasets; csv_step2_gap; csv_bsh_checks; csv_bsh_grid
                csv_apss_background; csv_instruments_classical; figures_all; csv_latent
                render_nb("robust_mr_report.qmd", "robust_mr_report.html") },
              format = "file", error = "continue", deployment = "main"),

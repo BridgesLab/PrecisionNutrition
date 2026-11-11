@@ -336,15 +336,15 @@ kable(fmt_table(body))
 |BMI             |Uncorrected           |IVW-MRE         |0.88 (0.83, 0.94) | 2.0e-04|  414|
 |BMI             |Uncorrected           |MRBEE           |0.90 (0.84, 0.96) | 1.1e-03|  414|
 |BMI             |Uncorrected           |Weighted median |0.82 (0.75, 0.91) | 7.3e-05|  414|
-|BMI             |SlopeHunter-corrected |IVW-MRE         |1.01 (0.95, 1.08) | 7.0e-01|  403|
-|BMI             |SlopeHunter-corrected |MRBEE           |1.03 (0.96, 1.11) | 4.2e-01|  403|
-|BMI             |SlopeHunter-corrected |Weighted median |0.94 (0.86, 1.03) | 1.8e-01|  403|
+|BMI             |SlopeHunter-corrected |IVW-MRE         |1.01 (0.94, 1.09) | 7.2e-01|  403|
+|BMI             |SlopeHunter-corrected |MRBEE           |1.03 (0.96, 1.11) | 4.3e-01|  403|
+|BMI             |SlopeHunter-corrected |Weighted median |0.94 (0.86, 1.03) | 1.9e-01|  403|
 |Lean mass       |Uncorrected           |IVW-MRE         |0.90 (0.87, 0.94) | 6.0e-06|  598|
 |Lean mass       |Uncorrected           |MRBEE           |0.91 (0.87, 0.95) | 1.2e-05|  598|
 |Lean mass       |Uncorrected           |Weighted median |0.92 (0.87, 0.98) | 1.1e-02|  598|
 |Lean mass       |SlopeHunter-corrected |IVW-MRE         |0.90 (0.86, 0.94) | 9.6e-06|  531|
-|Lean mass       |SlopeHunter-corrected |MRBEE           |0.90 (0.85, 0.94) | 5.4e-06|  531|
-|Lean mass       |SlopeHunter-corrected |Weighted median |0.88 (0.82, 0.94) | 1.3e-04|  531|
+|Lean mass       |SlopeHunter-corrected |MRBEE           |0.90 (0.85, 0.94) | 5.5e-06|  531|
+|Lean mass       |SlopeHunter-corrected |Weighted median |0.88 (0.82, 0.94) | 1.4e-04|  531|
 
 
 :::
@@ -352,6 +352,9 @@ kable(fmt_table(body))
 
 
 ## 4. Glycemic traits → AD, SlopeHunter-corrected
+
+SlopeHunter-corrected intervals here and in sections 6–8 include the uncertainty in b_SH, which
+is propagated per estimate (see `pipeline/README.md`).
 
 
 ::: {.cell}
@@ -395,7 +398,7 @@ kable(fmt_table(glyc))
 |2 h glucose     |Uncorrected           |MRBEE           |1.11 (1.00, 1.22) | 0.04100|   12|
 |2 h glucose     |Uncorrected           |Weighted median |1.14 (1.03, 1.27) | 0.01400|   12|
 |2 h glucose     |SlopeHunter-corrected |IVW-MRE         |1.14 (1.05, 1.23) | 0.00160|   12|
-|2 h glucose     |SlopeHunter-corrected |MRBEE           |1.16 (1.07, 1.26) | 0.00027|   12|
+|2 h glucose     |SlopeHunter-corrected |MRBEE           |1.16 (1.07, 1.26) | 0.00029|   12|
 |2 h glucose     |SlopeHunter-corrected |Weighted median |1.11 (0.99, 1.23) | 0.06300|   12|
 
 
@@ -759,13 +762,13 @@ mv |>
 |Instruments                         |Method  |Term                                       |OR (95% CI)       |      p| SNPs|
 |:-----------------------------------|:-------|:------------------------------------------|:-----------------|------:|----:|
 |Xue 2018 (plotted)                  |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.90 (0.71, 1.13) | 0.3500|  109|
-|Xue 2018 (plotted)                  |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.19 (1.05, 1.35) | 0.0073|  109|
+|Xue 2018 (plotted)                  |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.19 (1.05, 1.35) | 0.0074|  109|
 |Xue 2018 (plotted)                  |IVW-MRE |Difference (2 h minus fasting)             |1.32 (0.97, 1.81) | 0.0780|  109|
 |Xue 2018 (plotted)                  |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.88 (0.76, 1.03) | 0.1100|  109|
 |Xue 2018 (plotted)                  |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.24 (1.09, 1.41) | 0.0011|  109|
 |Xue 2018 (plotted)                  |MRBEE   |Difference (2 h minus fasting)             |1.40 (1.11, 1.77) | 0.0046|  109|
 |Suzuki 2024 (pre-specified primary) |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |1.03 (0.87, 1.23) | 0.7000|  273|
-|Suzuki 2024 (pre-specified primary) |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.05 (0.97, 1.13) | 0.2400|  273|
+|Suzuki 2024 (pre-specified primary) |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.05 (0.97, 1.14) | 0.2400|  273|
 |Suzuki 2024 (pre-specified primary) |IVW-MRE |Difference (2 h minus fasting)             |1.01 (0.81, 1.26) | 0.9000|  273|
 |Suzuki 2024 (pre-specified primary) |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |1.02 (0.84, 1.23) | 0.8600|  273|
 |Suzuki 2024 (pre-specified primary) |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.09 (0.97, 1.21) | 0.1500|  273|
@@ -842,7 +845,7 @@ mv_rep |>
 |AD dataset                                |Method  |Term                                       |OR (95% CI)       |      p| SNPs|
 |:-----------------------------------------|:-------|:------------------------------------------|:-----------------|------:|----:|
 |Bellenguez (SlopeHunter-corrected)        |IVW-MRE |Fasting glucose (adjusted for 2 h glucose) |0.90 (0.71, 1.13) | 0.3500|  109|
-|Bellenguez (SlopeHunter-corrected)        |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.19 (1.05, 1.35) | 0.0073|  109|
+|Bellenguez (SlopeHunter-corrected)        |IVW-MRE |2 h glucose (adjusted for fasting glucose) |1.19 (1.05, 1.35) | 0.0074|  109|
 |Bellenguez (SlopeHunter-corrected)        |IVW-MRE |Difference (2 h minus fasting)             |1.32 (0.97, 1.81) | 0.0780|  109|
 |Bellenguez (SlopeHunter-corrected)        |MRBEE   |Fasting glucose (adjusted for 2 h glucose) |0.88 (0.76, 1.03) | 0.1100|  109|
 |Bellenguez (SlopeHunter-corrected)        |MRBEE   |2 h glucose (adjusted for fasting glucose) |1.24 (1.09, 1.41) | 0.0011|  109|
@@ -1101,8 +1104,8 @@ cl |>
 |Cluster            | SNPs|OR (95% CI)       |     p|
 |:------------------|----:|:-----------------|-----:|
 |All beta cell      |   55|1.05 (1.00, 1.10) | 0.065|
-|Beta cell -PI      |   26|1.09 (0.99, 1.20) | 0.095|
-|Beta cell +PI      |   29|1.03 (0.98, 1.09) | 0.240|
+|Beta cell -PI      |   26|1.09 (0.99, 1.20) | 0.096|
+|Beta cell +PI      |   29|1.03 (0.98, 1.09) | 0.250|
 |Lipodystrophy      |   19|1.07 (0.94, 1.23) | 0.290|
 |Residual glycaemic |   49|1.02 (0.93, 1.13) | 0.620|
 |Body fat           |   40|1.00 (0.89, 1.13) | 0.940|
@@ -1395,7 +1398,7 @@ dt |>
 
 |Class                        |Outcome                                   | SNPs|OR (95% CI)       |       p|
 |:----------------------------|:-----------------------------------------|----:|:-----------------|-------:|
-|Amylin receptor              |Bellenguez (SlopeHunter-corrected)        |    3|1.77 (1.19, 2.62) | 0.00490|
+|Amylin receptor              |Bellenguez (SlopeHunter-corrected)        |    3|1.77 (1.19, 2.63) | 0.00500|
 |Amylin receptor              |Kunkle (clinical)                         |    3|1.47 (0.74, 2.93) | 0.27000|
 |Amylin receptor              |Uffelmann 2026, clinical only             |    2|1.34 (0.98, 1.83) | 0.06800|
 |FGF21 / KLB                  |Bellenguez (SlopeHunter-corrected)        |    3|0.96 (0.51, 1.81) | 0.91000|

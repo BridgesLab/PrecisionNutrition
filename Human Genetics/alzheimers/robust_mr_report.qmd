@@ -195,6 +195,30 @@ gap |> mutate(across(where(is.numeric), \(x) signif(x, 3))) |>
   kable(caption = "Step 2's estimate-level correction: naive − b_SH × (E → lifespan), IVW-MRE")
 ```
 
+The SlopeHunter rows' SE, p and CI include the uncertainty in b_SH (propagated per estimate; see
+`pipeline/README.md`). Without it SlopeHunter's Type I error is about 50% (Zhang et al. 2026, AJHG).
+`p (b_SH known)` is the value before propagation, `p (null SD)` uses the permutation-null SD instead
+of the bootstrap SE, and `b where estimate = 0` is the tipping point to compare with b_SH = −0.944
+and the permutation-null median.
+
+```{r collider-propagation}
+res |> filter(arm == "slopehunter", method %in% c("MR-APSS", "MR-APSS (p<5e-8)", "IVW-MRE")) |>
+  transmute(exposure, outcome, method, b = signif(b, 3), `p (b_SH known)` = signif(p_cond_bsh, 2),
+            p = signif(p, 2), `p (null SD)` = signif(p_bsh_cons, 2),
+            `b where estimate = 0` = signif(bsh_tip, 3)) |>
+  arrange(exposure, method) |>
+  kable(caption = "SlopeHunter arm with b_SH uncertainty")
+```
+
+```{r collider-grid}
+read_csv(file.path(res_dir, "bsh_grid.csv"), show_col_types = FALSE) |>
+  filter(table == "results", grepl("MR-APSS$", row_key)) |>
+  mutate(cell = sprintf("%.3f (p = %.2g)", estimate, p)) |>
+  select(row_key, b_point, cell) |>
+  tidyr::pivot_wider(names_from = b_point, values_from = cell) |>
+  kable(caption = "MR-APSS estimate at fixed values of b (p conditional on that b)")
+```
+
 ## Diagnostics by association
 
 Scatter (classical instruments, method lines), funnel (single-SNP Wald ratios with the IVW-MRE

@@ -26,7 +26,9 @@ The correction reuses the exact approach validated in the smoking→AD analysis
 (`smoking/04e_overlap_indexevent.qmd`). `b_SH` is the SlopeHunter selection slope
 relating SNP effects on AD to SNP effects on lifespan; it is a property of the
 **(AD GWAS × lifespan GWAS)** pair and is exposure-independent, so it is fit once
-per AD GWAS and applied to every exposure.
+per AD GWAS and applied to every exposure. Its uncertainty is carried into every
+corrected estimate: Step 2 adds `(E→lifespan)²·se(b_SH)²`, and the pipeline's
+SlopeHunter arm propagates it per estimate (see `pipeline/README.md`, "Survival collider").
 
 ## Files
 

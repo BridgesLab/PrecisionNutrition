@@ -256,7 +256,8 @@ contrast:
 
 # ---- survival-collider adjustment -------------------------------------------------------------
 # Every association into an outcome listed here gets a second, SlopeHunter-adjusted arm, but only
-# if that outcome's fit is trusted (Step 2's gate). Fits are Step 2's, not refit.
+# if that outcome's fit is trusted (Step 2's gate). Fits are Step 2's, not refit. The SE of b_SH is
+# propagated into that arm's results (propagate_bsh, R/selection.R); see pipeline/README.md.
 slopehunter:
   selection_axis: lifespan
   fits:

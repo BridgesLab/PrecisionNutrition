@@ -1,0 +1,580 @@
+---
+title: "SlopeHunter supplementary figures"
+subtitle: "What the survival-collider correction does, and how much it takes to change the result"
+author: "Dave Bridges"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    keep-md: true
+    code-fold: true
+    code-summary: "Show the code"
+params:
+  refit: false
+---
+
+Two supplementary figures for the SlopeHunter correction of Bellenguez AD:
+
+1. **Mechanism** (panels A–D): the problem, how b is estimated, how the correction is applied, and
+   what it does to the BMI → AD estimate.
+2. **Sensitivity to b**: each MR estimate as a function of b, with every independent estimate of b
+   we have.
+
+The roles here are the reverse of a disease-progression analysis. Survival is the selection event:
+AD is only observed in people who live long enough to be ascertained. AD is the outcome. So the
+correction shifts each variant's **AD** association by its **lifespan** association:
+
+$$\hat\beta_{AD,j}^{\,corr} = \hat\beta_{AD,j} - b\,\hat\beta_{life,j}$$
+
+Variants with no effect on lifespan do not move. Lifespan is a Martingale residual, so positive
+betas mean shorter life. b is negative: among survivors, alleles that shorten life look protective
+for AD.
+
+
+::: {.cell}
+
+```{.r .cell-code}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(patchwork)
+library(ggrepel)
+library(knitr)
+
+fig_dir <- "figures"
+dat_dir <- "results/slopehunter_figure"
+dir.create(dat_dir, showWarnings = FALSE, recursive = TRUE)
+
+cfg    <- yaml::read_yaml("pipeline/config.yml")
+sh_cfg <- cfg$slopehunter$fits$ad_bellenguez
+sh_fit <- read_csv(sh_cfg$fits_csv, show_col_types = FALSE) |> filter(set == sh_cfg$fit_set)
+b_hat  <- sh_fit$b_SH                      # the b applied in the pipeline
+b_ci   <- c(sh_fit$ci_lo, sh_fit$ci_hi)    # bootstrap 95% CI
+
+inst <- read_csv("results/pipeline/instruments_classical.csv", show_col_types = FALSE)
+res  <- read_csv("results/pipeline/results.csv", show_col_types = FALSE, name_repair = "minimal",
+                 guess_max = Inf)
+
+col_hunted <- "grey25"
+col_pleio  <- "#2F65A7"
+col_neg    <- "#2F65A7"   # SNP -> lifespan < 0: longer life
+col_pos    <- "#C4501B"   # SNP -> lifespan > 0: shorter life
+theme_set(theme_minimal(base_size = 11) +
+            theme(panel.grid.minor = element_blank(), plot.title = element_text(face = "bold", size = 11)))
+fmt_ci <- \(b, lo, hi, d = 2) sprintf(paste0("%.", d, "f (%.", d, "f to %.", d, "f)"), b, lo, hi)
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Inputs that need the GWAS in the targets store are computed once and cached as CSVs:
+#   fit_snps.csv     the SlopeHunter fit set (APOE excluded) with each SNP's cluster
+#   b_noadip.csv     SlopeHunter refit with adiposity-associated SNPs withheld
+#   bmi_genes.csv    nearest genes for the BMI instruments labelled in panel D (Ensembl GRCh37)
+# Render with -P refit:true to recompute.
+f_snps <- file.path(dat_dir, "fit_snps.csv")
+if (isTRUE(params$refit) || !file.exists(f_snps)) {
+  suppressPackageStartupMessages({ library(targets); library(data.table); library(SlopeHunter) })
+  tar_source("pipeline/R")
+  hunt_on <- function(d, seed = 20260604)
+    hunt(data.frame(SNP = d$SNP, BETA.incidence = d$beta_life, SE.incidence = d$se_life,
+                    Pval.incidence = d$p_life, BETA.prognosis = d$beta_ad_aligned,
+                    SE.prognosis = d$se_ad, Pval.prognosis = d$p_ad),
+         xp_thresh = 1e-3, Plot = FALSE, seed = seed)
+  m <- tar_read(sh_merge_ad_bellenguez)[apoe == FALSE]
+  f <- hunt_on(m)
+  as_tibble(f$Fit) |>
+    transmute(SNP, beta_life = xbeta, se_life = xse, p_life = xp, beta_ad = ybeta, se_ad = yse,
+              p_ad = yp, p_hunted = pt, cluster = clusters) |>
+    write_csv(f_snps)
+  # Adiposity-associated SNPs withheld (p < 1e-5 for BMI or fat mass): does a blend of adiposity
+  # and survival selection drive b?
+  adip <- unique(c(tar_read(gwas_bmi_ukb)[p < 1e-5, SNP], tar_read(gwas_fatmass_ukb)[p < 1e-5, SNP]))
+  f2 <- hunt_on(m[!SNP %chin% adip])
+  tibble(estimate = c("SlopeHunter refit, pipeline merge", "SlopeHunter, adiposity SNPs withheld"),
+         b = c(f$b, f2$b), se = c(f$bse, f2$bse),
+         lo = c(f$b_CI[1], f2$b_CI[1]), hi = c(f$b_CI[2], f2$b_CI[2]),
+         n = c(nrow(m), sum(!m$SNP %chin% adip))) |>
+    write_csv(file.path(dat_dir, "b_refits.csv"))
+  # Positions for the BMI instruments, so the biggest movers can be labelled with a gene.
+  pos <- tar_read(gwas_bmi_ukb)[SNP %chin% inst$SNP[inst$assoc_id == "bmi_ukb__ad_bellenguez__slopehunter"],
+                                .(SNP, chr, pos)]
+  write_csv(as_tibble(pos), file.path(dat_dir, "bmi_positions.csv"))
+}
+fit_snps <- read_csv(f_snps, show_col_types = FALSE) |>
+  mutate(cluster = factor(cluster, levels = c("Hunted", "Pleiotropic")),
+         beta_ad_corr = beta_ad - b_hat * beta_life)
+b_refits <- read_csv(file.path(dat_dir, "b_refits.csv"), show_col_types = FALSE)
+```
+:::
+
+
+## Figure S1: mechanism
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# A: the selection DAG.
+nodes <- tribble(
+  ~id,  ~x,   ~y,    ~label,
+  "G",  0.0,  1.05,  "Genetic\nvariants",
+  "X",  1.6,  2.0,   "Adiposity\n(BMI)",
+  "AD", 3.4,  2.0,   "Alzheimer's\ndisease",
+  "S",  2.5,  0.3,   "Survival to AD\nascertainment (S)",
+  "U",  5.0,  1.05,  "Other causes\nof survival\nand AD (U)")
+# Arrows trimmed by r0 / r1 (data units) at each end so they stop at the node labels.
+edge <- function(from, to, r0 = 0.45, r1 = 0.5) {
+  a <- nodes[nodes$id == from, ]; z <- nodes[nodes$id == to, ]
+  d <- sqrt((z$x - a$x)^2 + (z$y - a$y)^2); ux <- (z$x - a$x) / d; uy <- (z$y - a$y) / d
+  tibble(x = a$x + r0 * ux, y = a$y + r0 * uy, xend = z$x - r1 * ux, yend = z$y - r1 * uy)
+}
+edges <- bind_rows(edge("G", "X", r1 = 0.45), edge("X", "S", r0 = 0.4, r1 = 0.4),
+                   edge("G", "S", r0 = 0.55, r1 = 1.0), edge("U", "AD", r0 = 0.55, r1 = 0.5),
+                   edge("U", "S", r0 = 0.75, r1 = 1.0))
+causal <- edge("X", "AD", r0 = 0.5, r1 = 0.65)
+pA <- ggplot() +
+  annotate("rect", xmin = 1.55, xmax = 3.45, ymin = -0.02, ymax = 0.64, fill = NA, colour = "grey30",
+           linetype = 2, linewidth = 0.4) +
+  annotate("text", x = 2.5, y = -0.3, size = 2.8, colour = "grey20", lineheight = 0.9,
+           label = "selected: AD GWAS\ninclude only survivors") +
+  geom_segment(data = edges, aes(x, y, xend = xend, yend = yend), linewidth = 0.5,
+               arrow = arrow(length = unit(0.18, "cm"), type = "closed")) +
+  geom_segment(data = causal, aes(x, y, xend = xend, yend = yend), linewidth = 0.5, linetype = 3,
+               arrow = arrow(length = unit(0.18, "cm"), type = "closed")) +
+  annotate("text", x = 2.5, y = 2.3, label = "effect of interest", size = 3, colour = "grey30") +
+  annotate("curve", x = 0.1, y = 0.65, xend = 4.9, yend = 0.6, curvature = 1, colour = "#B91C1C",
+           linetype = 2, linewidth = 0.6) +
+  annotate("text", x = 2.5, y = -1.12, label = "association induced by selecting on S",
+           colour = "#B91C1C", size = 3.1, fontface = "italic") +
+  geom_label(data = nodes, aes(x, y, label = label), size = 3.1, linewidth = 0.3,
+             label.padding = unit(0.2, "lines"), lineheight = 0.9) +
+  coord_cartesian(xlim = c(-0.5, 5.6), ylim = c(-1.3, 2.45), clip = "off") +
+  theme_void() +
+  labs(title = "The problem: selection on survival")
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# B and C share axes so the shear is visible. Limits cover 99.8% of points; the few outside are
+# drawn at the edge of the panel by coord_cartesian (they are not dropped from anything).
+xl <- quantile(fit_snps$beta_life, c(0.001, 0.999))
+yl <- quantile(c(fit_snps$beta_ad, fit_snps$beta_ad_corr), c(0.001, 0.999))
+n_out <- with(fit_snps, sum(beta_life < xl[1] | beta_life > xl[2] |
+                            pmin(beta_ad, beta_ad_corr) < yl[1] | pmax(beta_ad, beta_ad_corr) > yl[2]))
+lines_b <- tibble(slope = c(b_hat, b_ci), what = c("b", "ci", "ci"))
+pts <- \(d, y) list(
+  geom_point(data = filter(d, cluster == "Pleiotropic"), aes(beta_life, {{ y }}, colour = cluster),
+             size = 0.7, alpha = 0.35, stroke = 0),
+  geom_point(data = filter(d, cluster == "Hunted"), aes(beta_life, {{ y }}, colour = cluster),
+             size = 0.9, alpha = 0.8, stroke = 0))
+ax <- list(geom_hline(yintercept = 0, colour = "grey70", linewidth = 0.3),
+           geom_vline(xintercept = 0, colour = "grey70", linewidth = 0.3),
+           coord_cartesian(xlim = xl, ylim = yl),
+           scale_colour_manual(values = c(Hunted = col_hunted, Pleiotropic = col_pleio),
+                               labels = c(Hunted = sprintf("Hunted: survival only (n = %d)", sum(fit_snps$cluster == "Hunted")),
+                                          Pleiotropic = sprintf("Pleiotropic (n = %d)", sum(fit_snps$cluster == "Pleiotropic")))),
+           labs(x = "SNP effect on lifespan (β, + = shorter life)", colour = NULL))
+
+pB <- ggplot() + ax + pts(fit_snps, beta_ad) +
+  geom_abline(data = lines_b, aes(intercept = 0, slope = slope, linetype = what), linewidth = 0.6,
+              show.legend = FALSE) +
+  scale_linetype_manual(values = c(b = 1, ci = 3)) +
+  annotate("label", x = xl[2], y = yl[2], hjust = 1, vjust = 1, size = 3.2, linewidth = 0,
+           label = sprintf("estimated b = %s", fmt_ci(b_hat, b_ci[1], b_ci[2]))) +
+  labs(y = "SNP effect on AD (log-OR), uncorrected",
+       title = "Estimating b: the slope of the survival-only cluster") +
+  theme(legend.position = "inside", legend.position.inside = c(0.02, 0.02),
+        legend.justification = c(0, 0), legend.background = element_rect(fill = "white", colour = NA)) +
+  guides(colour = guide_legend(override.aes = list(size = 2, alpha = 1)))
+
+pC <- ggplot() + ax +
+  geom_segment(data = fit_snps, aes(beta_life, beta_ad, xend = beta_life, yend = beta_ad_corr),
+               colour = "grey45", alpha = 0.18, linewidth = 0.2,
+               arrow = arrow(length = unit(0.05, "cm"), type = "closed")) +
+  pts(fit_snps, beta_ad_corr) +
+  labs(y = "SNP effect on AD (log-OR), corrected",
+       title = "Applying it: each SNP shifts by −b × its lifespan effect") +
+  theme(legend.position = "none")
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# D: BMI instruments, oriented to the BMI-raising allele. Raw AD effect -> corrected AD effect.
+wide <- inst |>
+  filter(assoc_id %in% c("bmi_ukb__ad_bellenguez__raw", "bmi_ukb__ad_bellenguez__slopehunter", "bmi_ukb__lifespan__raw")) |>
+  mutate(arm = recode(assoc_id, bmi_ukb__ad_bellenguez__raw = "raw", bmi_ukb__ad_bellenguez__slopehunter = "corr",
+                      bmi_ukb__lifespan__raw = "life")) |>
+  select(SNP, arm, bx = beta_exposure, by = beta_outcome) |>
+  pivot_wider(names_from = arm, values_from = by) |>
+  filter(!is.na(raw), !is.na(corr), !is.na(life)) |>
+  mutate(s = sign(bx), bx = bx * s, raw = raw * s, corr = corr * s, life = life * s,
+         shift = corr - raw)
+
+f_genes <- file.path(dat_dir, "bmi_genes.csv")
+top <- wide |> slice_max(abs(shift), n = 3)
+if (isTRUE(params$refit) || !file.exists(f_genes)) {
+  if (!exists("nearest_gene_b37")) targets::tar_source("pipeline/R")
+  read_csv(file.path(dat_dir, "bmi_positions.csv"), show_col_types = FALSE) |>
+    filter(SNP %in% top$SNP) |>
+    mutate(gene = purrr::map2_chr(chr, pos, nearest_gene_b37)) |>
+    write_csv(f_genes)
+}
+top <- top |> left_join(read_csv(f_genes, show_col_types = FALSE), by = "SNP") |>
+  mutate(lab = paste0(coalesce(gene, SNP), "\n", SNP))
+
+mr <- res |> filter(exposure == "bmi_ukb", outcome == "ad_bellenguez", method == "MRBEE") |>
+  transmute(arm, b, ci_lo, ci_hi,
+            lab = sprintf("%s MRBEE: %s", if_else(arm == "raw", "Uncorrected", "Corrected"),
+                          fmt_ci(b, ci_lo, ci_hi, 3)))
+lim_l <- max(abs(wide$life))
+pD <- ggplot(wide) +
+  geom_hline(yintercept = 0, colour = "grey70", linewidth = 0.3) +
+  geom_abline(data = mr, aes(intercept = 0, slope = b, linetype = lab), linewidth = 0.7) +
+  geom_segment(aes(bx, raw, xend = bx, yend = corr), colour = "grey55", alpha = 0.5, linewidth = 0.25,
+               arrow = arrow(length = unit(0.06, "cm"), type = "closed")) +
+  geom_point(aes(bx, raw), shape = 21, colour = "grey60", fill = NA, size = 1.1, stroke = 0.3) +
+  geom_point(aes(bx, corr, fill = life), shape = 21, colour = "grey30", size = 1.6, stroke = 0.15) +
+  geom_text_repel(data = top, aes(bx, corr, label = lab), size = 2.8, lineheight = 0.85,
+                  min.segment.length = 0, box.padding = 0.5, seed = 1) +
+  scale_fill_gradient2(low = col_neg, mid = "grey95", high = col_pos, midpoint = 0,
+                       limits = c(-lim_l, lim_l), name = "SNP effect\non lifespan\n(+ = shorter life)") +
+  scale_linetype_manual(values = setNames(c(2, 1), mr$lab[order(mr$arm != "raw")]), name = NULL) +
+  labs(x = "SNP effect on BMI (SD, BMI-raising allele)", y = "SNP effect on AD (log-OR)",
+       title = "Consequence: BMI → AD") +
+  theme(legend.position = "right") +
+  guides(linetype = guide_legend(order = 1, ncol = 1), fill = guide_colourbar(order = 2))
+```
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+fig1 <- (pA + pB) / (pC + pD) + plot_annotation(tag_levels = "A")
+ggsave(file.path(fig_dir, "supp-slopehunter-mechanism.pdf"), fig1, width = 13, height = 10.5)
+```
+
+::: {.cell-output .cell-output-stderr}
+
+```
+Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x$y, :
+conversion failure on 'SNP effect on lifespan (β, + = shorter life)' in
+'mbcsToSbcs': for β (U+03B2)
+Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x$y, :
+conversion failure on 'SNP effect on lifespan (β, + = shorter life)' in
+'mbcsToSbcs': for β (U+03B2)
+```
+
+
+:::
+
+::: {.cell-output .cell-output-stderr}
+
+```
+Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x$y, :
+for 'Applying it: each SNP shifts by −b × its lifespan effect' in 'mbcsToSbcs':
+- substituted for − (U+2212)
+```
+
+
+:::
+
+::: {.cell-output .cell-output-stderr}
+
+```
+Warning in grid.Call.graphics(C_text, as.graphicsAnnot(x$label), x$x, x$y, :
+for 'Consequence: BMI → AD' in 'mbcsToSbcs': -> substituted for → (U+2192)
+```
+
+
+:::
+
+```{.r .cell-code}
+ggsave(file.path(fig_dir, "supp-slopehunter-mechanism.png"), fig1, width = 13, height = 10.5, dpi = 300)
+fig1
+```
+
+::: {.cell-output-display}
+![](slopehunter_figure_files/figure-html/fig-s1-1.png){#fig-s1 width=1248}
+:::
+:::
+
+
+**Caption (draft).** *Figure S1. How the survival-collider correction works.*
+**(A)** AD is only observed in people who survive to be ascertained, so every AD GWAS is selected on
+survival (S). Variants that change survival, directly or through adiposity, become associated with
+other causes of survival (U) among the survivors. Because U also affects AD, each variant acquires
+a spurious AD association proportional to its effect on survival.
+**(B)** Each point is an independent variant associated with parental lifespan (p < 10⁻³,
+2,326 variants, APOE excluded), plotted by its effects on
+lifespan and on AD (Bellenguez 2022). SlopeHunter's mixture model finds the cluster of variants
+whose AD associations come only from their effect on survival (dark grey). The slope of that
+cluster is the selection slope b̂ = -0.94 (-1.08 to -0.81) (bootstrap 95% CI, dotted
+lines). It is negative because, among survivors, alleles that shorten life look protective for AD.
+**(C)** The correction shifts each variant's AD association by −b̂ × its lifespan association, so
+variants with no effect on survival do not move, and the survival-only cluster loses its slope.
+Panels B and C share axes. 14 points lie beyond the plotted range.
+**(D)** BMI instruments (classical set, BMI-raising allele) before (open circles) and after (filled)
+correction, coloured by their effect on lifespan. Lines are MRBEE estimates. The corrected interval
+includes the uncertainty in b̂. Instruments whose BMI-raising allele shortens life move up, which
+removes the apparent protective effect of BMI. With fixed weights, the corrected estimate is
+approximately the uncorrected one minus b̂ × the BMI → lifespan estimate from the same instruments.
+Cluster labels come from a SlopeHunter refit on the pipeline's merge
+(b = -0.935); the applied b̂ comes from the same GWAS with a slightly
+different merge.
+
+## Figure S2: sensitivity to b
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# Each MR estimate (classical instruments, Bellenguez) refitted on a grid of fixed b, by IVW-MRE
+# (smooth: with fixed weights it is linear in b) and MRBEE (the main-text estimator; its pleiotropy
+# screen adds or drops a variant at some b, which shows as steps). SEs are conditional on b
+# (se_b = 0), so the ribbon is the uncertainty at that b alone.
+exposures <- c(bmi_ukb = "BMI (per SD)", fatmass_ukb = "Fat mass (per SD)",
+               ffm_ukb = "Fat-free mass (per SD)", leanmass_pei = "Appendicular lean mass (per SD)",
+               t2d_xue = "Type 2 diabetes (per log-odds)", glu2h_chen = "2 h glucose (per mmol/L)")
+grid_b <- seq(0, -1.5, by = -0.025)
+pair_data <- function(e) {
+  ad   <- inst |> filter(assoc_id == paste0(e, "__ad_bellenguez__raw")) |>
+    select(SNP, ea = effect_allele, bx = beta_exposure, sx = se_exposure, by = beta_outcome, sy = se_outcome)
+  life <- inst |> filter(assoc_id == paste0(e, "__lifespan__raw")) |>
+    select(SNP, ea_l = effect_allele, bl = beta_outcome, sl = se_outcome)
+  inner_join(ad, life, by = "SNP") |> filter(ea == ea_l)
+}
+mrbee_at <- function(d, b, r) {
+  f <- suppressWarnings(MRBEE::MRBEE.IMRP.UV(by = d$by - b * d$bl, bx = d$bx,
+                                             byse = sqrt(d$sy^2 + b^2 * d$sl^2), bxse = d$sx,
+                                             Rxy = matrix(c(1, r, r, 1), 2)))
+  tibble(b_sel = b, estimator = "MRBEE", est = as.numeric(f$theta)[1], se = sqrt(as.numeric(f$vartheta)[1]))
+}
+ivw_at <- function(d, b) {
+  y <- d$by - b * d$bl; s <- sqrt(d$sy^2 + b^2 * d$sl^2)
+  sm <- summary(lm(y ~ 0 + d$bx, weights = 1 / s^2))
+  tibble(b_sel = b, estimator = "IVW-MRE", est = sm$coefficients[1, 1],
+         se = sm$coefficients[1, 2] / sm$sigma * sqrt(max(1, sm$sigma^2)))
+}
+f_grid <- file.path(dat_dir, "sensitivity_grid.csv")
+if (isTRUE(params$refit) || !file.exists(f_grid) ||
+    !"estimator" %in% names(read_csv(f_grid, n_max = 1, show_col_types = FALSE))) {
+  purrr::map_dfr(names(exposures), \(e) {
+    d <- pair_data(e)
+    r <- res |> filter(exposure == e, outcome == "ad_bellenguez", arm == "raw", method == "MRBEE") |>
+      pull(mrbee_error_cor)
+    purrr::map_dfr(grid_b, \(b) bind_rows(ivw_at(d, b), mrbee_at(d, b, r))) |>
+      mutate(exposure = e, n_snp = nrow(d))
+  }) |> write_csv(f_grid)
+}
+grid <- read_csv(f_grid, show_col_types = FALSE) |>
+  mutate(lo = est - 1.96 * se, hi = est + 1.96 * se, panel = factor(exposures[exposure], levels = exposures))
+
+# Check: at b = b_hat the grid reproduces the pipeline's SlopeHunter row (it differs only in the
+# MRBEE error correlation, taken here from the raw arm).
+chk <- purrr::map_dfr(names(exposures), \(e) {
+  r <- res |> filter(exposure == e, outcome == "ad_bellenguez", arm == "raw", method == "MRBEE") |> pull(mrbee_error_cor)
+  d <- pair_data(e)
+  bind_rows(ivw_at(d, b_hat), mrbee_at(d, b_hat, r)) |> mutate(exposure = e)
+}) |>
+  left_join(res |> filter(outcome == "ad_bellenguez", arm == "slopehunter", method %in% c("IVW-MRE", "MRBEE")) |>
+              select(exposure, estimator = method, pipeline = b, pipeline_se_cond = se_cond_bsh),
+            by = c("exposure", "estimator"))
+kable(chk |> mutate(across(where(is.numeric), \(x) signif(x, 3))),
+      caption = "Grid at b = b_hat vs the pipeline's SlopeHunter arm (SE given b_SH)")
+```
+
+::: {.cell-output-display}
+
+
+Table: Grid at b = b_hat vs the pipeline's SlopeHunter arm (SE given b_SH)
+
+|  b_sel|estimator |     est|     se|exposure     | pipeline| pipeline_se_cond|
+|------:|:---------|-------:|------:|:------------|--------:|----------------:|
+| -0.944|IVW-MRE   |  0.0132| 0.0346|bmi_ukb      |   0.0132|           0.0346|
+| -0.944|MRBEE     |  0.0305| 0.0362|bmi_ukb      |   0.0294|           0.0362|
+| -0.944|IVW-MRE   | -0.0702| 0.0339|fatmass_ukb  |  -0.0702|           0.0339|
+| -0.944|MRBEE     | -0.0553| 0.0353|fatmass_ukb  |  -0.0566|           0.0353|
+| -0.944|IVW-MRE   | -0.1860| 0.0403|ffm_ukb      |  -0.1860|           0.0403|
+| -0.944|MRBEE     | -0.1690| 0.0414|ffm_ukb      |  -0.1690|           0.0414|
+| -0.944|IVW-MRE   | -0.1070| 0.0242|leanmass_pei |  -0.1070|           0.0242|
+| -0.944|MRBEE     | -0.1110| 0.0243|leanmass_pei |  -0.1110|           0.0243|
+| -0.944|IVW-MRE   |  0.0246| 0.0188|t2d_xue      |   0.0246|           0.0188|
+| -0.944|MRBEE     |  0.0295| 0.0194|t2d_xue      |   0.0292|           0.0193|
+| -0.944|IVW-MRE   |  0.1270| 0.0401|glu2h_chen   |   0.1270|           0.0401|
+| -0.944|MRBEE     |  0.1480| 0.0407|glu2h_chen   |   0.1480|           0.0407|
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+slope <- read_csv("results/mvmr_lifespan/life_slope.csv", show_col_types = FALSE) |>
+  filter(outcome == "ad_bellenguez", set == "primary", method %in% c("IVW-MRE", "Weighted median"))
+mv <- read_csv("results/mvmr_lifespan/results.csv", show_col_types = FALSE) |>
+  filter(outcome == "ad_bellenguez", set == "primary", step == "MVMR", estimator == "MRBEE",
+         term == "lifespan", exposure == "bmi_ukb")
+nul <- read_csv("results/pipeline/bsh_null_checks.csv", show_col_types = FALSE)
+b_est <- bind_rows(
+  tibble(estimate = "SlopeHunter (applied)", b = b_hat, lo = b_ci[1], hi = b_ci[2], kind = "SlopeHunter"),
+  b_refits |> transmute(estimate, b, lo, hi, kind = "SlopeHunter"),
+  slope |> transmute(estimate = paste("Lifespan instruments,", if_else(method == "IVW-MRE", "IVW", "weighted median")),
+                     b, lo = b - 1.96 * se, hi = b + 1.96 * se, kind = "Lifespan instruments"),
+  mv |> transmute(estimate = "MVMR with BMI (lifespan coefficient)", b, lo = b - 1.96 * se, hi = b + 1.96 * se,
+                  kind = "Lifespan instruments"),
+  tibble(estimate = "SlopeHunter on permuted data (no signal)", b = nul$null_median, lo = nul$null_min,
+         hi = nul$null_max, kind = "Reference")) |>
+  mutate(estimate = factor(estimate, levels = rev(estimate)))
+kable(b_est |> mutate(across(where(is.numeric), \(x) round(x, 3))), caption = "Estimates of the selection slope b")
+```
+
+::: {.cell-output-display}
+
+
+Table: Estimates of the selection slope b
+
+|estimate                                 |      b|     lo|     hi|kind                 |
+|:----------------------------------------|------:|------:|------:|:--------------------|
+|SlopeHunter (applied)                    | -0.944| -1.081| -0.806|SlopeHunter          |
+|SlopeHunter refit, pipeline merge        | -0.935| -1.091| -0.779|SlopeHunter          |
+|SlopeHunter, adiposity SNPs withheld     | -0.939| -1.101| -0.778|SlopeHunter          |
+|Lifespan instruments, IVW                | -1.061| -1.425| -0.697|Lifespan instruments |
+|Lifespan instruments, weighted median    | -0.909| -1.397| -0.421|Lifespan instruments |
+|MVMR with BMI (lifespan coefficient)     | -0.839| -1.275| -0.404|Lifespan instruments |
+|SlopeHunter on permuted data (no signal) | -0.407| -0.407|  0.215|Reference            |
+
+
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+xr <- c(0.25, -1.5)
+band <- annotate("rect", xmin = b_ci[1], xmax = b_ci[2], ymin = -Inf, ymax = Inf, fill = "grey85", alpha = 0.6)
+pTop <- ggplot(b_est, aes(b, estimate, colour = kind, shape = kind)) +
+  band +
+  geom_vline(xintercept = 0, linetype = 3, colour = "grey40", linewidth = 0.4) +
+  geom_vline(xintercept = b_hat, linetype = 1, colour = "grey40", linewidth = 0.4) +
+  geom_errorbar(aes(xmin = lo, xmax = hi), orientation = "y", width = 0.25, linewidth = 0.5) +
+  geom_point(size = 2.2) +
+  scale_colour_manual(values = c(SlopeHunter = "#00274c", `Lifespan instruments` = "#C4501B", Reference = "grey55"),
+                      breaks = c("SlopeHunter", "Lifespan instruments", "Reference")) +
+  scale_shape_manual(values = c(SlopeHunter = 16, `Lifespan instruments` = 17, Reference = 1),
+                     breaks = c("SlopeHunter", "Lifespan instruments", "Reference")) +
+  scale_x_reverse(limits = xr) +
+  labs(x = "Selection slope b", y = NULL, colour = NULL, shape = NULL, title = "Estimates of the selection slope b") +
+  theme(legend.position = "top")
+pGrid <- ggplot(grid, aes(b_sel, est)) +
+  band +
+  geom_hline(yintercept = 0, colour = "grey60", linewidth = 0.3) +
+  geom_vline(xintercept = 0, linetype = 3, colour = "grey40", linewidth = 0.4) +
+  geom_vline(xintercept = b_hat, linetype = 1, colour = "grey40", linewidth = 0.4) +
+  geom_ribbon(data = filter(grid, estimator == "IVW-MRE"), aes(ymin = lo, ymax = hi), fill = "#2F65A7", alpha = 0.2) +
+  geom_line(aes(linetype = estimator), colour = "#00274c", linewidth = 0.6) +
+  scale_linetype_manual(values = c(`IVW-MRE` = 1, MRBEE = 2),
+                        labels = c(`IVW-MRE` = "IVW-MRE (95% CI ribbon)", MRBEE = "MRBEE")) +
+  facet_wrap(~panel, ncol = 3, scales = "free_y") +
+  scale_x_reverse(limits = xr) +
+  labs(x = "Selection slope b (0 = uncorrected; vertical line = estimated b, grey band = its 95% CI)",
+       y = "MR estimate on AD (log-OR)", linetype = NULL, title = "MR estimate at each fixed b") +
+  theme(legend.position = "top")
+fig2 <- pTop / pGrid + plot_layout(heights = c(1, 2.6)) + plot_annotation(tag_levels = "A")
+ggsave(file.path(fig_dir, "supp-slopehunter-sensitivity.pdf"), fig2, width = 11, height = 10)
+ggsave(file.path(fig_dir, "supp-slopehunter-sensitivity.png"), fig2, width = 11, height = 10, dpi = 300)
+fig2
+```
+
+::: {.cell-output-display}
+![](slopehunter_figure_files/figure-html/fig-s2-1.png){#fig-s2 width=1056}
+:::
+:::
+
+
+
+::: {.cell}
+
+```{.r .cell-code}
+# b at which each estimate crosses zero, and whether its CI excludes zero at b_hat.
+# For estimates whose CI excludes 0 uncorrected: the first b at which it no longer does.
+tip <- grid |> group_by(panel, estimator) |> arrange(desc(b_sel), .by_group = TRUE) |>
+  summarise(at_0 = sprintf("%.3f (%.3f to %.3f)", est[b_sel == 0], lo[b_sel == 0], hi[b_sel == 0]),
+            at_bhat = { i <- which.min(abs(b_sel - b_hat)); sprintf("%.3f (%.3f to %.3f)", est[i], lo[i], hi[i]) },
+            sign_flips_at = { s <- sign(est); k <- which(s != s[1])[1]; if (is.na(k)) NA_real_ else b_sel[k] },
+            ci_reaches_0_at = { ex <- lo > 0 | hi < 0
+                                if (!ex[1]) NA_real_ else { k <- which(!ex)[1]; if (is.na(k)) NA_real_ else b_sel[k] } },
+            .groups = "drop")
+kable(tip, caption = "Estimate at b = 0 and at the estimated b; first grid b where the sign flips, and where the 95% CI first includes 0")
+```
+
+::: {.cell-output-display}
+
+
+Table: Estimate at b = 0 and at the estimated b; first grid b where the sign flips, and where the 95% CI first includes 0
+
+|panel                           |estimator |at_0                      |at_bhat                   | sign_flips_at| ci_reaches_0_at|
+|:-------------------------------|:---------|:-------------------------|:-------------------------|-------------:|---------------:|
+|BMI (per SD)                    |IVW-MRE   |-0.128 (-0.194 to -0.061) |0.014 (-0.054 to 0.082)   |        -0.875|          -0.425|
+|BMI (per SD)                    |MRBEE     |-0.114 (-0.181 to -0.046) |0.032 (-0.039 to 0.102)   |        -0.750|          -0.300|
+|Fat mass (per SD)               |IVW-MRE   |-0.200 (-0.265 to -0.135) |-0.069 (-0.136 to -0.003) |        -1.475|          -0.975|
+|Fat mass (per SD)               |MRBEE     |-0.188 (-0.256 to -0.120) |-0.054 (-0.124 to 0.015)  |        -1.350|          -0.850|
+|Fat-free mass (per SD)          |IVW-MRE   |-0.243 (-0.320 to -0.167) |-0.185 (-0.264 to -0.106) |            NA|              NA|
+|Fat-free mass (per SD)          |MRBEE     |-0.233 (-0.312 to -0.154) |-0.168 (-0.250 to -0.087) |            NA|              NA|
+|Appendicular lean mass (per SD) |IVW-MRE   |-0.100 (-0.147 to -0.053) |-0.107 (-0.155 to -0.060) |            NA|              NA|
+|Appendicular lean mass (per SD) |MRBEE     |-0.097 (-0.143 to -0.050) |-0.111 (-0.159 to -0.063) |            NA|              NA|
+|Type 2 diabetes (per log-odds)  |IVW-MRE   |-0.001 (-0.038 to 0.036)  |0.025 (-0.012 to 0.062)   |        -0.050|              NA|
+|Type 2 diabetes (per log-odds)  |MRBEE     |0.003 (-0.034 to 0.040)   |0.030 (-0.008 to 0.068)   |            NA|              NA|
+|2 h glucose (per mmol/L)        |IVW-MRE   |0.100 (0.007 to 0.192)    |0.127 (0.048 to 0.205)    |            NA|              NA|
+|2 h glucose (per mmol/L)        |MRBEE     |0.101 (0.004 to 0.199)    |0.149 (0.069 to 0.228)    |            NA|              NA|
+
+
+:::
+
+```{.r .cell-code}
+tip_at <- \(p, col) tip[[col]][tip$panel == exposures[[p]] & tip$estimator == "IVW-MRE"]
+```
+:::
+
+
+**Caption (draft).** *Figure S2. Sensitivity of the MR estimates to the selection slope.*
+**(A)** Estimates of b from the same AD and lifespan GWAS, with 95% CIs. The SlopeHunter mixture
+model is shown three ways: as applied, refitted, and refitted without variants associated with
+BMI or fat mass (p < 10⁻⁵; b = -0.94). The last shows that selection
+acting through adiposity does not drive b. The other estimates use strong lifespan instruments,
+excluding those at AD loci, so they do not depend on SlopeHunter's mixture model. One is the
+AD-on-lifespan regression (IVW, weighted median), the other the lifespan coefficient of an MVMR
+with BMI. For reference, SlopeHunter on permuted, signal-free data gives the median and range in
+grey.
+**(B)** Each exposure's estimate on Bellenguez AD, refitted at fixed values of b by IVW-MRE (solid,
+with 95% CI conditional on that b) and MRBEE (dashed). b = 0 is the uncorrected analysis. The
+vertical line and grey band mark the estimated b and its bootstrap CI. With fixed weights the IVW
+estimate is linear in b; MRBEE's steps are its pleiotropy screen adding or dropping a variant.
+
+- **Not sensitive to b:** lean mass and fat-free mass stay protective, and 2 h glucose stays
+  positive, at every b from 0 to −1.5. Type 2 diabetes is null throughout.
+- **Sensitive to b:** the BMI estimate is no longer significant once
+  b ≤ -0.425, and it crosses zero at
+  b = -0.875 (IVW-MRE). Fat mass is no longer significant from
+  b = -0.975. So "no protective effect of BMI" needs only
+  about half the estimated slope, while flipping its sign needs almost all of it.

@@ -1,0 +1,827 @@
+---
+title: "Manuscript figures and tables"
+subtitle: "Glycemic traits, survival bias and Alzheimer's disease: Mendelian randomization"
+author: "Dave Bridges and Katie Kittell"
+date: today
+format:
+  html:
+    toc: true
+    toc-location: right
+    code-fold: true
+    code-summary: "Show the code"
+    embed-resources: true
+params:
+  strict: false   # true: refuse to render if any input has uncommitted changes (use for submission)
+knitr:
+  opts_chunk:
+    fig.path: "figures/ms-"   # own prefix: figures/ is shared with the other reports
+    dev: ["png", "pdf"]
+    dpi: 300
+execute:
+  echo: true
+  warning: false
+  message: false
+---
+
+Figures and tables for the manuscript (`Manuscripts/T2D_AD_MR/`). This notebook recomputes no MR
+estimates. It reads only committed CSVs, so every number traces to a commit.
+
+**Conventions**
+
+- **Chunk labels name content, not figure numbers.** Each figure is written to
+  `figures/ms-<chunk label>-1.pdf` / `.png`, and figure numbers are assigned only in
+  `Manuscripts/T2D_AD_MR/README.md`. Reordering figures, or reformatting for a journal, changes the
+  README, not the files.
+- **Source data.** Each figure chunk writes the data it plots to
+  `results/manuscript/source_data/<chunk label>.csv`; panels within a chunk get a suffix.
+- **Tables.** Written to `results/manuscript/tables/<name>.csv`.
+- **Provenance.** The table in the next section is rebuilt on every render and saved as
+  `results/manuscript/provenance.csv`. It records each input file, what produced it, the last commit
+  that changed it, and whether it has uncommitted changes. For submission, render with
+  `quarto render manuscript_figures.qmd -P strict:true`.
+
+Derived from `t2d_ad_figures.qmd`, the colour, large-font version for talks. The estimators, filters
+and in-notebook calculations are the same, so the numbers match. These figures are greyscale for
+print: series are told apart by shape and line type, not colour. Three figures also add what the talk
+version left out (see the notes under each figure).
+
+## Inputs and provenance
+
+```{r setup}
+library(dplyr)
+library(tidyr)
+library(readr)
+library(ggplot2)
+library(patchwork)
+library(knitr)
+
+res_dir <- "results/pipeline"
+con_dir <- file.path(res_dir, "contrast")
+ms_dir  <- "results/manuscript"
+src_dir <- file.path(ms_dir, "source_data")
+tab_dir <- file.path(ms_dir, "tables")
+for (d in c(src_dir, tab_dir)) dir.create(d, recursive = TRUE, showWarnings = FALSE)
+
+# Every file this notebook reads, and what wrote it. Pipeline history: results/pipeline/RUN_INFO.md.
+inputs <- tibble::tribble(
+  ~file,                                              ~produced_by,
+  "pipeline/config.yml",                              "hand-edited pipeline settings; dataset definitions (data-sources table)",
+  "results/pipeline/results.csv",                     "_targets.R `csv_results`; b_SH uncertainty added by pipeline/bsh_propagate_existing.R (7d9cad5)",
+  "results/pipeline/instruments_classical.csv",       "_targets.R `csv_instruments_classical`",
+  "ad_longevity_arm.csv",                             "exposure_survival_screen.qmd (Step 1 screen, OpenGWAS API)",
+  "results/pipeline/contrast/results.csv",            "_targets.R `csv_contrast_results`; b_SH propagation (7d9cad5)",
+  "results/pipeline/contrast/cluster_results.csv",    "_targets.R `csv_contrast_groups`; b_SH propagation (7d9cad5)",
+  "results/pipeline/contrast/drug_target_results.csv","_targets.R `csv_cis_results`; b_SH propagation (7d9cad5)",
+  "results/pipeline/contrast/instrument_outcome_data.csv", "_targets.R `csv_contrast_data`",
+  "results/pipeline/contrast/step0_strength.csv",     "_targets.R `csv_contrast_strength` (outcome-blind Step 0, 38987ad)",
+  "results/pipeline/contrast/xue_cluster_map.csv",    "_targets.R `csv_xue_cluster_map` (post-freeze LD map, 6814fd5)")
+
+git <- function(...) suppressWarnings(tryCatch(system2("git", c(...), stdout = TRUE, stderr = FALSE),
+                                               error = \(e) character()))
+git_last <- function(f) {
+  x <- git("log", "-1", shQuote("--format=%h %ad"), "--date=short", "--", shQuote(f))
+  if (length(x)) x else "NOT COMMITTED"
+}
+git_dirty <- function(f) length(git("status", "--porcelain", "--", shQuote(f))) > 0
+# Pipeline stamp (pipeline/R/provenance.R), if the file has one: step, commit, and whether the stamped
+# md5 still matches the file. Files without one predate stamping (see results/pipeline/RUN_INFO.md).
+stamp_of <- function(f) {
+  s <- file.path(dirname(f), "stamps", paste0(basename(f), ".txt"))
+  if (!file.exists(s)) return("none (see RUN_INFO.md)")
+  kv <- sub("^[a-z_]+: ", "", setNames(readLines(s), sub(":.*", "", readLines(s))))
+  sprintf("%s @ %s%s", kv[["step"]], kv[["git_commit"]],
+          if (kv[["md5"]] == unname(tools::md5sum(f))) "" else " (FILE CHANGED SINCE STAMP)")
+}
+
+stopifnot("an input file is missing" = all(file.exists(inputs$file)))
+provenance <- inputs |>
+  mutate(md5         = substr(unname(tools::md5sum(file)), 1, 10),
+         last_commit = unname(vapply(file, git_last, "")),
+         uncommitted = unname(vapply(file, git_dirty, TRUE)),
+         stamp       = unname(vapply(file, stamp_of, "")))
+head_commit <- git("rev-parse", "--short", "HEAD")
+
+if (any(provenance$uncommitted | provenance$last_commit == "NOT COMMITTED")) {
+  msg <- paste("Inputs with uncommitted changes:",
+               paste(provenance$file[provenance$uncommitted], collapse = ", "))
+  if (isTRUE(params$strict)) stop(msg) else warning(msg)
+}
+write_csv(provenance |> mutate(rendered = as.character(Sys.Date()), rendered_at_commit = head_commit),
+          file.path(ms_dir, "provenance.csv"))
+kable(provenance, caption = sprintf("Rendered at commit %s.", head_commit))
+```
+
+```{r helpers}
+# ---- read inputs (guess_max = Inf: the b_SH columns are NA for most rows and would be mis-typed) ----
+rd  <- \(f) read_csv(f, show_col_types = FALSE, guess_max = Inf, name_repair = "unique_quiet")
+res    <- rd(file.path(res_dir, "results.csv"))
+inst   <- rd(file.path(res_dir, "instruments_classical.csv"))
+con    <- rd(file.path(con_dir, "results.csv"))
+con_cl <- rd(file.path(con_dir, "cluster_results.csv"))
+con_dt <- rd(file.path(con_dir, "drug_target_results.csv"))
+iod    <- rd(file.path(con_dir, "instrument_outcome_data.csv"))
+step0  <- rd(file.path(con_dir, "step0_strength.csv"))
+cfg    <- yaml::read_yaml("pipeline/config.yml")
+
+# ---- settings: edit here -------------------------------------------------------------------
+ad_outcome     <- "ad_bellenguez"                                 # pre-specified primary outcome
+short <- c(bmi_ukb = "BMI", fatmass_ukb = "Fat mass", leanmass_pei = "Lean mass",
+           ffm_ukb = "Fat-free mass", t2d_xue = "Type 2 diabetes",
+           fg_dupuis = "Fasting glucose", glu2h_chen = "2 h glucose")
+body_exposures <- c("t2d_xue", "bmi_ukb", "leanmass_pei")
+glyc_exposures <- c("t2d_xue", "fg_dupuis", "glu2h_chen")
+uv_methods <- c("IVW-MRE" = "IVW", "MRBEE" = "MRBEE", "Weighted median" = "Weighted median")
+arm_labels <- c(raw = "Uncorrected", slopehunter = "SlopeHunter-corrected")
+# AD outcomes for the fasting vs 2 h glucose, cluster and drug-target analyses (config `contrast: outcomes`)
+con_outcomes <- tibble::tribble(
+  ~outcome,            ~arm,          ~dataset,
+  "ad_bellenguez",     "slopehunter", "Bellenguez 2022, SlopeHunter-corrected (primary)",
+  "ad_kunkle",         "raw",         "Kunkle 2019, clinical",
+  "ad_uffelmann_newc", "raw",         "Uffelmann 2026, new cohorts (replication)",
+  "ad_uffelmann_cc",   "raw",         "Uffelmann 2026, clinical only")
+rep_outcomes <- con_outcomes[c(1, 3), ]                           # primary + independent replication
+comb_out <- "ad_uffelmann_all"; comb_arm <- "raw"
+comb_lab <- "Uffelmann 2026, all cohorts (overlaps Bellenguez; uncorrected)"
+con_methods <- c("IVW-MRE" = "IVW", "MRBEE" = "MRBEE")
+set_labels  <- c(primary = "Suzuki 2024 instruments (pre-specified primary set)",
+                 xue     = "Xue 2018 instruments (sensitivity set)")
+
+# ---- palette (print-safe; maize darkened from the talk version) ---------------------------
+# Greyscale for print: series are told apart by shape (and line type) as well as grey level, so
+# the figures survive black-and-white printing. The colour versions for talks are in t2d_ad_figures.qmd.
+ink <- "black"; dark <- "grey35"; mid <- "grey60"
+method_cols  <- setNames(c(ink, dark, mid), uv_methods)
+method_lty   <- setNames(c("solid", "dashed", "dotted"), uv_methods)
+arm_cols     <- setNames(c(mid, ink), arm_labels)
+arm_shapes   <- setNames(c(1, 16), arm_labels)                  # open = uncorrected, filled = corrected
+con_cols     <- setNames(c(mid, ink), con_methods)
+con_shapes   <- setNames(c(1, 16), con_methods)                 # open = IVW, filled = MRBEE
+rep_cols     <- setNames(c(ink, mid), rep_outcomes$dataset)
+rep_shapes   <- setNames(c(16, 17), rep_outcomes$dataset)       # circle = primary, triangle = replication
+glu_cols     <- c(AD = ink, `Fasting glucose` = mid, `2 h glucose` = ink)
+glu_shapes   <- c(AD = 16, `Fasting glucose` = 1, `2 h glucose` = 17)
+
+theme_ms <- theme_bw(base_size = 10) +
+  theme(legend.position = "bottom", panel.grid.minor = element_blank(),
+        panel.grid.major.y = element_blank(), strip.background = element_blank(),
+        strip.text = element_text(face = "bold"), plot.caption = element_text(hjust = 0, colour = "grey30"))
+
+# ---- output helpers ------------------------------------------------------------------------
+# Plotted data -> results/manuscript/source_data/<chunk label>[-suffix].csv
+save_source <- function(d, suffix = NULL) {
+  lab <- paste(c(knitr::opts_current$get("label"), suffix), collapse = "-")
+  write_csv(d, file.path(src_dir, paste0(lab, ".csv")))
+  invisible(d)
+}
+save_table <- function(d, name, caption = NULL) {
+  write_csv(d, file.path(tab_dir, paste0(name, ".csv")))
+  kable(d, caption = caption)
+}
+or_ci <- \(b, lo, hi) sprintf("%.2f (%.2f, %.2f)", exp(b), exp(lo), exp(hi))
+
+uv_rows <- function(exposures, out, arms = c("raw", "slopehunter")) {
+  res |>
+    filter(exposure %in% exposures, outcome == out, arm %in% arms, method %in% names(uv_methods)) |>
+    mutate(method_label   = factor(uv_methods[method], levels = uv_methods),
+           arm_label      = factor(arm_labels[arm], levels = arm_labels),
+           exposure_label = factor(short[exposure], levels = rev(short[exposures])))
+}
+forest_or <- function(dat, xlim, xlab = "Odds ratio for AD per unit higher exposure (95% CI)") {
+  ggplot(dat, aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = exposure_label,
+                  colour = arm_label, shape = arm_label)) +
+    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+    geom_pointrange(position = position_dodge(width = 0.5), size = 0.35) +
+    facet_wrap(~ method_label, nrow = 1) +
+    scale_x_log10(limits = xlim) +
+    scale_colour_manual(values = arm_cols, drop = FALSE) +
+    scale_shape_manual(values = arm_shapes, drop = FALSE) +
+    labs(x = xlab, y = NULL, colour = NULL, shape = NULL) +
+    theme_ms
+}
+rep_forest <- function(d, xlab, caption = NULL) {
+  ggplot(d, aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = label,
+                colour = dataset, shape = dataset)) +
+    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+    geom_pointrange(position = position_dodge(width = -0.6), size = 0.3) +
+    scale_x_log10() +
+    scale_colour_manual(values = rep_cols, breaks = rep_outcomes$dataset) +
+    scale_shape_manual(values = rep_shapes, breaks = rep_outcomes$dataset) +
+    labs(x = xlab, y = NULL, colour = NULL, shape = NULL, caption = caption) +
+    theme_ms
+}
+```
+
+## Data sources
+
+Built from `pipeline/config.yml` → `datasets:`, the single place each GWAS is defined. Entries marked
+"TO CONFIRM" in the config are listed under [Open items](#open-items).
+
+```{r table-data-sources}
+`%||%` <- function(x, y) if (is.null(x)) y else x
+role_of <- function(k) case_when(grepl("^ad_", k) ~ "Outcome: Alzheimer's disease",
+                                 k == "lifespan" ~ "Selection axis (survival)",
+                                 k %in% c("bmi_ukb", "fatmass_ukb", "ffm_ukb", "leanmass_pei") ~ "Exposure: body composition",
+                                 TRUE ~ "Exposure: glycemic")
+data_sources <- purrr::imap_dfr(cfg$datasets, \(d, k) tibble(
+  key = k, Role = role_of(k), Dataset = d$label, Accession = d$id,
+  `Obtained from` = c(opengwas_vcf = "OpenGWAS VCF", local_tsv = "local file", chrpos_tsv = "local file")[d$source],
+  N = d$sample_size %||% NA_real_, Type = d$type,
+  Cohorts = paste(d$cohorts, collapse = ", "), `Adjusted for` = d$adjusted_for %||% "none")) |>
+  arrange(Role, key)
+save_table(data_sources, "data_sources")
+```
+
+## Survival bias and its correction
+
+### Both arms of the collider
+
+Survival is a collider only if both the exposure and AD liability affect it. IVW only: the AD →
+lifespan arm comes from the Step 1 screen (`ad_longevity_arm.csv`), which has standard errors for IVW
+alone. Units differ by row, so read direction and whether the interval excludes zero.
+
+```{r survival-collider, fig.width=6, fig.height=3.2}
+ad_life <- read_csv("ad_longevity_arm.csv", show_col_types = FALSE) |>
+  filter(grepl("Bellenguez", exposure), grepl("Martingale", survival)) |>
+  transmute(label = "AD liability", arm = "Outcome arm", b, ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se, p, n_snp)
+survival <- res |>
+  filter(exposure %in% body_exposures, outcome == "lifespan", method == "IVW-MRE") |>
+  transmute(label = short[exposure], arm = "Exposure arm", b, ci_lo, ci_hi, p, n_snp) |>
+  bind_rows(ad_life) |>
+  mutate(label = factor(label, levels = rev(c("AD liability", short[c("bmi_ukb", "t2d_xue", "leanmass_pei")]))),
+         arm = factor(arm, levels = c("Outcome arm", "Exposure arm")))
+save_source(survival)
+
+ggplot(survival, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = arm)) +
+  geom_vline(xintercept = 0, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(size = 0.4) +
+  facet_grid(arm ~ ., scales = "free_y", space = "free_y") +
+  scale_colour_manual(values = c("Outcome arm" = ink, "Exposure arm" = dark), guide = "none") +
+  labs(x = "Effect on parental lifespan, IVW (95% CI); positive = shorter life", y = NULL) +
+  theme_ms + theme(strip.text.y = element_text(angle = 0))
+```
+
+### Body composition and T2D → AD, before and after correction
+
+```{r ad-body-correction, fig.width=7.5, fig.height=3}
+body <- uv_rows(body_exposures, ad_outcome)
+save_source(body |> select(exposure, outcome, arm, method, b, se, ci_lo, ci_hi, p, n_snp))
+forest_or(body, range(exp(c(body$ci_lo, body$ci_hi))))
+```
+
+```{r table-ad-body}
+kable(body |> arrange(desc(exposure_label), arm_label, method_label) |>
+        transmute(Exposure = exposure_label, Arm = arm_label, Method = method,
+                  `OR (95% CI)` = or_ci(b, ci_lo, ci_hi), p = signif(p, 2), SNPs = n_snp))
+```
+
+## Glycemic traits → AD
+
+Both arms are shown (the talk version showed the corrected arm only). SlopeHunter-corrected
+intervals include the uncertainty in b_SH, propagated per estimate (`pipeline/README.md`).
+
+```{r ad-glycemic, fig.width=7.5, fig.height=3}
+glyc <- uv_rows(glyc_exposures, ad_outcome)
+save_source(glyc |> select(exposure, outcome, arm, method, b, se, ci_lo, ci_hi, p, n_snp))
+forest_or(glyc, range(exp(c(glyc$ci_lo, glyc$ci_hi))))
+```
+
+```{r table-ad-glycemic}
+kable(glyc |> arrange(desc(exposure_label), arm_label, method_label) |>
+        transmute(Exposure = exposure_label, Arm = arm_label, Method = method,
+                  `OR (95% CI)` = or_ci(b, ci_lo, ci_hi), p = signif(p, 2), SNPs = n_snp))
+```
+
+## Fasting vs 2 h glucose
+
+**Pre-specification.** The rule was fixed at Step 0, before any AD data were read: if the
+conditional F for 2 h glucose is at least 10, MVMR is primary; otherwise the contrast regression (by
+MRBEE) is primary, and MVMR is reported as underpowered. Conditional F was below 10 in every set
+(`step0_strength.csv`), so **the pre-specified primary estimate is the contrast regression on the
+Suzuki set**. The talk version plotted only MVMR on the Xue set. This figure shows both analyses on
+both sets, labelled. Scale: per mmol/L, which does not depend on the unconfirmed `sd_mmol`
+constants. Per-SD estimates are in the table.
+
+- MVMR: $\hat\beta_{AD} = \theta_F\hat\beta_F + \theta_2\hat\beta_2$. The difference row is
+  $\theta_2 - \theta_F$, with the full covariance.
+- Contrast regression: $\hat\beta_{AD} = a(\hat\beta_2 - \hat\beta_F) + c\,\hat\beta_{T2D}$. $a > 0$
+  means the AD signal follows post-load-specific physiology (`pipeline/R/contrast_outcome.R`).
+
+```{r fg-2h, fig.width=8, fig.height=4}
+term_labels <- c(fg = "Fasting glucose | 2 h", glu2h = "2 h glucose | fasting",
+                 `glu2h - fg` = "Difference, 2 h - fasting", contrast = "Contrast (2 h - fasting) | T2D")
+step_labels <- c(`1 MVMR` = "MVMR", `2 contrast regression` = "Contrast regression\n(pre-specified primary)")
+fg2h <- con |>
+  filter(outcome == ad_outcome, arm == "slopehunter", set %in% names(set_labels), scale == "per mmol/L",
+         estimator %in% names(con_methods), term %in% names(term_labels)) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         set_label    = factor(set_labels[set], levels = set_labels),
+         step_label   = factor(step_labels[step], levels = step_labels),
+         term_label   = factor(term_labels[term], levels = rev(term_labels)),
+         method_label = factor(con_methods[estimator], levels = con_methods))
+save_source(fg2h |> select(set, outcome, arm, step, estimator, term, scale, b, se, ci_lo, ci_hi, p, n_snp))
+
+ggplot(fg2h, aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = term_label,
+                 colour = method_label, shape = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), size = 0.35) +
+  facet_grid(step_label ~ set_label, scales = "free_y", space = "free_y",
+             labeller = labeller(set_label = label_wrap_gen(30))) +
+  scale_x_log10(breaks = c(0.7, 0.85, 1, 1.25, 1.5, 1.75)) +
+  scale_colour_manual(values = con_cols) + scale_shape_manual(values = con_shapes) +
+  labs(x = "Odds ratio for AD per mmol/L (95% CI); difference row: ratio of odds ratios", y = NULL,
+       colour = NULL, shape = NULL,
+       caption = "AD: Bellenguez 2022, SlopeHunter-corrected. Glucose effects: Chen 2021 (BMI-adjusted).") +
+  theme_ms + theme(strip.text.y = element_text(angle = 0))
+```
+
+```{r table-fg-2h}
+fg2h_tab <- con |>
+  filter(set %in% names(set_labels), estimator %in% names(con_methods), term %in% names(term_labels)) |>
+  inner_join(bind_rows(con_outcomes, tibble(outcome = comb_out, arm = comb_arm, dataset = comb_lab)),
+             by = c("outcome", "arm")) |>
+  transmute(Instruments = set_labels[set], `AD dataset` = dataset, Analysis = step, Method = estimator,
+            Term = term_labels[term], Scale = scale, b, se, `OR (95% CI)` = or_ci(b, b - 1.96 * se, b + 1.96 * se),
+            p, p_bsh_cons, SNPs = n_snp) |>
+  arrange(Instruments, `AD dataset`, Scale, Analysis, Method, Term)
+save_table(fg2h_tab |> filter(Scale == "per mmol/L", `AD dataset` == con_outcomes$dataset[1]) |>
+             select(-b, -se, -p_bsh_cons) |> mutate(p = signif(p, 2)), "fg_2h_primary_outcome")
+write_csv(fg2h_tab, file.path(tab_dir, "fg_2h_all_outcomes.csv"))
+```
+
+### Replication
+
+```{r fg-2h-replication, fig.width=8, fig.height=5}
+fg2h_rep <- con |>
+  filter(set %in% names(set_labels), scale == "per mmol/L", estimator %in% names(con_methods),
+         term %in% c("fg", "glu2h", "contrast")) |>
+  inner_join(con_outcomes, by = c("outcome", "arm")) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         set_label    = factor(set_labels[set], levels = set_labels),
+         term_label   = factor(term_labels[term], levels = term_labels[c("fg", "glu2h", "contrast")]),
+         method_label = factor(con_methods[estimator], levels = con_methods),
+         dataset      = factor(dataset, levels = rev(con_outcomes$dataset)))
+save_source(fg2h_rep |> select(set, outcome, arm, step, estimator, term, b, se, ci_lo, ci_hi, p, n_snp))
+
+ggplot(fg2h_rep, aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = dataset,
+                     colour = method_label, shape = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), size = 0.3) +
+  facet_grid(set_label ~ term_label, labeller = labeller(set_label = label_wrap_gen(22))) +
+  scale_x_log10(breaks = c(0.5, 0.7, 1, 1.4, 2)) +
+  scale_colour_manual(values = con_cols) + scale_shape_manual(values = con_shapes) +
+  labs(x = "Odds ratio for AD per mmol/L (95% CI)", y = NULL, colour = NULL, shape = NULL,
+       caption = "Uffelmann 2026 was added after the outcome-blind freeze. New cohorts share no participants with Bellenguez; MVP is also in the Suzuki T2D GWAS.") +
+  theme_ms + theme(strip.text.y = element_text(angle = 0))
+```
+
+### Validation: separability and the added-variable plot
+
+For each instrument set: left, each variant's fasting vs 2 h glucose effect (identification needs the
+mix to vary); right, the Frisch–Waugh–Lovell added-variable plot, whose slope is exactly the IVW
+estimate of $\theta_2$.
+
+```{r fg-2h-validation, fig.width=8, fig.height=7}
+validation_panels <- function(s) {
+  val <- iod |> filter(set == s, outcome == ad_outcome, arm == "slopehunter") |> mutate(w = 1 / se_y^2)
+  st  <- step0 |> filter(set == s)
+  val <- val |> mutate(resid_y  = resid(lm(beta_y ~ 0 + beta_fg, weights = w)),
+                       resid_2h = resid(lm(beta_2h ~ 0 + beta_fg, weights = w)))
+  fwl <- coef(lm(resid_y ~ 0 + resid_2h, data = val, weights = w))[[1]]
+  mv  <- coef(lm(beta_y ~ 0 + beta_fg + beta_2h, data = val, weights = w))[["beta_2h"]]
+  stopifnot(abs(fwl - mv) < 1e-10)   # the added-variable slope IS the MVMR IVW estimate
+  mrbee <- fg2h |> filter(set == s, step == "1 MVMR", estimator == "MRBEE", term == "glu2h") |> pull(b)
+  save_source(val |> select(set, SNP, beta_fg, se_fg, beta_2h, se_2h, beta_y, se_y, w, resid_2h, resid_y), s)
+
+  p1 <- ggplot(val, aes(beta_fg, beta_2h)) +
+    geom_hline(yintercept = 0, colour = "grey70") + geom_vline(xintercept = 0, colour = "grey70") +
+    geom_errorbar(aes(ymin = beta_2h - 1.96 * se_2h, ymax = beta_2h + 1.96 * se_2h), colour = "grey80", width = 0) +
+    geom_errorbar(aes(xmin = beta_fg - 1.96 * se_fg, xmax = beta_fg + 1.96 * se_fg), colour = "grey80",
+                  width = 0, orientation = "y") +
+    geom_point(colour = ink, size = 1) +
+    annotate("text", x = Inf, y = -Inf, hjust = 1.02, vjust = -0.3, size = 2.8, lineheight = 0.95,
+             label = sprintf("r = %.2f\nConditional F, 2 h | fasting = %.1f\nConditional F, fasting | 2 h = %.1f",
+                             cor(val$beta_fg, val$beta_2h), st$cond_F_2h, st$cond_F_fg)) +
+    labs(x = "Effect on fasting glucose (mmol/L)", y = "Effect on 2 h glucose (mmol/L)",
+         subtitle = set_labels[[s]]) +
+    theme_ms + theme(panel.grid.major.y = element_line())
+  p2 <- ggplot(val, aes(resid_2h, resid_y)) +
+    geom_hline(yintercept = 0, colour = "grey70") + geom_vline(xintercept = 0, colour = "grey70") +
+    geom_point(aes(size = w), colour = ink, alpha = 0.6, show.legend = FALSE) +
+    geom_abline(aes(slope = fwl, intercept = 0, colour = "IVW"), linewidth = 0.8) +
+    geom_abline(aes(slope = mrbee, intercept = 0, colour = "MRBEE"), linewidth = 0.8, linetype = "dashed") +
+    scale_size_area(max_size = 2.5) +
+    scale_colour_manual(values = c(IVW = mid, MRBEE = ink),
+                        labels = c(IVW = sprintf("IVW = %.3f", fwl), MRBEE = sprintf("MRBEE = %.3f", mrbee))) +
+    labs(x = "2 h glucose effect beyond fasting (mmol/L)", y = "AD effect beyond fasting (log-OR)", colour = NULL) +
+    theme_ms + theme(panel.grid.major.y = element_line())
+  p1 + p2
+}
+validation_panels("primary") / validation_panels("xue") + plot_annotation(tag_levels = "A")
+```
+
+## T2D liability → AD by mechanistic cluster
+
+Suzuki 2024 instruments split by the paper's clusters (frozen before any AD data were read). Left:
+AD per unit log-odds of T2D carried by the cluster. Right: the same variants' effect on fasting and 2
+h glucose. The glucose slopes are computed here from `instrument_outcome_data.csv`: IVW through the
+origin on the T2D effect, residual scale floored at 1, as in the pipeline's `wls_mre()`. The
+liver/lipid cluster (2 variants) and "other (small)" are in the table only.
+
+```{r clusters, fig.width=8, fig.height=4.5}
+beta_levels <- c("All beta cell", "Beta cell -PI", "Beta cell +PI")
+cl_pick <- function(d) d |>
+  filter(set == "primary",
+         model == "T2D effect x cluster" | (model == "T2D effect x beta-cell" & grepl("^Beta", group))) |>
+  mutate(group = if_else(model == "T2D effect x beta-cell", "All beta cell", group))
+cl <- cl_pick(con_cl) |>
+  filter(outcome == ad_outcome, arm == "slopehunter") |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se,
+         kind = if_else(group %in% beta_levels, "Beta-cell clusters", "Other clusters")) |>
+  arrange(kind != "Beta-cell clusters", match(group, beta_levels), desc(b)) |>
+  mutate(label = sprintf("%s (%d)", group, n_snp), label = factor(label, levels = rev(label)))
+cl_het <- con_cl |>
+  filter(set == "primary", outcome == ad_outcome, arm == "slopehunter", model == "T2D effect x cluster") |>
+  distinct(het_Q, het_df, het_p)
+
+ivw_slope <- function(y, se, x) {
+  f <- summary(lm(y ~ 0 + x, weights = 1 / se^2))
+  tibble(b = f$coefficients[1, 1], se = f$coefficients[1, 2] / f$sigma * max(1, f$sigma))
+}
+con_snps <- iod |> filter(set == "primary", outcome == ad_outcome, arm == "slopehunter")
+cl_glu <- bind_rows(con_snps, con_snps |> filter(grepl("^Beta cell", cluster)) |> mutate(cluster = "All beta cell")) |>
+  group_by(group = cluster) |>
+  reframe(bind_rows(`Fasting glucose` = ivw_slope(beta_fg, se_fg, beta_t2d),
+                    `2 h glucose` = ivw_slope(beta_2h, se_2h, beta_t2d), .id = "series")) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se)
+cl_both <- cl |>
+  transmute(group, series = "AD", b = exp(b), ci_lo = exp(ci_lo), ci_hi = exp(ci_hi), panel = "AD risk") |>
+  bind_rows(cl_glu |> mutate(panel = "Glucose") |> select(group, series, b, ci_lo, ci_hi, panel)) |>
+  inner_join(cl |> select(group, label, kind), by = "group") |>
+  filter(!group %in% c("other (small)", "Liver/lipid metabolism")) |>
+  mutate(panel = factor(panel, levels = c("AD risk", "Glucose")))
+save_source(cl_both)
+
+ggplot(cl_both, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = series, shape = series)) +
+  geom_vline(data = data.frame(panel = factor(c("AD risk", "Glucose"), levels = c("AD risk", "Glucose")), x = c(1, 0)),
+             aes(xintercept = x), linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), size = 0.3) +
+  facet_grid(kind ~ panel, scales = "free", space = "free_y",
+             labeller = labeller(panel = c(`AD risk` = "Odds ratio for AD (95% CI)",
+                                           Glucose = "Glucose, mmol/L (95% CI)"))) +
+  scale_colour_manual(values = glu_cols, breaks = c("Fasting glucose", "2 h glucose")) +
+  scale_shape_manual(values = glu_shapes, breaks = c("Fasting glucose", "2 h glucose")) +
+  labs(x = "Per unit higher log-odds of T2D carried by the cluster", y = NULL, colour = NULL, shape = NULL,
+       caption = sprintf("Variants per cluster in brackets. AD: Bellenguez, SlopeHunter-corrected. Heterogeneity across clusters: Q = %.1f, df = %d, p = %.2f.",
+                         cl_het$het_Q, cl_het$het_df, cl_het$het_p)) +
+  theme_ms + theme(strip.text.y = element_blank())
+```
+
+```{r clusters-replication, fig.width=7, fig.height=4.5}
+cl_rep <- cl_pick(con_cl) |>
+  inner_join(rep_outcomes, by = c("outcome", "arm")) |>
+  filter(!group %in% c("other (small)", "Liver/lipid metabolism")) |>
+  mutate(label = factor(group, levels = rev(unique(cl$group))), dataset = factor(dataset, levels = rep_outcomes$dataset))
+save_source(cl_rep |> select(set, outcome, arm, model, group, b, se, p, n_snp))
+rep_forest(cl_rep, "Odds ratio for AD per unit higher log-odds of T2D (95% CI)", "Suzuki 2024 clusters (frozen assignments).")
+```
+
+```{r table-clusters}
+cl_tab <- cl_pick(con_cl) |>
+  inner_join(bind_rows(con_outcomes, tibble(outcome = comb_out, arm = comb_arm, dataset = comb_lab)),
+             by = c("outcome", "arm")) |>
+  transmute(Cluster = group, `AD dataset` = dataset, SNPs = n_snp, b, se,
+            `OR (95% CI)` = or_ci(b, b - 1.96 * se, b + 1.96 * se), p, het_Q, het_df, het_p)
+write_csv(cl_tab, file.path(tab_dir, "cluster_results.csv"))
+cl_glu |>
+  mutate(est = sprintf("%.2f (%.2f, %.2f)", b, ci_lo, ci_hi)) |>
+  select(Cluster = group, series, est) |>
+  pivot_wider(names_from = series, values_from = est) |>
+  inner_join(cl |> transmute(Cluster = group, SNPs = n_snp, `AD OR (95% CI)` = or_ci(b, ci_lo, ci_hi), p = signif(p, 2)),
+             by = "Cluster") |>
+  arrange(match(Cluster, cl$group)) |>
+  select(Cluster, SNPs, `AD OR (95% CI)`, p, `Fasting glucose`, `2 h glucose`) |>
+  save_table("cluster_primary_outcome", "Glucose columns: mmol/L per unit higher log-odds of T2D (95% CI).")
+```
+
+## Drug targets
+
+Variants within 100 kb of each glucose-lowering drug target (T2D-associated at p < 10⁻⁴; targets of
+drugs at phase 2 or later for T2D, frozen Open Targets snapshot). Classes with fewer than 3 variants
+are in the table only.
+
+```{r drug-targets, fig.width=8, fig.height=4}
+class_labels <- c(katp_secretagogue = "KATP channel (sulfonylureas)", amylin = "Amylin receptor",
+                  pparg_sensitizer = "PPAR (glitazones)", glucokinase = "Glucokinase",
+                  insulin_receptor = "Insulin receptor", incretin = "Incretin (GLP1R, GIPR, DPP4)",
+                  fgf21_klb = "FGF21 / KLB", sglt = "SGLT", glucagon_receptor = "Glucagon receptor")
+dt <- con_dt |>
+  filter(set == "primary", level == "class") |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se, class = coalesce(class_labels[target], target))
+dt_order <- dt |> filter(outcome == ad_outcome, arm == "slopehunter", trait == "AD (log-OR)") |>
+  arrange(b) |> mutate(label = sprintf("%s (%d)", class, n_snp))
+dt_plot <- dt |>
+  filter(outcome == ad_outcome, arm == "slopehunter", n_snp >= 3) |>
+  inner_join(dt_order |> select(target, label), by = "target") |>
+  mutate(label = factor(label, levels = dt_order$label),
+         panel = factor(if_else(trait == "AD (log-OR)", "AD risk", "Glucose"), levels = c("AD risk", "Glucose")),
+         series = case_when(trait == "AD (log-OR)" ~ "AD", grepl("^fasting", trait) ~ "Fasting glucose",
+                            TRUE ~ "2 h glucose"),
+         across(c(b, ci_lo, ci_hi), \(v) if_else(panel == "AD risk", exp(v), v)))
+save_source(dt_plot |> select(target, class, outcome, arm, trait, series, b, ci_lo, ci_hi, p, n_snp))
+
+ggplot(dt_plot, aes(x = b, xmin = ci_lo, xmax = ci_hi, y = label, colour = series, shape = series)) +
+  geom_vline(data = data.frame(panel = factor(c("AD risk", "Glucose"), levels = c("AD risk", "Glucose")), x = c(1, 0)),
+             aes(xintercept = x), linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), size = 0.3) +
+  facet_wrap(~ panel, scales = "free_x",
+             labeller = as_labeller(c(`AD risk` = "Odds ratio for AD (95% CI)", Glucose = "Glucose, mmol/L (95% CI)"))) +
+  scale_colour_manual(values = glu_cols, breaks = c("Fasting glucose", "2 h glucose")) +
+  scale_shape_manual(values = glu_shapes, breaks = c("Fasting glucose", "2 h glucose")) +
+  labs(x = "Per unit higher log-odds of T2D acting through the target", y = NULL, colour = NULL, shape = NULL,
+       caption = "Variants per class in brackets. AD: Bellenguez, SlopeHunter-corrected. Incretin class includes GIPR, within 2 Mb of APOE.") +
+  theme_ms
+```
+
+```{r drug-targets-replication, fig.width=7, fig.height=3.5}
+dt_rep <- dt |>
+  filter(trait == "AD (log-OR)", n_snp >= 3, target %in% dt_plot$target) |>
+  inner_join(rep_outcomes, by = c("outcome", "arm")) |>
+  mutate(label = factor(class, levels = unique(dt_order$class)), dataset = factor(dataset, levels = rep_outcomes$dataset))
+save_source(dt_rep |> select(target, class, outcome, arm, b, se, p, n_snp))
+rep_forest(dt_rep, "Odds ratio for AD per unit higher log-odds of T2D (95% CI)", "Classes with at least 3 variants in an outcome.")
+```
+
+```{r table-drug-targets}
+dt |>
+  filter(trait == "AD (log-OR)") |>
+  inner_join(bind_rows(con_outcomes, tibble(outcome = comb_out, arm = comb_arm, dataset = comb_lab)),
+             by = c("outcome", "arm")) |>
+  transmute(Class = class, `AD dataset` = dataset, SNPs = n_snp, b, se,
+            `OR (95% CI)` = or_ci(b, ci_lo, ci_hi), p = signif(p, 2)) |>
+  arrange(Class, `AD dataset`) |>
+  save_table("drug_target_results")
+```
+
+## From T2D liability to the KATP channel (post hoc)
+
+**Post hoc.** The KATP channel was singled out because it stood out among nine drug classes, so its
+estimate is probably inflated by that selection. The steps overlap, so they are not independent. Xue
+2018 instruments; the beta-cell step uses the post-freeze LD map onto Suzuki clusters
+(`xue_cluster_map.csv`). Step 4 is a single-variant ratio (rs5215).
+
+```{r katp-specificity, fig.width=7, fig.height=3.2}
+spec_set <- "xue"
+snp_data <- iod |>
+  filter(set == spec_set) |>
+  select(-any_of("cluster")) |>
+  left_join(rd(file.path(con_dir, "xue_cluster_map.csv")) |> select(SNP, cluster), by = "SNP")
+rho_fg2h <- step0 |> filter(set == spec_set) |> pull(error_cor_fg_2h)
+two_h_specific <- function(x) {
+  delta <- coef(lm(beta_2h ~ 0 + beta_fg, data = x, weights = 1 / se_2h^2))[[1]]
+  x |> mutate(z_2h_spec = (beta_2h - delta * beta_fg) /
+                sqrt(se_2h^2 + delta^2 * se_fg^2 - 2 * delta * rho_fg2h * se_2h * se_fg))
+}
+ivw_t2d <- function(x) {
+  f <- summary(lm(beta_y ~ 0 + beta_t2d, data = x, weights = 1 / se_y^2))
+  tibble(b = f$coefficients[1, 1], se = f$coefficients[1, 2] / f$sigma * max(1, f$sigma), n_snp = nrow(x))
+}
+wald <- function(x) tibble(b = x$beta_y / x$beta_t2d, se = x$se_y / x$beta_t2d, n_snp = 1L)
+spec_steps <- c("All T2D variants", "2 h glucose beyond fasting", "Beta-cell clusters", "KATP channel (rs5215)")
+spec_one <- function(x) bind_rows(
+  ivw_t2d(x) |> mutate(step = spec_steps[1]),
+  ivw_t2d(filter(two_h_specific(x), z_2h_spec > 1.96)) |> mutate(step = spec_steps[2]),
+  ivw_t2d(filter(x, grepl("^Beta cell", cluster))) |> mutate(step = spec_steps[3]),
+  wald(filter(x, SNP == "rs5215")) |> mutate(step = spec_steps[4]))
+spec <- bind_rows(con_outcomes, tibble(outcome = comb_out, arm = comb_arm, dataset = comb_lab)) |>
+  purrr::pmap_dfr(\(outcome, arm, dataset)
+    spec_one(snp_data |> filter(.data$outcome == !!outcome, .data$arm == !!arm)) |>
+      mutate(outcome = outcome, arm = arm, dataset = dataset)) |>
+  mutate(ci_lo = b - 1.96 * se, ci_hi = b + 1.96 * se, p = 2 * pnorm(-abs(b / se)),
+         step = factor(step, levels = spec_steps))
+spec_plot <- spec |>
+  inner_join(rep_outcomes |> select(outcome, arm), by = c("outcome", "arm")) |>
+  mutate(label = factor(step, levels = rev(spec_steps)), dataset = factor(dataset, levels = rep_outcomes$dataset))
+save_source(spec_plot |> select(outcome, arm, dataset, step, b, se, ci_lo, ci_hi, p, n_snp))
+rep_forest(spec_plot, "Odds ratio for AD per unit higher log-odds of T2D (95% CI)",
+           "Xue 2018 T2D instruments; each row a narrower subset of the one above. Variant counts in the table.")
+```
+
+```{r table-katp-specificity}
+spec |>
+  arrange(factor(dataset, levels = c(con_outcomes$dataset, comb_lab)), step) |>
+  transmute(`AD dataset` = dataset, Step = step, Variants = n_snp, b, se,
+            `OR (95% CI)` = or_ci(b, ci_lo, ci_hi), p = signif(p, 2)) |>
+  save_table("katp_specificity")
+```
+
+## Supplementary: positive control, instrument strength, method concordance
+
+### BMI → type 2 diabetes
+
+```{r positive-control, fig.width=8, fig.height=3.8}
+ctl <- res |>
+  filter(exposure == "bmi_ukb", outcome == "t2d_xue", arm == "raw", method %in% names(uv_methods)) |>
+  mutate(method_label = factor(uv_methods[method], levels = uv_methods))
+ctl_snps <- inst |>
+  filter(assoc_id == "bmi_ukb__t2d_xue__raw") |>
+  mutate(flip = if_else(beta_exposure < 0, -1, 1),
+         beta_exposure = beta_exposure * flip, beta_outcome = beta_outcome * flip)
+save_source(ctl |> select(exposure, outcome, arm, method, b, se, ci_lo, ci_hi, p, n_snp), "estimates")
+save_source(ctl_snps |> select(SNP, beta_exposure, se_exposure, beta_outcome, se_outcome), "variants")
+
+p_sc <- ggplot(ctl_snps, aes(beta_exposure, beta_outcome)) +
+  geom_hline(yintercept = 0, colour = "grey70") +
+  geom_errorbar(aes(ymin = beta_outcome - 1.96 * se_outcome, ymax = beta_outcome + 1.96 * se_outcome),
+                colour = "grey80", width = 0) +
+  geom_errorbar(aes(xmin = beta_exposure - 1.96 * se_exposure, xmax = beta_exposure + 1.96 * se_exposure),
+                colour = "grey80", width = 0, orientation = "y") +
+  geom_point(colour = "grey45", size = 0.8) +
+  geom_abline(data = ctl, aes(slope = b, intercept = 0, colour = method_label, linetype = method_label), linewidth = 0.8) +
+  scale_colour_manual(values = method_cols) + scale_linetype_manual(values = method_lty) +
+  expand_limits(x = 0) +
+  labs(x = "Variant effect on BMI (SD)", y = "Variant effect on T2D (log-OR)", colour = NULL, linetype = NULL,
+       subtitle = sprintf("%d variants, oriented to the BMI-raising allele", nrow(ctl_snps))) +
+  theme_ms + theme(panel.grid.major.y = element_line())
+p_fo <- ggplot(ctl, aes(x = exp(b), xmin = exp(ci_lo), xmax = exp(ci_hi), y = forcats::fct_rev(method_label),
+                        colour = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(size = 0.4) +
+  scale_x_log10(limits = c(0.9, NA)) +
+  scale_colour_manual(values = method_cols, guide = "none") +
+  labs(x = "OR for T2D per SD higher BMI (95% CI)", y = NULL) +
+  theme_ms
+p_sc + p_fo + plot_layout(widths = c(1.3, 1), guides = "collect") + plot_annotation(tag_levels = "A") &
+  theme(legend.position = "bottom")
+```
+
+### Instrument strength
+
+R² for type 2 diabetes is converted from the observed case/control scale to the liability scale (Lee
+et al. 2011). **The case/control counts and the 10% prevalence are unconfirmed** ([Open items](#open-items)).
+F is scale-free.
+
+```{r instrument-strength, fig.width=7.5, fig.height=3}
+binary_exposures <- tibble::tibble(exposure = "t2d_xue", n_case = 62892, n_control = 596424, prevalence = 0.10)
+liability_factor <- function(K, P) {
+  z <- dnorm(qnorm(1 - K))
+  K^2 * (1 - K)^2 / (z^2 * P * (1 - P))
+}
+strength_exposures <- unique(c("bmi_ukb", body_exposures, glyc_exposures))
+strength <- res |>
+  filter(exposure %in% strength_exposures, outcome == ad_outcome, arm == "raw", method == "IVW-MRE") |>
+  left_join(binary_exposures, by = "exposure") |>
+  mutate(R2_observed = R2,
+         R2 = R2 * coalesce(liability_factor(prevalence, n_case / (n_case + n_control)), 1)) |>
+  transmute(exposure, exposure_label = factor(short[exposure], levels = rev(short[strength_exposures])),
+            n_snp, R2_pct = 100 * R2, R2_observed_pct = 100 * R2_observed, mean_F, total_F, N_exposure,
+            binary = !is.na(prevalence))
+save_source(strength)
+
+strength |>
+  pivot_longer(c(R2_pct, mean_F), names_to = "metric") |>
+  mutate(metric = factor(c(R2_pct = "Variance explained, R² (%)", mean_F = "Mean F per instrument")[metric],
+                         levels = c("Variance explained, R² (%)", "Mean F per instrument")),
+         label = if_else(metric == "Mean F per instrument", sprintf("%.0f", value),
+                         sprintf("%.1f%% (%d SNPs)", value, n_snp))) |>
+  ggplot(aes(value, exposure_label)) +
+  geom_col(fill = "grey45", width = 0.65) +
+  geom_vline(data = data.frame(metric = factor("Mean F per instrument"), x = 10),
+             aes(xintercept = x), linetype = "dashed", colour = dark) +
+  geom_text(aes(label = label), hjust = -0.1, size = 3) +
+  facet_wrap(~ metric, scales = "free_x") +
+  scale_x_continuous(expand = expansion(mult = c(0, 0.9))) +
+  labs(x = NULL, y = NULL) +
+  theme_ms
+```
+
+```{r table-instrument-strength}
+strength |>
+  arrange(desc(exposure_label)) |>
+  transmute(Exposure = exposure_label, SNPs = n_snp, `GWAS N` = N_exposure, `R² (%)` = round(R2_pct, 2),
+            `R² observed scale (%)` = if_else(binary, as.character(round(R2_observed_pct, 2)), "—"),
+            `Mean F` = round(mean_F, 1), `Overall F` = round(total_F, 1)) |>
+  save_table("instrument_strength_univariable")
+step0 |>
+  transmute(Set = set, SNPs = n_snp, `Mean F, fasting` = round(mean_F_fg, 1), `Mean F, 2 h` = round(mean_F_2h, 1),
+            `Conditional F, fasting | 2 h` = round(cond_F_fg, 1), `Conditional F, 2 h | fasting` = round(cond_F_2h, 1),
+            `Error correlation (fasting, 2 h)` = round(error_cor_fg_2h, 3), `Pre-specified analysis` = primary_analysis) |>
+  save_table("instrument_strength_fg_2h", "Step 0 (outcome-blind). Conditional F < 10 for 2 h glucose in every set, so the contrast regression is primary.")
+```
+
+### Concordance across every method
+
+Direction and whether the 95% interval excludes zero: the only comparison valid across scales
+(MR-APSS, CAUSE and MRAID are SD per SD; the rest are log-OR per unit). Blank cells were not run.
+
+```{r method-concordance, fig.width=9, fig.height=5}
+grid_methods <- c("IVW-MRE", "MR-PRESSO", "MR-RAPS", "MRBEE", "Weighted median", "Weighted mode",
+                  "MR-Egger", "MR-APSS", "MR-APSS (p<5e-8)", "CAUSE", "MRAID")
+grid_exposures <- unique(c(body_exposures, glyc_exposures))
+calls <- c("Lower risk, interval excludes 0", "Lower risk, n.s.", "Higher risk, n.s.", "Higher risk, interval excludes 0")
+conc <- res |>
+  filter(exposure %in% grid_exposures, outcome == ad_outcome, method %in% grid_methods) |>
+  mutate(excl = ci_lo * ci_hi > 0,
+         call = factor(case_when(b < 0 & excl ~ calls[1], b < 0 ~ calls[2],
+                                 b >= 0 & !excl ~ calls[3], TRUE ~ calls[4]), levels = calls),
+         method = factor(method, levels = grid_methods),
+         family = if_else(grepl("^SD", scale), "SD per SD", "log-OR per unit"),
+         arm_label = factor(arm_labels[arm], levels = rev(arm_labels)),
+         exposure_label = factor(short[exposure], levels = short[grid_exposures]))
+save_source(conc |> select(exposure, outcome, arm, method, scale, b, ci_lo, ci_hi, p, call))
+
+# Greyscale: fill = direction; a black frame and bold text = interval excludes 0.
+conc <- conc |> mutate(direction = factor(if_else(b < 0, "Lower risk", "Higher risk"),
+                                          levels = c("Lower risk", "Higher risk")))
+ggplot(conc, aes(method, arm_label, fill = direction)) +
+  geom_tile(colour = "white", linewidth = 0.8) +
+  geom_tile(data = filter(conc, excl), fill = NA, colour = "black", linewidth = 0.9, width = 0.9, height = 0.85) +
+  geom_text(aes(label = sprintf("%+.2f", b), colour = direction, fontface = if_else(excl, "bold", "plain")),
+            size = 2.4, show.legend = FALSE) +
+  facet_grid(exposure_label ~ family, scales = "free_x", space = "free_x", switch = "y") +
+  scale_fill_manual(values = c(`Lower risk` = "grey35", `Higher risk` = "grey85"), drop = FALSE) +
+  scale_colour_manual(values = c(`Lower risk` = "white", `Higher risk` = "black")) +
+  labs(x = NULL, y = NULL, fill = NULL, caption = "Framed cells, bold values: 95% interval excludes 0.") +
+  theme_ms +
+  theme(axis.text.x = element_text(angle = 35, hjust = 1), strip.placement = "outside",
+        strip.text.y.left = element_text(angle = 0, hjust = 1), panel.grid = element_blank())
+```
+
+## Supplementary: combined Uffelmann (all cohorts)
+
+The most precise AD file, but it contains most of Bellenguez's cohorts, so it adds precision, not
+independent evidence. Uncorrected: SlopeHunter is not identified for it.
+
+```{r uffelmann-combined, fig.width=9, fig.height=9}
+pa <- con |>
+  filter(set %in% names(set_labels), outcome == comb_out, arm == comb_arm, scale == "per mmol/L",
+         estimator %in% names(con_methods), term %in% names(term_labels)) |>
+  mutate(set_label = factor(set_labels[set], levels = set_labels),
+         term_label = factor(term_labels[term], levels = rev(term_labels)),
+         method_label = factor(con_methods[estimator], levels = con_methods))
+pb <- cl_pick(con_cl) |>
+  filter(outcome == comb_out, arm == comb_arm, !group %in% c("other (small)", "Liver/lipid metabolism")) |>
+  mutate(label = factor(sprintf("%s (%d)", group, n_snp)))
+pb <- pb |> mutate(label = forcats::fct_reorder(label, b))
+pc <- dt |> filter(outcome == comb_out, arm == comb_arm, trait == "AD (log-OR)", n_snp >= 3) |>
+  mutate(label = forcats::fct_reorder(sprintf("%s (%d)", class, n_snp), b))
+pd <- spec |> filter(outcome == comb_out) |> mutate(label = factor(step, levels = rev(spec_steps)))
+save_source(pa |> select(set, step, estimator, term, b, se, p, n_snp), "fg-2h")
+save_source(pb |> select(group, b, se, p, n_snp), "clusters")
+save_source(pc |> select(target, class, b, se, p, n_snp), "drug-targets")
+save_source(pd |> select(step, b, se, p, n_snp), "katp-specificity")
+
+or_breaks <- c(0.7, 0.8, 0.9, 1, 1.1, 1.2, 1.3, 1.5, 1.75, 2)   # log-scale defaults drop the ticks above 1
+simple_forest <- function(d, xlab, colour = ink) {
+  ggplot(d, aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = label)) +
+    geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+    geom_pointrange(colour = colour, size = 0.3) +
+    scale_x_log10(breaks = or_breaks) + labs(x = xlab, y = NULL) + theme_ms
+}
+fa <- ggplot(pa, aes(x = exp(b), xmin = exp(b - 1.96 * se), xmax = exp(b + 1.96 * se), y = term_label,
+                     colour = method_label, shape = method_label)) +
+  geom_vline(xintercept = 1, linetype = "dashed", colour = "grey40") +
+  geom_pointrange(position = position_dodge(width = 0.5), size = 0.3) +
+  facet_wrap(~ set_label, labeller = label_wrap_gen(30)) +
+  scale_x_log10(breaks = or_breaks) + scale_colour_manual(values = con_cols) + scale_shape_manual(values = con_shapes) +
+  labs(x = "OR for AD per mmol/L (95% CI)", y = NULL, colour = NULL, shape = NULL) + theme_ms
+fa / (simple_forest(pb, "OR per log-odds T2D, by cluster") | simple_forest(pc, "OR per log-odds T2D, by drug class")) /
+  simple_forest(pd, "OR per log-odds T2D, KATP specificity steps") +
+  plot_annotation(tag_levels = "A", caption = comb_lab)
+```
+
+## Figures made by other notebooks
+
+These figures are not redrawn here. Each notebook records its own inputs, and the README maps them
+to figure numbers.
+
+| Content | Notebook | File |
+|---|---|---|
+| Causal diagrams (study design, survival collider) | `mr_dags.qmd` | `figures/dags-*-1.pdf` |
+| SlopeHunter mechanism (A–D) | `slopehunter_figure.qmd` | `figures/supp-slopehunter-mechanism.pdf` |
+| SlopeHunter sensitivity to b | `slopehunter_figure.qmd` | `figures/supp-slopehunter-sensitivity.pdf` |
+| MVMR with lifespan (cross-check) | `mvmr_lifespan_indexevent.qmd` | `mvmr_lifespan_indexevent_files/figure-html/forest-1.png` (PNG only; no `fig.path`) |
+| KCNJ11/ABCC8 fine-mapping | `diabetes_ad_fine_mapping.qmd` | `figures/finemap-*-1.pdf` (reads the local `_targets` store on every render) |
+
+## Open items
+
+Values that feed into reported numbers and are marked unconfirmed at their source. Resolve these
+before the numbers go into the text.
+
+| Value | Where | Used by |
+|---|---|---|
+| `sd_mmol: {fg: 0.65, glu2h: 1.85}`, "TO CONFIRM from the MAGIC cohorts" | `pipeline/config.yml` → `contrast:` | every **per-SD** contrast, cluster-contrast and MVMR estimate (not the per-mmol/L figures here) |
+| T2D cases 62,892 / controls 596,424, prevalence 10% ("VERIFY") | the `instrument-strength` chunk above | liability-scale R² for T2D |
+| Suzuki 2024 cohort list ("TO CONFIRM against Supplementary Table 1") | `config.yml` → `t2d_suzuki_eur` | sample-overlap statements (MVP in both Suzuki and the Uffelmann new cohorts) |
+| Uffelmann clinical-only cohort list ("TO CONFIRM") | `config.yml` → `ad_uffelmann_cc` | overlap with Bellenguez |
+| Suzuki sumstats MD5 does not match the DIAGRAM page | `config.yml` → `t2d_suzuki_eur` comment | which file version the instruments came from |
+| `fg_chen` p-value source ("TO CHECK": raw-mmol/L beta with INT p?) | `config.yml` → `fg_chen` | instrument selection on fasting glucose (Chen) |
+| Fat-free mass covariates ("to confirm") | `config.yml` → `ffm_ukb` | data-sources table |
+
+## Session
+
+```{r session}
+si <- sessionInfo()
+writeLines(c(sprintf("Rendered %s at commit %s", Sys.time(), head_commit), capture.output(print(si))),
+           file.path(ms_dir, "session_info.txt"))
+si
+```

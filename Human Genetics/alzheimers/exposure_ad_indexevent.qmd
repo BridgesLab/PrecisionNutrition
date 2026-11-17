@@ -129,7 +129,7 @@ SELECTION_LABEL <- "Parental lifespan (combined, Martingale resid)"  # ebi-a-GCS
 # travels with the table instead of living in someone's memory.
 bsh_sources <- tibble::tribble(
   ~ad_id,               ~fits_csv,                                          ~fit_set,              ~trusted, ~reason,
-  "ebi-a-GCST90027158", "smoking/results/indexevent_slopehunter_fits.csv",  "excl_APOE (PRIMARY)", TRUE,     "validated in the smoking pipeline",
+  "ebi-a-GCST90027158", "R/fits/bellenguez_lifespan_slopehunter_fits.csv", "excl_APOE (PRIMARY)", TRUE,     "refit here (scripts/refit_bellenguez_bsh.R); identical to the smoking-pipeline fit",
   "ieu-b-2",            "R/fits/kunkle_lifespan_slopehunter_fits.csv",      "excl_APOE (PRIMARY)", FALSE,    "not identified: raw r = -0.0008, sign agreement 0.499 on the 2250 fitted SNPs"
 )
 

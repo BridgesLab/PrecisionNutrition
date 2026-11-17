@@ -1,0 +1,11 @@
+file,produced_by,md5,last_commit,uncommitted,stamp,rendered,rendered_at_commit
+pipeline/config.yml,hand-edited pipeline settings; dataset definitions (data-sources table),9e9e1b60a0,7d9cad5 2026-11-11,TRUE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/results.csv,_targets.R `csv_results`; b_SH uncertainty added by pipeline/bsh_propagate_existing.R (7d9cad5),3c77165e29,7d9cad5 2026-11-11,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/instruments_classical.csv,_targets.R `csv_instruments_classical`,37b835c661,42568d82 2026-10-08,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+ad_longevity_arm.csv,"exposure_survival_screen.qmd (Step 1 screen, OpenGWAS API)",7901949e22,64c7bbe6 2026-07-22,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/contrast/results.csv,_targets.R `csv_contrast_results`; b_SH propagation (7d9cad5),d6d45a90ba,7d9cad5 2026-11-11,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/contrast/cluster_results.csv,_targets.R `csv_contrast_groups`; b_SH propagation (7d9cad5),3df7f56f32,7d9cad5 2026-11-11,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/contrast/drug_target_results.csv,_targets.R `csv_cis_results`; b_SH propagation (7d9cad5),9b98d98c43,7d9cad5 2026-11-11,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/contrast/instrument_outcome_data.csv,_targets.R `csv_contrast_data`,901995a518,6930e3e 2026-10-30,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/contrast/step0_strength.csv,"_targets.R `csv_contrast_strength` (outcome-blind Step 0, 38987ad)",a0622267de,38987ad 2026-10-12,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2
+results/pipeline/contrast/xue_cluster_map.csv,"_targets.R `csv_xue_cluster_map` (post-freeze LD map, 6814fd5)",b0e19ec0fa,6814fd5 2026-10-29,FALSE,none (see RUN_INFO.md),2026-11-17,8675cf2

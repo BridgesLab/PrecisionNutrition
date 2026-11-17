@@ -12,6 +12,7 @@
 
 suppressPackageStartupMessages({ library(dplyr); library(readr) })
 source("pipeline/R/selection.R")
+source("pipeline/R/provenance.R")   # stamp_output(): stamps/<file>.txt beside each file written
 
 cfg     <- yaml::read_yaml("pipeline/config.yml")
 res_dir <- cfg$paths$results_dir
@@ -61,6 +62,7 @@ grids <- purrr::pmap(tables, function(table, path, keys) {
   }
   out[] <- lapply(out, \(x) replace(x, x %in% "NA", NA))
   write_csv(out, path, na = "NA")
+  stamp_output(path, "post-processing: pipeline/bsh_propagate_existing.R")
   n <- sum(!is.na(new$dtheta_dbsh))
   message(sprintf("%-24s %4d SlopeHunter rows propagated  (%s)", table, n, path))
   bsh_sensitivity_grid(work, BSH_KEYS[[keys]], par, table)
@@ -68,4 +70,5 @@ grids <- purrr::pmap(tables, function(table, path, keys) {
 
 grid <- bind_rows(grids)
 write_csv(grid, file.path(res_dir, "bsh_grid.csv"))
+stamp_output(file.path(res_dir, "bsh_grid.csv"), "post-processing: pipeline/bsh_propagate_existing.R")
 message("bsh_grid.csv: ", nrow(grid), " rows")

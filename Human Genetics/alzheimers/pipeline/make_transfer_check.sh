@@ -26,7 +26,7 @@ while read -r sum path; do
   if [[ "$got" == "$sum" ]]; then ok=$((ok+1)); else echo "DIFFERENT $path"; bad=$((bad+1)); fi
 done <<'MANIFEST'
 EOF
-for f in alzheimers/_targets.R alzheimers/smoking/results/indexevent_slopehunter_fits.csv \
+for f in alzheimers/_targets.R alzheimers/R/fits/bellenguez_lifespan_slopehunter_fits.csv \
          alzheimers/R/fits/kunkle_lifespan_slopehunter_fits.csv alzheimers/R/fit_selection_slope.R \
          alzheimers/data/cache/EUR.bed alzheimers/data/cache/EUR.bim alzheimers/data/cache/EUR.fam \
          calcium-cholesterol/R/robust_mr_helpers.R calcium-cholesterol/raw_data/reference/w_hm3.snplist \

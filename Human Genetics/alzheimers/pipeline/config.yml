@@ -256,16 +256,17 @@ contrast:
 
 # ---- survival-collider adjustment -------------------------------------------------------------
 # Every association into an outcome listed here gets a second, SlopeHunter-adjusted arm, but only
-# if that outcome's fit is trusted (Step 2's gate). Fits are Step 2's, not refit. The SE of b_SH is
+# if that outcome's fit is trusted (Step 2's gate). Fits come from R/fits/ (refit outside the pipeline;
+# Bellenguez by scripts/refit_bellenguez_bsh.R). The SE of b_SH is
 # propagated into that arm's results (propagate_bsh, R/selection.R); see pipeline/README.md.
 slopehunter:
   selection_axis: lifespan
   fits:
     ad_bellenguez:
-      fits_csv: smoking/results/indexevent_slopehunter_fits.csv
+      fits_csv: R/fits/bellenguez_lifespan_slopehunter_fits.csv   # scripts/refit_bellenguez_bsh.R (2026-11-17)
       fit_set: "excl_APOE (PRIMARY)"
       trusted: true
-      reason: "validated in the smoking pipeline; permutation null checked by this pipeline"
+      reason: "refit here, identical to the smoking-pipeline fit it replaces (b_SH -0.94364, SE 0.07015); permutation null checked by this pipeline"
     ad_kunkle:
       fits_csv: R/fits/kunkle_lifespan_slopehunter_fits.csv
       fit_set: "excl_APOE (PRIMARY)"

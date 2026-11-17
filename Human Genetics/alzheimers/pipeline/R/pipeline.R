@@ -72,6 +72,7 @@ assemble_results <- function(assoc, classical_rows, primary_rows, stability) {
 write_csv_target <- function(x, path) {
   dir.create(dirname(path), showWarnings = FALSE, recursive = TRUE)
   readr::write_csv(x, path)
+  stamp_output(path, "targets pipeline (_targets.R)")   # provenance.R: stamps/<file>.txt
   path
 }
 

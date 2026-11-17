@@ -1,0 +1,17 @@
+key,Role,Dataset,Accession,Obtained from,N,Type,Cohorts,Adjusted for
+bmi_ukb,Exposure: body composition,"BMI (UKB, MRC-IEU)",ukb-b-2303,OpenGWAS VCF,454884,continuous,UKB,none
+fatmass_ukb,Exposure: body composition,"Whole-body fat mass (UKB, MRC-IEU)",ukb-b-19393,OpenGWAS VCF,454137,continuous,UKB,none
+ffm_ukb,Exposure: body composition,"Whole-body fat-free mass (UKB, MRC-IEU)",ukb-b-13354,OpenGWAS VCF,454850,continuous,UKB,none
+leanmass_pei,Exposure: body composition,Appendicular lean mass (Pei 2020),ebi-a-GCST90000025,OpenGWAS VCF,450243,continuous,UKB,appendicular fat mass (Pei 2020 Methods)
+fg_chen,Exposure: glycemic,"Fasting glucose (Chen 2021, EUR)",ebi-a-GCST90002232,OpenGWAS VCF,200622,continuous,MAGIC,BMI (Chen 2021 Methods)
+fg_dupuis,Exposure: glycemic,Fasting glucose (Dupuis 2010) [primary FG],ieu-b-4761,OpenGWAS VCF,46186,continuous,MAGIC,none
+fg_manning,Exposure: glycemic,Fasting glucose (Manning 2012) [original analysis],ebi-a-GCST005186,OpenGWAS VCF,58074,continuous,MAGIC,unclear: Manning 2012 fit models with and without BMI
+glu2h_chen,Exposure: glycemic,"2-h glucose (Chen 2021, EUR)",ebi-a-GCST90002227,OpenGWAS VCF,63396,continuous,MAGIC,BMI (Chen 2021 Methods)
+t2d_suzuki_eur,Exposure: glycemic,"Type 2 diabetes (Suzuki 2024, T2DGGI EUR)",T2DGGI-EUR,local file,NA,binary,"DIAGRAM, UKB, MVP, FinnGen",none
+t2d_xue,Exposure: glycemic,Type 2 diabetes (Xue 2018),ebi-a-GCST006867,OpenGWAS VCF,655666,binary,"DIAGRAM, GERA, UKB",none
+ad_bellenguez,Outcome: Alzheimer's disease,AD: Bellenguez 2022 (proxy + clinical),ebi-a-GCST90027158,OpenGWAS VCF,487511,binary,"EADB, UKB",none
+ad_kunkle,Outcome: Alzheimer's disease,AD: Kunkle 2019 IGAP (clinical only),ieu-b-2,local file,63926,binary,IGAP,none
+ad_uffelmann_all,Outcome: Alzheimer's disease,"AD: Uffelmann 2026, all cohorts (clinical + proxy)",PGC-ALZ3-combined-EUR,local file,354310,binary,"EADB, IGAP, UKB, MVP, FinnGen",none
+ad_uffelmann_cc,Outcome: Alzheimer's disease,"AD: Uffelmann 2026, clinical cases only (all cohorts)",PGC-ALZ3-cc-EUR,local file,307558,binary,"EADB, IGAP, UKB, MVP, FinnGen",none
+ad_uffelmann_newc,Outcome: Alzheimer's disease,"AD: Uffelmann 2026, cohorts new to PGC-ALZ (independent of Bellenguez)",PGC-ALZ3-newc-EUR,local file,103313,binary,"MVP, AllOfUs, Estonian, Regeneron, DBDS, HUSK, Lifelines",none
+lifespan,Selection axis (survival),Parental lifespan (Martingale residual; + = shorter life),ebi-a-GCST006697,local file,389166,continuous,UKB,none

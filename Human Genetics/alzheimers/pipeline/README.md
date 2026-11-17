@@ -73,6 +73,7 @@ biallelic SNV, valid beta/SE/p, MAF ≥ 0.01, one row per rsID.
 | `latent_confounding.csv` | one row per pair × method (CAUSE, MR-APSS): causal estimate, latent term with interval, fraction shared, CAUSE q / ΔELPD, MR-APSS sample-structure slope, flags |
 | `cause_posteriors.rds` | CAUSE grid posteriors (causal and sharing) per pair, so latent terms can be recomputed without re-running CAUSE. **~135 MB: gitignored** (over GitHub's 100 MB limit); keep the Great Lakes copy |
 | `figures/<assoc_id>/` | `scatter_classical.png`, `funnel.png` (Wald ratios, IVW line, pseudo-95% cone), `leave_one_out.png` + `.csv`, `scatter_mrapss.png` |
+| `stamps/<file>.txt`, `contrast/stamps/<file>.txt` | provenance stamp per CSV (md5, step, time, host, git commit or code digest, package versions), written by `stamp_output()` in `R/provenance.R`. History before 2026-11-17: `RUN_INFO.md` |
 
 **Report:** [`../robust_mr_report.qmd`](../robust_mr_report.qmd) reads only these files: datasets, a
 main/sensitivity/category-2 table, forest plots split by scale, overlap, survival collider, and

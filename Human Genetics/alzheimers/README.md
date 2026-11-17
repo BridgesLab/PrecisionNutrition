@@ -39,6 +39,9 @@ R/fit_selection_slope.R             SlopeHunter prep + fit + linear-correction e
 mvmr_lifespan_indexevent.qmd        Cross-check — MVMR with lifespan as a second exposure (Zhang et al. 2026, step 2)
 R/mvmr_lifespan.R                   its engine; writes results/mvmr_lifespan/
 slopehunter_figure.qmd              Supplementary figures: SlopeHunter mechanism (A–D) and sensitivity to b → figures/supp-slopehunter-*
+manuscript_figures.qmd              Greyscale manuscript figures and tables → figures/ms-*, results/manuscript/ (key: Manuscripts/T2D_AD_MR/README.md)
+t2d_ad_figures.qmd                  Colour talk versions of the same panels → figures/talk-*
+scripts/refit_bellenguez_bsh.R      Bellenguez b_SH fit → R/fits/bellenguez_lifespan_slopehunter_fits.csv (identical to the smoking-pipeline fit)
 scripts/fetch_kunkle_sumstats.sh    Turnkey fetch/normalize of Kunkle b_SH inputs
 docs/MR_visual_inspection.mediawiki SOP section (scatter/funnel + decision matrix) for the lab wiki
 ```
@@ -76,9 +79,10 @@ quarto render exposure_survival_screen.qmd
 ### Step 2 — naive + corrected exposure → AD
 
 The naive `E → AD` step needs a valid OpenGWAS token (it caches to
-`exposure_ad_naive.csv` on first success). Bellenguez reuses the `b_SH` already fit
-in the smoking pipeline, so no local sumstats are required for it; Kunkle rows show
-"run the fit for this AD GWAS" until you do the fit below:
+`exposure_ad_naive.csv` on first success). The Bellenguez `b_SH` is read from
+`R/fits/bellenguez_lifespan_slopehunter_fits.csv` (`Rscript scripts/refit_bellenguez_bsh.R`;
+identical to the fit first made in the smoking pipeline), so rendering needs no local
+sumstats. Kunkle rows show "run the fit for this AD GWAS" until you do the fit below:
 
 ```bash
 quarto render exposure_ad_indexevent.qmd
@@ -139,9 +143,14 @@ lifespan halves per-allele effects, so the subtracted term is conservative.
 
 ## Known issues
 
-- **Kunkle `b_SH = +1.10` is opposite-signed to Bellenguez `−0.944`** and unverified.
-  Because AD → shorter lifespan holds regardless of ascertainment, an opposite sign
-  is likely an allele-orientation artefact in the Kunkle sumstats, and it flips every
-  Kunkle correction. Run the `bsh-orientation-check` chunk (`ad_orientation_check()`)
-  before trusting the Kunkle column; treat only the Bellenguez column as validated
-  until then. The Kunkle fit CSV is deliberately **not** committed.
+- **Kunkle's `b_SH` is not identified, so it is never applied.** The fit
+  (`R/fits/kunkle_lifespan_slopehunter_fits.csv`, committed) returns `+1.10`,
+  opposite in sign to Bellenguez's `−0.944`. `exposure_ad_indexevent.qmd` ("Why the
+  Kunkle `b_SH` is not used") ruled out allele inversion and a sign-convention
+  mismatch. On the fitted SNPs there is no raw lifespan–AD relationship (r = −0.0008,
+  sign agreement 0.499), so SlopeHunter is partitioning noise. The Uffelmann 2026
+  new-cohorts and clinical-only files are not identified either (raw r = 0.034, 0.047).
+  The combined Uffelmann file is weak (r = 0.115), and its `b_SH` sits inside the
+  permutation null. The Kunkle and Uffelmann columns are reported uncorrected;
+  `pipeline/config.yml` marks all four fits `trusted: false`.
+  Run `bsh_identifiability()` on any new AD GWAS before trusting its `b_SH`.

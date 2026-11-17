@@ -4,9 +4,14 @@ ffm_ukb,ukb-b-13354,"Whole-body fat-free mass (UKB, MRC-IEU)",opengwas_vcf,NA,45
 glu2h_chen,ebi-a-GCST90002227,"2-h glucose (Chen 2021, EUR)",opengwas_vcf,NA,63396,continuous,MAGIC,BMI (Chen 2021 Methods),FALSE
 fg_dupuis,ieu-b-4761,Fasting glucose (Dupuis 2010) [primary FG],opengwas_vcf,NA,46186,continuous,MAGIC,NA,FALSE
 fg_manning,ebi-a-GCST005186,Fasting glucose (Manning 2012) [original analysis],opengwas_vcf,NA,58074,continuous,MAGIC,unclear: Manning 2012 fit models with and without BMI,FALSE
+fg_chen,ebi-a-GCST90002232,"Fasting glucose (Chen 2021, EUR)",opengwas_vcf,NA,200622,continuous,MAGIC,BMI (Chen 2021 Methods),FALSE
+t2d_suzuki_eur,T2DGGI-EUR,"Type 2 diabetes (Suzuki 2024, T2DGGI EUR)",chrpos_tsv,data/cache/sumstats/Suzuki.Nature2024.T2DGGI.EUR.sumstats.zip,NA,binary,DIAGRAM+UKB+MVP+FinnGen,NA,FALSE
 t2d_xue,ebi-a-GCST006867,Type 2 diabetes (Xue 2018),opengwas_vcf,NA,655666,binary,DIAGRAM+GERA+UKB,NA,FALSE
 bmi_ukb,ukb-b-2303,"BMI (UKB, MRC-IEU)",opengwas_vcf,NA,454884,continuous,UKB,NA,FALSE
 fatmass_ukb,ukb-b-19393,"Whole-body fat mass (UKB, MRC-IEU)",opengwas_vcf,NA,454137,continuous,UKB,NA,FALSE
 ad_bellenguez,ebi-a-GCST90027158,AD: Bellenguez 2022 (proxy + clinical),opengwas_vcf,NA,487511,binary,EADB+UKB,NA,FALSE
 ad_kunkle,ieu-b-2,AD: Kunkle 2019 IGAP (clinical only),local_tsv,data/cache/sumstats/AD_kunkle_harmonised.tsv.gz,63926,binary,IGAP,NA,FALSE
+ad_uffelmann_newc,PGC-ALZ3-newc-EUR,"AD: Uffelmann 2026, cohorts new to PGC-ALZ (independent of Bellenguez)",local_tsv,data/cache/sumstats/AD_uffelmann_newc_harmonised.tsv.gz,103313,binary,MVP+AllOfUs+Estonian+Regeneron+DBDS+HUSK+Lifelines,NA,FALSE
+ad_uffelmann_cc,PGC-ALZ3-cc-EUR,"AD: Uffelmann 2026, clinical cases only (all cohorts)",local_tsv,data/cache/sumstats/AD_uffelmann_cc_harmonised.tsv.gz,307558,binary,EADB+IGAP+UKB+MVP+FinnGen,NA,FALSE
+ad_uffelmann_all,PGC-ALZ3-combined-EUR,"AD: Uffelmann 2026, all cohorts (clinical + proxy)",local_tsv,data/cache/sumstats/AD_uffelmann_all_harmonised.tsv.gz,354310,binary,EADB+IGAP+UKB+MVP+FinnGen,NA,FALSE
 lifespan,ebi-a-GCST006697,Parental lifespan (Martingale residual; + = shorter life),local_tsv,data/cache/sumstats/LIFESPAN_pilling_harmonised.tsv.gz,389166,continuous,UKB,NA,FALSE

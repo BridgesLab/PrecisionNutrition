@@ -52,6 +52,8 @@ Human Genetics/PheWeb Summary Statistics/ALLFX_GWAS_build37.txt.gz
 
 #Temporary Excel files
 ~$*.xlsx
+#Office lock files (Word is covered above; PowerPoint here)
+~$*.pptx
 
 #Mouse cholesterol GWAS: GEMMA association output (~55 MB each) and an orphan render (no source file)
 Mouse Genetics/Cholesterol/GWAS/*.assoc.txt

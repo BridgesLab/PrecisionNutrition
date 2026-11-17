@@ -25,7 +25,7 @@ files locally with a bare `tar_make()`.
 | `6814fd5` | 2026-10-29 | Uffelmann 2026 new-cohorts and clinical-only outcomes added (post-freeze); LD map of Xue instruments onto Suzuki clusters | `contrast/{results,cluster_results,drug_target_results,drug_target_snps,error_correlations,instrument_outcome_data,xue_cluster_map}.csv` |
 | `6930e3e` | 2026-10-30 | Combined Uffelmann (all cohorts) sensitivity outcome | same `contrast/` files as `6814fd5`, except `xue_cluster_map.csv` |
 | `7d9cad5` | 2026-11-11 | **Post-processing, not a pipeline run:** `pipeline/bsh_propagate_existing.R` added the b_SH uncertainty to the SlopeHunter rows in place (`se`, `p`, CI; conditional values kept in `*_cond_bsh`; new `p_bsh_cons`, `bsh_tip`) and wrote `bsh_grid.csv` | `results.csv`, `bsh_grid.csv`, `contrast/{results,cluster_results,drug_target_results,post_freeze_drug_target_results}.csv` |
-| (2026-11-17 commit) | 2026-11-17 | Local, by name: `tar_make(names = c("datasets_used", "csv_datasets"))`. The file had last been written on 2026-10-08, before `fg_chen`, `t2d_suzuki_eur` and the three Uffelmann files were added to the config. Existing rows unchanged; five rows added. First file with a stamp | `datasets.csv`, `stamps/datasets.csv.txt` |
+| `60f2bf3` | 2026-11-17 | Local, by name: `tar_make(names = c("datasets_used", "csv_datasets"))`. The file had last been written on 2026-10-08, before `fg_chen`, `t2d_suzuki_eur` and the three Uffelmann files were added to the config. Existing rows unchanged; five rows added. First file with a stamp | `datasets.csv`, `stamps/datasets.csv.txt` |
 
 `figures/<assoc_id>/` (scatter, funnel and leave-one-out plots per association) came from the same
 runs as `results.csv` (targets `diag_classical`, `diag_apss`).
